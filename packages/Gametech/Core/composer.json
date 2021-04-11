@@ -1,0 +1,25 @@
+{
+    "name": "gametech/core",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Boat",
+            "email": "b0855626503@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Gametech\\Core\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gametech\\Core\\Providers\\CoreServiceProvider"
+            ],
+            "aliases": { }
+        }
+    },
+    "minimum-stability": "dev"
+}

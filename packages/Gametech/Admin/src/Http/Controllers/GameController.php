@@ -1,0 +1,241 @@
+<?php
+
+namespace Gametech\Admin\Http\Controllers;
+
+
+use Gametech\Admin\DataTables\GameDataTable;
+use Gametech\Game\Repositories\GameRepository;
+use Gametech\Game\Repositories\GameUserFreeRepository;
+use Gametech\Game\Repositories\GameUserRepository;
+use Gametech\Member\Repositories\MemberRepository;
+use Illuminate\Http\Request;
+
+
+class GameController extends AppBaseController
+{
+    protected $_config;
+
+    protected $repository;
+
+    protected $gameUserRepository;
+
+    protected $memberRepository;
+
+    protected $gameUserFreeRepository;
+
+    public function __construct
+    (
+        GameRepository $repository,
+        GameUserRepository $gameUserRepo,
+        GameUserFreeRepository $gameUserFreeRepo,
+        MemberRepository $memberRepo
+    )
+    {
+        $this->_config = request('_config');
+
+        $this->middleware('admin');
+
+        $this->repository = $repository;
+
+        $this->gameUserRepository = $gameUserRepo;
+
+        $this->gameUserFreeRepository = $gameUserFreeRepo;
+
+        $this->memberRepository = $memberRepo;
+    }
+
+
+    public function index(GameDataTable $gameDataTable)
+    {
+        return $gameDataTable->render($this->_config['view']);
+    }
+
+    public function edit(Request $request)
+    {
+        $user = $this->user()->name . ' ' . $this->user()->surname;
+        $id = $request->input('id');
+        $status = $request->input('status');
+        $method = $request->input('method');
+
+
+        $data[$method] = $status;
+
+        $chk = $this->repository->find($id);
+        if (!$chk) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
+        }
+
+        $data['user_update'] = $user;
+        $this->repository->update($data, $id);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function loadData(Request $request)
+    {
+        $id = $request->input('id');
+
+        $data = $this->repository->find($id);
+        if (!$data) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
+        }
+
+        return $this->sendResponse($data, 'ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function update($id, Request $request)
+    {
+        $user = $this->user()->name . ' ' . $this->user()->surname;
+
+        $data = json_decode($request['data'], true);
+
+
+        $chk = $this->repository->find($id);
+        if (!$chk) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
+        }
+
+        $data['user_update'] = $user;
+        $this->repository->updatenew($data, $id);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function loadDebug(Request $request)
+    {
+        $user = $this->user()->name . ' ' . $this->user()->surname;
+        $id = $request->input('id');
+        $method = $request->input('method');
+
+
+        $chk = $this->repository->find($id);
+
+
+        if (!$chk) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
+        }
+
+        $response = [];
+
+        $game_user = $this->gameUserRepository->findOneWhere(['user_name' => $chk->user_demo, 'game_code' => $id ]);
+//        if (!$game_user && $method != 'add') {
+//            return $this->sendError('ไม่พบข้อมูล User Demo', 200);
+//        }
+
+
+
+        if(!$game_user){
+            $username = $chk->user_demo;
+            $id = 2;
+        }else{
+            $username = $game_user->user_name;
+            $id = $game_user->member_code;
+        }
+
+        $member = $this->memberRepository->find($id);
+
+        switch ($method) {
+            case 'add':
+                $response = $this->gameUserRepository->addGameUser($chk->code, 0, collect($member)->toArray(), true);
+                break;
+
+            case 'pass':
+                $user_pass = "Bb" . rand(100000, 999999);
+                $response = $this->gameUserRepository->changeGamePass($chk->code, $game_user->code, [
+                    'user_pass' => $user_pass,
+                    'user_name' => $username,
+                    'name' => $member['name'],
+                    'firstname' => $member['firstname'],
+                    'lastname' => $member['lastname'],
+                    'gender' => $member['gender'],
+                    'birth_day' => $member->birth_day->format('Y-m-d'),
+                    'date_regis' => $member->date_regis->format('Y-m-d'),
+                ], true);
+
+                break;
+
+            case 'balance':
+
+                $response = $this->gameUserRepository->checkBalance($chk->id, $username, true);
+                break;
+
+            case 'deposit':
+                $response = $this->gameUserRepository->UserDeposit($chk->code, $username,50,true,true);
+                break;
+
+            case 'withdraw':
+                $response = $this->gameUserRepository->UserWithdraw($chk->code, $username,50,true,true);
+                break;
+        }
+
+
+
+        return $this->sendResponseNew($response,'complete');
+
+    }
+
+    public function loadDebugFree(Request $request)
+    {
+        $user = $this->user()->name . ' ' . $this->user()->surname;
+        $id = $request->input('id');
+        $method = $request->input('method');
+
+
+        $chk = $this->repository->find($id);
+
+
+        if (!$chk) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
+        }
+
+        $response = [];
+        $member = $this->memberRepository->find(1);
+        $game_user = $this->gameUserFreeRepository->findOneByField('user_name', $chk->user_demofree);
+        if (!$game_user && $method != 'add') {
+            return $this->sendError('ไม่พบข้อมูล User Demo', 200);
+        }
+
+        switch ($method) {
+            case 'add':
+                $response = $this->gameUserFreeRepository->addGameUser($chk->code, 0, collect($member)->toArray(), true);
+                break;
+
+            case 'pass':
+                $user_pass = "Bb" . rand(100000, 999999);
+                $response = $this->gameUserFreeRepository->changeGamePass($chk->code, $game_user->code, [
+                    'user_pass' => $user_pass,
+                    'user_name' => $game_user->user_name,
+                    'name' => $member->name,
+                    'firstname' => $member['firstname'],
+                    'lastname' => $member['lastname'],
+                    'gender' => $member['gender'],
+                    'birth_day' => $member['birth_day'],
+                    'date_regis' => $member['date_regis'],
+                ], true);
+
+                break;
+
+            case 'balance':
+                $response = $this->gameUserFreeRepository->checkBalance($chk->id, $game_user->user_name, true);
+                break;
+
+            case 'deposit':
+                $response = $this->gameUserFreeRepository->UserDeposit($chk->code, $game_user->user_name,1,true,true);
+                break;
+
+            case 'withdraw':
+                $response = $this->gameUserFreeRepository->UserWithdraw($chk->code, $game_user->user_name,1,true,true);
+                break;
+        }
+
+
+
+        return $this->sendResponseNew($response,'complete');
+
+    }
+
+
+}

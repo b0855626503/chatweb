@@ -1,0 +1,183 @@
+<?php
+
+namespace Gametech\Core\Models;
+
+use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
+use DateTimeInterface;
+use Gametech\Core\Contracts\Config as ConfigContract;
+use Illuminate\Database\Eloquent\Model;
+
+class Config extends Model implements ConfigContract
+{
+    use LaravelSubQueryTrait;
+
+    protected function serializeDate(DateTimeInterface $date)
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    protected $table = 'configs';
+
+    const CREATED_AT = 'date_create';
+    const UPDATED_AT = 'date_update';
+
+    protected $dateFormat = 'Y-m-d H:i:s';
+
+    protected $primaryKey = 'code';
+
+    protected $fillable = [
+        'name_th',
+        'name_en',
+        'lineid',
+        'linelink',
+        'minwithdraw',
+        'maxwithdraw_day',
+        'maxtransfer_time',
+        'mintransfer',
+        'mintransferback',
+        'maxsetcredit',
+        'free_mintransfer',
+        'free_mintransferback',
+        'free_maxtransfer',
+        'free_maxout',
+        'free_minwithdraw',
+        'free_maxwithdraw',
+        'maxspin',
+        'onoff',
+        'pro_onoff',
+        'website',
+        'enable',
+        'user_create',
+        'user_update',
+        'notice',
+        'mintransfer_pro',
+        'pro_wallet',
+        'point_open',
+        'reward_open',
+        'diamond_open',
+        'points',
+        'diamonds',
+        'logo',
+        'favicon',
+        'title',
+        'description',
+        'multigame_open',
+        'freecredit_open',
+        'freecredit_all',
+        'sitename',
+        'admin_navbar_color',
+        'admin_brand_color',
+        'admin_darkmode_open',
+        'wallet_navbar_color',
+        'wallet_body_stop_color',
+        'wallet_body_start_color',
+        'wallet_footer_color',
+        'wallet_footer_active',
+        'wallet_footer_exchange'
+    ];
+
+    protected $casts = [
+        'code' => 'integer',
+        'name_th' => 'string',
+        'name_en' => 'string',
+        'lineid' => 'string',
+        'linelink' => 'string',
+        'minwithdraw' => 'decimal:2',
+        'maxwithdraw_day' => 'decimal:2',
+        'maxtransfer_time' => 'decimal:2',
+        'mintransfer' => 'decimal:2',
+        'mintransferback' => 'decimal:2',
+        'maxsetcredit' => 'decimal:2',
+        'free_mintransfer' => 'decimal:2',
+        'free_mintransferback' => 'decimal:2',
+        'free_maxtransfer' => 'decimal:2',
+        'free_maxout' => 'decimal:2',
+        'free_minwithdraw' => 'decimal:2',
+        'free_maxwithdraw' => 'decimal:2',
+        'maxspin' => 'decimal:2',
+        'onoff' => 'string',
+        'pro_onoff' => 'string',
+        'website' => 'string',
+        'enable' => 'string',
+        'user_create' => 'string',
+        'user_update' => 'string',
+        'notice' => 'string',
+        'mintransfer_pro' => 'decimal:2',
+        'pro_wallet' => 'string',
+        'point_open' => 'string',
+        'reward_open' => 'string',
+        'diamond_open' => 'string',
+        'points' => 'decimal:2',
+        'diamonds' => 'decimal:2',
+        'logo' => 'string',
+        'favicon' => 'string',
+        'title' => 'string',
+        'description' => 'string',
+        'multigame_open' => 'string',
+        'freecredit_open' => 'string',
+        'freecredit_all' => 'string',
+        'sitename' => 'string',
+        'admin_navbar_color' => 'string',
+        'admin_brand_color' => 'string',
+        'admin_darkmode_open' => 'string',
+        'wallet_navbar_color' => 'string',
+        'wallet_body_stop_color' => 'string',
+        'wallet_body_start_color' => 'string',
+        'wallet_footer_color' => 'string',
+        'wallet_footer_active' => 'string',
+        'wallet_footer_exchange' => 'string',
+    ];
+
+    protected static $rules = [
+        'name_th' => 'required|string|max:255',
+        'name_en' => 'required|string|max:255',
+        'lineid' => 'required|string|max:100',
+        'linelink' => 'required|string|max:255',
+        'minwithdraw' => 'required|numeric',
+        'maxwithdraw_day' => 'required|numeric',
+        'maxtransfer_time' => 'required|numeric',
+        'mintransfer' => 'required|numeric',
+        'mintransferback' => 'required|numeric',
+        'maxsetcredit' => 'required|numeric',
+        'free_mintransfer' => 'required|numeric',
+        'free_mintransferback' => 'required|numeric',
+        'free_maxtransfer' => 'required|numeric',
+        'free_maxout' => 'required|numeric',
+        'free_minwithdraw' => 'required|numeric',
+        'free_maxwithdraw' => 'required|numeric',
+        'maxspin' => 'required|numeric',
+        'onoff' => 'required|string',
+        'pro_onoff' => 'required|string',
+        'website' => 'required|string|max:255',
+        'enable' => 'nullable|string',
+        'user_create' => 'required|string|max:100',
+        'user_update' => 'required|string|max:100',
+        'date_create' => 'required',
+        'date_update' => 'required',
+        'notice' => 'nullable|string|max:191',
+        'mintransfer_pro' => 'nullable|numeric',
+        'pro_wallet' => 'nullable|string',
+        'point_open' => 'nullable|string',
+        'reward_open' => 'nullable|string',
+        'diamond_open' => 'nullable|string',
+        'points' => 'nullable|numeric',
+        'diamonds' => 'nullable|numeric',
+        'logo' => 'required|string|max:100',
+        'favicon' => 'required|string|max:100',
+        'title' => 'required|string|max:191',
+        'description' => 'required|string',
+        'multigame_open' => 'required|string',
+        'freecredit_open' => 'required|string',
+        'freecredit_all' => 'required|string',
+        'sitename' => 'required|string|max:191',
+        'admin_navbar_color' => 'required|string|max:191',
+        'admin_brand_color' => 'required|string|max:191',
+        'admin_darkmode_open' => 'required|string',
+        'wallet_navbar_color' => 'required|string|max:191',
+        'wallet_body_stop_color' => 'required|string|max:191',
+        'wallet_body_start_color' => 'required|string|max:191',
+        'wallet_footer_color' => 'required|string|max:191',
+        'wallet_footer_active' => 'required|string|max:191',
+        'wallet_footer_exchange' => 'required|string|max:191',
+    ];
+}

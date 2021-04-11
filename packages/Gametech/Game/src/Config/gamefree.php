@@ -1,0 +1,128 @@
+<?php
+
+return [
+
+    'kiss' => [
+        'apiurl' => env('APIURL', 'http://api.918kiss.com:9991/'),
+        'apiurl2' => env('APIURL2', 'http://api.918kiss.com:9919/'),
+        'agent' => env('AGENT', 'thokaa03aa'),
+        'login' => env('LOGIN', 'thokaa03aa'),
+        'auth' => env('AUTH', 'pRHUAjGhpYTKGMtPyJPt'),
+        'secretkey' => env('SECRETKEY', '63sMG2PgG6737z4CrD24'),
+    ],
+    'pussy' => [
+        'apiurl' => env('APIURL', 'http://api.pussy888.com/'),
+        'apiurl2' => env('APIURL2', 'http://api2.pussy888.com/'),
+        'agent' => env('AGENT', 'THOKLY03A'),
+        'login' => env('LOGIN', 'THOKLY03A'),
+        'auth' => env('AUTH', 'DVZJqvjJSfrXFchWnCCY'),
+        'secretkey' => env('SECRETKEY', 'Bj5Wz2ZkPS45ba3736v6'),
+    ],
+    'jokernew' => [
+        'apiurl' => env('APIURL', 'https://joker.hibizsoft.com/joker_api/'),
+        'apiurl2' => env('APIURL2', 'https://joker.hibizsoft.com/joker_api/'),
+        'agent' => env('AGENT', 'dumbovip2'),
+        'login' => env('LOGIN', 'dumbovip2'),
+        'auth' => env('AUTH', 'm2YykEk3z5EMj4b9epsO'),
+        'secretkey' => env('SECRETKEY', 'BicaLYNI0QnMEj2k5OqkOA=='),
+    ],
+    'joker' => [
+        'apiurl' => env('APIURL', 'http://api688.com:80/'),
+        'apiurl2' => env('APIURL2', 'http://api688.com:80/'),
+        'agent' => env('AGENT', 'AKEH03A'),
+        'login' => env('LOGIN', 'AKEH03A'),
+        'auth' => env('AUTH', '44s4rf5ny1i7e'),
+        'secretkey' => env('SECRETKEY', '44s4rf5ny1i7e'),
+    ],
+    'slotxo' => [
+        'apiurl' => env('APIURL', 'http://api688.com:80/'),
+        'apiurl2' => env('APIURL2', 'http://api688.com:80/'),
+        'agent' => env('AGENT', 'LUYFF03A'),
+        'login' => env('LOGIN', 'LUYFF03A'),
+        'auth' => env('AUTH', 'bfa8doii4fhb1'),
+        'secretkey' => env('SECRETKEY', 'bfa8doii4fhb1'),
+    ],
+    'slotx' => [
+        'apiurl' => env('APIURL', 'http://api688.com:80/'),
+        'apiurl2' => env('APIURL2', 'http://api688.com:80/'),
+        'agent' => env('AGENT', 'SVV002'),
+        'login' => env('LOGIN', 'SVV002'),
+        'auth' => env('AUTH', 'g3goifapjezde'),
+        'secretkey' => env('SECRETKEY', 'g3goifapjezde'),
+    ],
+    'live22' => [
+        'apiurl' => env('APIURL', 'https://topup-casino.api-hub.com:22222/external/sit22/'),
+        'apiurl2' => env('APIURL2', 'https://topup-casino.api-hub.com:22222/external/sit22/'),
+        'agent' => env('AGENT', 'thsv88'),
+        'agent_pass' => env('AGENT_PASS', 'Aa321654'),
+        'login' => env('LOGIN', ''),
+        'auth' => env('AUTH', ''),
+        'secretkey' => env('SECRETKEY', ''),
+    ],
+    'nxcasino' => [
+        'apiurl' => env('APIURL', 'http://op01.nxcasino.com/api/service/'),
+        'apiurl2' => env('APIURL2', 'http://op01.nxcasino.com/api/service/'),
+        'agent' => env('AGENT', ''),
+        'agent_pass' => env('AGENT_PASS', ''),
+        'login' => env('LOGIN', ''),
+        'auth' => env('AUTH', ''),
+        'secretkey' => env('SECRETKEY', 'da39a3ee5e6b4b0d3255bfef95601890afd80709'),
+    ],
+    'avenger' => [
+        'apiurl' => env('APIURL', 'http://thedevpers.com/avenger/'),
+        'apiurl2' => env('APIURL2', 'http://thedevpers.com/avenger/'),
+        'agent' => env('AGENT', 'AVGA04'),
+        'agent_pass' => env('AGENT_PASS', ''),
+        'login' => env('LOGIN', 'AVGA04'),
+        'auth' => env('AUTH', ''),
+        'secretkey' => env('SECRETKEY', ''),
+    ],
+    'gott7' => [
+        'apiurl' => env('APIURL', 'https://www.gott7.com/api/service/'),
+        'apiurl2' => env('APIURL2', 'https://www.gott7.com/api/service/'),
+        'agent' => env('AGENT', '26'),
+        'agent_pass' => env('AGENT_PASS', ''),
+        'login' => env('LOGIN', ''),
+        'auth' => env('AUTH', ''),
+        'secretkey' => env('SECRETKEY', 'da39a3ee5e6b4b0d3255bfef95601890afd80709'),
+    ],
+    'dreamtech' => [
+        'apiurl' => env('APIURL', 'http://agency.dreamtech888.com/api_service/'),
+        'apiurl2' => env('APIURL2', 'http://agency.dreamtech888.com/api_service/'),
+        'agent' => env('AGENT', 'svv002'),
+        'agent_pass' => env('AGENT_PASS', ''),
+        'login' => env('LOGIN', ''),
+        'auth' => env('AUTH', ''),
+        'secretkey' => env('API_KEYDT', 'nCRVo374KNPQUKMRlPX2hqGPVuRAAu'),
+        'appid' => env('APP_ID', 26),
+        'passkey' => env('PASSKEY', 'd6ad6d45-c67e-4cc9-88a8-3e36bb84e1e4'),
+        'apikey' => env('API_KEY', 'nCRVo374KNPQUKMRlPX2hqGPVuRAAu'),
+        'apiuser' => env('API_USR', 'DTOPSITE-PROD'),
+    ],
+    'epic' => [
+        'apiurl' => env('APIURL', 'https://epicwinapi.com/tapi/'),
+        'apiurl2' => env('APIURL2', 'https://epicwinapi.com/tapi/'),
+        'agent' => env('AGENT', 'Thad03'),
+        'agent_pass' => env('AGENT_PASS', 'Aa159623')
+    ],
+    'kaya' => [
+        'apiurl' => env('APIURL', 'http://apiservice.da31889.com/v1/'),
+        'apiurl2' => env('APIURL2', 'http://apiservice.da31889.com/v1/'),
+        'agent' => env('AGENT', 'svv002'),
+        'secretkey' => env('SECRETKEY', 'vbn83ILfV9KGZBhz'),
+        'passkey' => env('PASSKEY', '19zmaCedjhBnMXOcJWS2E0GDL4NwF3vU')
+    ],
+    'pgslot' => [
+        'apiurl' => env('APIURL', 'https://api-prod.pgslot-api.com/'),
+        'agenturl' => env('APIURL2', 'https://ag-dev.pgslot.cc/'),
+        'agent' => env('AGENT', 'pg8888'),
+        'secretkey' => env('SECRETKEY', '72363f3e5c7ed054d1c843890f6a1b0b')
+    ],
+    '100plus' => [
+        'apiurl' => env('APIURL_100PLUS', 'https://api.100plus.me/b/'),
+        'agenturl' => env('APIURL2', 'https://ag-dev.pgslot.cc/'),
+        'agent' => env('AGENT_100PLUS', 'THsv88vip'),
+        'agent_pass' => env('AGENT_PASS_100PLUS', 'aede3e295a3c457fae25c6d6e16936dc'),
+        'secretkey' => env('SECRETKEY_100PLUS', 'A1asd4fhu4E45Gdmk')
+    ],
+];

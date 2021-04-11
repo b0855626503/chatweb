@@ -1,0 +1,63 @@
+window._ = require('lodash');
+
+/**
+ * We'll load jQuery and the Bootstrap jQuery plugin which provides support
+ * for JavaScript based Bootstrap features such as modals and tabs. This
+ * code may be modified to fit the specific needs of your application.
+ */
+
+try {
+    window.Popper = require('@popperjs/core');
+    window.$ = window.jQuery = require('jquery');
+    window.Bootstrap = require('bootstrap');
+    window.Moment = require('moment');
+
+    require('admin-lte');
+    require('tempusdominus-bootstrap-4');
+    require('datatables.net-bs4');
+    require('datatables.net-responsive-bs4');
+    require('datatables.net-buttons-bs4');
+    // require('egalink-toasty.js');
+    require('./jquery.marquee');
+} catch (e) {}
+
+/**
+ * We'll load the axios HTTP library which allows us to easily issue requests
+ * to our Laravel back-end. This library automatically handles sending the
+ * CSRF token as a header based on the value of the "XSRF" token cookie.
+ */
+
+
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+/**
+ * Next we will register the CSRF Token as a common header with Axios so that
+ * all outgoing HTTP requests automatically have it attached. This is just
+ * a simple convenience so we don't have to attach every token manually.
+ */
+
+let token = document.head.querySelector('meta[name="csrf-token"]');
+
+if (token) {
+    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+} else {
+    console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
+}
+
+// import Echo from 'laravel-echo';
+//
+// window.Pusher = require('pusher-js');
+//
+// window.Echo = new Echo({
+//     broadcaster: 'pusher',
+//     key: '251227',
+//     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
+//     forceTLS: true,
+//     encrypted: false,
+//     wsHost: window.location.hostname,
+//     wsPort: 6001,
+//     wssPort: 6001,
+//     disableStats: true,
+//     enabledTransports: ['ws', 'wss'],
+//     authEndpoint: 'admin/broadcasting/auth',
+// });
