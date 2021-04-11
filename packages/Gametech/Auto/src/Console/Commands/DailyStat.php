@@ -40,7 +40,7 @@ class DailyStat extends Command
     public function handle()
     {
         $date = $this->argument('date');
-        if(!$date){
+        if (!$date) {
             $date = now()->toDateString();
         }
 

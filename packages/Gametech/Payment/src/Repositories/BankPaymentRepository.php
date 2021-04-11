@@ -214,10 +214,11 @@ class BankPaymentRepository extends Repository
                 'user_update' => "System Auto"
             ]);
 
-            $this->allLogRepository->update([
-                "remark" => 'Auto Topup and Refer Credit Log ID : ' . $bill->code,
-                "user_update" => 'System Auto'
-            ], $alllog->code);
+
+            $alllog->remark = 'Auto Topup and Refer Credit Log ID : ' . $bill->code;
+            $alllog->user_update = 'System Auto';
+            $alllog->save();
+
 
 
             if ($config->pro_wallet == 'N') {
@@ -313,6 +314,6 @@ class BankPaymentRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Payment\Contracts\BankPayment';
+        return 'Gametech\Payment\Contracts\BankPaymentContract';
     }
 }
