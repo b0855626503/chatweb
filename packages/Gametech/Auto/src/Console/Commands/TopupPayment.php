@@ -2,8 +2,8 @@
 
 namespace Gametech\Auto\Console\Commands;
 
-use Illuminate\Console\Command;
 use Gametech\Auto\Jobs\TopupPayments as TopupPaymentsJob;
+use Illuminate\Console\Command;
 
 class TopupPayment extends Command
 {
@@ -52,7 +52,7 @@ class TopupPayment extends Command
 
 
         foreach ($payments as $i => $payment) {
-            TopupPaymentsJob::dispatch($payment->code) ->delay(now()->addSeconds(5))->onQueue('topup');
+            TopupPaymentsJob::dispatch($payment->code)->delay(now()->addSeconds(5))->onQueue('topup');
             $bar->advance();
         }
 

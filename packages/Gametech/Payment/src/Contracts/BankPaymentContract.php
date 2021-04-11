@@ -2,6 +2,6 @@
 
 namespace Gametech\Payment\Contracts;
 
-interface BankPayment
+interface BankPaymentContract
 {
 }

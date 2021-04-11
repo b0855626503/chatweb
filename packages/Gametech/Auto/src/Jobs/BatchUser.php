@@ -23,25 +23,23 @@ class BatchUser implements ShouldQueue
 
     public $retryAfter = 3;
 
-    public $deleteWhenMissingModels = true;
-
     protected $items;
 
     protected $game;
 
-    public function __construct($game,$items)
+    public function __construct($game, $items)
     {
         $this->items = $items;
         $this->game = $game;
     }
 
 
-    public function handle()
+    public function handle(): bool
     {
         $items = collect($this->items)->toArray();
         $games = $this->game;
 
-        return DB::table('users_'.$games)->insert($items);
+        return DB::table('users_' . $games)->insert($items);
 
     }
 }

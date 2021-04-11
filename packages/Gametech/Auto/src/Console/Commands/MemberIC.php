@@ -3,9 +3,9 @@
 namespace Gametech\Auto\Console\Commands;
 
 
+use Gametech\Auto\Jobs\MemberIc as MemberIcJob;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Gametech\Auto\Jobs\MemberIc as MemberIcJob;
 
 
 class MemberIC extends Command
@@ -22,7 +22,7 @@ class MemberIC extends Command
      *
      * @var string
      */
-        protected $description = 'Check and Refill IC to upline';
+    protected $description = 'Check and Refill IC to upline';
 
     /**
      * Create a new command instance.
@@ -45,13 +45,13 @@ class MemberIC extends Command
         $ip = request()->ip();
         $startdate = $this->argument('date');
 
-        if(empty($startdate)){
+        if (empty($startdate)) {
             $startdate = now()->subDays(1)->toDateString();
         }
 
 
         $promotion = DB::table('promotions')->where('id', 'pro_ic')->first();
-        if($promotion->enable != 'Y' && $promotion->active != 'Y' && $promotion->use_auto != 'Y'){
+        if ($promotion->enable != 'Y' && $promotion->active != 'Y' && $promotion->use_auto != 'Y') {
             return false;
         }
 
@@ -91,10 +91,8 @@ class MemberIC extends Command
             ->groupBy('bank_payment.member_topup');
 
 
-
-
         $lists = DB::table('members')
-            ->select('membernew.user_name as upline_user','membernew.name as upline_name','members.upline_code','members.code as member_code', 'members.user_name as user_name', 'members.name as member_name', 'members.balance_free as balance', DB::raw('IFNULL(withdraw_amount,0) as withdraw_amount'), DB::raw('IFNULL(bonus_amount,0) as bonus_amount'), 'bank_payment.deposit_amount', 'bank_payment.date_cashback', 'bank_payment.date_approve', 'bank_payment.code')
+            ->select('membernew.user_name as upline_user', 'membernew.name as upline_name', 'members.upline_code', 'members.code as member_code', 'members.user_name as user_name', 'members.name as member_name', 'members.balance_free as balance', DB::raw('IFNULL(withdraw_amount,0) as withdraw_amount'), DB::raw('IFNULL(bonus_amount,0) as bonus_amount'), 'bank_payment.deposit_amount', 'bank_payment.date_cashback', 'bank_payment.date_approve', 'bank_payment.code')
             ->orderByDesc('bank_payment.code')
             ->join('members as membernew', 'members.upline_code', '=', 'membernew.code')
             ->joinSub($latestBP, 'bank_payment', function ($join) {
@@ -118,15 +116,15 @@ class MemberIC extends Command
             $items->ip = $ip;
             $items->emp_code = 0;
             $items->emp_name = 'SYSTEM';
-            if($items->bonus_amount > 0 || ($items->deposit_amount - $items->withdraw_amount) <= 0){
+            if ($items->bonus_amount > 0 || ($items->deposit_amount - $items->withdraw_amount) <= 0) {
                 $bar->advance();
                 continue;
             }
             $items->balance_total = ($items->deposit_amount - $items->withdraw_amount);
 
-            $chk = DB::table('members_ic')->whereDate('date_cashback',$startdate)->where('member_code',$items->upline_code)->where('downline_code',$items->member_code)->where('topupic','Y');
-            if($chk->doesntExist()){
-                MemberIcJob::dispatch($startdate,$items)->delay(now()->addMinutes(5))->onQueue('ic');
+            $chk = DB::table('members_ic')->whereDate('date_cashback', $startdate)->where('member_code', $items->upline_code)->where('downline_code', $items->member_code)->where('topupic', 'Y');
+            if ($chk->doesntExist()) {
+                MemberIcJob::dispatch($startdate, $items)->delay(now()->addMinutes(5))->onQueue('ic');
             }
             $bar->advance();
         }

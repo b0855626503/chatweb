@@ -7,7 +7,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 
 
 class MemberCashback implements ShouldQueue
@@ -35,7 +34,6 @@ class MemberCashback implements ShouldQueue
 
     public function handle()
     {
-        $date = $this->date;
         $item = $this->item;
         $this->memberCashbackRepository = app('Gametech\Member\Repositories\MemberCashbackRepository');
 

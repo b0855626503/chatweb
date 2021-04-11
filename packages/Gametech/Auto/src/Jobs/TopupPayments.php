@@ -2,12 +2,13 @@
 
 namespace Gametech\Auto\Jobs;
 
+use Gametech\Core\Models\AllLog;
+use Gametech\Payment\Models\BankPayment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 
 
 class TopupPayments implements ShouldQueue
@@ -20,34 +21,42 @@ class TopupPayments implements ShouldQueue
 
     public $maxExceptions = 3;
 
+    protected $bankpayment;
+
+    protected $alllog;
 
     protected $item;
 
-    public function __construct($item)
+    public function __construct(
+        BankPayment $bankpayment,
+        AllLog $alllog
+    )
     {
-        $this->item = $item;
+
+        $this->bankpayment = $bankpayment->withoutRelations();
+        $this->alllog = $alllog->withoutRelations();
 
     }
 
 
-    public function handle()
+    public function handle($item)
     {
+        $this->item = $item;
 
+        $payment = $this->bankpayment->where('code', $this->item)->where('status', 0)->where('autocheck', 'W')->firstOrFail();
 
-        $payment = DB::table('bank_payment')->where('code', $this->item)->where('status', 0)->where('autocheck', 'W')->first();
-
-        if (!$payment) {
-
+        if (empty($payment)) {
             return false;
         }
 
 
-        $alllog = DB::table('all_log')->where('bank_payment_id', $payment->code);
-        if ($alllog->exists()) {
-            DB::table('bank_payment')->where('code', $this->item)->update([
-                'autocheck' => 'Y',
-                'status' => 1
-            ]);
+        $logs = $this->alllog->where('bank_payment_id', $payment->code);
+        if ($logs->exists()) {
+
+            $payment->autocheck = 'Y';
+            $payment->status = 1;
+            $payment->save();
+
             return false;
         }
 

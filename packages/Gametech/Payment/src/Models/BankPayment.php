@@ -6,7 +6,7 @@ use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
 use Gametech\Admin\Models\AdminProxy;
 use Gametech\Member\Models\MemberProxy;
-use Gametech\Payment\Contracts\BankPayment as BankPaymentContract;
+use Gametech\Payment\Contracts\BankPaymentContract as BankPaymentContract;
 use Gametech\Promotion\Models\PromotionProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +16,7 @@ class BankPayment extends Model implements BankPaymentContract
 {
     use LaravelSubQueryTrait;
 
-    protected function serializeDate(DateTimeInterface $date)
+    protected function serializeDate(DateTimeInterface $date): string
     {
         return $date->format('Y-m-d H:i:s');
     }
@@ -158,7 +158,7 @@ class BankPayment extends Model implements BankPaymentContract
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
+            $builder->where('bank_payment.code', '<>', 0);
         });
     }
 
