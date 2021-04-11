@@ -3,19 +3,16 @@
 namespace App\Providers;
 
 use Gametech\Core\Tree;
-use Gametech\Payment\Contracts\BankPaymentContract;
-use Gametech\Payment\Models\BankPaymentProxy;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Queue\Events\Looping;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public $bindings = [
-        BankPaymentContract::class => BankPaymentProxy::class,
-    ];
-
     /**
      * Register any application services.
      *
@@ -24,10 +21,6 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app['request']->server->set('HTTPS', true);
-
-
-
-
     }
 
     /**

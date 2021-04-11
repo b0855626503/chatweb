@@ -2,12 +2,16 @@
 
 namespace Gametech\Auto\Jobs;
 
+use Exception;
+use Gametech\Payment\Models\BankPayment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -35,7 +39,7 @@ class PaymentTrue implements ShouldQueue
     }
 
 
-    public function handle(): bool
+    public function handle()
     {
 
 
@@ -49,19 +53,22 @@ class PaymentTrue implements ShouldQueue
 
 
 
+        $start = now()->subDays(1)->toDateString();
+        $end = $date;
+
 
         $url = [
-            'https://dumbo.168csn.com/tw/Transaction_' . $mobile_number . '_' . $date . '.json',
-            'https://sv1.168csn.com/tw/Transaction_' . $mobile_number . '_' . $date . '.json',
-            'https://thaislot2.168csn.com/tw/Transaction_' . $mobile_number . '_' . $date . '.json',
-        ];
+            'https://dumbo.168csn.com/tw/Transaction_'.$mobile_number.'_'.$date.'.json'  ,
+            'https://sv1.168csn.com/tw/Transaction_'.$mobile_number.'_'.$date.'.json' ,
+            'https://thaislot2.168csn.com/tw/Transaction_'.$mobile_number.'_'.$date.'.json' ,
+       ];
 
 
         $success = false;
-        foreach ($url as $file) {
+        foreach($url as $file){
             $response = Http::get($file);
 
-            if ($response->successful()) {
+            if($response->successful()) {
                 $response = $response->json();
                 $success = true;
                 break;
@@ -69,7 +76,7 @@ class PaymentTrue implements ShouldQueue
         }
 
 
-        $path = storage_path('logs/tw/Transaction_' . $mobile_number . '_' . now()->format('Y_m_d') . '.log');
+        $path = storage_path('logs/tw/Transaction_' . $mobile_number . '_' . now()->format('Y_m_d') .'.log');
         file_put_contents($path, print_r($response, true));
 
         if ($success) {
@@ -84,8 +91,8 @@ class PaymentTrue implements ShouldQueue
 
                 try {
 
-                    foreach ($lists as $value) {
-                        if (!isset($value['transaction_reference_id'])) continue;
+                    foreach ($lists as $i => $value) {
+                        if(!isset($value['transaction_reference_id']))continue;
                         $str = $value['date_time'];
                         $arr = explode(" ", $str);
                         $dtmp = explode('/', $arr[0]);
@@ -100,7 +107,7 @@ class PaymentTrue implements ShouldQueue
                         }
 
 
-                        $newpayment = app('Gametech\Payment\Repositories\BankPaymentRepository')->firstOrNew(['report_id' => $value['report_id'], 'account_code' => $data->code]);
+                        $newpayment = BankPayment::firstOrNew(['report_id' => $value['report_id'], 'account_code' => $data->code]);
                         $newpayment->bank = 'twl_' . $mobile_number;
                         $newpayment->bankstatus = 1;
                         $newpayment->bank_time = $dates;
@@ -114,8 +121,9 @@ class PaymentTrue implements ShouldQueue
                         $newpayment->save();
                     }
 
+                    return true;
 
-                } catch (Throwable $e) {
+                } catch (Exception $e) {
                     report($e);
                     return false;
                 }
@@ -129,7 +137,7 @@ class PaymentTrue implements ShouldQueue
 
     }
 
-    public function failed(Throwable $exception): bool
+    public function failed(Throwable $exception)
     {
         report($exception);
         return false;

@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 
 class MemberIc implements ShouldQueue
@@ -21,6 +22,8 @@ class MemberIc implements ShouldQueue
 
     public $retryAfter = 3;
 
+    public $deleteWhenMissingModels = true;
+
     protected $item;
 
     protected $date;
@@ -34,6 +37,7 @@ class MemberIc implements ShouldQueue
 
     public function handle()
     {
+        $date = $this->date;
         $item = $this->item;
         $this->memberIcRepository = app('Gametech\Member\Repositories\MemberIcRepository');
 

@@ -21,6 +21,8 @@ class CheckPayments implements ShouldQueue
 
     public $retryAfter = 3;
 
+    public $deleteWhenMissingModels = true;
+
     protected $bank;
 
     protected $item;
@@ -33,7 +35,7 @@ class CheckPayments implements ShouldQueue
     }
 
 
-    public function handle(): bool
+    public function handle()
     {
         $bank = $this->bank;
         $item = $this->item;

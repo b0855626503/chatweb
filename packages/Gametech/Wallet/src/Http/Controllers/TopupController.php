@@ -45,16 +45,16 @@ class TopupController extends AppBaseController
 
     public function indextest()
     {
-        $banks = collect($this->bankRepository->getBankInAccount()->toArray());
+       $banks = collect($this->bankRepository->getBankInAccount()->toArray());
 
-        $banks = $banks->transform(function ($item, $key) {
-            $item['filepic'] = Storage::url('bank_img/' . $item['filepic']);
+        $banks = $banks->transform(function ($item, $key){
+            $item['filepic'] = Storage::url('bank_img/'.$item['filepic']);
             return $item;
         });
 
-        $profile = $this->user()->load('bank');
+       $profile = $this->user()->load('bank');
 
-        return view($this->_config['view'], compact('banks', 'profile'));
+        return view($this->_config['view'], compact('banks','profile'));
     }
 
     public function index()
@@ -64,13 +64,20 @@ class TopupController extends AppBaseController
         $bankss = collect($this->bankRepository->getBankInAccountAll()->toArray());
 
 
-        $banks = $bankss->transform(function ($item, $key) {
-            $item['filepic'] = Storage::url('bank_img/' . $item['filepic']);
+        $banks = $bankss->transform(function ($item, $key){
+            $item['filepic'] = Storage::url('bank_img/'.$item['filepic']);
             return $item;
         });
 
+//        if($profile->bank->shortcode === 'KBANK'){
+//            $banks = $bankss;
+//
+//        }else{
+//            $banks = $bankss->whereNotIn('shortcode',['KBANK'])->all();
+//        }
 
-        return view($this->_config['view'], compact('banks', 'profile'));
+
+        return view($this->_config['view'], compact('banks','profile'));
     }
 
 

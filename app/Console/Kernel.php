@@ -42,21 +42,19 @@ class Kernel extends ConsoleKernel
     {
         $yesterday = now()->subDays(1)->toDateString();
 
-        $schedule->command('cashback:list')->dailyAt('00:20')->runInBackground()
-            ->onFailure(function ($message) {
-                Log::warning($message);
-            });
-
-        $schedule->command('ic:list')->dailyAt('00:30')->runInBackground()
-            ->onFailure(function ($message) {
-                Log::warning($message);
-            });
-
+//        $schedule->command('cashback:list')->dailyAt('00:10')->runInBackground()
+//            ->onFailure(function ($message) {
+//                Log::warning($message);
+//            });
+//        $schedule->command('ic:list')->dailyAt('00:10')->runInBackground()
+//            ->onFailure(function ($message) {
+//                Log::warning($message);
+//            });
         $schedule->command('dailystat:check')->dailyAt('00:05')
             ->onFailure(function ($message) {
                 Log::warning($message);
             });
-        $schedule->command('dailystat:check ' . $yesterday)->dailyAt('00:10')
+        $schedule->command('dailystat:check ' . $yesterday)->dailyAt('00:05')
             ->onFailure(function ($message) {
                 Log::warning($message);
             });
