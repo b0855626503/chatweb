@@ -23,6 +23,5 @@ Homestead.json
 /.vagrant
 .phpunit.result.cache
 /.idea/
-/storage/
 /wallet_demo.zip
 /bank/
