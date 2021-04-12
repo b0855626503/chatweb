@@ -23,26 +23,6 @@ class RpSponsorDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-            ->filter(function ($query) {
-
-
-                if ($name = request()->input('upline_id')) {
-                    $query->whereHas('member', function ($q) use ($name) {
-                        $q->where('members.user_name', $name);
-                    });
-                }
-
-                if ($name = request()->input('downline_id')) {
-                    $query->whereHas('down', function ($q) use ($name) {
-                        $q->where('user_name', $name);
-//                        $q->where('user_name', 'like', "%" . $name . "%");
-                    });
-                }
-
-                if (request()->input('ip')) {
-                    $query->where('ip', 'like', "%" . request('ip') . "%");
-                }
-            })
             ->with('deposit', function () use ($query) {
                 return core()->currency((clone $query)->sum('amount'));
             })
@@ -87,7 +67,19 @@ class RpSponsorDataTable extends DataTable
             ])
             ->when($startdate, function ($query, $startdate) use ($enddate) {
                 $query->whereBetween('payments_promotion.date_create', array($startdate, $enddate));
-
+            })
+            ->when($ip, function ($query, $ip) {
+                $query->where('ip', 'like', "%" . $ip . "%");
+            })
+            ->when($up_id, function ($query, $up_id) {
+                $query->whereHas('member', function ($q) use ($up_id) {
+                    $q->where('user_name', $up_id);
+                });
+            })
+            ->when($down_id, function ($query, $down_id) {
+                $query->whereHas('down', function ($q) use ($down_id) {
+                    $q->where('user_name', $down_id);
+                });
             });
 
 

@@ -3,6 +3,7 @@
 namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
+use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\Http;
 
 class EpicRepository extends Repository
@@ -25,7 +26,7 @@ class EpicRepository extends Repository
 
     protected $auth;
 
-    public function __construct($method, $debug)
+    public function __construct($method, $debug,App $app)
     {
         $game = 'epic';
 
@@ -46,6 +47,8 @@ class EpicRepository extends Repository
         $this->passkey = config($this->method . '.' . $game . '.passkey');
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
+
+        parent::__construct($app);
     }
 
 
@@ -161,7 +164,7 @@ class EpicRepository extends Repository
     public function viewBalance($username): array
     {
         $return['success'] = false;
-        $return['score']  = 0;
+        $return['score'] = 0;
 
         $param = [
             'agent_id' => $this->agent,
@@ -195,6 +198,7 @@ class EpicRepository extends Repository
         $return['success'] = false;
 
         $ip = request()->ip();
+
         $score = $amount;
 
         if ($score < 0) {

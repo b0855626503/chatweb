@@ -138,6 +138,11 @@ class JokerRepository extends Repository
             $response = $response->json();
 
             if ($response['Status'] === 'Created') {
+                $this->changePass([
+                    'user_name' => $username,
+                    'user_pass' => $user_pass
+                ]);
+
                 DB::table('users_joker')
                     ->where('user_name', $username)
                     ->update(['date_join' => now()->toDateString(), 'ip' => request()->ip(), 'use_account' => 'Y', 'user_update' => 'SYSTEM']);

@@ -2,8 +2,12 @@
 
 namespace Gametech\Core\Eloquent;
 
+use Illuminate\Container\Container as Application;
+
+use Illuminate\Database\Eloquent\Model;
 use Prettus\Repository\Contracts\CacheableInterface;
 use Prettus\Repository\Eloquent\BaseRepository;
+use Prettus\Repository\Exceptions\RepositoryException;
 use Prettus\Repository\Traits\CacheableRepository;
 
 
@@ -12,6 +16,17 @@ abstract class Repository extends BaseRepository implements CacheableInterface
 
     use CacheableRepository;
 
+    protected $app;
+
+    /**
+     * @var Model
+     */
+    protected $model;
+
+    public function __construct(Application $app)
+    {
+        parent::__construct($app);
+    }
 
     /**
      * Find data by field and value
@@ -21,9 +36,9 @@ abstract class Repository extends BaseRepository implements CacheableInterface
      * @param array $columns
      * @return mixed
      */
-    public function findOneByField($field, $value = null, $columns = ['*'])
+    public function findOneByField(string $field, $value = null, $columns = ['*'])
     {
-        $model = $this->findByField($field, $value, $columns = ['*']);
+        $model = $this->findByField($field, $value, $columns);
 
         return $model->first();
     }
@@ -31,8 +46,7 @@ abstract class Repository extends BaseRepository implements CacheableInterface
     /**
      * Find data by field and value
      *
-     * @param string $field
-     * @param string $value
+     * @param array $where
      * @param array $columns
      * @return mixed
      */
@@ -43,98 +57,53 @@ abstract class Repository extends BaseRepository implements CacheableInterface
         return $model->first();
     }
 
-    /**
-     * Find data by id
-     *
-     * @param int $id
-     * @param array $columns
-     * @return mixed
-     */
-    public function find($id, $columns = ['*'])
-    {
-        $this->applyCriteria();
-        $this->applyScope();
-        $model = $this->model->find($id, $columns);
-        $this->resetModel();
-
-        return $this->parserResult($model);
-    }
 
     /**
      * Find data by id
      *
-     * @param int $id
+     * @param       $id
      * @param array $columns
+     *
      * @return mixed
      */
     public function findOrFail($id, $columns = ['*'])
     {
-        $this->applyCriteria();
-        $this->applyScope();
-        $model = $this->model->findOrFail($id, $columns);
-        $this->resetModel();
+        return $this->find($id, $columns);
 
-        return $this->parserResult($model);
     }
 
-    /**
-     * Count results of repository
-     *
-     * @param array $where
-     * @param string $columns
-     * @return int
-     */
-    public function count(array $where = [], $columns = '*')
-    {
-        $this->applyCriteria();
-        $this->applyScope();
-
-        if ($where) {
-            $this->applyConditions($where);
-        }
-
-        $result = $this->model->count($columns);
-        $this->resetModel();
-        $this->resetScope();
-
-        return $result;
-    }
 
     /**
-     * @param string $columns
-     * @return mixed
+     * @throws RepositoryException
      */
-    public function sum($columns)
+    public function sum(string $columns)
     {
         $this->applyCriteria();
         $this->applyScope();
 
         $sum = $this->model->sum($columns);
+
         $this->resetModel();
+        $this->resetScope();
 
         return $sum;
     }
 
     /**
-     * @param string $columns
-     * @return mixed
+     * @throws RepositoryException
      */
-    public function avg($columns)
+    public function avg(string $columns)
     {
         $this->applyCriteria();
         $this->applyScope();
 
         $avg = $this->model->avg($columns);
+
         $this->resetModel();
+        $this->resetScope();
 
         return $avg;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getModel()
-    {
-        return $this->model;
-    }
+
 }

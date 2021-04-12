@@ -28,17 +28,17 @@
                         label-for="id"
                         description="ระบุรหัสโปร">
                         @if(auth()->guard('admin')->user()->superadmin == 'N')
-                        <b-form-input
-                            id="id"
-                            v-model="formaddedit.id"
-                            type="text"
-                            size="sm"
-                            placeholder="รหัสโปร"
-                            autocomplete="off"
-                            required
-                            readonly
+                            <b-form-input
+                                id="id"
+                                v-model="formaddedit.id"
+                                type="text"
+                                size="sm"
+                                placeholder="รหัสโปร"
+                                autocomplete="off"
+                                required
+                                readonly
 
-                        ></b-form-input>
+                            ></b-form-input>
                         @else
                             <b-form-input
                                 id="id"
@@ -65,15 +65,15 @@
                         label-for="length_type"
                         description="">
                         @if(auth()->guard('admin')->user()->superadmin == 'Y')
-                        <b-form-select
-                            id="length_type"
-                            v-model="formaddedit.length_type"
-                            :options="option.length_type"
-                            size="sm"
+                            <b-form-select
+                                id="length_type"
+                                v-model="formaddedit.length_type"
+                                :options="option.length_type"
+                                size="sm"
 
-                            v-on:change="changeType($event)"
-                        ></b-form-select>
-                            @else
+                                v-on:change="changeType($event)"
+                            ></b-form-select>
+                        @else
                             <b-form-select
                                 id="length_type"
                                 v-model="formaddedit.length_type"
@@ -226,6 +226,29 @@
                 </b-col>
             </b-form-row>
 
+            <b-form-row>
+                <b-col>
+                    <b-form-group
+                        id="input-group-withdraw_limit"
+                        label="จำกัดยอดถอนได้:"
+                        label-for="withdraw_limit"
+                        description="">
+                        <b-form-input
+                            id="withdraw_limit"
+                            v-model="formaddedit.withdraw_limit"
+                            type="number"
+                            size="sm"
+                            placeholder=""
+                            autocomplete="off"
+                            required
+                        ></b-form-input>
+                    </b-form-group>
+                </b-col>
+                <b-col>
+
+                </b-col>
+            </b-form-row>
+
 
             <b-form-row>
 
@@ -323,7 +346,7 @@
                 type="number"
                 size="sm"
                 placeholder="จำนวนเงิน"
-                min="1"
+                min="0"
                 max="10000"
                 autocomplete="off"
                 required
@@ -341,7 +364,7 @@
                 type="number"
                 size="sm"
                 placeholder="จำนวนเงิน"
-                min="1"
+                min="0"
                 max="10000"
                 autocomplete="off"
                 required>
@@ -391,6 +414,7 @@
                 data() {
                     return {
                         showtable: false,
+                        showtabletime: false,
                         fields: [],
                         items: [],
                         isBusy: false,
@@ -417,6 +441,7 @@
                             bonus_max: 0,
                             bonus_price: 0,
                             bonus_percent: 0,
+                            withdraw_limit: 0,
                             use_manual: 'N',
                             use_wallet: 'N',
                             use_auto: 'N',
@@ -484,6 +509,7 @@
                             bonus_max: 0,
                             bonus_price: 0,
                             bonus_percent: 0,
+                            withdraw_limit: 0,
                             use_manual: 'N',
                             use_wallet: 'N',
                             use_auto: 'N',
@@ -590,6 +616,7 @@
                             bonus_min: response.data.data.bonus_min,
                             bonus_max: response.data.data.bonus_max,
                             bonus_price: response.data.data.bonus_price,
+                            withdraw_limit: response.data.data.withdraw_limit,
                             bonus_percent: response.data.data.bonus_percent,
 
                         }
@@ -637,6 +664,7 @@
                             length_type: this.formaddedit.length_type,
                             content: this.formaddedit.content,
                             sort: this.formaddedit.sort,
+                            withdraw_limit: this.formaddedit.withdraw_limit,
                             use_manual: this.formaddedit.use_manual,
                             use_wallet: this.formaddedit.use_wallet,
                             use_auto: this.formaddedit.use_auto,

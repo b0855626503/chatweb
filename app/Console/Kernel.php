@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use Gametech\Auto\Console\Commands\Cashback;
+use Gametech\Auto\Console\Commands\CheckFastStart;
 use Gametech\Auto\Console\Commands\CheckPayment;
 use Gametech\Auto\Console\Commands\DailyStat;
 use Gametech\Auto\Console\Commands\GetPayment;
@@ -28,7 +29,7 @@ class Kernel extends ConsoleKernel
         Cashback::class,
         MemberIC::class,
         DailyStat::class,
-
+        CheckFastStart::class,
     ];
 
 

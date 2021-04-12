@@ -68,7 +68,7 @@ class PaymentPromotionRepository extends Repository
 
                         $this->create([
                             'ip' => $ip,
-                            'pro_code' => '6',
+                            'pro_code' => $chk->code,
                             'amount' => $amount,
                             'credit' => $amount,
                             'credit_bonus' => $bonus,
@@ -97,7 +97,9 @@ class PaymentPromotionRepository extends Repository
                             'credit_before' => 0,
                             'credit_after' => 0,
                             'member_code' => $upline_code,
-                            'pro_code' => 6,
+                            'pro_code' => $chk->code,
+                            'refer_code' => $payment_code,
+                            'refer_table' => 'banks_payment',
                             'auto' => 'Y',
                             'remark' => 'Refer From User : ' . $user_topup->user_name . ' Deposit ID : ' . $payment_code . ' ' . $promotion['type'],
                             'kind' => 'FASTSTART',
@@ -105,7 +107,7 @@ class PaymentPromotionRepository extends Repository
                             'user_update' => "System Auto"
                         ]);
 
-                        $member->balance = $credit_after;
+                        $member->balance += $bonus;
                         $member->save();
                         DB::commit();
 

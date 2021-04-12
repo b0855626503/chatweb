@@ -127,7 +127,15 @@ class BillRepository extends Repository
         if ($withdraw_limit > 0) {
             ActivityLoggerUser::activity('Transfer Game To Wallet', 'เกมมีการจำกัดยอดเงินที่ได้รับจริง');
             $amount = $withdraw_limit;
+
+            if(floor($total) != floor($user->balance)){
+                ActivityLoggerUser::activity('Transfer Game To Wallet', 'ยอดแจ้งถอน ไม่เท่ากับยอดเงินในเกม');
+                $return['msg'] = 'ไม่สามารถทำรายการได้ เนื่องจาก ต้องโยกออกทั้งหมดตามเงื่อนไขโปรโมชั่น โปรดใส่จำนวนเต็มในการโยก สามารถเหลือเศษได้';
+                return $return;
+            }
         }
+
+
 
         $balance_before = $data['member_balance'];
         $balance_after = ($balance_before + $amount);

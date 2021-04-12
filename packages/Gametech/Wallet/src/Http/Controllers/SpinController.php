@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 
 class SpinController extends AppBaseController
@@ -58,13 +59,7 @@ class SpinController extends AppBaseController
     {
 
         $spins = $this->loadSpin();
-//        $spins[] = [
-//            'fillStyle' => '#cccccc',
-//            'text' => 'เสียใจด้วยนะ',
-//            'image' => Storage::url('spin_img/nopic.png'),
-//            'code' => 0,
-//            'amount' => 0,
-//        ];
+
         $profile = $this->user();
 
         return view($this->_config['view'], compact('spins', 'profile'));
@@ -96,8 +91,9 @@ class SpinController extends AppBaseController
     public function store(Request $request): JsonResponse
     {
 
-        function getRandomWeightedElement(array $weightedValues) {
-            $rand = mt_rand(1, (int) array_sum($weightedValues));
+        function getRandomWeightedElement(array $weightedValues)
+        {
+            $rand = mt_rand(1, (int)array_sum($weightedValues));
 
             foreach ($weightedValues as $key => $value) {
                 $rand -= $value;
@@ -117,25 +113,23 @@ class SpinController extends AppBaseController
 
         $diamond = ($this->user()->diamond - 1);
         if ($diamond < 0) {
-            return $this->sendError('ต้องใช้เพชรในการเล่น จำนวน 1 เม็ด',200);
+            return $this->sendError('ต้องใช้เพชรในการเล่น จำนวน 1 เม็ด', 200);
         }
-        $y = 0;
-        $distance = 3;
         $result['success'] = 'COMPLETE';
         $spins = $this->LoadSpin();
-        $length = 0;
         $percent = 0;
 
         $range = (360 / count($spins));
 
         $change = [];
         $no_change = [];
+        $random = [];
 
         foreach ($spins as $i => $item) {
 
             $change += [$item['code'] => $item['winloss']];
 
-            if($item['amount'] == 0){
+            if ($item['amount'] == 0) {
                 $no_change += [$item['code'] => $item['winloss']];
             }
 
@@ -143,10 +137,10 @@ class SpinController extends AppBaseController
 
 
             $start = (($i * $range) + 1);
-            $stop = (($i+1) * $range);
+            $stop = (($i + 1) * $range);
 
             $wheel[] = [
-                'fillStyle' => ($item['spincolor'] ? $item['spincolor'] : '#cccccc'),
+                'fillStyle' => ($item['spincolor'] ?: '#cccccc'),
                 'text' => $item['name'],
                 'image' => ''
             ];
@@ -175,7 +169,7 @@ class SpinController extends AppBaseController
             $spinid = getRandomWeightedElement($change);
         }
 
-        $point =  rand($random[$spinid]['start'],$random[$spinid]['stop']);
+        $point = rand($random[$spinid]['start'], $random[$spinid]['stop']);
 
         $name_stop = $random[$spinid]['name'];
         $amount_stop = $random[$spinid]['amount'];
@@ -211,10 +205,13 @@ class SpinController extends AppBaseController
             'user_update' => $this->user()->name
         ];
 
-        $response = $this->bonusSpinRepository->create($param);
-        if (!$response->code) {
+        try {
+            $response = $this->bonusSpinRepository->create($param);
+        } catch (Throwable $e) {
+            report($e);
             return $this->sendError('ไม่สามารถทำรายการได้', 200);
         }
+
 
         if ($reward_type === 'WALLET' && $amount_stop > 0) {
             $setdata = [
@@ -223,6 +220,8 @@ class SpinController extends AppBaseController
                 'amount' => $amount_stop,
                 'method' => 'D',
                 'member_code' => $this->id(),
+                'refer_code' => $response->code,
+                'refer_table' => 'bonus_spin',
                 'emp_code' => 0,
                 'emp_name' => $this->user()->name
             ];
@@ -231,7 +230,7 @@ class SpinController extends AppBaseController
             if (!$response) {
                 return $this->sendError('ไม่สามารถทำรายการได้', 200);
             }
-        }elseif($reward_type === 'CREDIT' && $amount_stop > 0){
+        } elseif ($reward_type === 'CREDIT' && $amount_stop > 0) {
             $setdata = [
                 'kind' => 'SPIN',
                 'remark' => 'ได้รับรางวัลจากการหมุนวงล้อ',
@@ -246,7 +245,7 @@ class SpinController extends AppBaseController
             if (!$response) {
                 return $this->sendError('ไม่สามารถทำรายการได้', 200);
             }
-        }elseif($reward_type === 'DIAMOND' && $amount_stop > 0){
+        } elseif ($reward_type === 'DIAMOND' && $amount_stop > 0) {
 
             $setdata = [
                 'remark' => 'ได้รับรางวัลจากการหมุนวงล้อ',
@@ -267,7 +266,7 @@ class SpinController extends AppBaseController
         if ($amount_stop > 0) {
             $win = [
                 'title' => 'ได้รางวัล !! โชคของคุณมาแล้ววว',
-                'msg' => 'จากการหมุนวงล้อมหาสนุก ได้รับ ' .$name_stop .' ( จำนวน '.core()->currency($amount_stop).' )',
+                'msg' => 'จากการหมุนวงล้อมหาสนุก ได้รับ ' . $name_stop . ' ( จำนวน ' . core()->currency($amount_stop) . ' )',
                 'img' => Storage::url('spin_img/spin-win.png'),
                 'point' => $point,
                 'diamond' => $diamond
@@ -304,14 +303,14 @@ class SpinController extends AppBaseController
     {
         $responses = [];
         $result = [];
-        $results = $this->user()->bonus_spin()->select('bonus_name','reward_type','amount', DB::raw("DATE_FORMAT(date_create,'%Y-%m-%d') as date"), DB::raw("DATE_FORMAT(date_create,'%H:%i') as time"))->orderBy('code', 'desc')->withCasts([
+        $results = $this->user()->bonus_spin()->select('bonus_name', 'reward_type', 'amount', DB::raw("DATE_FORMAT(date_create,'%Y-%m-%d') as date"), DB::raw("DATE_FORMAT(date_create,'%H:%i') as time"))->orderBy('code', 'desc')->withCasts([
             'date' => 'date:d/m/Y'
         ])->get()->toArray();
 
-        foreach ($results as $i => $item) {
+        foreach ($results as $item) {
 
             if ($item['amount'] > 0) {
-                $credit = 'ได้รับรางวัล ' . $item['bonus_name'] . ' จำนวน '.$item['amount'];
+                $credit = 'ได้รับรางวัล ' . $item['bonus_name'] . ' จำนวน ' . $item['amount'];
             } else {
                 $credit = 'ไม่ได้รับรางวัล';
             }
@@ -321,7 +320,7 @@ class SpinController extends AppBaseController
             $responses[$item['date']]['data'][] = ['credit' => $credit, 'time' => $item['time']];
         }
 
-        foreach ($responses as $i => $value) {
+        foreach ($responses as $value) {
             $result[] = $value;
         }
 

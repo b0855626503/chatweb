@@ -5,7 +5,7 @@ namespace Gametech\Game\Repositories;
 use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
-use Prettus\Validator\Exceptions\ValidatorException;
+use Throwable;
 
 /**
  * Class GameUserRepository
@@ -52,7 +52,7 @@ class GameUserFreeRepository extends Repository
         $return['success'] = false;
         $return['msg'] = 'พบปัญหาบางประการ โปลดลองใหม่อีกครั้ง';
 
-        $result = $this->model->with(['game' => function ($query) {
+        $result = $this->with(['game' => function ($query) {
             $query->active()->open()->select('code', 'id', 'filepic', 'game_type', 'name');
         }])->where('enable', 'Y')->where('game_code', $game)->where('member_code', $id)->first();
 
@@ -63,14 +63,12 @@ class GameUserFreeRepository extends Repository
         if ($update) {
 
             $response = $this->checkBalance($result->game->id, $result->user_name);
-            if ($response['success'] !== true) {
-                return $return;
-            }
 
-            $result->balance = $response['score'];
-            try {
-                $this->update(['balance' => $response['score']], $result->code);
-            } catch (ValidatorException $e) {
+            if ($response['success'] == true) {
+
+                $result->balance = $response['score'];
+                $result->save();
+
             }
 
 
@@ -89,25 +87,24 @@ class GameUserFreeRepository extends Repository
         $results = $this->gameRepository->orderBy('sort')->findWhere(['status_open' => 'Y', 'enable' => 'Y', ['filepic', '<>', '']], array('code', 'id', 'filepic', 'game_type', 'name'));
 
         foreach ($results as $i => $result) {
-            $score = 0;
             $game_user = $this->findOneWhere(['member_code' => $id, 'game_code' => $result->code, 'enable' => 'Y']);
             $game_id = preg_replace('/\d/', '', $result->id);
             $game = ucfirst($game_id);
             if (!is_null($game_user)) {
                 if (is_file(base_path('packages/Gametech/Game/src/Repositories/Games/' . $game . 'Repository.php'))) {
                     $response = app('Gametech\Game\Repositories\Games\\' . $game . 'Repository', ['method' => $this->gameMethod])->viewBalance($game_user->user_name);
-                    if ($response['success'] == true) {
+                    if ($response['success'] === true) {
 
-                        try {
+                        $score = $response['score'];
+                        $game_user->balance = $score;
+                        $game_user->save();
 
-                            $score = $response['score'];
-                            $this->update(['balance' => $score], $game_user->code);
+                    } else {
 
-                        } catch (Exception $e) {
-                            $score = $game_user->balance;
-                        }
+                        $score = $game_user->balance;
 
                     }
+
 
                     $results[$i]->user_code = $game_user->code;
                     $results[$i]->user_name = $game_user->user_name;
@@ -168,8 +165,8 @@ class GameUserFreeRepository extends Repository
                         $return['success'] = true;
                         $return['data'] = $result;
                     }
-                } catch (ValidatorException $e) {
-
+                } catch (Throwable $e) {
+                    report($e);
                 }
 
             }
@@ -188,14 +185,10 @@ class GameUserFreeRepository extends Repository
             $return = app('Gametech\Game\Repositories\Games\\' . $game . 'Repository', ['method' => $this->gameMethod, 'debug' => $debug])->changePass($data);
             if ($return['success'] === true) {
 
-                $param = array(
-                    'user_pass' => $data['user_pass']
-                );
+                $game_user = $this->findOrFail($id);
+                $game_user->user_pass = $data['user_pass'];
+                $game_user->save();
 
-                try {
-                    $this->update($param, $id);
-                } catch (ValidatorException $e) {
-                }
 
             }
         }
@@ -211,9 +204,9 @@ class GameUserFreeRepository extends Repository
         $game_id = preg_replace('/\d/', '', $games->id);
         $game = ucfirst($game_id);
 
-        if($debug){
-            $return = app('Gametech\Game\Repositories\Games\\' . $game . 'Repository', ['method' => $this->gameMethod, 'debug' => $debug])->deposit($user_name, $total);
-            return $return;
+        if ($debug) {
+            return app('Gametech\Game\Repositories\Games\\' . $game . 'Repository', ['method' => $this->gameMethod, 'debug' => $debug])->deposit($user_name, $total);
+
         }
 
         $user = $this->findOneWhere(['user_name' => $user_name, 'game_code' => $game_code]);
@@ -223,13 +216,8 @@ class GameUserFreeRepository extends Repository
                 if ($update) {
                     if ($return['success'] === true) {
 
-                        try {
-
-                            $this->update(['balance' => $return['after']], $user->code);
-
-                        } catch (ValidatorException $e) {
-
-                        }
+                        $user->balance = $return['after'];
+                        $user->save();
 
                     }
                 }
@@ -247,9 +235,9 @@ class GameUserFreeRepository extends Repository
         $game_id = preg_replace('/\d/', '', $games->id);
         $game = ucfirst($game_id);
 
-        if($debug){
-            $return = app('Gametech\Game\Repositories\Games\\' . $game . 'Repository', ['method' => $this->gameMethod, 'debug' => $debug])->withdraw($user_name, $total);
-            return $return;
+        if ($debug) {
+            return app('Gametech\Game\Repositories\Games\\' . $game . 'Repository', ['method' => $this->gameMethod, 'debug' => $debug])->withdraw($user_name, $total);
+
         }
 
         $user = $this->findOneWhere(['user_name' => $user_name, 'game_code' => $game_code]);
@@ -260,14 +248,9 @@ class GameUserFreeRepository extends Repository
                 if ($update) {
                     if ($return['success'] === true) {
 
-                        try {
+                        $user->balance = $return['after'];
+                        $user->save();
 
-                            $this->update(['balance' => $return['after']], $user->code);
-
-
-                        } catch (ValidatorException $e) {
-
-                        }
                     }
                 }
             }

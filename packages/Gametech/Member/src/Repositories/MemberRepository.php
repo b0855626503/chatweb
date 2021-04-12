@@ -4,6 +4,7 @@ namespace Gametech\Member\Repositories;
 
 use Gametech\Core\Eloquent\Repository;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -25,8 +26,18 @@ class MemberRepository extends Repository
     {
 
         return $this->withCount(['downs' => function ($query) {
-            $query->active();
-        }])->find($id)->withSum(['paymentsPromotion:credit_bonus' => function ($query) {
+            $query->where('enable','Y');
+        }])->withSum(['paymentsPromotion:credit_bonus' => function ($query) {
+            $query->active()->aff();
+        }])->find($id);
+    }
+
+    public function getAffTest($id)
+    {
+
+        return $this->withCount(['down' => function ($query) {
+            $query->where('enable','Y');
+        }])->withSum(['paymentsPromotion:credit_bonus' => function ($query) {
             $query->active()->aff();
         }])->find($id);
     }
@@ -169,7 +180,6 @@ class MemberRepository extends Repository
         return $this->find($id)->paymentsPromotion()->active()->orderBy('date_create', 'desc')->with('down')->whereHas('down')
             ->when($date_start, function ($query, $date_start) use ($date_stop) {
                 return $query->whereBetween('date_create', [$date_start, $date_stop]);
-//                return $query->whereRaw("DATE_FORMAT(date_create,'%Y-%m-%d') between ? and ?",[$date_start,$date_stop]);
             })->get();
 
     }

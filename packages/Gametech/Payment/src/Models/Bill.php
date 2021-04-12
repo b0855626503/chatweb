@@ -15,11 +15,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Bill extends Model implements BillContract
 {
-//    use LaravelSubQueryTrait;
 
     use Compoships;
-
-//    use DateTimeInterface;
 
     protected function serializeDate(DateTimeInterface $date)
     {
@@ -33,11 +30,8 @@ class Bill extends Model implements BillContract
 
     protected $dateFormat = 'Y-m-d H:i:s';
 
-//    protected $dates = ['date_create', 'date_update'];
 
     protected $primaryKey = 'code';
-
-//    protected $appends = ['viewtype'];
 
 
     protected $fillable = [
@@ -96,7 +90,6 @@ class Bill extends Model implements BillContract
     ];
 
 
-
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
@@ -104,24 +97,20 @@ class Bill extends Model implements BillContract
         });
     }
 
-//    public function getViewtypeAttribute()
-//    {
-//        return 'BILL';
-//    }
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
 
     public function scopeGetpro($query)
     {
-        return $query->where('pro_code','>',0);
+        return $query->where('pro_code', '>', 0);
     }
 
     public function member()
@@ -136,12 +125,12 @@ class Bill extends Model implements BillContract
 
     public function billturn()
     {
-        return $this->hasOne(PromotionProxy::modelClass(), 'code','pro_code')->where('turnpro','>',0);
+        return $this->hasOne(PromotionProxy::modelClass(), 'code', 'pro_code')->where('turnpro', '>', 0);
     }
 
     public function emp()
     {
-        return $this->hasOne(AdminProxy::modelClass(),'code','emp_code');
+        return $this->hasOne(AdminProxy::modelClass(), 'code', 'emp_code');
     }
 
     public function pross()
@@ -156,7 +145,7 @@ class Bill extends Model implements BillContract
 
     public function games()
     {
-        return $this->hasMany(GameProxy::modelClass(), 'code','game_code');
+        return $this->hasMany(GameProxy::modelClass(), 'code', 'game_code');
     }
 
     public function withdraws()
@@ -171,30 +160,24 @@ class Bill extends Model implements BillContract
     }
 
 
-
     public function game_user()
     {
-        return $this->belongsTo(GameUserProxy::modelClass(),['member_code', 'game_code'],['member_code', 'game_code']);
+        return $this->belongsTo(GameUserProxy::modelClass(), ['member_code', 'game_code'], ['member_code', 'game_code']);
     }
-
-//    public function gameUser()
-//    {
-//        return $this->hasOne(GameUserProxy::modelClass(),'member_code','member_code')->where('game_code',$this->game_code);
-//    }
 
     public function gamesUser()
     {
-        return $this->hasMany(GameUserProxy::modelClass(),'member_code','member_code')->where('game_code',$this->game_code);
+        return $this->hasMany(GameUserProxy::modelClass(), 'member_code', 'member_code')->where('game_code', $this->game_code);
     }
 
     public function members()
     {
-        return $this->hasMany(MemberProxy::modelClass(),'code','member_code');
+        return $this->hasMany(MemberProxy::modelClass(), 'code', 'member_code');
     }
 
     public function bank()
     {
-        return $this->hasOne(BankProxy::modelClass(),'code','bank_code');
+        return $this->hasOne(BankProxy::modelClass(), 'code', 'bank_code');
     }
 
 }

@@ -3,7 +3,6 @@
 namespace Gametech\Wallet\Http\Controllers;
 
 
-
 use Gametech\Core\Repositories\ConfigRepository;
 use Gametech\Game\Repositories\GameRepository;
 use Gametech\Game\Repositories\GameUserFreeRepository;
@@ -87,12 +86,12 @@ class CreditTransferGameController extends AppBaseController
 
         $games = $this->loadGame();
 
-        $games = $games->map(function ($items){
+        $games = $games->map(function ($items) {
             $item = (object)$items;
             return [
                 'code' => $item->code,
                 'name' => $item->name,
-                'image' =>  Storage::url('game_img/'.$item->filepic),
+                'image' => Storage::url('game_img/' . $item->filepic),
                 'balance' => $item->game_user_free['balance']
             ];
 
@@ -101,14 +100,13 @@ class CreditTransferGameController extends AppBaseController
 
         $profile = $this->user()->load('bank');
 
-        return view($this->_config['view'], compact('profile','promotions'))->with('games',$games);
+        return view($this->_config['view'], compact('profile', 'promotions'))->with('games', $games);
     }
 
     public function loadGame(): Collection
     {
-        return collect($this->gameRepository->getGameUserFreeById($this->id(),false)->toArray())->whereNotNull('game_user_free');
+        return collect($this->gameRepository->getGameUserFreeById($this->id(), false)->toArray())->whereNotNull('game_user_free');
     }
-
 
 
     public function check(Request $request)
@@ -121,42 +119,41 @@ class CreditTransferGameController extends AppBaseController
 
         $game_id = $request->input('game');
         $promotion_id = $request->input('promotion');
-        if($promotion_id == ''){
+        if ($promotion_id == '') {
             $promotion_id = null;
         }
         $amount = $request->input('amount');
         $balance = $this->user()->balance_free;
 
 
-
-        $getdata = $this->gameUserFreeRepository->getOneUser($this->id(),$game_id);
-        if($getdata['success'] === false){
+        $getdata = $this->gameUserFreeRepository->getOneUser($this->id(), $game_id);
+        if ($getdata['success'] === false) {
             session()->flash('error', $getdata['msg']);
             return redirect()->route('customer.credit.transfer.game.index');
         }
 
         $game = $getdata['data'];
 
-        if(!$this->checkCondition($amount,$balance,$game,$this->user())){
+        if (!$this->checkCondition($amount, $balance, $game, $this->user())) {
             return redirect()->route('customer.credit.transfer.game.index');
         }
 
 
-        $item = $this->checkPro($game,$this->id(),$promotion_id,$amount,$balance);
+        $item = $this->checkPro($game, $this->id(), $promotion_id, $amount, $balance);
 
-        $param = [ 'game' => $item['game_code'] , 'id' => $this->id() , 'promotion' => $item['pro_code'] , 'amount' => $amount , 'datetime' => now()];
+        $param = ['game' => $item['game_code'], 'id' => $this->id(), 'promotion' => $item['pro_code'], 'amount' => $amount, 'datetime' => now()];
 
 
         session()->flash('gametoken', Crypt::encryptString(json_encode($param)));
 
-        return view($this->_config['view'])->with('item',$item);
+        return view($this->_config['view'])->with('item', $item);
 
     }
 
     public function confirm(Request $request): RedirectResponse
     {
 
-        if(!$request->has('gametoken')){
+        if (!$request->has('gametoken')) {
             session()->flash('error', 'พบข้อผิดพลาดบางประการ โปรดทำรายการใหม่อีกครั้ง');
             return redirect()->route('customer.credit.transfer.game.index');
         }
@@ -172,12 +169,12 @@ class CreditTransferGameController extends AppBaseController
         }
 
 
-        $gamedata = json_decode($gamedata,true);
+        $gamedata = json_decode($gamedata, true);
 
 
         $user_id = $gamedata['id'];
 
-        if($user_id !== $this->id()){
+        if ($user_id !== $this->id()) {
             session()->flash('error', 'ทำรายการไม่ถูกต้อง โปรดทำรายการใหม่อีกครั้ง');
             return redirect()->route('customer.credit.transfer.game.index');
         }
@@ -188,33 +185,32 @@ class CreditTransferGameController extends AppBaseController
         $balance = $this->user()->balance_free;
 
 
-
-        $getdata = $this->gameUserFreeRepository->getOneUser($this->id(),$game_id);
-        if($getdata['success'] === false){
+        $getdata = $this->gameUserFreeRepository->getOneUser($this->id(), $game_id);
+        if ($getdata['success'] === false) {
             session()->flash('error', $getdata['msg']);
             return redirect()->route('customer.credit.transfer.game.index');
         }
 
         $game = $getdata['data'];
 
-        if(!$this->checkCondition($amount,$balance,$game,$this->user())){
+        if (!$this->checkCondition($amount, $balance, $game, $this->user())) {
             return redirect()->route('customer.credit.transfer.game.index');
         }
 
-        $item = $this->checkPro($game,$this->id(),$promotion_id,$amount,$balance);
+        $item = $this->checkPro($game, $this->id(), $promotion_id, $amount, $balance);
 
 
         $response = $this->billFreeRepository->transferGame($item);
-        if($response['success'] == false){
+        if ($response['success'] == false) {
             session()->flash('error', $response['msg']);
             return redirect()->route('customer.credit.transfer.game.index');
         }
 
         $bills = $response['data'];
-//        dd(collect($bills));
-        $bills = collect($bills)->only('code','date_create','credit_before','credit_after','balance_after','balance_before');
+
+        $bills = collect($bills)->only('code', 'date_create', 'credit_before', 'credit_after', 'balance_after', 'balance_before');
         $bills = $bills->merge([
-            'invoice' => '#BL'.Str::of($bills['code'])->padLeft(8,0),
+            'invoice' => '#BL' . Str::of($bills['code'])->padLeft(8, 0),
             'game_name' => $item['game_name'],
             'game_pic' => $item['game_pic'],
             'pro_code' => $item['pro_code'],
@@ -227,10 +223,9 @@ class CreditTransferGameController extends AppBaseController
             'wallet_before' => $bills['balance_before'],
             'wallet_after' => $bills['balance_after'],
             'wallet' => $item['wallet'],
-            'date_create' => core()->formatDate($bills['date_create'],'d/m/y H:i:s')
+            'date_create' => core()->formatDate($bills['date_create'], 'd/m/y H:i:s')
         ]);
 
-//        dd($bills);
 
         session()->flash('bills', $bills);
         return redirect()->route('customer.credit.transfer.game.complete');
@@ -238,7 +233,7 @@ class CreditTransferGameController extends AppBaseController
 
     public function complete()
     {
-        if (! $item = session('bills')) {
+        if (!$item = session('bills')) {
             return redirect()->route('customer.credit.transfer.game.index');
         }
 
@@ -246,7 +241,7 @@ class CreditTransferGameController extends AppBaseController
         return view($this->_config['view'], compact('item'));
     }
 
-    public function checkCondition($amount,$balance,$game_user,$member): bool
+    public function checkCondition($amount, $balance, $game_user, $member): bool
     {
 
         $config = core()->getConfigData();
@@ -263,12 +258,12 @@ class CreditTransferGameController extends AppBaseController
 
         } elseif ($amount < $config['free_mintransfer']) {
 
-            session()->flash('error', 'ยอดเงินขั้นต่ำในการโยกเงินเข้าเกม คือ : '.$config['free_mintransfer']);
+            session()->flash('error', 'ยอดเงินขั้นต่ำในการโยกเงินเข้าเกม คือ : ' . $config['free_mintransfer']);
             return false;
 
         } elseif ($amount > $config['free_maxtransfer']) {
 
-            session()->flash('error', 'ยอดเงินสูงสุดในการโยกเงินเข้าเกม คือ : '.$config['free_maxtransfer']);
+            session()->flash('error', 'ยอดเงินสูงสุดในการโยกเงินเข้าเกม คือ : ' . $config['free_maxtransfer']);
             return false;
 
         }
@@ -291,7 +286,7 @@ class CreditTransferGameController extends AppBaseController
         $datenow = now();
         $today = now()->toDateString();
 
-        if(!is_null($promotion_id)) {
+        if (!is_null($promotion_id)) {
 
             $pro_limit = $this->memberRepository->getPro($id);
 
@@ -341,7 +336,7 @@ class CreditTransferGameController extends AppBaseController
             'member_balance' => $balance,
             'game_code' => $game->game->code,
             'game_name' => $game->game->name,
-            'game_pic' => Storage::url('game_img/'.$game->game->filepic),
+            'game_pic' => Storage::url('game_img/' . $game->game->filepic),
             'user_code' => $game->code,
             'user_name' => $game->user_name,
             'pro_code' => $promotion['pro_code'],

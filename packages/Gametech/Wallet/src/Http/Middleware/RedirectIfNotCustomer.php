@@ -9,16 +9,16 @@ use Illuminate\Support\Facades\Auth;
 class RedirectIfNotCustomer
 {
     /**
-    * Handle an incoming request.
-    *
-    * @param  Request  $request
-    * @param Closure $next
-    * @param  string|null  $guard
-    * @return mixed
-    */
-    public function handle($request, Closure $next, $guard = 'customer')
+     * Handle an incoming request.
+     *
+     * @param Request $request
+     * @param Closure $next
+     * @param string|null $guard
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next, $guard = 'customer')
     {
-        if (! Auth::guard($guard)->check()) {
+        if (!Auth::guard($guard)->check()) {
             return redirect()->route('customer.session.index');
         } else {
             if (Auth::guard($guard)->user()->enable != 'Y') {

@@ -3,6 +3,7 @@
 namespace Gametech\Promotion\Repositories;
 
 use Gametech\Core\Eloquent\Repository;
+use Gametech\Member\Repositories\MemberPromotionLogRepository;
 use Gametech\Member\Repositories\MemberRepository;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
@@ -11,14 +12,17 @@ use Illuminate\Support\Facades\Storage;
 class PromotionRepository extends Repository
 {
     protected $memberRepository;
+    protected $memberPromotionLogRepository;
     protected $promotionTimeRepository;
     protected $promotionAmountRepository;
 
+
     /**
-     * BankPaymentRepository constructor.
+     * PromotionRepository constructor.
      * @param MemberRepository $memberRepository
      * @param PromotionTimeRepository $promotionTimeRepository
      * @param PromotionAmountRepository $promotionAmountRepository
+     * @param MemberPromotionLogRepository $memberPromotionLogRepository
      * @param App $app
      */
     public function __construct
@@ -26,15 +30,61 @@ class PromotionRepository extends Repository
         MemberRepository $memberRepository,
         PromotionTimeRepository $promotionTimeRepository,
         PromotionAmountRepository $promotionAmountRepository,
+        MemberPromotionLogRepository $memberPromotionLogRepository,
+
         App $app
     )
     {
 
         $this->memberRepository = $memberRepository;
+        $this->memberPromotionLogRepository = $memberPromotionLogRepository;
         $this->promotionTimeRepository = $promotionTimeRepository;
         $this->promotionAmountRepository = $promotionAmountRepository;
         parent::__construct($app);
     }
+
+    public function checkSelectPro($pro_id, $member_id, $amount, $date)
+    {
+        $promotion = [
+            'pro_code' => 0,
+            'pro_name' => '',
+            'turnpro' => 0,
+            'withdraw_limit' => 0,
+            'bonus' => 0,
+            'total' => $amount,
+        ];
+
+        $pro = $this->findOrFail($pro_id);
+        $member = $this->memberRepository->findOrFail($member_id);
+
+
+        switch ($pro->id) {
+            case 'pro_newuser':
+                if ($member->status_pro === 0) {
+                    $promotion = $this->checkPromotion($pro_id, $amount, $date);
+                }
+                break;
+
+            case 'pro_firstday':
+                if ($this->checkProFirstDay($member->code) == 0) {
+                    $promotion = $this->checkPromotion($pro_id, $amount, $date);
+                }
+                break;
+
+            case 'pro_bigbonus':
+            case 'pro_allbonus':
+                $promotion = $this->checkPromotion($pro_id, $amount, $date);
+                break;
+
+            case 'pro_hottime';
+//                if ($this->checkHotTime($today, '00:00', '00:01', $datenow)) {
+//                    $promotion = $this->checkPromotion($pro_id, $amount, $date);
+//                }
+                break;
+        }
+
+    }
+
 
     public function checkPromotion($id, $amount, $date)
     {
@@ -42,18 +92,18 @@ class PromotionRepository extends Repository
         $pro_amount = 0;
         $order = array();
 
-        $promotion = $this->find($id);
+        $promotion = $this->findOrFail($id);
 
-        if($promotion){
-            if ($amount < $promotion['bonus_min']) {
+        if (!empty($promotion)) {
+            if ($amount < $promotion->bonus_min) {
                 $pro_amount = 0;
             } else {
-                switch ($promotion['length_type']) {
+                switch ($promotion->length_type) {
                     case 'PRICE':
-                        $pro_amount = $promotion['bonus_price'];
+                        $pro_amount = $promotion->bonus_price;
                         break;
                     case 'PERCENT':
-                        $pro_amount = $amount * $promotion['bonus_percent'] / 100;
+                        $pro_amount = $amount * $promotion->bonus_percent / 100;
                         break;
                     case 'TIME':
                         $order = $this->promotionTimeRepository->promotion($id, $date);
@@ -80,8 +130,8 @@ class PromotionRepository extends Repository
                         $pro_amount = ($amount * $order['amount']) / 100;
                         break;
                 }
-                if ($pro_amount > $promotion['bonus_max']) {
-                    $pro_amount = $promotion['bonus_max'];
+                if ($pro_amount > $promotion->bonus_max) {
+                    $pro_amount = $promotion->bonus_max;
                 }
             }
         }
@@ -99,16 +149,15 @@ class PromotionRepository extends Repository
             'BETWEENPC' => 'ช่วงระหว่างราคา จ่ายเป็น %'
         ];
 
-        if ($pro_amount > 0) {
+        if($pro_amount > 0) {
             $total = ($amount + $pro_amount);
 
             $result['pro_code'] = $id;
-            $result['pro_name'] = $promotion['name_th'];
-            $result['turnpro'] = $promotion['turnpro'];
-            $result['withdraw_limit'] = $promotion['withdraw_limit'];
+            $result['pro_name'] = $promotion->name_th;
+            $result['turnpro'] = $promotion->turnpro;
+            $result['withdraw_limit'] = $promotion->withdraw_limit;
             $result['total'] = $total;
             $result['bonus'] = $pro_amount;
-            $result['type'] = $type[$promotion['length_type']];
         } else {
             $result['pro_code'] = 0;
             $result['pro_name'] = '';
@@ -116,8 +165,8 @@ class PromotionRepository extends Repository
             $result['withdraw_limit'] = 0;
             $result['total'] = $amount;
             $result['bonus'] = 0;
-            $result['type'] = $type[$promotion['length_type']];
         }
+        $result['type'] = $type[$promotion->length_type];
 
         return $result;
     }
@@ -132,7 +181,7 @@ class PromotionRepository extends Repository
         $id = $promotion['code'];
 
 
-        if($promotion){
+        if ($promotion) {
             if ($amount < $promotion['bonus_min']) {
                 $pro_amount = 0;
             } else {
@@ -214,12 +263,12 @@ class PromotionRepository extends Repository
 
     public function loadPromotion($id)
     {
-        $datenow =  now();
-        $today =  now()->toDateString();
+        $datenow = now();
+        $today = now()->toDateString();
 
         $member = $this->memberRepository->find($id);
         $count = $this->checkProFirstDay($id);
-        $hottime = $this->checkHotTime($today,'00:00','00:01',$datenow);
+        $hottime = $this->checkHotTime($today, '00:00', '00:01', $datenow);
 
 
         $code[] = '0';
@@ -237,31 +286,31 @@ class PromotionRepository extends Repository
             $code[] = '5';
         }
 
-        return $this->where('use_wallet','Y')->whereNotIn('code',$code)->active()->get();
+        return $this->where('use_wallet', 'Y')->whereNotIn('code', $code)->active()->get();
 
     }
 
     public function checkProFirstDay($id)
     {
-        $today =  now()->toDateString();
+        $today = now()->toDateString();
         $member = $this->memberRepository->find($id);
-        return $member->bills()->where('pro_code',2)->whereRaw("DATE_FORMAT(date_create,'%Y-%m-%d') = ?",[$today])->exists();
+        return $member->bills()->where('pro_code', 2)->whereDate('date_create', $today)->exists();
 
     }
 
     public function checkHotTime($today, $time_start, $time_stop, $datenow)
     {
-        $datestart = $today.' '.$time_start.':00';
-        $datestop = $today.' '.$time_stop.':00';
-        $hot = DB::select("select '$datenow' as datenow,'$datestart' as datestart,'$datestop' as datestop  from dual where ? between ? and ?",[$datenow,$datestart,$datestop]);
-        if(is_null($hot)){
+        $datestart = $today . ' ' . $time_start . ':00';
+        $datestop = $today . ' ' . $time_stop . ':00';
+        $hot = DB::select("select '$datenow' as datenow,'$datestart' as datestart,'$datestop' as datestop  from dual where ? between ? and ?", [$datenow, $datestart, $datestop]);
+        if (is_null($hot)) {
             return false;
         }
         return true;
 
     }
 
-    public function CalculatePro($member,$amount,$date)
+    public function CalculatePro($member, $amount, $date)
     {
         $bonus = 0;
         $pro_code = 0;
@@ -271,10 +320,10 @@ class PromotionRepository extends Repository
         $withdraw_limit = 0;
         $turnpro = 0;
         // Check Member Get Promotion (for single mode)
-        if($member['promotion'] == 'Y'){
+        if ($member['promotion'] == 'Y') {
 
             // Pro New User for First Deposit
-            if($status_pro == 0){
+            if ($status_pro == 0) {
                 $promotion = $this->checkPromotionId('pro_newuser', $amount, $date);
                 $bonus = $promotion['bonus'];
                 $pro_code = $promotion['pro_code'];
@@ -283,7 +332,7 @@ class PromotionRepository extends Repository
                 $withdraw_limit = $promotion['withdraw_limit'];
                 $turnpro = $promotion['turnpro'];
 
-                if($bonus > 0){
+                if ($bonus > 0) {
                     $status_pro = 1;
                 }
             }
@@ -350,15 +399,15 @@ class PromotionRepository extends Repository
         return $order;
     }
 
-    public function uploadImages( $data, $order, $type = "filepic")
+    public function uploadImages($data, $order, $type = "filepic")
     {
 
         $request = request();
 
         $hasfile = is_null($request->fileupload);
 
-        if(!$hasfile){
-            $file = $order->id.'.'.$request->fileupload->getClientOriginalExtension();
+        if (!$hasfile) {
+            $file = $order->id . '.' . $request->fileupload->getClientOriginalExtension();
             $dir = 'promotion_img';
 
             Storage::putFileAs($dir, $request->fileupload, $file);

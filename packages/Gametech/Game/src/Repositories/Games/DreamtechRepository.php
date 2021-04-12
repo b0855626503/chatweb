@@ -3,7 +3,8 @@
 namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
-use Illuminate\Support\Arr;
+use Illuminate\Container\Container as App;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -27,7 +28,7 @@ class DreamtechRepository extends Repository
 
     protected $auth;
 
-    public function __construct($method, $debug)
+    public function __construct($method, $debug, App $app)
     {
         $game = 'dreamtech';
 
@@ -48,9 +49,11 @@ class DreamtechRepository extends Repository
         $this->passkey = config($this->method . '.' . $game . '.passkey');
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
+
+        parent::__construct($app);
     }
 
-    public function Debug($response)
+    public function Debug($response): array
     {
         $return['debug']['body'][] = $response->body();
         $return['debug']['json'][] = $response->json();
@@ -63,7 +66,7 @@ class DreamtechRepository extends Repository
     }
 
 
-    public function GameCurl($param, $action)
+    public function GameCurl($param, $action): Response
     {
 
         ksort($param);
@@ -83,7 +86,7 @@ class DreamtechRepository extends Repository
 
     }
 
-    public function GameCurlAuth($username)
+    public function GameCurlAuth($username): array
     {
         $return['success'] = false;
 
@@ -122,7 +125,7 @@ class DreamtechRepository extends Repository
         return $return;
     }
 
-    public function GameCurlKey($param, $action, $key)
+    public function GameCurlKey($param, $action, $key): Response
     {
         ksort($param);
         $postString = "";
@@ -197,7 +200,7 @@ class DreamtechRepository extends Repository
 
             $response = $response->json();
 
-            if (isset($response['code']) === 'UNKNOWN_ERROR') {
+            if (isset($response['code']) == 'UNKNOWN_ERROR') {
 
                 $user_pass = "Aa" . rand(100000, 999999);
                 $param = [
@@ -218,7 +221,6 @@ class DreamtechRepository extends Repository
 
 
                 $response = $this->GameCurl($param, 'create-check-account');
-
 
 
                 if ($this->debug) {
@@ -254,7 +256,6 @@ class DreamtechRepository extends Repository
         $return['success'] = false;
 
 
-
         $response = $this->GameCurlAuth($data['user_name']);
 
         if ($response['success'] === true) {
@@ -273,9 +274,6 @@ class DreamtechRepository extends Repository
                 'timeStamp' => date('Y-m-d') . 'T' . date('H:i:s')
             ];
 
-            if ($this->debug) {
-//                dd($param);
-            }
 
             $response = $this->GameCurlKey($param, $data['user_name'] . '/update-account', $key);
 
@@ -295,14 +293,15 @@ class DreamtechRepository extends Repository
 
     public function viewBalance($username): array
     {
+
         $return['success'] = false;
-        $return['score']  = 0;
+        $return['score'] = 0;
 
-        $return = $this->GameCurlAuth($username);
+        $response = $this->GameCurlAuth($username);
 
-        if ($return['success'] === true) {
+        if ($response['success'] === true) {
 
-            $key = $return['key'];
+            $key = $response['key'];
 
             $param = [
                 'accountType' => 1,
@@ -366,14 +365,13 @@ class DreamtechRepository extends Repository
                     $response = $response->json();
 
 
-
                     if (!empty($response['transactionReferenceNo'])) {
                         $return['success'] = true;
                         $return['ref_id'] = $response['transactionReferenceNo'];
                         $return['after'] = $response['balance'];
                         $return['before'] = ($response['balance'] - $score);
 
-                    }else{
+                    } else {
                         $return['success'] = false;
                         $return['msg'] = $response['message'];
                     }
@@ -430,7 +428,7 @@ class DreamtechRepository extends Repository
                         $return['after'] = $response['balance'];
                         $return['before'] = ($response['balance'] + $score);
 
-                    }else{
+                    } else {
                         $return['success'] = false;
                         $return['msg'] = $response['message'];
                     }

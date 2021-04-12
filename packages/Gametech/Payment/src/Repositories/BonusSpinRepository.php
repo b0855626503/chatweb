@@ -2,12 +2,11 @@
 
 namespace Gametech\Payment\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
+use Gametech\LogUser\Http\Traits\ActivityLoggerUser;
 use Gametech\Member\Repositories\MemberRepository;
 use Illuminate\Container\Container as App;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Throwable;
 
 class BonusSpinRepository extends Repository
 {
@@ -23,6 +22,7 @@ class BonusSpinRepository extends Repository
 
         parent::__construct($app);
     }
+
     /**
      * Specify Model class name
      *
@@ -41,29 +41,24 @@ class BonusSpinRepository extends Repository
         $reward_type = $data['reward_type'];
         $amount = $data['amount'];
 
-        DB::beginTransaction();
+        ActivityLoggerUser::activity('Spin Reward', 'เริ่มต้นบันทึกรายการเล่นวงล้อมหาสนุก');
+
+
+        $member = $this->memberRepository->find($member_code);
+
+        $member->balance = $credit_after;
+        $member->diamond = $diamond;
+        $member->save();
+
         try {
-            Event::dispatch('customer.spin.before', $data);
 
-            $member = $this->memberRepository->sharedLock()->find($member_code);
+            $this->create($data);
 
+        } catch (Throwable $e) {
 
-            $bill = $this->create($data);
-
-
-
-            $member->balance = $credit_after;
-            $member->diamond = $diamond;
-            $member->save();
-
-            Event::dispatch('customer.spin.after', $bill);
-        } catch (Exception $e) {
-            DB::rollBack();
-
+            report($e);
             return false;
         }
-
-        DB::commit();
 
         return true;
     }

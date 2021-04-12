@@ -59,7 +59,7 @@
                         <div class="card card-trans">
                             <div class="card-body">
                                 <h4 class="content-heading">ลิงค์สำหรับแนะนำเพื่อน</h4>
-                                <input id="copy" class="form-control w-100" outsideclick="true" popover="คัดลอกสำเร็จ"
+                                <input id="copy" class="form-control w-100" data-container="body" data-toggle="popover" data-placement="top" data-content="คัดลอกสำเร็จ"
                                        type="text" value="{{ route('customer.session.store',$profile->code) }}">
                                 <br>
                                 <button class="btn btn-sm btn-theme float-right btn-outline" onclick="myFunction()">
@@ -74,7 +74,7 @@
                     <div class="col-md-12">
                         <div class="card card-trans">
                             <div class="card-body">
-                                <h4 class="content-heading">รายการ รายได้จากเพื่อนที่แนะนำ</h4>
+                                <h4 class="content-heading">รายการรายได้จากเพื่อนที่แนะนำ</h4>
                                 <div class="row">
                                     <div class="col">
                                         <div class="form-group">
@@ -131,8 +131,6 @@
                                     class="float-right">@{{ item.amount }} ฿</span></li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">วันที่สมัคร :
                                 <span class="float-right">@{{ item.date_regis }} </span></li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">วันเวลาที่ฝากเงิน :
-                                <span class="float-right">@{{ item.date_topup }} </span></li>
                         </ul>
                     </div>
                 </div>

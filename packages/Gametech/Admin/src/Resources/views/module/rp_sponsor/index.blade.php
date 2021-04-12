@@ -33,13 +33,13 @@
 
                                 <div class="form-group col-6">
                                     <input type="text" class="form-control form-control-sm" id="upline_id"
-                                           placeholder="เบอร์โทร Upline"
+                                           placeholder="User ID Upline"
                                            name="upline_id">
                                 </div>
 
                                 <div class="form-group col-6">
                                     <input type="text" class="form-control form-control-sm" id="downline_id"
-                                           name="downline_id" placeholder="เบอร์โทร Downline">
+                                           name="downline_id" placeholder="User ID Downline">
                                 </div>
 
                                 <div class="form-group col-6"></div>

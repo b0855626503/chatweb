@@ -1,4 +1,7 @@
 <?php
+
+use Illuminate\Support\Facades\Route;
+
 Route::domain(config('app.user_url') . '.' . config('app.domain_url'))->group(function () {
 
     Route::group(['middleware' => ['web', 'loguser']], function () {
@@ -129,6 +132,10 @@ Route::domain(config('app.user_url') . '.' . config('app.domain_url'))->group(fu
                 Route::get('contributor', 'Gametech\Wallet\Http\Controllers\ContributorController@index')->defaults('_config', [
                     'view' => 'wallet::customer.contributor.index',
                 ])->name('customer.contributor.index');
+
+                Route::get('contributortest', 'Gametech\Wallet\Http\Controllers\ContributorController@indextest')->defaults('_config', [
+                    'view' => 'wallet::customer.contributor.indextest',
+                ])->name('customer.contributor.indextest');
 
                 Route::post('contributor', 'Gametech\Wallet\Http\Controllers\ContributorController@store')->name('customer.contributor.store');
 

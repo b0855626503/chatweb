@@ -255,12 +255,12 @@ class Member extends Authenticatable implements MemberContract
 
     public function downs(): HasMany
     {
-        return $this->hasMany(PaymentPromotionProxy::modelClass(), 'member_code');
+        return $this->hasMany(MemberProxy::modelClass(), 'upline_code');
     }
 
-    public function down(): BelongsTo
+    public function down()
     {
-        return $this->belongsTo(self::class, 'upline_code');
+        return $this->hasMany(MemberProxy::modelClass(), 'upline_code');
     }
 
     public function memberIc(): HasMany
