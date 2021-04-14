@@ -26,10 +26,10 @@ class RpWithdrawTransformer extends TransformerAbstract
             'status' => $status[$model->status],
             'date_approve' => ($model->date_approve === '0000-00-00 00:00:00' || is_null($model->date_approve) ? '' : core()->formatDate($model->date_approve,'d/m/y H:i:s')),
 
-            'remark' => $model->remark,
+            'remark' => 'User : '.$model->remark.'<br>Admin : '.$model->remark_admin,
             'emp_name' => ($model->emp_approve === 0 ? '' : (is_null($model->admin) ? '' : $model->admin->name)),
             'date_create' => $model->date_create->format('d/m/y H:i:s'),
-            'ip' => $model->ip
+            'ip' => 'User : '.$model->ip.'<br>Admin : '.$model->ip_admin,
         ];
     }
 
