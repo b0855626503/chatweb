@@ -13,6 +13,8 @@ use Throwable;
 
 class PaymentPromotionRepository extends Repository
 {
+    use ActivityLogger;
+
     private $memberRepository;
 
     private $memberCreditLogRepository;
@@ -47,7 +49,7 @@ class PaymentPromotionRepository extends Repository
             return false;
         }
 
-        $user_topup = $this->memberRepository->find($user_topup_code);
+        $user_topup = $this->memberRepository->findOrFail($user_topup_code);
 
         $upline_code = $user_topup->upline_code;
         $downline_code = $user_topup_code;
@@ -57,17 +59,18 @@ class PaymentPromotionRepository extends Repository
         if ($upline_code > 0) {
             $cnt = $this->findOneWhere(['member_code' => $upline_code, 'downline_code' => $downline_code, 'pro_code' => $chk->code]);
             if (empty($cnt)) {
+                ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'เติมครั้งแรก !! กำลังเชคโบนัสให้กับ UPLINE CODE : '.$upline_code);
                 $promotion = $this->promotionRepository->checkPromotionId("pro_faststart", $amount, $datenow);
                 $bonus = $promotion['bonus'];
                 $total = $promotion['total'];
                 if ($bonus > 0) {
 
-                    $member = $this->memberRepository->find($upline_code);
+                    $member = $this->memberRepository->findOrFail($upline_code);
 
                     $credit_before = $member['balance'];
                     $credit_after = ($credit_before + $bonus);
 
-                    ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'เริ่มรายการ FASTSTART ให้กับ User : ' . $member->user_name);
+                    ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'มอบโบนัส FASTSTART ให้กับ User : ' . $member->user_name);
 
                     DB::beginTransaction();
                     try {
@@ -124,10 +127,17 @@ class PaymentPromotionRepository extends Repository
                         report($e);
                         return false;
                     }
-                }
-            }
 
-            ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'ทำรายการ FASTSTART ให้กับ User : ' . $member->user_name. ' สำเร็จ');
+                    ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'ทำรายการ FASTSTART ให้กับ User : ' . $member->user_name. ' สำเร็จ');
+
+                }else{
+
+                    ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'โบนัสคำนวนได้ 0 ?? อดโบนัสให้กับ UPLINE CODE : '.$upline_code);
+
+                }
+            }else{
+                ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'ไม่ใช่ครั้งแรก !! อดโบนัสให้กับ UPLINE CODE : '.$upline_code);
+            }
 
         }else{
 

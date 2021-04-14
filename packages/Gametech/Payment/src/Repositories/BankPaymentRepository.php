@@ -19,6 +19,8 @@ use Throwable;
 class BankPaymentRepository extends Repository
 {
 
+    use ActivityLogger;
+
     private $memberRepository;
 
     private $memberCreditLogRepository;

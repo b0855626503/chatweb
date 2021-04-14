@@ -89,14 +89,14 @@ class PromotionRepository extends Repository
     public function checkPromotion($id, $amount, $date)
     {
         $min = 0;
-        $pro_amount = 0;
+        $pro_amount = 0.00;
         $order = array();
 
         $promotion = $this->findOrFail($id);
 
         if (!empty($promotion)) {
             if ($amount < $promotion->bonus_min) {
-                $pro_amount = 0;
+                $pro_amount = 0.00;
             } else {
                 switch ($promotion->length_type) {
                     case 'PRICE':
@@ -174,7 +174,7 @@ class PromotionRepository extends Repository
     public function checkPromotionId($pro_id, $amount, $date)
     {
         $min = 0;
-        $pro_amount = 0;
+        $pro_amount = 0.00;
         $order = array();
 
         $promotion = $this->findOneByField('id', $pro_id);
@@ -183,14 +183,14 @@ class PromotionRepository extends Repository
 
         if ($promotion) {
             if ($amount < $promotion['bonus_min']) {
-                $pro_amount = 0;
+                $pro_amount = 0.00;
             } else {
                 switch ($promotion['length_type']) {
                     case 'PRICE':
                         $pro_amount = $promotion['bonus_price'];
                         break;
                     case 'PERCENT':
-                        $pro_amount = $amount * $promotion['bonus_percent'] / 100;
+                        $pro_amount = ($amount * $promotion['bonus_percent']) / 100;
                         break;
                     case 'TIME':
                         $order = $this->promotionTimeRepository->promotion($id, $date);

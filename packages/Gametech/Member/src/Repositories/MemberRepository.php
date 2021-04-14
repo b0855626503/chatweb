@@ -203,26 +203,21 @@ class MemberRepository extends Repository
             case 'scb':
 //                $field = "bank_code = 4 and name = ?";
 //                $value = Str::of($data->detail)->after('นาย')->after('นาง')->after('นายสาว')->trim()->__toString();
-
-                $field = "acc_check = ?";
-                $acc = Str::of($data->atranferer)->replaceMatches('/[^0-9]/', '')->trim();
-                $value = Str::of($acc)->replace('*', '');
-                if(!$data->atranferer && !$value){
-                    $acc_chk = explode(' ',$data->detail);
-
-
+                if(!empty($data->atranferer)){
+                    $field = "acc_check = ?";
+                    $acc = Str::of($data->atranferer)->replaceMatches('/[^0-9]/', '')->trim();
+                    $value = Str::of($acc)->replace('*', '');
+                }else{
                     $field = "bank_code = 4 and acc_check = ?";
-                    $value = Str::of($acc_chk[2])->replace('*', '');
-
-//                    $field = "bank_code = 4 and acc_check =  and name like ?";
-//                    $value = Str::of($data->detail)->after('นาย')->after('นาง')->after('นายสาว')->trim();
-//                    $value = "'%{$value}%'";
+                    $acc_chk = explode(' ',$data->detail);
+                    $acc = Str::of($acc_chk[2])->replaceMatches('/[^0-9]/', '')->trim();
+                    $value = Str::of($acc)->replace('*', '');
                 }
+
                 break;
             case 'kbank':
                 $field = "bank_code = 2 and LENGTH(acc_no) = 10 and SUBSTRING(acc_no, 4, 6) = ?";
                 $value = Str::of($data->atranferer)->replace('*', '');
-
 
                 break;
             case 'ktb':

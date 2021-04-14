@@ -101,11 +101,11 @@ Route::domain(config('app.admin_url') . '.' . config('app.domain_url'))->group(f
 
             Route::get('rp_user_log', 'ReportController@rp_user_log')->defaults('_config', [
                 'view' => 'admin::module.rp_user_log.index',
-            ])->name('admin.rp_user_log.index');
+            ])->name('admin.rp_user_log.index')->withoutMiddleware(['logadmin']);
 
             Route::get('rp_staff_log', 'ReportController@rp_staff_log')->defaults('_config', [
                 'view' => 'admin::module.rp_staff_log.index',
-            ])->name('admin.rp_staff_log.index');
+            ])->name('admin.rp_staff_log.index')->withoutMiddleware(['logadmin']);
 
 
             Route::get('rp_deposit', 'ReportController@rp_deposit')->defaults('_config', [

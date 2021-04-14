@@ -3,6 +3,7 @@
 namespace Gametech\Auto\Console\Commands;
 
 
+use Gametech\Auto\Jobs\TopupFastStart;
 use Illuminate\Console\Command;
 
 
@@ -16,7 +17,7 @@ class CheckFastStart extends Command
      *
      * @var string
      */
-    protected $signature = 'faststart:bill {code}';
+    protected $signature = 'faststart:date {date}';
 
     /**
      * The console command description.
@@ -46,19 +47,25 @@ class CheckFastStart extends Command
      */
     public function handle()
     {
-        $code = $this->argument('code');
+        $date = $this->argument('date');
 
-        $payment = $this->bankPaymentRepository->findOrFail($code);
+        $payments = $this->bankPaymentRepository->scopeQuery(function ($query) use ($date) {
+            return $query->orderBy('code', 'asc')
+                ->whereDate('date_topup',$date)
+                ->where('bankstatus',1)
+                ->where('status',1)
+                ->where('member_topup','<>',0);
+        })->all();
 
-        $this->line($payment);
+        $bar = $this->output->createProgressBar($payments->count());
+        $bar->start();
 
-
-        $result = $this->paymentPromotionRepository->checkFastStart($payment->amount, $payment->member_topup, $payment->code);
-        if($result){
-            $this->line('Success');
-        }else{
-            $this->line('Fail');
+        foreach ($payments as $i => $payment) {
+            TopupFastStart::dispatch($payment->code)->delay(now()->addSeconds(10))->onQueue('topup');
+            $bar->advance();
         }
+
+        $bar->finish();
 
     }
 
