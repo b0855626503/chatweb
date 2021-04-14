@@ -3,6 +3,7 @@
 namespace Gametech\Payment\Repositories;
 
 use Gametech\Core\Eloquent\Repository;
+use Gametech\LogAdmin\Http\Traits\ActivityLogger;
 use Gametech\Member\Repositories\MemberCreditLogRepository;
 use Gametech\Member\Repositories\MemberRepository;
 use Gametech\Promotion\Repositories\PromotionRepository;
@@ -42,6 +43,7 @@ class PaymentPromotionRepository extends Repository
 
         $chk = $this->promotionRepository->findOneByField('id', 'pro_faststart');
         if ($chk->enable == 'N' || $chk->use_wallet == 'N' || $chk->active == 'N' || $chk->use_auto == 'N') {
+
             return false;
         }
 
@@ -49,22 +51,26 @@ class PaymentPromotionRepository extends Repository
 
         $upline_code = $user_topup->upline_code;
         $downline_code = $user_topup_code;
+        ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'เริ่มรายการ FASTSTART ให้กับ UPLINE CODE : '.$upline_code);
+
 
         if ($upline_code > 0) {
-            $cnt = $this->findWhere(['member_code' => $upline_code, 'downline_code' => $downline_code, 'pro_code' => $chk->code]);
-            if ($cnt->count() == 0) {
+            $cnt = $this->findOneWhere(['member_code' => $upline_code, 'downline_code' => $downline_code, 'pro_code' => $chk->code]);
+            if (empty($cnt)) {
                 $promotion = $this->promotionRepository->checkPromotionId("pro_faststart", $amount, $datenow);
                 $bonus = $promotion['bonus'];
                 $total = $promotion['total'];
                 if ($bonus > 0) {
 
+                    $member = $this->memberRepository->find($upline_code);
+
+                    $credit_before = $member['balance'];
+                    $credit_after = ($credit_before + $bonus);
+
+                    ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'เริ่มรายการ FASTSTART ให้กับ User : ' . $member->user_name);
+
                     DB::beginTransaction();
                     try {
-
-                        $member = $this->memberRepository->find($upline_code);
-
-                        $credit_before = $member['balance'];
-                        $credit_after = ($credit_before + $bonus);
 
                         $this->create([
                             'ip' => $ip,
@@ -114,12 +120,20 @@ class PaymentPromotionRepository extends Repository
                     } catch (Throwable $e) {
 
                         DB::rollBack();
+                        ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'ไม่สามารถทำรายการ FASTSTART ให้กับ User : ' . $member->user_name);
                         report($e);
                         return false;
                     }
                 }
             }
+
+            ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'ทำรายการ FASTSTART ให้กับ User : ' . $member->user_name. ' สำเร็จ');
+
+        }else{
+
+            ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'จบการทำงาน UPLINE CODE : ' . $upline_code);
         }
+
 
         return true;
 

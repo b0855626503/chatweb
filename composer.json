@@ -58,7 +58,8 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "platform-check": false
     },
     "extra": {
         "laravel": {
@@ -67,7 +68,8 @@
                 "facade/ignition",
                 "mockery/mockery",
                 "nunomaduro/collision",
-                "phpunit/phpunit"
+                "phpunit/phpunit",
+                "barryvdh/laravel-debugbar"
             ]
         }
     },

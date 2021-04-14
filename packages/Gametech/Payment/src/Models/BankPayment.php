@@ -6,7 +6,7 @@ use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
 use Gametech\Admin\Models\AdminProxy;
 use Gametech\Member\Models\MemberProxy;
-use Gametech\Payment\Contracts\BankPaymentContract as BankPaymentContract;
+use Gametech\Payment\Contracts\BankPayment as BankPaymentContract;
 use Gametech\Promotion\Models\PromotionProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;

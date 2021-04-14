@@ -314,6 +314,6 @@ class BankPaymentRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Payment\Contracts\BankPaymentContract';
+        return 'Gametech\Payment\Contracts\BankPayment';
     }
 }

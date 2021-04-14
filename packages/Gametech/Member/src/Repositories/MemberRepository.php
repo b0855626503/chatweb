@@ -208,9 +208,15 @@ class MemberRepository extends Repository
                 $acc = Str::of($data->atranferer)->replaceMatches('/[^0-9]/', '')->trim();
                 $value = Str::of($acc)->replace('*', '');
                 if(!$data->atranferer && !$value){
-                    $field = "bank_code = 4 and name like ?";
-                    $value = Str::of($data->detail)->after('นาย')->after('นาง')->after('นายสาว')->trim();
-                    $value = "%{$value}%";
+                    $acc_chk = explode(' ',$data->detail);
+
+
+                    $field = "bank_code = 4 and acc_check = ?";
+                    $value = Str::of($acc_chk[2])->replace('*', '');
+
+//                    $field = "bank_code = 4 and acc_check =  and name like ?";
+//                    $value = Str::of($data->detail)->after('นาย')->after('นาง')->after('นายสาว')->trim();
+//                    $value = "'%{$value}%'";
                 }
                 break;
             case 'kbank':

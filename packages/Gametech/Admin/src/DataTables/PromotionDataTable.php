@@ -35,8 +35,7 @@ class PromotionDataTable extends DataTable
     public function query(Promotion $model)
     {
 
-        $admin = (auth()->guard('admin')->user()->superadmin = 'N' ? true : false);
-
+        $admin = auth()->guard('admin')->user()->superadmin === 'N';
 
         return $model->newQuery()
             ->when($admin, function ($query) {

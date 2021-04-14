@@ -47,7 +47,7 @@ class MemberDataTable extends DataTable
 
 
         return $model->newQuery()
-            ->confirm()->active()
+            ->confirm()
             ->select('members.*')->with(['bank', 'up'])->withCount(['downs' => function ($model) {
                 $model->active();
             }])->withCasts([

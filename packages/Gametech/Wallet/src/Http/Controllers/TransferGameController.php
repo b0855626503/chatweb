@@ -358,7 +358,7 @@ class   TransferGameController extends AppBaseController
 
             if ($pro_limit >= $amount) {
 
-                $pro_id = $this->promotionRepository->checkSelectPro($promotion_id);
+//                $pro_id = $this->promotionRepository->checkSelectPro($promotion_id);
 
                 switch ($promotion_id) {
                     case 1:

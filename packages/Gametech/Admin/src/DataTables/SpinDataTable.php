@@ -3,8 +3,6 @@
 namespace Gametech\Admin\DataTables;
 
 
-
-
 use Gametech\Admin\Transformers\SpinTransformer;
 use Gametech\Core\Contracts\Spin;
 use Yajra\DataTables\DataTableAbstract;
@@ -54,7 +52,7 @@ class SpinDataTable extends DataTable
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->parameters([
-                'dom'       => 'Bfrtip',
+                'dom' => 'Bfrtip',
 
                 'processing' => true,
                 'serverSide' => true,
@@ -64,16 +62,44 @@ class SpinDataTable extends DataTable
                 'searching' => false,
                 'deferRender' => true,
                 'retrieve' => true,
-'ordering' => true,
+                'ordering' => true,
                 'autoWidth' => false,
                 'scrollX' => true,
-                'order'     => [[0, 'asc']],
-                'buttons'   => [
+                'order' => [[0, 'asc']],
+                'buttons' => [
                     'pageLength'
                 ],
                 'columnDefs' => [
-                    [ 'targets' => '_all' , 'className' => 'text-nowrap']
-                ]
+                    ['targets' => '_all', 'className' => 'text-nowrap']
+                ],
+                'footerCallback' => "function (row, data, start, end, display) {
+                           var api = this.api();
+
+                           var intVal = function ( i ) {
+                                return typeof i === 'string' ?
+                                    i.replace(/[\$,]/g, '')*1 :
+                                    typeof i === 'number' ?
+                                        i : 0;
+                            };
+
+                           api.columns().every(function (i) {
+                           if(i == 5){
+                           var sum = this.data()
+                                      .reduce(function(a, b) {
+                                        var x = intVal(a) || 0;
+                                        var y = intVal(b) || 0;
+                                        return x + y;
+                                      }, 0);
+
+                                    var n = new Number(sum);
+                                    var myObj = {
+                                        style: 'decimal'
+                                    };
+
+                                $(this.footer()).html(n.toLocaleString(myObj));
+                            }
+                            });
+                        }",
             ]);
     }
 
@@ -85,13 +111,13 @@ class SpinDataTable extends DataTable
     protected function getColumns()
     {
         return [
-            ['data' => 'code' , 'name' => 'spins_new.code' , 'title' => '#' , 'orderable' => true , 'searchable' => true , 'className' => 'text-center text-nowrap'],
-            ['data' => 'filepic' , 'name' => 'spins.filepic' , 'title' => 'ภาพ' , 'orderable' => false , 'searchable' => true , 'className' => 'text-center text-nowrap' ],
-            ['data' => 'types' , 'name' => 'spins.name' , 'title' => 'ประเภทรางวัล' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'name' , 'name' => 'spins.name' , 'title' => 'ขื่อรางวัล' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'amount' , 'name' => 'spins.amount' , 'title' => 'จำนวนที่ได้' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'winloss' , 'name' => 'spins.winloss' , 'title' => 'โอกาสออก' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'action' , 'name' => 'action' , 'title' => 'Action' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%' ],
+            ['data' => 'code', 'name' => 'spins_new.code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'filepic', 'name' => 'spins.filepic', 'title' => 'ภาพ', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'types', 'name' => 'spins.name', 'title' => 'ประเภทรางวัล', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+            ['data' => 'name', 'name' => 'spins.name', 'title' => 'ขื่อรางวัล', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+            ['data' => 'amount', 'name' => 'spins.amount', 'title' => 'จำนวนที่ได้', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'winloss', 'name' => 'spins.winloss', 'title' => 'โอกาสออก', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];
     }
 

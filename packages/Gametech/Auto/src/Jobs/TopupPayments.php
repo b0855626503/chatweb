@@ -27,30 +27,25 @@ class TopupPayments implements ShouldQueue
 
     protected $item;
 
-    public function __construct(
-        BankPayment $bankpayment,
-        AllLog $alllog
-    )
+    public function __construct($item)
     {
-
-        $this->bankpayment = $bankpayment->withoutRelations();
-        $this->alllog = $alllog->withoutRelations();
+        $this->item = $item;
 
     }
 
 
-    public function handle($item)
+    public function handle()
     {
-        $this->item = $item;
+//        $this->item = $item;
 
-        $payment = $this->bankpayment->where('code', $this->item)->where('status', 0)->where('autocheck', 'W')->firstOrFail();
+        $payment = BankPayment::where('code', $this->item)->where('status', 0)->where('autocheck', 'W')->firstOrFail();
 
         if (empty($payment)) {
             return false;
         }
 
 
-        $logs = $this->alllog->where('bank_payment_id', $payment->code);
+        $logs = AllLog::where('bank_payment_id', $payment->code);
         if ($logs->exists()) {
 
             $payment->autocheck = 'Y';
