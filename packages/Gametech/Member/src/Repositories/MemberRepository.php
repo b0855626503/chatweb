@@ -208,10 +208,13 @@ class MemberRepository extends Repository
                     $acc = Str::of($data->atranferer)->replaceMatches('/[^0-9]/', '')->trim();
                     $value = Str::of($acc)->replace('*', '');
                 }else{
-                    $field = "bank_code = 4 and acc_check = ?";
+
                     $acc_chk = explode(' ',$data->detail);
+                    $firstname = $acc_chk[4];
                     $acc = Str::of($acc_chk[2])->replaceMatches('/[^0-9]/', '')->trim();
                     $value = Str::of($acc)->replace('*', '');
+                    $field = "bank_code = 4 and firstname = '$firstname' and acc_check = ?";
+
                 }
 
                 break;
