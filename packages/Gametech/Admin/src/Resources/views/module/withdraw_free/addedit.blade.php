@@ -258,7 +258,9 @@
                             member_bank: response.data.data.bank.name_th,
                             member_bank_pic: '/storage/bank_img/' + response.data.data.bank.filepic,
                             amount: response.data.data.amount,
-                            fee: 0
+                            fee: 0,
+                            date_bank: moment().format('YYYY-MM-DD'),
+                            time_bank: moment().format('HH:mm'),
 
                         };
 
