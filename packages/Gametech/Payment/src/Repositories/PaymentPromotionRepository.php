@@ -59,7 +59,7 @@ class PaymentPromotionRepository extends Repository
         if ($upline_code > 0) {
             $cnt = $this->findOneWhere(['member_code' => $upline_code, 'downline_code' => $downline_code, 'pro_code' => $chk->code]);
             if (empty($cnt)) {
-                ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'เติมครั้งแรก !! กำลังเชคโบนัสให้กับ UPLINE CODE : '.$upline_code);
+                ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'เติมครั้งแรก '.$amount.' บาท !! กำลังเชคโบนัสให้กับ UPLINE CODE : '.$upline_code);
                 $promotion = $this->promotionRepository->checkPromotionId("pro_faststart", $amount, $datenow);
                 $bonus = $promotion['bonus'];
                 $total = $promotion['total'];
@@ -132,7 +132,7 @@ class PaymentPromotionRepository extends Repository
 
                 }else{
 
-                    ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'โบนัสคำนวนได้ 0 ?? อดโบนัสให้กับ UPLINE CODE : '.$upline_code);
+                    ActivityLogger::activitie('FASTSTART REFER ID : ' . $user_topup->user_name , 'โบนัสคำนวนได้ '.$bonus.' ?? อดโบนัสให้กับ UPLINE CODE : '.$upline_code);
 
                 }
             }else{

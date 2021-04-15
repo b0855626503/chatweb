@@ -178,19 +178,19 @@ class PromotionRepository extends Repository
         $order = array();
 
         $promotion = $this->findOneByField('id', $pro_id);
-        $id = $promotion['code'];
+        $id = $promotion->code;
 
 
-        if ($promotion) {
-            if ($amount < $promotion['bonus_min']) {
+        if (!empty($promotion)) {
+            if ($amount < $promotion->bonus_min) {
                 $pro_amount = 0.00;
             } else {
-                switch ($promotion['length_type']) {
+                switch ($promotion->length_type) {
                     case 'PRICE':
-                        $pro_amount = $promotion['bonus_price'];
+                        $pro_amount = $promotion->bonus_price;
                         break;
                     case 'PERCENT':
-                        $pro_amount = ($amount * $promotion['bonus_percent']) / 100;
+                        $pro_amount = ($amount * $promotion->bonus_percent) / 100;
                         break;
                     case 'TIME':
                         $order = $this->promotionTimeRepository->promotion($id, $date);
@@ -217,8 +217,8 @@ class PromotionRepository extends Repository
                         $pro_amount = ($amount * $order['amount']) / 100;
                         break;
                 }
-                if ($pro_amount > $promotion['bonus_max']) {
-                    $pro_amount = $promotion['bonus_max'];
+                if ($pro_amount > $promotion->bonus_max) {
+                    $pro_amount = $promotion->bonus_max;
                 }
             }
         }
@@ -236,26 +236,24 @@ class PromotionRepository extends Repository
             'BETWEENPC' => 'ช่วงระหว่างราคา จ่ายเป็น %'
         ];
 
-        if ($pro_amount > 0) {
+        if($pro_amount > 0) {
             $total = ($amount + $pro_amount);
 
             $result['pro_code'] = $id;
-            $result['pro_name'] = $promotion['name_th'];
-            $result['turnpro'] = $promotion['turnpro'];
-            $result['withdraw_limit'] = $promotion['withdraw_limit'];
+            $result['pro_name'] = $promotion->name_th;
+            $result['turnpro'] = $promotion->turnpro;
+            $result['withdraw_limit'] = $promotion->withdraw_limit;
             $result['total'] = $total;
             $result['bonus'] = $pro_amount;
-
-            $result['type'] = $type[$promotion['length_type']];
         } else {
             $result['pro_code'] = 0;
             $result['pro_name'] = '';
             $result['turnpro'] = 0;
             $result['withdraw_limit'] = 0;
             $result['total'] = $amount;
-            $result['bonus'] = 0;
-            $result['type'] = $type[$promotion['length_type']];
+            $result['bonus'] = 0.00;
         }
+        $result['type'] = $type[$promotion->length_type];
 
         return $result;
     }

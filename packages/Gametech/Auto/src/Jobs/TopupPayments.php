@@ -55,7 +55,7 @@ class TopupPayments implements ShouldQueue
             return false;
         }
 
-        app('Gametech\Payment\Repositories\PaymentPromotionRepository')->checkFastStart($payment->amount, $payment->member_topup, $payment->code);
+        app('Gametech\Payment\Repositories\PaymentPromotionRepository')->checkFastStart($payment->value, $payment->member_topup, $payment->code);
         return app('Gametech\Payment\Repositories\BankPaymentRepository')->refillPayment(collect($payment)->toArray());
 
     }
