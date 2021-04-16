@@ -384,6 +384,19 @@ class PromotionRepository extends Repository
         return 'Gametech\Promotion\Contracts\Promotion';
     }
 
+    public function createnew(array $data)
+    {
+        $reward = $this->create($data);
+
+        $order = $this->find($reward->code);
+
+
+        $this->uploadImages($data, $order);
+
+
+        return $order;
+    }
+
     public function updatenew(array $data, $id, $attribute = "id")
     {
         $order = $this->find($id);

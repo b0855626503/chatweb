@@ -624,6 +624,8 @@ Route::domain(config('app.admin_url') . '.' . config('app.domain_url'))->group(f
 
                 Route::post('create', $route['controller'] . '@create')->name('admin.' . $route['name'] . '.create');
 
+                Route::post('createsub', $route['controller'] . '@createsub')->name('admin.' . $route['name'] . '.createsub');
+
                 Route::post('loaddata', $route['controller'] . '@loadData')->name('admin.' . $route['name'] . '.loaddata');
 
                 Route::post('loadpro', $route['controller'] . '@loadPro')->name('admin.' . $route['name'] . '.loadpro');
@@ -633,6 +635,8 @@ Route::domain(config('app.admin_url') . '.' . config('app.domain_url'))->group(f
                 Route::post('update/{id?}', $route['controller'] . '@update')->name('admin.' . $route['name'] . '.update');
 
                 Route::post('delete', $route['controller'] . '@destroy')->name('admin.' . $route['name'] . '.delete');
+
+                Route::post('deletesub', $route['controller'] . '@destroysub')->name('admin.' . $route['name'] . '.deletesub');
 
             });
 

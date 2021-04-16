@@ -81,6 +81,23 @@ class PromotionController extends AppBaseController
     public function create(Request $request)
     {
         $user = $this->user()->name . ' ' . $this->user()->surname;
+
+        $data = json_decode($request['data'], true);
+
+
+
+        $data['user_create'] = $user;
+        $data['user_update'] = $user;
+
+        $this->repository->createnew($data);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function createsub(Request $request)
+    {
+        $user = $this->user()->name . ' ' . $this->user()->surname;
         $id = $request->input('id');
         $data = $request->input('data');
         $table = $request->input('table');
@@ -147,6 +164,21 @@ class PromotionController extends AppBaseController
     }
 
     public function destroy(Request $request)
+    {
+        $id = $request->input('id');
+
+        $chk = $this->repository->find($id);
+
+        if(!$chk){
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        }
+
+        $this->repository->delete($id);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+    }
+
+    public function destroysub(Request $request)
     {
         $id = $request->input('id');
         $table = $request->input('method');

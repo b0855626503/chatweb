@@ -559,7 +559,7 @@
                         })
                             .then(value => {
                                 if (value) {
-                                    this.$http.post("{{ url($menu->currentRoute.'/delete') }}", {
+                                    this.$http.post("{{ url($menu->currentRoute.'/deletesub') }}", {
                                         id: code, method: table
                                     })
                                         .then(response => {
@@ -700,7 +700,7 @@
                     addEditSubmitNewSub(event) {
                         event.preventDefault();
 
-                        var url = "{{ url($menu->currentRoute.'/create') }}";
+                        var url = "{{ url($menu->currentRoute.'/createsub') }}";
 
                         this.$http.post(url, {id: this.code, data: this.formsub, table: this.table})
                             .then(response => {
