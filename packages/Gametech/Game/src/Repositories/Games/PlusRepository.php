@@ -213,12 +213,12 @@ class PlusRepository extends Repository
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
         } else {
-
+            $transID = "DP" . date('YmdHis');
             $before = $this->viewBalance($username);
 
             $param = [
                 'account' => $username,
-                'setScore' => strval($before['score'])
+                'setScore' => strval($score)
             ];
 
             $response = $this->GameCurl($param, 'setScore');
@@ -226,6 +226,7 @@ class PlusRepository extends Repository
             if ($this->debug) {
                 $return = $this->Debug($response);
             }
+
 
             if ($response->successful()) {
                 $response = $response->json();
@@ -235,7 +236,7 @@ class PlusRepository extends Repository
                     $after = $this->viewBalance($username);
 
                     $return['success'] = true;
-                    $return['ref_id'] = $response['acc'];
+                    $return['ref_id'] = (isset($response['acc']) ? : $transID);
                     $return['after'] = $after['score'];
                     $return['before'] = $before['score'];
 
@@ -258,7 +259,7 @@ class PlusRepository extends Repository
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
         } else {
-
+            $transID = "WD" . date('YmdHis');
             $before = $this->viewBalance($username);
 
             $score = ($score * -1);
@@ -282,7 +283,7 @@ class PlusRepository extends Repository
                     $after = $this->viewBalance($username);
 
                     $return['success'] = true;
-                    $return['ref_id'] = $response['acc'];
+                    $return['ref_id'] = (isset($response['acc']) ? : $transID);
                     $return['after'] = $after['score'];
                     $return['before'] = $before['score'];
 

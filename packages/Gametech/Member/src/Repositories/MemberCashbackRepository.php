@@ -4,12 +4,16 @@ namespace Gametech\Member\Repositories;
 
 use Exception;
 use Gametech\Core\Eloquent\Repository;
+use Gametech\LogAdmin\Http\Traits\ActivityLogger;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Throwable;
 
 class MemberCashbackRepository extends Repository
 {
+    use ActivityLogger;
+
     private $memberRepository;
 
     private $memberFreeCreditRepository;
@@ -55,13 +59,16 @@ class MemberCashbackRepository extends Repository
             }
         }
 
+        $member = $this->memberRepository->findOrFail($downline_code);
+
+        $total = ($member->balance_free + $cashback);
+
+        ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name , 'เริ่มรายการ CASHBACK');
+
+
         DB::beginTransaction();
         try {
-            Event::dispatch('customer.cashback.before', $data);
 
-            $member = $this->memberRepository->sharedLock()->find($downline_code);
-
-            $total = ($member->balance_free + $cashback);
 
             if($chk){
                 $bill = $this->update([
@@ -117,16 +124,18 @@ class MemberCashbackRepository extends Repository
 
             $member->balance_free = $total;
             $member->save();
+            DB::commit();
 
-            Event::dispatch('customer.cashback.after', $bill);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
+            ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name , 'พบข้อผิดพลาด CASHBACK');
+
             report($e);
             return false;
         }
 
-        DB::commit();
+        ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name , 'ทำรายการ CASHBACK สำเร็จ');
 
         return true;
     }

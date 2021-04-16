@@ -52,7 +52,7 @@ class Cashback extends Command
 
         $promotion = DB::table('promotions')->where('id', 'pro_cashback')->first();
 
-        if ($promotion->enable != 'Y' && $promotion->active != 'Y' && $promotion->use_auto != 'Y') {
+        if ($promotion->enable != 'Y' || $promotion->active != 'Y' || $promotion->use_auto != 'Y') {
             return false;
         }
 

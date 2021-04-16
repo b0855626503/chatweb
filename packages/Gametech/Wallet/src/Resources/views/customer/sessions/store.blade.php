@@ -23,8 +23,8 @@
                                 <input type="hidden" id="upline" name="upline" value="{!! $id !!}">
 
                             @endif
-                            <input type="hidden" id="firstname" name="firstname">
-                            <input type="hidden" id="lastname" name="lastname">
+{{--                            <input type="hidden" id="firstname" name="firstname">--}}
+{{--                            <input type="hidden" id="lastname" name="lastname">--}}
                             <div class="card-body" id="zone-acc">
 
                                 <div class="form-group">
@@ -64,13 +64,13 @@
                                     <span class="control-error" v-if="errors.has('acc_no')">@{{ errors.first('acc_no') }}</span>
 
                                 </div>
-                                <button type="button" role="button" id="btnverify" class="btn btn-info btn-block" style="border: none"><i
-                                        class="fa fa-check"></i> ตรวจสอบบัญชี
-                                </button>
+{{--                                <button type="button" role="button" id="btnverify" class="btn btn-info btn-block" style="border: none"><i--}}
+{{--                                        class="fa fa-check"></i> ตรวจสอบบัญชี--}}
+{{--                                </button>--}}
 
                             </div>
 
-                            <div class="card-body" id="zone-user" style="display:none">
+                            <div class="card-body" id="zone-user">
                                 <div class="form-group">
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
@@ -78,19 +78,21 @@
                                 <i class="fal fa-user"></i>
                             </span>
                                         </div>
-                                        <input autocomplete="off" class="form-control" id="firstname_tmp"
+                                        <input autocomplete="off" class="form-control" id="firstname"
+                                               name="firstname"
                                                v-validate="'required'"
                                                :class="[errors.has('firstname') ? 'is-invalid' : '']"
                                                data-vv-as="&quot;firstname&quot;"
-                                               value=""
-                                               placeholder="ชื่อ" type="text" readonly>
+                                               value="{{ old('firstname') }}"
+                                               placeholder="ชื่อ" type="text">
                                         <input autocomplete="off"
+                                               name="lastname"
                                                class="form-control"
                                                v-validate="'required'"
-                                               value=""
+                                               value="{{ old('lastname') }}"
                                                :class="[errors.has('lastname') ? 'is-invalid' : '']"
-                                               id="lastname_tmp" placeholder="นามสกุล" type="text"
-                                               readonly>
+                                               id="lastname" placeholder="นามสกุล" type="text"
+                                               >
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -215,12 +217,12 @@
                                 </div>
                             </div>
 
-                            <div class="card-body">
-                                <p class="control-error" v-if="errors.has('acc_no')">@{{ errors.first('acc_no') }}</p>
-                                <p class="control-error"
-                                   v-if="errors.has('tel')">@{{ errors.first('tel') }}</p>
-                                <p class="control-error" v-if="errors.has('user_name')">@{{ errors.first('user_name') }}</p>
-                            </div>
+{{--                            <div class="card-body">--}}
+{{--                                <p class="control-error" v-if="errors.has('acc_no')">@{{ errors.first('acc_no') }}</p>--}}
+{{--                                <p class="control-error"--}}
+{{--                                   v-if="errors.has('tel')">@{{ errors.first('tel') }}</p>--}}
+{{--                                <p class="control-error" v-if="errors.has('user_name')">@{{ errors.first('user_name') }}</p>--}}
+{{--                            </div>--}}
 
 
                         </form>

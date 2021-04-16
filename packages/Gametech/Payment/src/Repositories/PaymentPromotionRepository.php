@@ -44,7 +44,7 @@ class PaymentPromotionRepository extends Repository
         $ip = request()->ip();
 
         $chk = $this->promotionRepository->findOneByField('id', 'pro_faststart');
-        if ($chk->enable == 'N' || $chk->use_wallet == 'N' || $chk->active == 'N' || $chk->use_auto == 'N') {
+        if ($chk->enable != 'Y' || $chk->active != 'Y' || $chk->use_auto != 'Y') {
 
             return false;
         }

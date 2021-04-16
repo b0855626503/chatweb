@@ -155,9 +155,9 @@
                 <b-col>
                     <b-form-group
                         id="input-group-bonus_min"
-                        label="ยอดขั้นต่ำ:"
+                        label="ยอดโบนัสขั้นต่ำ:"
                         label-for="bonus_min"
-                        description="">
+                        description="โบนัสที่ได้ต้องมากกว่าขั้นต่ำ">
                         <b-form-input
                             id="bonus_min"
                             v-model="formaddedit.bonus_min"
@@ -173,9 +173,9 @@
 
                     <b-form-group
                         id="input-group-bonus_max"
-                        label="ยอดสูงสุด:"
+                        label="ยอดโบนัสสูงสุด:"
                         label-for="bonus_max"
-                        description="">
+                        description="โบนัสที่ได้จะไม่มากกว่าสูงสุด">
                         <b-form-input
                             id="bonus_max"
                             v-model="formaddedit.bonus_max"
