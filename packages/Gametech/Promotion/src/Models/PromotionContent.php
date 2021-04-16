@@ -4,8 +4,6 @@ namespace Gametech\Promotion\Models;
 
 use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
-use Gametech\Payment\Models\BillProxy;
-use Gametech\Payment\Models\PaymentWaitingProxy;
 use Gametech\Promotion\Contracts\PromotionContent as PromotionContentContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -73,15 +71,13 @@ class PromotionContent extends Model implements PromotionContentContract
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
-
-
 
 
 }

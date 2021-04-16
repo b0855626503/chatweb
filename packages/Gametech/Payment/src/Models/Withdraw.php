@@ -6,10 +6,9 @@ use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
 use Gametech\Admin\Models\AdminProxy;
 use Gametech\Member\Models\MemberProxy;
-
+use Gametech\Payment\Contracts\Withdraw as WithdrawContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Gametech\Payment\Contracts\Withdraw as WithdrawContract;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -154,22 +153,22 @@ class Withdraw extends Model implements WithdrawContract
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
 
     public function scopeWaiting($query)
     {
-        return $query->where('status',0);
+        return $query->where('status', 0);
     }
 
     public function scopeComplete($query)
     {
-        return $query->where('status',1);
+        return $query->where('status', 1);
     }
 
     public function bank(): BelongsTo
@@ -189,7 +188,7 @@ class Withdraw extends Model implements WithdrawContract
 
     public function bills(): HasMany
     {
-        return $this->hasMany(BillProxy::modelClass(), 'member_code','member_code');
+        return $this->hasMany(BillProxy::modelClass(), 'member_code', 'member_code');
     }
 
     public function member_wallet(): MorphMany

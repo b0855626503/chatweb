@@ -158,7 +158,7 @@ class BankPayment extends Model implements BankPaymentContract
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('bank_payment.code', '<>', 0);
+            $builder->where('code', '<>', 0);
         });
     }
 

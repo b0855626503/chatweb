@@ -4,9 +4,8 @@ namespace Gametech\Payment\Models;
 
 use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
-use Illuminate\Database\Eloquent\Model;
-
 use Gametech\Payment\Contracts\PaymentLogFree as PaymentLogFreeContract;
+use Illuminate\Database\Eloquent\Model;
 
 class PaymentLogFree extends Model implements PaymentLogFreeContract
 {

@@ -93,12 +93,12 @@ class BonusSpin extends Model implements BonusSpinContract
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
 
     public function member()

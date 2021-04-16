@@ -92,32 +92,32 @@ class PaymentWaiting extends Model implements PaymentWaitingContract
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
 
     public function scopeWaiting($query)
     {
-        return $query->where('confirm','X');
+        return $query->where('confirm', 'X');
     }
 
     public function scopeComplete($query)
     {
-        return $query->where('confirm','Y');
+        return $query->where('confirm', 'Y');
     }
 
     public function scopeReject($query)
     {
-        return $query->where('confirm','N');
+        return $query->where('confirm', 'N');
     }
 
     public function member()
     {
-        return $this->belongsTo(MemberProxy::modelClass(),'member_code');
+        return $this->belongsTo(MemberProxy::modelClass(), 'member_code');
     }
 
 

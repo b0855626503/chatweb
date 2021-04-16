@@ -3,8 +3,8 @@
 namespace Gametech\Payment\Models;
 
 use DateTimeInterface;
-use Illuminate\Database\Eloquent\Model;
 use Gametech\Payment\Contracts\Payment as PaymentContract;
+use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model implements PaymentContract
 {

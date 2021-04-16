@@ -4,10 +4,10 @@ namespace Gametech\Promotion\Models;
 
 use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
+use Gametech\Promotion\Contracts\PromotionTime as PromotionTimeContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Webkul\Product\Models\ProductProxy;
-use Gametech\Promotion\Contracts\PromotionTime as PromotionTimeContract;
+
 
 class PromotionTime extends Model implements PromotionTimeContract
 {
@@ -44,11 +44,11 @@ class PromotionTime extends Model implements PromotionTimeContract
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
 }

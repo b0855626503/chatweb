@@ -151,22 +151,22 @@ class WithdrawFree extends Model implements WithdrawFreeContract
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
 
     public function scopeWaiting($query)
     {
-        return $query->where('status',0);
+        return $query->where('status', 0);
     }
 
     public function scopeComplete($query)
     {
-        return $query->where('status',1);
+        return $query->where('status', 1);
     }
 
     public function bank(): BelongsTo
@@ -186,7 +186,7 @@ class WithdrawFree extends Model implements WithdrawFreeContract
 
     public function bills()
     {
-        return $this->hasMany(BillFreeProxy::modelClass(), 'member_code','member_code');
+        return $this->hasMany(BillFreeProxy::modelClass(), 'member_code', 'member_code');
     }
 
     public function member_credit()

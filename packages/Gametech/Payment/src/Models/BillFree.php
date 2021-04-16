@@ -2,18 +2,15 @@
 
 namespace Gametech\Payment\Models;
 
-use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use Awobaz\Compoships\Compoships;
 use DateTimeInterface;
 use Gametech\Game\Models\GameProxy;
 use Gametech\Game\Models\GameUserFreeProxy;
-
-use Gametech\Game\Models\GameUserProxy;
 use Gametech\Member\Models\MemberProxy;
+use Gametech\Payment\Contracts\BillFree as BillFreeContract;
 use Gametech\Promotion\Models\PromotionProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Gametech\Payment\Contracts\BillFree as BillFreeContract;
 
 class BillFree extends Model implements BillFreeContract
 {
@@ -86,7 +83,6 @@ class BillFree extends Model implements BillFreeContract
     ];
 
 
-
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
@@ -95,20 +91,19 @@ class BillFree extends Model implements BillFreeContract
     }
 
 
-
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
 
     public function scopeGetpro($query)
     {
-        return $query->where('pro_code','>',0);
+        return $query->where('pro_code', '>', 0);
     }
 
     public function member()
@@ -128,7 +123,7 @@ class BillFree extends Model implements BillFreeContract
 
     public function games()
     {
-        return $this->hasMany(GameProxy::modelClass(), 'code','game_code');
+        return $this->hasMany(GameProxy::modelClass(), 'code', 'game_code');
     }
 
     public function withdraws()
@@ -143,11 +138,11 @@ class BillFree extends Model implements BillFreeContract
 
     public function game_user()
     {
-        return $this->belongsTo(GameUserFreeProxy::modelClass(),['member_code', 'game_code'],['member_code', 'game_code']);
+        return $this->belongsTo(GameUserFreeProxy::modelClass(), ['member_code', 'game_code'], ['member_code', 'game_code']);
     }
 
     public function gamesUser()
     {
-        return $this->hasMany(GameUserFreeProxy::modelClass(),'member_code','member_code')->where('game_code',$this->game_code);
+        return $this->hasMany(GameUserFreeProxy::modelClass(), 'member_code', 'member_code')->where('game_code', $this->game_code);
     }
 }
