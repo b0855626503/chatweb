@@ -2,14 +2,16 @@
 
 namespace Gametech\Member\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
+use Gametech\LogAdmin\Http\Traits\ActivityLogger;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Throwable;
 
 class MemberIcRepository extends Repository
 {
+    use ActivityLogger;
+
     private $memberRepository;
 
     private $memberFreeCreditRepository;
@@ -48,22 +50,25 @@ class MemberIcRepository extends Repository
         $emp_code = $data['emp_code'];
         $emp_name = $data['emp_name'];
 
-        $chk = $this->findOneWhere(['date_cashback' => $date_cashback , 'member_code' => $member_code , 'downline_code' => $downline_code]);
-        if($chk){
-            if($chk->topupic == 'Y' || $chk->topupic == 'X'){
+        $chk = $this->findOneWhere(['date_cashback' => $date_cashback, 'member_code' => $member_code, 'downline_code' => $downline_code]);
+        if ($chk) {
+            if ($chk->topupic == 'Y' || $chk->topupic == 'X') {
                 return false;
             }
         }
 
+        $member = $this->memberRepository->findOrFail($member_code);
+
+        $total = ($member->balance_free + $cashback);
+
+        ActivityLogger::activitie('IC REFER USER : ' . $member->user_name, 'เริ่มรายการ IC');
+
+
         DB::beginTransaction();
         try {
-            Event::dispatch('customer.ic.before', $data);
 
-            $member = $this->memberRepository->sharedLock()->find($member_code);
 
-            $total = ($member->balance_free + $cashback);
-
-            if($chk){
+            if ($chk) {
                 $bill = $this->update([
                     'member_code' => $member_code,
                     'downline_code' => $downline_code,
@@ -77,12 +82,12 @@ class MemberIcRepository extends Repository
                     'date_approve' => now()->toDateTimeString(),
                     'user_create' => $emp_name,
                     'user_update' => $emp_name
-                ],$chk->code);
+                ], $chk->code);
 
-                if($bill->wasChanged()){
+                if ($bill->wasChanged()) {
                     $bill->code = $chk->code;
                 }
-            }else{
+            } else {
                 $bill = $this->create([
                     'member_code' => $member_code,
                     'downline_code' => $downline_code,
@@ -108,7 +113,7 @@ class MemberIcRepository extends Repository
                 'credit_balance' => $total,
                 'member_code' => $member_code,
                 'kind' => 'IC',
-                'remark' => "เติม IC อ้างอิง record : ".$bill->code,
+                'remark' => "เติม IC อ้างอิง record : " . $bill->code,
                 'emp_code' => $emp_code,
                 'user_create' => $emp_name,
                 'user_update' => $emp_name,
@@ -116,16 +121,19 @@ class MemberIcRepository extends Repository
 
             $member->balance_free = $total;
             $member->save();
+            DB::commit();
 
-            Event::dispatch('customer.ic.after', $bill);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
+            ActivityLogger::activitie('IC REFER USER : ' . $member->user_name, 'พบข้อผิดพลาด IC');
+
             report($e);
             return false;
         }
 
-        DB::commit();
+        ActivityLogger::activitie('IC REFER USER : ' . $member->user_name, 'ทำรายการ IC สำเร็จ');
+
 
         return true;
     }

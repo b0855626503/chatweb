@@ -2,11 +2,10 @@
 
 namespace Gametech\Member\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Throwable;
 
 class MemberPointLogRepository extends Repository
 {
@@ -21,17 +20,18 @@ class MemberPointLogRepository extends Repository
         $this->memberRepository = $memberRepo;
         parent::__construct($app);
     }
+
     /**
      * Specify Model class name
      *
-     * @return mixed
+     * @return string
      */
-    function model()
+    function model(): string
     {
         return 'Gametech\Member\Contracts\MemberPointLog';
     }
 
-    public function setPoint(array $data)
+    public function setPoint(array $data): bool
     {
 
         $ip = request()->ip();
@@ -43,23 +43,21 @@ class MemberPointLogRepository extends Repository
         $emp_code = $data['emp_code'];
         $emp_name = $data['emp_name'];
 
+        $member = $this->memberRepository->findOrFail($member_code);
+
+        if ($method == 'D') {
+            $credit_balance = ($member->point_deposit + $amount);
+        } elseif ($method == 'W') {
+            $credit_balance = ($member->point_deposit - $amount);
+            if ($credit_balance < 0) {
+                return false;
+            }
+        }
+
         DB::beginTransaction();
         try {
-            Event::dispatch('customer.set.point.before', $data);
 
-            $member = $this->memberRepository->sharedLock()->find($member_code);
-
-            if($method == 'D'){
-                $credit_balance = ($member->point_deposit + $amount);
-            }elseif($method == 'W'){
-                $credit_balance = ($member->point_deposit - $amount);
-                if($credit_balance < 0){
-                    return false;
-                }
-            }
-
-
-            $bill = $this->create([
+            $this->create([
                 'point_type' => $method,
                 'point_amount' => $amount,
                 'point_before' => $member->point_deposit,
@@ -75,15 +73,13 @@ class MemberPointLogRepository extends Repository
             $member->point_deposit = $credit_balance;
             $member->save();
 
-            Event::dispatch('customer.set.point.after', $bill);
+            DB::commit();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
-
+            report($e);
             return false;
         }
-
-        DB::commit();
 
         return true;
     }

@@ -2,12 +2,10 @@
 
 namespace Gametech\Member\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Gametech\LogAdmin\Http\Traits\ActivityLogger;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Throwable;
 
 class MemberCashbackRepository extends Repository
@@ -52,9 +50,9 @@ class MemberCashbackRepository extends Repository
         $emp_code = $data['emp_code'];
         $emp_name = $data['emp_name'];
 
-        $chk = $this->findOneWhere(['date_cashback' => $date_cashback , 'downline_code' => $downline_code]);
-        if($chk){
-            if($chk->topupic == 'Y' || $chk->topupic == 'X'){
+        $chk = $this->findOneWhere(['date_cashback' => $date_cashback, 'downline_code' => $downline_code]);
+        if ($chk) {
+            if ($chk->topupic == 'Y' || $chk->topupic == 'X') {
                 return false;
             }
         }
@@ -63,14 +61,14 @@ class MemberCashbackRepository extends Repository
 
         $total = ($member->balance_free + $cashback);
 
-        ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name , 'เริ่มรายการ CASHBACK');
+        ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name, 'เริ่มรายการ CASHBACK');
 
 
         DB::beginTransaction();
         try {
 
 
-            if($chk){
+            if ($chk) {
                 $bill = $this->update([
                     'member_code' => $member_code,
                     'downline_code' => $downline_code,
@@ -84,13 +82,13 @@ class MemberCashbackRepository extends Repository
                     'date_approve' => now()->toDateTimeString(),
                     'user_create' => $emp_name,
                     'user_update' => $emp_name
-                ],$chk->code);
+                ], $chk->code);
 
-                if($bill->wasChanged()){
+                if ($bill->wasChanged()) {
                     $bill->code = $chk->code;
                 }
 
-            }else {
+            } else {
                 $bill = $this->create([
                     'member_code' => $member_code,
                     'downline_code' => $downline_code,
@@ -116,7 +114,7 @@ class MemberCashbackRepository extends Repository
                 'credit_balance' => $total,
                 'member_code' => $downline_code,
                 'kind' => 'CASHBACK',
-                'remark' => "เติม Cashback อ้างอิง record : ".$bill->code,
+                'remark' => "เติม Cashback อ้างอิง record : " . $bill->code,
                 'emp_code' => $emp_code,
                 'user_create' => $emp_name,
                 'user_update' => $emp_name,
@@ -129,13 +127,13 @@ class MemberCashbackRepository extends Repository
 
         } catch (Throwable $e) {
             DB::rollBack();
-            ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name , 'พบข้อผิดพลาด CASHBACK');
+            ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name, 'พบข้อผิดพลาด CASHBACK');
 
             report($e);
             return false;
         }
 
-        ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name , 'ทำรายการ CASHBACK สำเร็จ');
+        ActivityLogger::activitie('CASHBACK REFER USER : ' . $member->user_name, 'ทำรายการ CASHBACK สำเร็จ');
 
         return true;
     }

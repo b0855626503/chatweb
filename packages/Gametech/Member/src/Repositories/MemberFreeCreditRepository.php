@@ -2,11 +2,10 @@
 
 namespace Gametech\Member\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Throwable;
 
 class MemberFreeCreditRepository extends Repository
 {
@@ -21,6 +20,7 @@ class MemberFreeCreditRepository extends Repository
         $this->memberRepository = $memberRepo;
         parent::__construct($app);
     }
+
     /**
      * Specify Model class name
      *
@@ -44,21 +44,20 @@ class MemberFreeCreditRepository extends Repository
         $emp_name = $data['emp_name'];
         $kind = $data['kind'];
 
-        DB::beginTransaction();
-        try {
-            Event::dispatch('customer.set.credit.before', $data);
+        $member = $this->memberRepository->findOrFail($member_code);
 
-            $member = $this->memberRepository->sharedLock()->find($member_code);
-
-            if($method == 'D'){
-                $credit_balance = ($member->balance_free + $amount);
-            }elseif($method == 'W'){
-                $credit_balance = ($member->balance_free - $amount);
-                if($credit_balance < 0){
-                    return false;
-                }
+        if ($method == 'D') {
+            $credit_balance = ($member->balance_free + $amount);
+        } elseif ($method == 'W') {
+            $credit_balance = ($member->balance_free - $amount);
+            if ($credit_balance < 0) {
+                return false;
             }
+        }
 
+        DB::beginTransaction();
+
+        try {
 
             $bill = $this->create([
                 'credit_type' => $method,
@@ -79,15 +78,13 @@ class MemberFreeCreditRepository extends Repository
             $member->balance_free = $credit_balance;
             $member->save();
 
-            Event::dispatch('customer.set.credit.after', $bill);
+            DB::commit();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
-
+            report($e);
             return false;
         }
-
-        DB::commit();
 
         return true;
     }

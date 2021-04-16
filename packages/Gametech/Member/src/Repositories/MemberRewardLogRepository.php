@@ -2,12 +2,12 @@
 
 namespace Gametech\Member\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Gametech\Core\Repositories\RewardRepository;
+use Gametech\Member\Contracts\MemberRewardLog;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
-use Gametech\Member\Contracts\MemberRewardLog;
+use Throwable;
 
 class MemberRewardLogRepository extends Repository
 {
@@ -34,33 +34,32 @@ class MemberRewardLogRepository extends Repository
     /**
      * Specify Model class name
      *
-     * @return mixed
+     * @return string
      */
-    function model()
+    function model(): string
     {
         return MemberRewardLog::class;
     }
 
-    public function exchangeReward($id, $user)
+    public function exchangeReward($id, $user): array
     {
         $result['success'] = false;
         $result['message'] = '';
 
         $ip = request()->ip();
 
+        $member = $this->memberRepository->find($user->code);
+        $reward = $this->rewardRepository->find($id);
 
+        if ($member->point_deposit < $reward->points) {
+            $result['message'] = 'Point ไม่เพียงพอ';
+            return $result;
+        }
+
+        $total = ($member->point_deposit - $reward->points);
+
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
-
-            $member = $this->memberRepository->sharedLock()->find($user->code);
-            $reward = $this->rewardRepository->find($id);
-
-            if ($member->point_deposit < $reward->points) {
-                $result['message'] = 'Point ไม่เพียงพอ';
-                return $result;
-            }
-
-            $total = ($member->point_deposit - $reward->points);
 
             $bill = $this->create([
                 'member_code' => $member->code,
@@ -93,7 +92,7 @@ class MemberRewardLogRepository extends Repository
             $member->save();
             DB::commit();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             report($e);
             $result['message'] = 'พบข้อผิดพลาดในการทำรายการ';

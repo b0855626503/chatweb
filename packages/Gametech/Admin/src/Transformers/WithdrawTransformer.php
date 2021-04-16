@@ -31,7 +31,7 @@ class WithdrawTransformer extends TransformerAbstract
             'bonus' => (!is_null($model->bills->first()) ? (is_null($model->bills->first()->promotion) ? '' : $model->bills->first()->promotion['name_th']) . ' [' . $model->bills->first()->date_create->format('d/m/Y') . ']' : ''),
             'status' => $status[$model->status],
             'date_approve' => ($model->date_approve === '0000-00-00 00:00:00' || is_null($model->date_approve) ? '' : $model->date_approve->format('d/m/y H:i:s')),
-            'emp_approve' => ($model->emp_approve == 0 ? '' : $model->admin->user_name),
+            'emp_approve' => ($model->emp_approve == 0 ? '' : (is_null($model->admin) ? '' : $model->admin->user_name)),
             'waiting' => view('admin::module.withdraw.datatables_confirm', ['code' => $model->code , 'status' => $model->status ])->render(),
             'cancel' => view('admin::module.withdraw.datatables_cancel', ['code' => $model->code , 'status' => $model->status ])->render(),
             'delete' => view('admin::module.withdraw.datatables_delete', ['code' => $model->code , 'status' => $model->status ])->render()

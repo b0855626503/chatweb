@@ -182,8 +182,36 @@ class RpMemberIcDataTable extends DataTable
                     'pageLength'
                 ],
                 'columnDefs' => [
-                    ['targets' => '_all', 'className' => 'text-center text-nowrap']
-                ]
+                    ['targets' => '_all', 'className' => 'text-nowrap']
+                ],
+                'footerCallback' => "function (row, data, start, end, display) {
+                           var api = this.api();
+
+                           var intVal = function ( i ) {
+                                return typeof i === 'string' ?
+                                    i.replace(/[\$,]/g, '')*1 :
+                                    typeof i === 'number' ?
+                                        i : 0;
+                            };
+
+                           api.columns().every(function (i) {
+                           if(i == 10){
+                           var sum = this.data()
+                                      .reduce(function(a, b) {
+                                        var x = intVal(a) || 0;
+                                        var y = intVal(b) || 0;
+                                        return x + y;
+                                      }, 0);
+
+                                    var n = new Number(sum);
+                                    var myObj = {
+                                        style: 'decimal'
+                                    };
+
+                                $(this.footer()).html(n.toLocaleString(myObj));
+                            }
+                            });
+                        }",
             ]);
     }
 

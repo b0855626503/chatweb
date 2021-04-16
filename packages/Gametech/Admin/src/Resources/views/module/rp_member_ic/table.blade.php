@@ -53,35 +53,35 @@
     </script>
     @include('admin::layouts.datatables_js')
     {!! $dataTable->scripts() !!}
-{{--    <script>--}}
-{{--        $(function () {--}}
+    <script>
+        $(function () {
 
-{{--            var table = window.LaravelDataTables["dataTableBuilder"];--}}
-{{--            window.LaravelDataTables["dataTableBuilder"].on('draw', function () {--}}
-{{--                $("#customfooter tbody").html('');--}}
+            var table = window.LaravelDataTables["dataTableBuilder"];
+            window.LaravelDataTables["dataTableBuilder"].on('draw', function () {
+                $("#customfooter tbody").html('');
 
-{{--                let html = '<tr>';--}}
-{{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดฝาก (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().deposit + '</th>';--}}
-{{--                html += '</tr>';--}}
-{{--                html += '<tr>';--}}
-{{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดถอน (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().withdraw + '</th>';--}}
-{{--                html += '</tr>';--}}
-{{--                html += '<tr>';--}}
-{{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดโบนัส (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().bonus + '</th>';--}}
-{{--                html += '</tr>';--}}
-{{--                html += '<tr>';--}}
-{{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดเสีย (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().totals + '</th>';--}}
-{{--                html += '</tr>';--}}
-{{--                html += '<tr>';--}}
-{{--                html += '<th style="text-align:right;width:80%;color:blue">รวม IC (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().cashback + '</th>';--}}
-{{--                html += '</tr>';--}}
+                let html = '<tr>';
+                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดฝาก (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().deposit + '</th>';
+                html += '</tr>';
+                html += '<tr>';
+                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดถอน (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().withdraw + '</th>';
+                html += '</tr>';
+                html += '<tr>';
+                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดโบนัส (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().bonus + '</th>';
+                html += '</tr>';
+                html += '<tr>';
+                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดเสีย (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().totals + '</th>';
+                html += '</tr>';
+                html += '<tr>';
+                html += '<th style="text-align:right;width:80%;color:blue">รวม IC (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().cashback + '</th>';
+                html += '</tr>';
 
-{{--                $("#customfooter tbody").append(html);--}}
-
-
-{{--            });--}}
+                $("#customfooter tbody").append(html);
 
 
-{{--        });--}}
-{{--    </script>--}}
+            });
+
+
+        });
+    </script>
 @endpush

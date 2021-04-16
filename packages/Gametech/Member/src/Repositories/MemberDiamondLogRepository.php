@@ -2,11 +2,10 @@
 
 namespace Gametech\Member\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Throwable;
 
 class MemberDiamondLogRepository extends Repository
 {
@@ -21,6 +20,7 @@ class MemberDiamondLogRepository extends Repository
         $this->memberRepository = $memberRepo;
         parent::__construct($app);
     }
+
     /**
      * Specify Model class name
      *
@@ -43,21 +43,20 @@ class MemberDiamondLogRepository extends Repository
         $emp_code = $data['emp_code'];
         $emp_name = $data['emp_name'];
 
-        DB::beginTransaction();
-        try {
-            Event::dispatch('customer.set.diamond.before', $data);
+        $member = $this->memberRepository->findOrFail($member_code);
 
-            $member = $this->memberRepository->sharedLock()->find($member_code);
-
-            if($method == 'D'){
-                $credit_balance = ($member->diamond + $amount);
-            }elseif($method == 'W'){
-                $credit_balance = ($member->diamond - $amount);
-                if($credit_balance < 0){
-                    return false;
-                }
+        if ($method == 'D') {
+            $credit_balance = ($member->diamond + $amount);
+        } elseif ($method == 'W') {
+            $credit_balance = ($member->diamond - $amount);
+            if ($credit_balance < 0) {
+                return false;
             }
+        }
 
+        DB::beginTransaction();
+
+        try {
 
             $bill = $this->create([
                 'diamond_type' => $method,
@@ -75,15 +74,13 @@ class MemberDiamondLogRepository extends Repository
             $member->diamond = $credit_balance;
             $member->save();
 
-            Event::dispatch('customer.set.diamond.after', $bill);
+            DB::commit();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
-
+            report($e);
             return false;
         }
-
-        DB::commit();
 
         return true;
     }

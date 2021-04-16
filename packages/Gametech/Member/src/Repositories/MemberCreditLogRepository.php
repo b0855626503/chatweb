@@ -2,11 +2,10 @@
 
 namespace Gametech\Member\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Throwable;
 
 class MemberCreditLogRepository extends Repository
 {
@@ -25,14 +24,14 @@ class MemberCreditLogRepository extends Repository
     /**
      * Specify Model class name
      *
-     * @return mixed
+     * @return string
      */
-    function model()
+    function model(): string
     {
         return 'Gametech\Member\Contracts\MemberCreditLog';
     }
 
-    public function setWallet(array $data)
+    public function setWallet(array $data): bool
     {
 
         $ip = request()->ip();
@@ -45,23 +44,21 @@ class MemberCreditLogRepository extends Repository
         $emp_code = $data['emp_code'];
         $emp_name = $data['emp_name'];
 
+        $member = $this->memberRepository->findOrFail($member_code);
+
+        if ($method == 'D') {
+            $credit_balance = ($member->balance + $amount);
+        } elseif ($method == 'W') {
+            $credit_balance = ($member->balance - $amount);
+            if ($credit_balance < 0) {
+                return false;
+            }
+        }
+
         DB::beginTransaction();
         try {
-            Event::dispatch('customer.set.wallet.before', $data);
 
-            $member = $this->memberRepository->sharedLock()->find($member_code);
-
-            if($method == 'D'){
-                $credit_balance = ($member->balance + $amount);
-            }elseif($method == 'W'){
-                $credit_balance = ($member->balance - $amount);
-                if($credit_balance < 0){
-                    return false;
-                }
-            }
-
-
-            $bill = $this->create([
+            $this->create([
                 'credit_type' => $method,
                 'amount' => $amount,
                 'bonus' => 0,
@@ -86,15 +83,13 @@ class MemberCreditLogRepository extends Repository
             $member->balance = $credit_balance;
             $member->save();
 
-            Event::dispatch('customer.set.wallet.after', $bill);
+            DB::commit();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
-
+            report($e);
             return false;
         }
-
-        DB::commit();
 
         return true;
     }
