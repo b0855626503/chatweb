@@ -31,14 +31,14 @@ class MemberCashbackRepository extends Repository
     /**
      * Specify Model class name
      *
-     * @return mixed
+     * @return string
      */
-    function model()
+    function model(): string
     {
         return 'Gametech\Member\Contracts\MemberCashback';
     }
 
-    public function refill(array $data)
+    public function refill(array $data): bool
     {
 
         $member_code = $data['upline_code'];

@@ -24,14 +24,14 @@ class MemberDiamondLogRepository extends Repository
     /**
      * Specify Model class name
      *
-     * @return mixed
+     * @return string
      */
-    function model()
+    function model(): string
     {
         return 'Gametech\Member\Contracts\MemberDiamondLog';
     }
 
-    public function setDiamond(array $data)
+    public function setDiamond(array $data): bool
     {
 
         $ip = request()->ip();
@@ -58,7 +58,7 @@ class MemberDiamondLogRepository extends Repository
 
         try {
 
-            $bill = $this->create([
+            $this->create([
                 'diamond_type' => $method,
                 'diamond_amount' => $amount,
                 'diamond_before' => $member->diamond,

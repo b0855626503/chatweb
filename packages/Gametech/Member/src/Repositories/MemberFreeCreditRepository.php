@@ -24,14 +24,14 @@ class MemberFreeCreditRepository extends Repository
     /**
      * Specify Model class name
      *
-     * @return mixed
+     * @return string
      */
-    function model()
+    function model(): string
     {
         return 'Gametech\Member\Contracts\MemberFreeCredit';
     }
 
-    public function setCredit(array $data)
+    public function setCredit(array $data): bool
     {
 
         $ip = request()->ip();
@@ -59,7 +59,7 @@ class MemberFreeCreditRepository extends Repository
 
         try {
 
-            $bill = $this->create([
+            $this->create([
                 'credit_type' => $method,
                 'credit' => $amount,
                 'credit_amount' => $amount,

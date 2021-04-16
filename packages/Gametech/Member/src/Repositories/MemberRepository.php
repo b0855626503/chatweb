@@ -4,8 +4,6 @@ namespace Gametech\Member\Repositories;
 
 use Gametech\Core\Eloquent\Repository;
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MemberRepository extends Repository
