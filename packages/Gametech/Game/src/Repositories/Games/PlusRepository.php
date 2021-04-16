@@ -124,6 +124,8 @@ class PlusRepository extends Repository
             $return = $this->Debug($response);
         }
 
+
+
         if ($response->successful()) {
 
             $response = $response->json();

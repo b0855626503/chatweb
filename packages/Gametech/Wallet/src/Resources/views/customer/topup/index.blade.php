@@ -111,11 +111,12 @@
                         <strong v-text="sub.acc_name"></strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        เลขบัญชี:<span class="float-right" v-text="sub.acc_no"> </span>
+                        เลขบัญชี:<span :id="sub.code" class="float-right" v-text="sub.acc_no"> </span>
                     </li>
+
                     <li class="list-group-item d-flex justify-content-between align-items-center pb-2">
                                 <span class="text-center d-block mx-auto">
-                                    <button class="btn btn-sm btn-info float-right btn-outline" onclick=""
+                                    <button class="btn btn-sm btn-info float-right btn-outline" :data-id="sub.code"  onclick="myFunction(this)"
                                             popover="คัดลอกสำเร็จ">
                                         <i class="fa fa-clone"></i> คัดลอกเลขบัญชี
                                     </button>
@@ -126,6 +127,31 @@
         </script>
 
         <script type="text/javascript">
+            function myFunction(e) {
+                /* Get the text field */
+                var val = $(e).attr('data-id');
+                console.log(val);
+                var copyText = document.getElementById(val).textContent;
+
+                var aux = document.createElement("input");
+
+                // Assign it the value of the specified element
+                aux.setAttribute("value", copyText);
+
+                // Append it to the body
+                document.body.appendChild(aux);
+
+                // Highlight its content
+                aux.select();
+                aux.setSelectionRange(0, 99999); /* For mobile devices */
+
+                /* Copy the text inside the text field */
+                document.execCommand("copy");
+                document.body.removeChild(aux);
+
+                /* Alert the copied text */
+                // alert("Copied the text: " + copyText.value);
+            }
             (() => {
 
 

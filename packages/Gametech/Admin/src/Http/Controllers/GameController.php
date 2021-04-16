@@ -111,31 +111,18 @@ class GameController extends AppBaseController
         $method = $request->input('method');
 
 
-        $chk = $this->repository->find($id);
+        $chk = $this->repository->findOrFail($id);
 
 
-        if (!$chk) {
+        if (empty($chk)) {
             return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
 
         $response = [];
 
-        $game_user = $this->gameUserRepository->findOneWhere(['user_name' => $chk->user_demo, 'game_code' => $id ]);
-//        if (!$game_user && $method != 'add') {
-//            return $this->sendError('ไม่พบข้อมูล User Demo', 200);
-//        }
 
+        $member = $this->memberRepository->where('enable','Y')->first();
 
-
-        if(!$game_user){
-            $username = $chk->user_demo;
-            $id = 2;
-        }else{
-            $username = $game_user->user_name;
-            $id = $game_user->member_code;
-        }
-
-        $member = $this->memberRepository->find($id);
 
         switch ($method) {
             case 'add':
@@ -143,10 +130,14 @@ class GameController extends AppBaseController
                 break;
 
             case 'pass':
+                $game_user = $this->gameUserRepository->findOneWhere(['user_name' => $chk->user_demo, 'game_code' => $id ]);
+                if(!$game_user){
+                    return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
+                }
                 $user_pass = "Bb" . rand(100000, 999999);
                 $response = $this->gameUserRepository->changeGamePass($chk->code, $game_user->code, [
                     'user_pass' => $user_pass,
-                    'user_name' => $username,
+                    'user_name' => $game_user->user_name,
                     'name' => $member['name'],
                     'firstname' => $member['firstname'],
                     'lastname' => $member['lastname'],
@@ -159,15 +150,15 @@ class GameController extends AppBaseController
 
             case 'balance':
 
-                $response = $this->gameUserRepository->checkBalance($chk->id, $username, true);
+                $response = $this->gameUserRepository->checkBalance($chk->id, $chk->user_demo, true);
                 break;
 
             case 'deposit':
-                $response = $this->gameUserRepository->UserDeposit($chk->code, $username,50,true,true);
+                $response = $this->gameUserRepository->UserDeposit($chk->code, $chk->user_demo,50,true,true);
                 break;
 
             case 'withdraw':
-                $response = $this->gameUserRepository->UserWithdraw($chk->code, $username,50,true,true);
+                $response = $this->gameUserRepository->UserWithdraw($chk->code, $chk->user_demo,50,true,true);
                 break;
         }
 
