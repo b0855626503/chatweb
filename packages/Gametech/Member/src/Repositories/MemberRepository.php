@@ -3,7 +3,6 @@
 namespace Gametech\Member\Repositories;
 
 use Gametech\Core\Eloquent\Repository;
-
 use Illuminate\Support\Str;
 
 class MemberRepository extends Repository
@@ -24,7 +23,7 @@ class MemberRepository extends Repository
     {
 
         return $this->withCount(['downs' => function ($query) {
-            $query->where('enable','Y');
+            $query->where('enable', 'Y');
         }])->withSum(['paymentsPromotion:credit_bonus' => function ($query) {
             $query->active()->aff();
         }])->find($id);
@@ -34,7 +33,7 @@ class MemberRepository extends Repository
     {
 
         return $this->withCount(['down' => function ($query) {
-            $query->where('enable','Y');
+            $query->where('enable', 'Y');
         }])->withSum(['paymentsPromotion:credit_bonus' => function ($query) {
             $query->active()->aff();
         }])->find($id);
@@ -201,18 +200,22 @@ class MemberRepository extends Repository
             case 'scb':
 //                $field = "bank_code = 4 and name = ?";
 //                $value = Str::of($data->detail)->after('นาย')->after('นาง')->after('นายสาว')->trim()->__toString();
-                if(!empty($data->atranferer)){
+                if (!empty($data->atranferer)) {
                     $field = "acc_check = ?";
                     $acc = Str::of($data->atranferer)->replaceMatches('/[^0-9]/', '')->trim();
                     $value = Str::of($acc)->replace('*', '');
-                }else{
+                } else {
 
-                    $acc_chk = explode(' ',$data->detail);
-                    $firstname = $acc_chk[4];
-                    $acc = Str::of($acc_chk[2])->replaceMatches('/[^0-9]/', '')->trim();
-                    $value = Str::of($acc)->replace('*', '');
-                    $field = "bank_code = 4 and firstname = '$firstname' and acc_check = ?";
-
+                    $acc_chk = explode(' ', $data->detail);
+                    if (isset($acc_chk[4])) {
+                        $firstname = $acc_chk[4];
+                        $acc = Str::of($acc_chk[2])->replaceMatches('/[^0-9]/', '')->trim();
+                        $value = Str::of($acc)->replace('*', '');
+                        $field = "bank_code = 4 and firstname = '$firstname' and acc_check = ?";
+                    } else {
+                        $field = "bank_code = ?";
+                        $value = 0;
+                    }
                 }
 
                 break;
@@ -237,7 +240,7 @@ class MemberRepository extends Repository
             }
         }
 
-        return $this->whereRaw($field, [$value])->where('enable','Y')
+        return $this->whereRaw($field, [$value])->where('enable', 'Y')
             ->when($member_code, function ($query) use ($member_code) {
                 return $query->where('code', $member_code);
             })->get();

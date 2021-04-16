@@ -40,6 +40,7 @@ class PromotionRepository extends Repository
         $this->memberPromotionLogRepository = $memberPromotionLogRepository;
         $this->promotionTimeRepository = $promotionTimeRepository;
         $this->promotionAmountRepository = $promotionAmountRepository;
+
         parent::__construct($app);
     }
 
