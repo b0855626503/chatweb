@@ -138,7 +138,7 @@
                                 <b-th colspan="4"></b-th>
                                 <b-th variant="secondary" class="text-center">
                                     <button type="button" class="btn btn-xs btn-primary"
-                                            @click="addModal()"><i class="fa fa-plus"></i> Add
+                                            @click="addSubModal()"><i class="fa fa-plus"></i> Add
                                     </button>
                                 </b-th>
 
@@ -496,6 +496,35 @@
                             this.showtable = true;
                         }
                     },
+                    addModal() {
+                        this.formaddedit = {
+                            id: '',
+                            name_th: '',
+                            turnpro: '',
+                            length_type: '',
+                            content: '',
+                            sort: 0,
+                            bonus_min: 0,
+                            bonus_max: 0,
+                            bonus_price: 0,
+                            bonus_percent: 0,
+                            withdraw_limit: 0,
+                            use_manual: 'N',
+                            use_wallet: 'N',
+                            use_auto: 'N',
+                            active: 'N',
+                            enable: 'Y'
+                        }
+                        this.formmethod = 'add';
+                        this.fileupload = '';
+
+                        this.show = false;
+                        this.$nextTick(() => {
+                            this.show = true;
+                            this.$refs.addedit.show();
+
+                        })
+                    },
                     editModal(code) {
                         this.code = null;
                         this.formaddedit = {
@@ -528,7 +557,7 @@
 
                         })
                     },
-                    addModal() {
+                    addSubModal() {
 
                         this.formsub = {
                             deposit_amount: 0,
@@ -648,7 +677,14 @@
                     },
                     addEditSubmitNew(event) {
                         event.preventDefault();
-                        let url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
+
+                        if (this.formmethod === 'add') {
+                            var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
+                        } else if (this.formmethod === 'edit') {
+                            var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
+                        }
+
+                        {{--let url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;--}}
 
 
                         let formData = new FormData();
