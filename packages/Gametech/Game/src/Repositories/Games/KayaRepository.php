@@ -4,6 +4,7 @@ namespace Gametech\Game\Repositories\Games;
 
 use App\Libraries\Agent;
 use Gametech\Core\Eloquent\Repository;
+use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -27,7 +28,7 @@ class KayaRepository extends Repository
 
     protected $auth;
 
-    public function __construct($method, $debug)
+    public function __construct($method, $debug, App $app)
     {
         $game = 'kaya';
 
@@ -48,6 +49,8 @@ class KayaRepository extends Repository
         $this->passkey = config($this->method . '.' . $game . '.passkey');
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
+
+        parent::__construct($app);
     }
 
 

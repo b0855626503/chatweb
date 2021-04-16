@@ -48,7 +48,7 @@ class MemberTransformer extends TransformerAbstract
             'date' => $model->date_regis->format('d/m/Y'),
             'firstname' => $model->firstname,
             'lastname' => $model->lastname,
-            'up' => ($model->upline_code == 0 ? '' : $model->up->name),
+            'up' => ($model->upline_code == 0 ? '' : (is_null($model->up) ? '' : $model->up->name)),
             'down' => $model->downs_count,
             'bank' => (is_null($model->bank) ? '' : core()->displayBank($model->bank->shortcode, $model->bank->filepic)),
             'acc_no' => $model->acc_no,

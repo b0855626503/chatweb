@@ -3,6 +3,7 @@
 namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
+use Illuminate\Container\Container as App;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -27,7 +28,7 @@ class PlusRepository extends Repository
 
     protected $auth;
 
-    public function __construct($method, $debug)
+    public function __construct($method, $debug, App $app)
     {
         $game = '100plus';
 
@@ -48,6 +49,8 @@ class PlusRepository extends Repository
         $this->passkey = config($this->method . '.' . $game . '.passkey');
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
+
+        parent::__construct($app);
     }
 
     public function GameCurl($param, $action)

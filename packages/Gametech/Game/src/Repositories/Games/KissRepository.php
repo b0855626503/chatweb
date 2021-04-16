@@ -3,6 +3,7 @@
 namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
+use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\Http;
 
 class KissRepository extends Repository
@@ -25,7 +26,7 @@ class KissRepository extends Repository
 
     protected $auth;
 
-    public function __construct($method, $debug)
+    public function __construct($method, $debug, App $app)
     {
         $game = 'kiss';
 
@@ -46,6 +47,8 @@ class KissRepository extends Repository
         $this->passkey = config($this->method . '.' . $game . '.passkey');
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
+
+        parent::__construct($app);
     }
 
 
