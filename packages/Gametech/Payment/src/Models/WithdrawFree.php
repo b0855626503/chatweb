@@ -10,12 +10,14 @@ use Gametech\Payment\Contracts\WithdrawFree as WithdrawFreeContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class WithdrawFree extends Model implements WithdrawFreeContract
 {
     use LaravelSubQueryTrait;
 
-    protected function serializeDate(DateTimeInterface $date)
+    protected function serializeDate(DateTimeInterface $date): string
     {
         return $date->format('Y-m-d H:i:s');
     }
@@ -179,17 +181,17 @@ class WithdrawFree extends Model implements WithdrawFreeContract
         return $this->belongsTo(MemberProxy::modelClass(), 'member_code');
     }
 
-    public function admin()
+    public function admin(): BelongsTo
     {
         return $this->belongsTo(AdminProxy::modelClass(), 'emp_approve');
     }
 
-    public function bills()
+    public function bills(): HasMany
     {
         return $this->hasMany(BillFreeProxy::modelClass(), 'member_code', 'member_code');
     }
 
-    public function member_credit()
+    public function member_credit(): MorphMany
     {
         return $this->morphMany(MemberProxy::modelClass(), 'credit_transaction');
     }
