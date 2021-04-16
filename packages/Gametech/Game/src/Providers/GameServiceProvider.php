@@ -2,11 +2,9 @@
 
 namespace Gametech\Game\Providers;
 
-use Gametech\Admin\Bouncer;
 use Gametech\Game\Game;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Event;
 use Gametech\Game\Facades\Game  as GameFacade;
 
 class GameServiceProvider extends ServiceProvider
@@ -28,7 +26,7 @@ class GameServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->registerConfig();
+//        $this->registerConfig();
         $this->registerBouncer();
     }
 
@@ -59,10 +57,10 @@ class GameServiceProvider extends ServiceProvider
         //alias to the class needed to be called.
         $loader = AliasLoader::getInstance();
 
-        $loader->alias('Game', GameFacade::class);
+        $loader->alias('game', GameFacade::class);
 
         $this->app->singleton('game', function () {
-            return new Game();
+            return app()->make(Game::class);
         });
 
     }

@@ -1,5 +1,5 @@
 <?php
-Route::domain(config('app.admin_url') . '.' . config('app.domain_url'))->group(function () {
+Route::domain(config('app.admin_url') . '.' . config('app.admin_domain_url'))->group(function () {
 
 
 //Route::prefix('admin')->group(function () {
