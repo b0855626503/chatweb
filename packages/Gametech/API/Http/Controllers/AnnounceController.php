@@ -4,6 +4,7 @@ namespace Gametech\API\Http\Controllers;
 
 use Gametech\Core\Repositories\AnnounceRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class AnnounceController extends AppBaseController
 {
@@ -36,6 +37,11 @@ class AnnounceController extends AppBaseController
         $this->repository->update($data, $id);
 
         return $this->sendSuccess('บันทึกข้อมูลแล้ว');
+
+    }
+
+    public function getAnnounce()
+    {
 
     }
 

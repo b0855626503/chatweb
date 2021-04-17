@@ -38,7 +38,7 @@ class PaymentTrue implements ShouldQueue
     public function handle(): bool
     {
 
-
+        $response = [];
         $mobile_number = $this->id;
 
         $data = app('Gametech\Payment\Repositories\BankAccountRepository')->getAccountOne('tw', $mobile_number);
@@ -58,7 +58,7 @@ class PaymentTrue implements ShouldQueue
 
 
         $success = false;
-        foreach ($url as $file) {
+        foreach ((array)$url as $file) {
             $response = Http::get($file);
 
             if ($response->successful()) {
@@ -73,7 +73,6 @@ class PaymentTrue implements ShouldQueue
         file_put_contents($path, print_r($response, true));
 
         if ($success) {
-
 
             $data->balance = $response['current_balance'];
             $data->checktime = $datenow;

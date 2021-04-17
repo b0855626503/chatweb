@@ -57,7 +57,7 @@ class MemberIcRepository extends Repository
             }
         }
 
-        $member = $this->memberRepository->findOrFail($member_code);
+        $member = $this->memberRepository->find($member_code);
 
         $total = ($member->balance_free + $cashback);
 

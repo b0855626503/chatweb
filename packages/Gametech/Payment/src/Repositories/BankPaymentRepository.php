@@ -134,7 +134,7 @@ class BankPaymentRepository extends Repository
 
         $member = $this->memberRepository->find($data['member_topup']);
 
-        $bank_acc = $this->bankAccountRepository->findOrFail($data['account_code']);
+        $bank_acc = $this->bankAccountRepository->find($data['account_code']);
 
         $member_code = $member->code;
         $amount = $data['value'];

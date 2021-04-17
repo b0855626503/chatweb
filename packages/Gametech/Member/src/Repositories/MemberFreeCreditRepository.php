@@ -44,7 +44,7 @@ class MemberFreeCreditRepository extends Repository
         $emp_name = $data['emp_name'];
         $kind = $data['kind'];
 
-        $member = $this->memberRepository->findOrFail($member_code);
+        $member = $this->memberRepository->find($member_code);
 
         if ($method == 'D') {
             $credit_balance = ($member->balance_free + $amount);

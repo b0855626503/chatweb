@@ -43,7 +43,7 @@ class MemberDiamondLogRepository extends Repository
         $emp_code = $data['emp_code'];
         $emp_name = $data['emp_name'];
 
-        $member = $this->memberRepository->findOrFail($member_code);
+        $member = $this->memberRepository->find($member_code);
 
         if ($method == 'D') {
             $credit_balance = ($member->diamond + $amount);

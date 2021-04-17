@@ -55,8 +55,8 @@ class PromotionRepository extends Repository
             'total' => $amount,
         ];
 
-        $pro = $this->findOrFail($pro_id);
-        $member = $this->memberRepository->findOrFail($member_id);
+        $pro = $this->find($pro_id);
+        $member = $this->memberRepository->find($member_id);
 
 
         switch ($pro->id) {
@@ -93,7 +93,7 @@ class PromotionRepository extends Repository
         $pro_amount = 0.00;
         $order = array();
 
-        $promotion = $this->findOrFail($id);
+        $promotion = $this->find($id);
 
         if (!empty($promotion)) {
             if ($amount < $promotion->bonus_min) {

@@ -5,7 +5,9 @@ namespace Gametech\Admin\Http\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 
 class DashboardController extends AppBaseController
@@ -63,7 +65,7 @@ class DashboardController extends AppBaseController
 
         $bank_in_today = app('Gametech\Payment\Repositories\BankPaymentRepository')
             ->income()->active()->waiting()
-            ->whereDate('date_create',$today)
+            ->whereDate('date_create', $today)
             ->whereIn('autocheck', ['N', 'W'])
             ->count();
         $bank_in = app('Gametech\Payment\Repositories\BankPaymentRepository')
@@ -85,16 +87,46 @@ class DashboardController extends AppBaseController
             ->count();
 
         $payment_waiting = app('Gametech\Payment\Repositories\PaymentWaitingRepository')
-            ->whereDate('date_create','>','2021-04-05')
+            ->whereDate('date_create', '>', '2021-04-05')
             ->active()->waiting()
             ->count();
 
-        $announce = app('Gametech\Core\Repositories\AnnounceRepository')->first();
-        $announce_new = $announce->new;
-        if ($announce->new == 'Y') {
-            $announce->new = 'N';
-            $announce->save();
+
+        $announce = [
+            'content' => '',
+            'updated_at' => now()->toDateTimeString()
+        ];
+
+        $announce_new = 'N';
+
+        $response = Http::get('https://announce.168csn.com/api/announce');
+
+        if ($response->successful()) {
+            $response = $response->json();
+//            dd($response);
+            $announce = $response['data'];
         }
+
+//        dd($announce);
+
+        if (!Cache::has($this->id() . 'announce_start')) {
+            Cache::add($this->id() . 'announce_stop', $announce['updated_at']);
+        }
+        if (!Cache::has($this->id() . 'announce_stop')) {
+            Cache::add($this->id() . 'announce_stop', $announce['updated_at']);
+        } else {
+            Cache::put($this->id() . 'announce_stop', $announce['updated_at']);
+        }
+
+        $start = Cache::get($this->id() . 'announce_start');
+        $stop = Cache::get($this->id() . 'announce_stop');
+        if ($start != $stop) {
+            $announce_new = 'Y';
+            Cache::put($this->id() . 'announce_start', $stop);
+        }
+
+
+
 
         $result['bank_in_today'] = $bank_in_today;
         $result['bank_in'] = $bank_in;
@@ -102,7 +134,7 @@ class DashboardController extends AppBaseController
         $result['withdraw'] = $withdraw;
         $result['withdraw_free'] = $withdraw_free;
         $result['payment_waiting'] = $payment_waiting;
-        $result['announce'] = $announce->content;
+        $result['announce'] = $announce['content'];
         $result['announce_new'] = $announce_new;
 
         return $this->sendResponseNew($result, 'Complete');
@@ -117,15 +149,15 @@ class DashboardController extends AppBaseController
         $method = $request->input('method');
         switch ($method) {
             case  'setdeposit':
-                $data = app('Gametech\Member\Repositories\MemberCreditLogRepository')->active()->where('kind', 'SETWALLET')->where('credit_type', 'D')->whereDate('date_create',$startdate)->sum('amount');
+                $data = app('Gametech\Member\Repositories\MemberCreditLogRepository')->active()->where('kind', 'SETWALLET')->where('credit_type', 'D')->whereDate('date_create', $startdate)->sum('amount');
                 $data = core()->currency($data);
                 break;
             case  'setwithdraw':
-                $data = app('Gametech\Member\Repositories\MemberCreditLogRepository')->active()->where('kind', 'SETWALLET')->where('credit_type', 'W')->whereDate('date_create',$startdate)->sum('amount');
+                $data = app('Gametech\Member\Repositories\MemberCreditLogRepository')->active()->where('kind', 'SETWALLET')->where('credit_type', 'W')->whereDate('date_create', $startdate)->sum('amount');
                 $data = core()->currency($data);
                 break;
             case  'deposit':
-                $data = app('Gametech\Payment\Repositories\BankPaymentRepository')->income()->active()->whereIn('status', [0, 1])->whereDate('date_create',$startdate)->sum('value');
+                $data = app('Gametech\Payment\Repositories\BankPaymentRepository')->income()->active()->whereIn('status', [0, 1])->whereDate('date_create', $startdate)->sum('value');
                 $data = core()->currency($data);
                 break;
             case  'withdraw':
@@ -158,7 +190,7 @@ class DashboardController extends AppBaseController
         $startdate = now()->subDays(6)->toDateString();
         $enddate = now()->toDateString();
 
-        $date_arr = core()->generateDateRange($startdate,$enddate);
+        $date_arr = core()->generateDateRange($startdate, $enddate);
 //        dd($date_arr);
 
         $method = $request->input('method');
@@ -174,7 +206,6 @@ class DashboardController extends AppBaseController
                 $datas = collect($data->toArray())->mapToGroups(function ($item, $key) {
                     return [$item['date'] => $item['value']];
                 })->toArray();
-
 
 
                 $data2 = app('Gametech\Payment\Repositories\WithdrawRepository')->active()->complete()
@@ -205,7 +236,7 @@ class DashboardController extends AppBaseController
                     return [$item['date'] => $item['value']];
                 })->toArray();
 
-                foreach($date_arr as $i => $dt){
+                foreach ($date_arr as $i => $dt) {
                     $x1 = (empty($datas[$dt]) ? 0 : $datas[$dt][0]);
                     $x2 = (empty($datas2[$dt]) ? 0 : $datas2[$dt][0]);
                     $x3 = (empty($datas3[$dt]) ? 0 : $datas3[$dt][0]);
@@ -216,10 +247,10 @@ class DashboardController extends AppBaseController
                     $d = intval($x4);
                     $balance = ($a - $b);
 
-                    $result['label'][] = core()->Date($dt,'d M');
+                    $result['label'][] = core()->Date($dt, 'd M');
                     $result['line_deposit'][] = $a;
                     $result['line_withdraw'][] = $b;
-                    $result['line_bonus'][] = ($c+$d);
+                    $result['line_bonus'][] = ($c + $d);
                     $result['line_balance'][] = $balance;
                 }
 
@@ -237,13 +268,13 @@ class DashboardController extends AppBaseController
                     return [$item['date'] => $item['value']];
                 })->toArray();
 
-                foreach($date_arr as $i => $dt){
+                foreach ($date_arr as $i => $dt) {
                     $x1 = (empty($datas[$dt]) ? 0 : $datas[$dt][0]);
 
                     $a = intval($x1);
 
 
-                    $result['label'][] = core()->Date($dt,'d M');
+                    $result['label'][] = core()->Date($dt, 'd M');
                     $result['bar'][] = $a;
 
                 }
@@ -261,13 +292,13 @@ class DashboardController extends AppBaseController
                     return [$item['date'] => $item['value']];
                 })->toArray();
 
-                foreach($date_arr as $i => $dt){
+                foreach ($date_arr as $i => $dt) {
                     $x1 = (empty($datas[$dt]) ? 0 : $datas[$dt][0]);
 
                     $a = intval($x1);
 
 
-                    $result['label'][] = core()->Date($dt,'d M');
+                    $result['label'][] = core()->Date($dt, 'd M');
                     $result['bar'][] = $a;
 
                 }
@@ -289,10 +320,10 @@ class DashboardController extends AppBaseController
             case 'bankin':
                 $responses = collect(app('Gametech\Payment\Repositories\BankAccountRepository')->getAccountInAll()->toArray());
 
-                $response = $responses->map(function ($items){
+                $response = $responses->map(function ($items) {
 
                     return [
-                        'date_update' =>  core()->formatDate($items['checktime'],'d/m/y H:i:s'),
+                        'date_update' => core()->formatDate($items['checktime'], 'd/m/y H:i:s'),
                         'bank' => core()->displayBank($items['bank']['shortcode'], $items['bank']['filepic']),
                         'acc_no' => $items['acc_no'],
                         'balance' => core()->currency($items['balance'])
@@ -308,10 +339,10 @@ class DashboardController extends AppBaseController
 
                 $responses = collect(app('Gametech\Payment\Repositories\BankAccountRepository')->getAccountOutAll()->toArray());
 
-                $response = $responses->map(function ($items){
+                $response = $responses->map(function ($items) {
 
                     return [
-                        'date_update' =>  core()->formatDate($items['checktime'],'d/m/y H:i:s'),
+                        'date_update' => core()->formatDate($items['checktime'], 'd/m/y H:i:s'),
                         'bank' => core()->displayBank($items['bank']['shortcode'], $items['bank']['filepic']),
                         'acc_no' => $items['acc_no'],
                         'balance' => core()->currency($items['balance'])
@@ -325,7 +356,7 @@ class DashboardController extends AppBaseController
                 break;
         }
 
-        return $this->sendResponseNew($result,'complete');
+        return $this->sendResponseNew($result, 'complete');
     }
 
     public function setStartEndDate()
@@ -347,6 +378,46 @@ class DashboardController extends AppBaseController
 
         $this->lastStartDate->subDays($this->startDate->diffInDays($this->endDate));
         // $this->lastEndDate->subDays($this->lastStartDate->diffInDays($this->lastEndDate));
+    }
+
+    public function getAnnounce()
+    {
+        $announce = [
+            'content' => '',
+            'updated_at' => now()->toDateTimeString()
+        ];
+
+        $announce_new = 'N';
+        $result['content'] = '';
+        $result['new'] = $announce_new;
+
+        $response = Http::get('https://announce.168csn.com/api/announce');
+
+        if ($response->successful()) {
+            $response = $response->json();
+            $announce = $response['data'];
+        }
+
+        if (!Cache::has($this->id() . 'announce_start')) {
+            Cache::add($this->id() . 'announce_stop', $announce['updated_at']);
+        }
+        if (!Cache::has($this->id() . 'announce_stop')) {
+            Cache::add($this->id() . 'announce_stop', $announce['updated_at']);
+        } else {
+            Cache::put($this->id() . 'announce_stop', $announce['updated_at']);
+        }
+
+        $start = Cache::get($this->id() . 'announce_start');
+        $stop = Cache::get($this->id() . 'announce_stop');
+        if ($start != $stop) {
+            $announce_new = 'Y';
+            Cache::put($this->id() . 'announce_start', $stop);
+        }
+
+
+        $result['content'] = $announce['content'];
+        $result['new'] = $announce_new;
+        return $result;
     }
 
 

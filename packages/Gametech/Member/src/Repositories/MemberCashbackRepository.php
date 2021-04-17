@@ -57,7 +57,7 @@ class MemberCashbackRepository extends Repository
             }
         }
 
-        $member = $this->memberRepository->findOrFail($downline_code);
+        $member = $this->memberRepository->find($downline_code);
 
         $total = ($member->balance_free + $cashback);
 

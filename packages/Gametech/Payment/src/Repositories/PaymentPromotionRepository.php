@@ -49,7 +49,7 @@ class PaymentPromotionRepository extends Repository
             return false;
         }
 
-        $user_topup = $this->memberRepository->findOrFail($user_topup_code);
+        $user_topup = $this->memberRepository->find($user_topup_code);
 
         $upline_code = $user_topup->upline_code;
         $downline_code = $user_topup_code;
@@ -65,7 +65,7 @@ class PaymentPromotionRepository extends Repository
                 $total = $promotion['total'];
                 if ($bonus > 0) {
 
-                    $member = $this->memberRepository->findOrFail($upline_code);
+                    $member = $this->memberRepository->find($upline_code);
 
                     $credit_before = $member['balance'];
                     $credit_after = ($credit_before + $bonus);
