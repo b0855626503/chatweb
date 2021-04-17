@@ -111,7 +111,7 @@ class BankinController extends AppBaseController
             return $this->sendSuccess('ไม่พบข้อมูลดังกล่าว');
         }
 
-        if($chk->emp_topup > 0 || $chk->autocheck == 'W'){
+        if($chk->autocheck == 'W'){
             return $this->sendSuccess('รายการนี้ กำลัง รอเติมเงินผ่านระบบ Auto อยู่');
         }
 
