@@ -3,16 +3,17 @@
 namespace Gametech\Auto\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 
 
-class DailyStat extends Command
+class DailyStatMonth extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'dailystat:check {date?} {--queue=default}';
+    protected $signature = 'dailystat:month';
 
     /**
      * The console command description.
@@ -39,12 +40,12 @@ class DailyStat extends Command
      */
     public function handle()
     {
-        $date = $this->argument('date');
-        if (!$date) {
-            $date = now()->toDateString();
-        }
 
-        app('Gametech\Core\Repositories\DailyStatRepository')->sumData($date);
+        for ($x = 1; $x <= 18; $x++) {
+            Artisan::call('dailystat:check', [
+                'date' => '2021-04-'.sprintf("%02d", $x)
+            ]);
+        }
 
     }
 

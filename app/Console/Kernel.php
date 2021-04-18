@@ -6,6 +6,7 @@ use Gametech\Auto\Console\Commands\Cashback;
 use Gametech\Auto\Console\Commands\CheckFastStart;
 use Gametech\Auto\Console\Commands\CheckPayment;
 use Gametech\Auto\Console\Commands\DailyStat;
+use Gametech\Auto\Console\Commands\DailyStatMonth;
 use Gametech\Auto\Console\Commands\GetPayment;
 use Gametech\Auto\Console\Commands\GetPaymentAcc;
 use Gametech\Auto\Console\Commands\MemberIC;
@@ -30,6 +31,7 @@ class Kernel extends ConsoleKernel
         MemberIC::class,
         DailyStat::class,
         CheckFastStart::class,
+        DailyStatMonth::class,
     ];
 
 
@@ -61,6 +63,11 @@ class Kernel extends ConsoleKernel
             ->onFailure(function ($message) {
                 Log::warning($message);
             });
+
+//        $schedule->command('dailystat:month')->dailyAt('12:00')->runInBackground()
+//            ->onFailure(function ($message) {
+//                Log::warning($message);
+//            });
 
 
         $schedule->command('payment:get tw')->everyMinute();

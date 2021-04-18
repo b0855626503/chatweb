@@ -4,25 +4,25 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "086d2dd2c0a4e8ffb7bd74754b8298ea",
+    "content-hash": "8ac13e6a71645bac8a30e64b9fb45708",
     "packages": [
         {
             "name": "alexmg86/laravel-sub-query",
-            "version": "v1.9.7",
+            "version": "v1.9.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Alexmg86/laravel-sub-query.git",
-                "reference": "b734d8824518b4271067694b620d4d332f46d091"
+                "reference": "a4c63648dc3adbcb9ee293db6fb0b77e5d733efe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Alexmg86/laravel-sub-query/zipball/b734d8824518b4271067694b620d4d332f46d091",
-                "reference": "b734d8824518b4271067694b620d4d332f46d091",
+                "url": "https://api.github.com/repos/Alexmg86/laravel-sub-query/zipball/a4c63648dc3adbcb9ee293db6fb0b77e5d733efe",
+                "reference": "a4c63648dc3adbcb9ee293db6fb0b77e5d733efe",
                 "shasum": ""
             },
             "require": {
                 "illuminate/support": ">=5.4",
-                "laravel/framework": "<8.0",
+                "laravel/framework": ">5.0",
                 "php": ">=5.6.4"
             },
             "require-dev": {
@@ -68,9 +68,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Alexmg86/laravel-sub-query/issues",
-                "source": "https://github.com/Alexmg86/laravel-sub-query/tree/v1.9.7"
+                "source": "https://github.com/Alexmg86/laravel-sub-query/tree/v1.9.8"
             },
-            "time": "2021-02-04T20:41:15+00:00"
+            "time": "2021-04-14T09:22:07+00:00"
         },
         {
             "name": "algolia/algoliasearch-client-php",
@@ -329,16 +329,16 @@
         },
         {
             "name": "babenkoivan/elastic-adapter",
-            "version": "v1.13.0",
+            "version": "v1.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/babenkoivan/elastic-adapter.git",
-                "reference": "68e006c893e3fba4594e9788c6cccbe507bd8508"
+                "reference": "505049d185ce2de27b97372e738e7412ac2398da"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/babenkoivan/elastic-adapter/zipball/68e006c893e3fba4594e9788c6cccbe507bd8508",
-                "reference": "68e006c893e3fba4594e9788c6cccbe507bd8508",
+                "url": "https://api.github.com/repos/babenkoivan/elastic-adapter/zipball/505049d185ce2de27b97372e738e7412ac2398da",
+                "reference": "505049d185ce2de27b97372e738e7412ac2398da",
                 "shasum": ""
             },
             "require": {
@@ -376,7 +376,7 @@
             ],
             "support": {
                 "issues": "https://github.com/babenkoivan/elastic-adapter/issues",
-                "source": "https://github.com/babenkoivan/elastic-adapter/tree/v1.13.0"
+                "source": "https://github.com/babenkoivan/elastic-adapter/tree/v1.14.0"
             },
             "funding": [
                 {
@@ -388,7 +388,7 @@
                     "type": "paypal"
                 }
             ],
-            "time": "2021-02-16T07:25:59+00:00"
+            "time": "2021-04-06T17:49:45+00:00"
         },
         {
             "name": "babenkoivan/elastic-client",
@@ -4529,16 +4529,16 @@
         },
         {
             "name": "paragonie/sodium_compat",
-            "version": "v1.14.0",
+            "version": "v1.15.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paragonie/sodium_compat.git",
-                "reference": "a1cfe0b21faf9c0b61ac0c6188c4af7fd6fd0db3"
+                "reference": "8a93bfe047c7f699f819459de8ddda144cd636a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/a1cfe0b21faf9c0b61ac0c6188c4af7fd6fd0db3",
-                "reference": "a1cfe0b21faf9c0b61ac0c6188c4af7fd6fd0db3",
+                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/8a93bfe047c7f699f819459de8ddda144cd636a4",
+                "reference": "8a93bfe047c7f699f819459de8ddda144cd636a4",
                 "shasum": ""
             },
             "require": {
@@ -4609,9 +4609,9 @@
             ],
             "support": {
                 "issues": "https://github.com/paragonie/sodium_compat/issues",
-                "source": "https://github.com/paragonie/sodium_compat/tree/v1.14.0"
+                "source": "https://github.com/paragonie/sodium_compat/tree/v1.15.4"
             },
-            "time": "2020-12-03T16:26:19+00:00"
+            "time": "2021-04-17T09:00:05+00:00"
         },
         {
             "name": "phpoffice/phpspreadsheet",
@@ -6175,16 +6175,16 @@
         },
         {
             "name": "react/http",
-            "version": "v1.2.0",
+            "version": "v1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/http.git",
-                "reference": "badb0a87890e14b9cdfa3aec3ba1aafd900401ac"
+                "reference": "bc537273d11ee769c723a830e63aa33c0c35a530"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/http/zipball/badb0a87890e14b9cdfa3aec3ba1aafd900401ac",
-                "reference": "badb0a87890e14b9cdfa3aec3ba1aafd900401ac",
+                "url": "https://api.github.com/repos/reactphp/http/zipball/bc537273d11ee769c723a830e63aa33c0c35a530",
+                "reference": "bc537273d11ee769c723a830e63aa33c0c35a530",
                 "shasum": ""
             },
             "require": {
@@ -6253,7 +6253,7 @@
             ],
             "support": {
                 "issues": "https://github.com/reactphp/http/issues",
-                "source": "https://github.com/reactphp/http/tree/v1.2.0"
+                "source": "https://github.com/reactphp/http/tree/v1.3.0"
             },
             "funding": [
                 {
@@ -6265,7 +6265,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-12-04T12:57:33+00:00"
+            "time": "2021-04-11T18:07:28+00:00"
         },
         {
             "name": "react/promise",
@@ -9690,16 +9690,16 @@
         },
         {
             "name": "yajra/laravel-datatables-oracle",
-            "version": "v9.17.1",
+            "version": "v9.18.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/yajra/laravel-datatables.git",
-                "reference": "53b3f8532b5021ffda813a8a54ecca121834ddb7"
+                "reference": "b00f25b1941879b34e05f270835235a32b46567c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yajra/laravel-datatables/zipball/53b3f8532b5021ffda813a8a54ecca121834ddb7",
-                "reference": "53b3f8532b5021ffda813a8a54ecca121834ddb7",
+                "url": "https://api.github.com/repos/yajra/laravel-datatables/zipball/b00f25b1941879b34e05f270835235a32b46567c",
+                "reference": "b00f25b1941879b34e05f270835235a32b46567c",
                 "shasum": ""
             },
             "require": {
@@ -9759,7 +9759,7 @@
             ],
             "support": {
                 "issues": "https://github.com/yajra/laravel-datatables/issues",
-                "source": "https://github.com/yajra/laravel-datatables/tree/v9.17.1"
+                "source": "https://github.com/yajra/laravel-datatables/tree/v9.18.0"
             },
             "funding": [
                 {
@@ -9771,7 +9771,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2021-03-23T01:32:51+00:00"
+            "time": "2021-04-16T12:08:33+00:00"
         }
     ],
     "packages-dev": [
@@ -9927,16 +9927,16 @@
         },
         {
             "name": "facade/flare-client-php",
-            "version": "1.6.1",
+            "version": "1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/facade/flare-client-php.git",
-                "reference": "f2b0969f2d9594704be74dbeb25b201570a98098"
+                "reference": "6bf380035890cb0a09b9628c491ae3866b858522"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/facade/flare-client-php/zipball/f2b0969f2d9594704be74dbeb25b201570a98098",
-                "reference": "f2b0969f2d9594704be74dbeb25b201570a98098",
+                "url": "https://api.github.com/repos/facade/flare-client-php/zipball/6bf380035890cb0a09b9628c491ae3866b858522",
+                "reference": "6bf380035890cb0a09b9628c491ae3866b858522",
                 "shasum": ""
             },
             "require": {
@@ -9980,7 +9980,7 @@
             ],
             "support": {
                 "issues": "https://github.com/facade/flare-client-php/issues",
-                "source": "https://github.com/facade/flare-client-php/tree/1.6.1"
+                "source": "https://github.com/facade/flare-client-php/tree/1.7.0"
             },
             "funding": [
                 {
@@ -9988,7 +9988,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-04-08T08:50:01+00:00"
+            "time": "2021-04-12T09:30:36+00:00"
         },
         {
             "name": "facade/ignition",

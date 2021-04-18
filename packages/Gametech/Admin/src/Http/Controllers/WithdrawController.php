@@ -97,6 +97,8 @@ class WithdrawController extends AppBaseController
         }
 
         $datanew = [
+            'refer_code' => $id,
+            'refer_table' => 'withdraws',
             'remark' => 'คืนยอดจากการถอน',
             'kind' => 'ROLLBACK',
             'amount' => $chk->amount,

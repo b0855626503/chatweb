@@ -17,7 +17,7 @@ class TopupPayments implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $deleteWhenMissingModels = true;
+//    public $deleteWhenMissingModels = true;
 
     public $timeout = 60;
 

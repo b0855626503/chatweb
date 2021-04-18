@@ -114,39 +114,40 @@ class Core
 
     }
 
-    public function TypeDisplay($type, $transfer,$remark, $bank, $game, $promotion)
+    public function TypeDisplay($type, $transfer,$remark, $bank, $game, $promotion ,$refer_table , $refer_code)
     {
+        $remark = $remark.'<br> อ้างอิง table : '.$refer_table.' , code : '.$refer_code;
         $result = "";
         switch ($type) {
             case "TOPUP":
-                $result = "<span class='text-success' data-toggle='popover' data-placement='top' data-content='$remark'>ฝากเงิน ($bank)</span>";
+                $result = "<span class='text-success' data-html='true' data-toggle='popover' data-placement='top' data-content='$remark'>ฝากเงิน ($bank)</span>";
                 break;
             case "WITHDRAW":
-                $result = "<span class='text-danger' data-toggle='popover' data-placement='top' data-content='$remark'>ถอนเงิน ($bank)</span>";
+                $result = "<span class='text-danger' data-html='true' data-toggle='popover' data-placement='top' data-content='$remark'>ถอนเงิน ($bank)</span>";
                 break;
             case "TRANSFER":
                 if ($transfer == 'W') {
-                    $result = "<span class='text-info' data-toggle='popover' data-placement='top' data-content='$remark'>Wallet ไป $game</span>";
+                    $result = "<span class='text-info' data-html='true' data-toggle='popover' data-placement='top' data-content='$remark'>Wallet ไป $game</span>";
 
                 } elseif ($transfer == 'D') {
-                    $result = "<span class='text-orange' data-toggle='popover' data-placement='top' data-content='$remark'>$game มา Wallet</span>";
+                    $result = "<span class='text-orange' data-html='true' data-toggle='popover' data-placement='top' data-content='$remark'>$game มา Wallet</span>";
                 }
                 break;
             case "SETWALLET":
                 if ($transfer == 'D') {
-                    $result = "<span class='text-success' data-toggle='popover' data-placement='top' data-content='$remark'>เพิ่ม Wallet</span>";
+                    $result = "<span class='text-success' data-html='true' data-toggle='popover' data-placement='top' data-content='$remark'>เพิ่ม Wallet</span>";
                 } elseif ($transfer == 'W') {
-                    $result = "<span class='text-danger' data-toggle='popover' data-placement='top' data-content='$remark'>ลด Wallet</span>";
+                    $result = "<span class='text-danger' data-html='true' data-toggle='popover' data-placement='top' data-content='$remark'>ลด Wallet</span>";
                 }
                 break;
             case "ROLLBACK":
                 $result = "<span class='text-success'>$remark</span>";
                 break;
             case "SPIN":
-                $result = "<span class='text-maroon' data-toggle='popover' data-placement='top' data-content='$remark'>วงล้อมหาสนุก</span>";
+                $result = "<span class='text-maroon' data-html='true' data-toggle='popover' data-placement='top' data-content='$remark'>วงล้อมหาสนุก</span>";
                 break;
             case "FASTSTART":
-                $result = "<span class='text-info' data-toggle='popover' data-placement='top' data-content='$remark'>$promotion</span>";
+                $result = "<span class='text-info' data-html='true' data-toggle='popover' data-placement='top' data-content='$remark'>$promotion</span>";
                 break;
         }
 

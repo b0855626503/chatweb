@@ -50,6 +50,9 @@ class PaymentPromotionRepository extends Repository
         }
 
         $user_topup = $this->memberRepository->find($user_topup_code);
+        if(empty($user_topup)){
+            return false;
+        }
 
         $upline_code = $user_topup->upline_code;
         $downline_code = $user_topup_code;
@@ -66,6 +69,9 @@ class PaymentPromotionRepository extends Repository
                 if ($bonus > 0) {
 
                     $member = $this->memberRepository->find($upline_code);
+                    if(empty($member)){
+                        return false;
+                    }
 
                     $credit_before = $member['balance'];
                     $credit_after = ($credit_before + $bonus);
@@ -147,56 +153,7 @@ class PaymentPromotionRepository extends Repository
 
         return true;
 
-//        if ($upline_code > 0) {
-//            $datenow = now()->toDateTimeString();
-//            $cnt = $this->where('member_code', $upline_code)->where('downline_code', $downline_code)->where('pro_code', 6)->count();
-//            if ($cnt == 0) {
-//                $promotion = $this->promotionRepository->checkPromotionId("pro_faststart", $amount, now()->toDateTimeString());
-//                $bonus = $promotion['bonus'];
-//                $total = $promotion['total'];
-//                if ($bonus > 0) {
-//
-//                    DB::beginTransaction();
-//                    try {
-//
-//                        $member = $this->memberRepository->find($upline_code);
-//
-//                        $credit_before = $member['balance'];
-//                        $credit_after = ($credit_before + $bonus);
-//
-//                        $this->create([
-//                            'ip' => request()->ip(),
-//                            'pro_code' => '6',
-//                            'amount' => $amount,
-//                            'credit' => $amount,
-//                            'credit_bonus' => $bonus,
-//                            'credit_before' => $credit_before,
-//                            'credit_after' => $credit_after,
-//                            'credit_balance' => $total,
-//                            'member_code' => $upline_code,
-//                            'downline_code' => $downline_code,
-//                            'remark' => $promotion['type'],
-//                            'user_create' => "System Auto",
-//                            'user_update' => "System Auto",
-//                            'date_create' => $datenow,
-//                            'date_update' => $datenow,
-//                        ]);
-//
-//                        $member->balance = $credit_after;
-//                        $member->save();
-//
-//                    } catch (Exception $e) {
-//                        report($e);
-//                        DB::rollBack();
-//                        return false;
-//                    }
-//
-//                    DB::commit();
-//                    return true;
-//                }
-//
-//            }
-//        }
+
     }
 
     /**

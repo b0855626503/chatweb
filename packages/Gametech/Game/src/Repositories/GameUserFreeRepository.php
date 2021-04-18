@@ -13,6 +13,9 @@ use Throwable;
  */
 class GameUserFreeRepository extends Repository
 {
+    protected $skipCache = true;
+
+    protected $cacheMinutes = 0;
 
     protected $gameMethod;
 

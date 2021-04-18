@@ -168,7 +168,7 @@ class LoginController extends AppBaseController
         if(!is_numeric($id)){
             $id = null;
         }
-        $banks = app('Gametech\Payment\Repositories\BankRepository')->findWhere(['enable' => 'Y' ,['code' , '<>' , 0],['shortcode' , '<>' , 'TW']]);
+        $banks = app('Gametech\Payment\Repositories\BankRepository')->findWhere(['enable' => 'Y' ,['code' , '<>' , 0]]);
         $refers = app('Gametech\Core\Repositories\ReferRepository')->findWhere(['enable' => 'Y' ,['code' , '<>' , 0]]);
         return view($this->_config['view'],compact('banks','refers'))->with('id',$id);
     }

@@ -75,6 +75,8 @@ class KayaRepository extends Repository
         $signMsg = $pAgent->sign($str_to_sign);
         $url = $this->url . $action;
 
+        dd($url);
+
         return Http::withHeaders([
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-store',
@@ -134,11 +136,15 @@ class KayaRepository extends Repository
             'timeStamp' => time()
         ];
 
+//        dd($param);
+
         $response = $this->GameCurl($param, 'accountcreate');
 
         if ($this->debug) {
             $return = $this->Debug($response);
         }
+
+        dd($return);
 
         if ($response->successful()) {
 

@@ -208,6 +208,8 @@ class MemberController extends AppBaseController
         }
 
         $data = [
+            'refer_code' => $id,
+            'refer_table' => 'members',
             'kind' => 'SETWALLET',
             'remark' => $remark,
             'amount' => $amount,

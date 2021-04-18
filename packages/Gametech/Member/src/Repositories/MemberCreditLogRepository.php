@@ -43,6 +43,8 @@ class MemberCreditLogRepository extends Repository
         $remark = $data['remark'];
         $emp_code = $data['emp_code'];
         $emp_name = $data['emp_name'];
+        $refer_code = $data['refer_code'];
+        $refer_table = $data['refer_table'];
 
         $member = $this->memberRepository->find($member_code);
 
@@ -59,6 +61,8 @@ class MemberCreditLogRepository extends Repository
         try {
 
             $this->create([
+                'refer_code' => $refer_code,
+                'refer_table' => $refer_table,
                 'credit_type' => $method,
                 'amount' => $amount,
                 'bonus' => 0,

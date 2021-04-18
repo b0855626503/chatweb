@@ -7,6 +7,9 @@ use Illuminate\Support\Str;
 
 class MemberRepository extends Repository
 {
+    protected $skipCache = true;
+
+    protected $cacheMinutes = 0;
 
     /**
      * Specify Model class name

@@ -26,7 +26,7 @@ class RpAllLogTransformer extends TransformerAbstract
         $game = (is_null($model->game_user) ? (is_null($model->game) ? '' : $model->game->name) : $model->game_user->game->name );
         $bank = (is_null($model->bank) ? '' : $model->bank->shortcode);
         $pro = (is_null($model->promotion) ? '' : $model->promotion->name_th);
-        $type = core()->TypeDisplay($model->kind,$model->credit_type,$model->remark,$bank,$game,$pro);
+        $type = core()->TypeDisplay($model->kind,$model->credit_type,$model->remark,$bank,$game,$pro , $model->refer_table , $model->refer_code);
 
         $amount = ($model->kind === 'TRANSFER' ? ($model->credit_type === 'D' ? $model->amount : $model->credit) : $model->amount);
         $bonus = ($model->kind === 'TRANSFER' ? ($model->credit_type === 'D' ? $model->bonus : $model->credit_bonus) : $model->bonus);

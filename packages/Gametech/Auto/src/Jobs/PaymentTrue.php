@@ -53,6 +53,7 @@ class PaymentTrue implements ShouldQueue
         $url = [
             'https://dumbo.168csn.com/tw/Transaction_' . $mobile_number . '_' . $date . '.json',
             'https://sv1.168csn.com/tw/Transaction_' . $mobile_number . '_' . $date . '.json',
+            'https://thaislot.168csn.com/tw/Transaction_' . $mobile_number . '_' . $date . '.json',
             'https://thaislot2.168csn.com/tw/Transaction_' . $mobile_number . '_' . $date . '.json',
         ];
 
@@ -67,6 +68,7 @@ class PaymentTrue implements ShouldQueue
                 break;
             }
         }
+
 
 
         $path = storage_path('logs/tw/Transaction_' . $mobile_number . '_' . now()->format('Y_m_d') . '.log');
