@@ -69,6 +69,8 @@ class Kernel extends ConsoleKernel
 //                Log::warning($message);
 //            });
 
+//        $schedule->command('queue:work --queue=topup --stop-when-empty')->everyTwoMinutes();
+
 
         $schedule->command('payment:get tw')->everyMinute();
         $schedule->command('payment:check kbank 100')->everyMinute();
@@ -76,18 +78,18 @@ class Kernel extends ConsoleKernel
         $schedule->command('payment:check bay 100')->everyMinute();
         $schedule->command('payment:check tw 100')->everyMinute();
         $schedule->command('payment:emp-topup 100')->everyMinute();
-        sleep(20);
+        sleep(30);
         $schedule->command('payment:check kbank 100')->everyMinute();
         $schedule->command('payment:check scb 100')->everyMinute();
         $schedule->command('payment:check bay 100')->everyMinute();
         $schedule->command('payment:check tw 100')->everyMinute();
         $schedule->command('payment:emp-topup 100')->everyMinute();
-        sleep(20);
-        $schedule->command('payment:check kbank 100')->everyMinute();
-        $schedule->command('payment:check scb 100')->everyMinute();
-        $schedule->command('payment:check bay 100')->everyMinute();
-        $schedule->command('payment:check tw 100')->everyMinute();
-        $schedule->command('payment:emp-topup 100')->everyMinute();
+//        sleep(20);
+//        $schedule->command('payment:check kbank 100')->everyMinute();
+//        $schedule->command('payment:check scb 100')->everyMinute();
+//        $schedule->command('payment:check bay 100')->everyMinute();
+//        $schedule->command('payment:check tw 100')->everyMinute();
+//        $schedule->command('payment:emp-topup 100')->everyMinute();
 
     }
 

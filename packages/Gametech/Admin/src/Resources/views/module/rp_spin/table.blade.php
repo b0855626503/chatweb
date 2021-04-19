@@ -6,6 +6,10 @@
 @endpush
 
 {!! $dataTable->table(['width' => '100%', 'class' => 'table table-striped table-sm']) !!}
+<hr>
+<table width="100%" class="table table-bordered" id="customfooter" style="font-size: medium">
+    <tbody></tbody>
+</table>
 
 @push('scripts')
     <script src="{{ asset('vendor/daterangepicker/daterangepicker.js') }}"></script>
@@ -55,4 +59,25 @@
     </script>
     @include('admin::layouts.datatables_js')
     {!! $dataTable->scripts() !!}
+    <script>
+        $(function () {
+
+
+            var table = window.LaravelDataTables["dataTableBuilder"];
+            window.LaravelDataTables["dataTableBuilder"].on('draw', function () {
+                $("#customfooter tbody").html('');
+
+                let html = '<tr>';
+                html += '<th style="text-align:right;width:80%;color:blue">รวมจำนวนรางวัลที่ได้รับ (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().spin + '</th>';
+                html += '</tr>';
+
+
+                $("#customfooter tbody").append(html);
+
+
+            });
+
+
+        });
+    </script>
 @endpush

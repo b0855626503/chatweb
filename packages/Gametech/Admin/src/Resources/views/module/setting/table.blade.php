@@ -441,7 +441,7 @@
 
                                 <b-form-group
                                     id="input-group-maxspin"
-                                    label="ยอดรวมรางวัล วงล้อมหาสนุก (สูงสุด) :"
+                                    label="ยอดรวมรางวัล วงล้อมหาสนุก (สูงสุด) / รหัส :"
                                     label-for="maxspin"
                                     description="">
                                     <b-form-input

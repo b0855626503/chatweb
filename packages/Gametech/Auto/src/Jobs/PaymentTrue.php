@@ -101,18 +101,22 @@ class PaymentTrue implements ShouldQueue
                         }
 
 
-                        $newpayment = app('Gametech\Payment\Repositories\BankPaymentRepository')->firstOrNew(['report_id' => $value['report_id'], 'account_code' => $data->code]);
-                        $newpayment->bank = 'twl_' . $mobile_number;
-                        $newpayment->bankstatus = 1;
-                        $newpayment->bank_time = $dates;
-                        $newpayment->type = $value['type'];
-                        $newpayment->title = $value['title'];
-                        $newpayment->value = $amount;
-                        $newpayment->value = $amount;
-                        $newpayment->detail = $detail;
-                        $newpayment->time = $dates;
-                        $newpayment->create_by = 'SYSAUTO';
-                        $newpayment->save();
+                        $chk = app('Gametech\Payment\Repositories\BankPaymentRepository')->findOneWhere(['report_id' => $value['report_id'], 'account_code' => $data->code]);
+                        if(!$chk) {
+
+                            $newpayment = app('Gametech\Payment\Repositories\BankPaymentRepository')->firstOrNew(['bank_time' => $dates, 'account_code' => $data->code, 'value' => $amount, 'detail' => $detail]);
+                            $newpayment->bank = 'twl_' . $mobile_number;
+                            $newpayment->bankstatus = 1;
+                            $newpayment->report_id = $value['report_id'];
+                            $newpayment->bank_time = $dates;
+                            $newpayment->type = $value['type'];
+                            $newpayment->title = $value['title'];
+                            $newpayment->value = $amount;
+                            $newpayment->detail = $detail;
+                            $newpayment->time = $dates;
+                            $newpayment->create_by = 'SYSAUTO';
+                            $newpayment->save();
+                        }
                     }
 
 

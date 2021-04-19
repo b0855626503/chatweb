@@ -25,6 +25,9 @@
 
         <div class="row">
             <div class="col">
+                <deposit_wait-slot ref="deposit_wait"></deposit_wait-slot>
+            </div>
+            <div class="col">
                 <setdeposit-slot ref="setdeposit"></setdeposit-slot>
             </div>
             <div class="col">
@@ -175,6 +178,46 @@
                 async loadData() {
                     try {
                         const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit'});
+                        this.sum = res.data.sum;
+                    } catch (e) {
+                        return 0;
+                    }
+                }
+            }
+        });
+    </script>
+
+    <script type="text/x-template" id="deposit_wait-slot-template">
+
+        <div class="info-box">
+            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-times-circle"></i></span>
+
+            <div class="info-box-content">
+                <span class="info-box-text">ยอดฝาก (มีปัญหา)</span>
+                <span class="info-box-number">
+                  @{{ sum }}
+                  <small>บาท</small>
+                </span>
+            </div>
+            <!-- /.info-box-content -->
+        </div>
+
+    </script>
+    <script>
+        Vue.component('deposit_wait-slot', {
+            template: '#deposit_wait-slot-template',
+            data: function () {
+                return {
+                    sum: 0
+                }
+            },
+            mounted() {
+                this.loadData();
+            },
+            methods: {
+                async loadData() {
+                    try {
+                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit_wait'});
                         this.sum = res.data.sum;
                     } catch (e) {
                         return 0;

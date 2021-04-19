@@ -585,7 +585,19 @@ class MemberController extends AppBaseController
         $data = json_decode($request['data'],true);
 
 
+        $acc_no = Str::of($data['acc_no'])->replaceMatches('/[^0-9]++/', '')->trim()->__toString();
+        $data['acc_no'] = $acc_no;
         $bank_code = $data['bank_code'];
+        if ($bank_code == 4) {
+            $acc_check  = substr($acc_no, -4);
+        } else {
+            $acc_check  = substr($acc_no, -6);
+        }
+        $acc_bay = substr($acc_no, -7);
+
+        $data['acc_check'] = $acc_check;
+        $data['acc_bay'] = $acc_bay;
+
 //        $validator = Validator::make($data, [
 //            'acc_no' => [
 //                'required',

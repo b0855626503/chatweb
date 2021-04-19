@@ -157,7 +157,11 @@ class DashboardController extends AppBaseController
                 $data = core()->currency($data);
                 break;
             case  'deposit':
-                $data = app('Gametech\Payment\Repositories\BankPaymentRepository')->income()->active()->whereIn('status', [0, 1])->whereDate('date_create', $startdate)->sum('value');
+                $data = app('Gametech\Payment\Repositories\BankPaymentRepository')->income()->active()->complete()->whereDate('date_create', $startdate)->sum('value');
+                $data = core()->currency($data);
+                break;
+            case  'deposit_wait':
+                $data = app('Gametech\Payment\Repositories\BankPaymentRepository')->income()->active()->waiting()->where('autocheck','Y')->whereDate('date_create', $startdate)->sum('value');
                 $data = core()->currency($data);
                 break;
             case  'withdraw':
@@ -197,7 +201,7 @@ class DashboardController extends AppBaseController
         switch ($method) {
             case  'income':
                 $data = app('Gametech\Payment\Repositories\BankPaymentRepository')->income()->active()
-                    ->whereIn('status', [0, 1])
+                    ->complete()
                     ->whereRaw(DB::raw("DATE_FORMAT(date_create,'%Y-%m-%d') between ? and ? "), [$startdate, $enddate])
                     ->groupBy(DB::raw('Date(date_create)'))
                     ->select(DB::raw('SUM(value) as value'), DB::raw("DATE_FORMAT(date_create,'%Y-%m-%d') as date"))->get();

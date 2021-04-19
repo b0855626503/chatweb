@@ -232,7 +232,7 @@
                         id="input-group-withdraw_limit"
                         label="จำกัดยอดถอนได้:"
                         label-for="withdraw_limit"
-                        description="">
+                        description="หมายถึงตอนถอนออกมา จะได้ยอดที่เซตไว้ตรงนี้">
                         <b-form-input
                             id="withdraw_limit"
                             v-model="formaddedit.withdraw_limit"
@@ -425,6 +425,7 @@
                         methods: '',
                         fileupload: '',
                         formmethod: 'edit',
+                        formmethodsub: 'edit',
                         formsub: {
                             deposit_amount: 0,
                             deposit_stop: 0,
@@ -564,7 +565,7 @@
                             deposit_stop: 0,
                             amount: 0
                         }
-                        this.formmethod = 'add';
+                        this.formmethodsub = 'add';
                         this.fileupload = '';
 
                         this.showsub = false;

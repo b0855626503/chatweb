@@ -149,6 +149,7 @@ class PlusRepository extends Repository
     public function changePass($data): array
     {
         $return['success'] = false;
+        $return['msg'] = 'ไม่สามารถทำรายการได้';
 
         $param = [
             'account' => $data['user_name'],
@@ -165,13 +166,15 @@ class PlusRepository extends Repository
             $return = $this->Debug($response);
         }
 
+//        dd($return);
+
         if ($response->successful()) {
             $response = $response->json();
 
             if ($response['status'] === 'success') {
                 $return['success'] = true;
             }
-            $return['msg'] = $response['msg'];
+            $return['msg'] = isset($response['msg']) ?: 'ทำรายการสำเร็จ';
         }
 
         return $return;

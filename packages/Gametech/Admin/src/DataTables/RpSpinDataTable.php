@@ -46,6 +46,9 @@ class RpSpinDataTable extends DataTable
 //                    $query->where('ip', 'like', "%" . request('ip') . "%");
 //                }
 //            })
+            ->with('spin', function () use ($query) {
+                return core()->currency((clone $query)->sum('amount'));
+            })
             ->setTransformer(new RpSpinTransformer);
 
     }

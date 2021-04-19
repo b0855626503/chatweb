@@ -38,8 +38,10 @@ class RpSumStatDataTable extends DataTable
     public function query(DailyStat $model)
     {
         $today = now()->toDateString();
+        $yesterday = now()->subDays(1)->toDateString();
 
         app('Gametech\Core\Repositories\DailyStatRepository')->sumData($today);
+        app('Gametech\Core\Repositories\DailyStatRepository')->sumData($yesterday);
 
 
         $startdate = request()->input('startDate');

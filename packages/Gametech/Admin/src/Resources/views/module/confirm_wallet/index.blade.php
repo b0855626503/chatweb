@@ -38,6 +38,7 @@
                                     <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
                                 </div>
                             </div>
+                            <p>* เมื่อเลือกคืนยอด จะมีการคืนยอดเงินเข้า บัญชีของลูกค้า</p>
                         </div>
                     </form>
 

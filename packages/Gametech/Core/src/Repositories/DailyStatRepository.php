@@ -34,7 +34,7 @@ class DailyStatRepository extends Repository
         $member_new_code = (clone $members)->whereDate('date_regis',$date)->pluck('code');
 
         $payments = app('Gametech\Payment\Repositories\BankPaymentRepository')->income()->active()
-            ->whereIn('status', [0, 1])
+            ->complete()
             ->where('enable','Y')
             ->whereRaw(DB::raw("DATE_FORMAT(date_create,'%Y-%m-%d') = ?"), [$date])
             ->where('bankstatus',1);
