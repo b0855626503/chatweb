@@ -292,6 +292,7 @@ return [
         'Image' => Intervention\Image\Facades\Image::class,
         'Active' => Rainwater\Active\ActiveFacade::class,
         'Google2FA' => PragmaRX\Google2FALaravel\Facade::class,
+        'FastExcel' => Rap2hpoutre\FastExcel\Facades\FastExcel::class,
     ],
 
 ];

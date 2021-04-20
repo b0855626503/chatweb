@@ -3,7 +3,6 @@
 namespace Gametech\Admin\DataTables;
 
 
-use App\Exports\UsersExport;
 use Gametech\Admin\Transformers\MemberTransformer;
 use Gametech\Member\Contracts\Member;
 use Yajra\DataTables\DataTableAbstract;
@@ -15,7 +14,8 @@ use Yajra\DataTables\Services\DataTable;
 class MemberDataTable extends DataTable
 {
 
-    protected $exportClass = UsersExport::class;
+    protected $fastExcel = true;
+
     /**
      * Build DataTable class.
      *
@@ -166,5 +166,32 @@ class MemberDataTable extends DataTable
     protected function filename()
     {
         return 'member_datatable_' . time();
+    }
+
+    public function fastExcelCallback()
+    {
+
+
+        return function ($row) {
+            if($prem = bouncer()->hasPermission('wallet.member.tel')){
+                return [
+                    'Register Date' => $row['date_regis'],
+                    'UserName' => $row['user_name'],
+                    'FirstName' => $row['firstname'],
+                    'LastName' => $row['lastname'],
+                    'Line ID' => $row['lineid'],
+                    'Mobile Number' => $row['tel'],
+                ];
+            }else{
+                return [
+                    'Register Date' => $row['date_regis'],
+                    'UserName' => $row['user_name'],
+                    'FirstName' => $row['firstname'],
+                    'LastName' => $row['lastname'],
+                    'Line ID' => $row['lineid']
+                ];
+            }
+
+        };
     }
 }
