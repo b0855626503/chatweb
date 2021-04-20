@@ -39,6 +39,8 @@ class MemberTransformer extends TransformerAbstract
 
         if ($config->pro_wallet === 'Y') {
             $pro = '';
+//            $pro = '<button class="btn btn-xs icon-only ' . ($model->promotion == 'Y' ? 'btn-success' : 'btn-danger') . '" onclick="editdata(' . $model->code . "," . "'" . core()->flip($model->promotion) . "'" . "," . "'promotion'" . ')">' . ($model->promotion == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>') . '</button>';
+
         } else {
             $pro = '<button class="btn btn-xs icon-only ' . ($model->promotion == 'Y' ? 'btn-success' : 'btn-danger') . '" onclick="editdata(' . $model->code . "," . "'" . core()->flip($model->promotion) . "'" . "," . "'promotion'" . ')">' . ($model->promotion == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>') . '</button>';
 
@@ -55,6 +57,7 @@ class MemberTransformer extends TransformerAbstract
             'user_name' => $model->user_name,
             'tel' => $tel,
             'pass' => $model->user_pass,
+            'remark' => $model->remark,
             'lineid' => $model->lineid,
             'deposit' => $model->count_deposit,
             'point' => "<span class='text-primary'>" . $model->point_deposit . "</span>",

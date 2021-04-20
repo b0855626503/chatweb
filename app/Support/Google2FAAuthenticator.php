@@ -10,6 +10,7 @@ class Google2FAAuthenticator extends Authenticator
 {
     protected function canPassWithoutCheckingOTP()
     {
+
         if($this->getUser()->superadmin === 'Y')
             return true;
         return

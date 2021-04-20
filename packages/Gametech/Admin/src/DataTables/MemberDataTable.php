@@ -152,6 +152,7 @@ class MemberDataTable extends DataTable
             ['data' => 'point', 'name' => 'members.point_deposit', 'title' => 'Point', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'diamond', 'name' => 'members.diamond', 'title' => 'Diamond', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'balance', 'name' => 'members.balance', 'title' => 'Wallet', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'pro', 'name' => 'members.promotion', 'title' => 'รับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'enable', 'name' => 'members.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],

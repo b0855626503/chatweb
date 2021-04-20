@@ -29,6 +29,11 @@ class Google2FAController extends Controller
         $google2fa_url = "";
         $secret_key = "";
 
+        if(config('google2fa.enabled') == false){
+            (new Authenticator(request()))->login();
+            return redirect()->route('admin.home.index');
+        }
+
         if($user->superadmin === 'Y'){
             (new Authenticator(request()))->login();
             return redirect()->route('admin.home.index');
