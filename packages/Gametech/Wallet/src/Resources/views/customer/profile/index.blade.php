@@ -124,6 +124,7 @@
                     <btn-reset></btn-reset>
                 </section>
 
+                @if($config->freecredit_open == 'Y')
                 <section class="content mt-3">
                     <div class="card card-trans">
                         <div class="card-header">Cashback</div>
@@ -139,6 +140,7 @@
 
                     <btnfree-reset></btnfree-reset>
                 </section>
+                    @endif
 
             </div>
         </div>

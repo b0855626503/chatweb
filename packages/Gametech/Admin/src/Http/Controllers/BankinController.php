@@ -115,6 +115,10 @@ class BankinController extends AppBaseController
             return $this->sendSuccess('รายการนี้ กำลัง รอเติมเงินผ่านระบบ Auto อยู่');
         }
 
+        if($chk->autocheck == 'Y' && $chk->status == 1){
+            return $this->sendSuccess('รายการนี้ เติมสำเร็จไปแล้ว');
+        }
+
 
         $data['emp_topup'] = $this->id();
         $data['autocheck'] = 'W';

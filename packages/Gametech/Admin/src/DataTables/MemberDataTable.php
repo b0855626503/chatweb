@@ -3,6 +3,7 @@
 namespace Gametech\Admin\DataTables;
 
 
+use App\Exports\UsersExport;
 use Gametech\Admin\Transformers\MemberTransformer;
 use Gametech\Member\Contracts\Member;
 use Yajra\DataTables\DataTableAbstract;
@@ -13,6 +14,8 @@ use Yajra\DataTables\Services\DataTable;
 
 class MemberDataTable extends DataTable
 {
+
+    protected $exportClass = UsersExport::class;
     /**
      * Build DataTable class.
      *
@@ -87,6 +90,14 @@ class MemberDataTable extends DataTable
      */
     public function html()
     {
+        $prem = bouncer()->hasPermission('wallet.member.tel');
+        if($prem){
+            $btn = ['pageLength','excel'];
+        }else{
+            $btn = ['pageLength'];
+        }
+
+
         return $this->builder()
             ->columns($this->getColumns())
             ->minifiedAjax()
@@ -110,9 +121,7 @@ class MemberDataTable extends DataTable
                     [50, 100, 200],
                     ['50 rows', '100 rows', '200 rows']
                 ],
-                'buttons' => [
-                    'pageLength'
-                ],
+                'buttons' => $btn,
                 'columnDefs' => [
                     ['targets' => '_all', 'className' => 'text-center text-nowrap']
                 ]
@@ -156,6 +165,6 @@ class MemberDataTable extends DataTable
      */
     protected function filename()
     {
-        return 'bankin_datatable_' . time();
+        return 'member_datatable_' . time();
     }
 }
