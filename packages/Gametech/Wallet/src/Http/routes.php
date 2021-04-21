@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::domain(config('app.user_url') . '.' . config('app.user_domain_url'))->group(function () {
+Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_url')) ? config('app.domain_url') : config('app.user_domain_url')))->group(function () {
 
     Route::group(['middleware' => ['web', 'loguser']], function () {
 

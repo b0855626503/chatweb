@@ -219,6 +219,10 @@ class Core
         return ($data === 'Y' ? 'N' : 'Y');
     }
 
+    public function flipnum($data){
+        return ($data === 1 ? 0 : 1);
+    }
+
     /**
      * Returns time intervals
      *

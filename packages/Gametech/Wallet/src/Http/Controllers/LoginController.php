@@ -198,6 +198,12 @@ class LoginController extends AppBaseController
             $freecredit = 'N';
         }
 
+        if($config->verify_open === 'Y'){
+            $verify = 'N';
+        }else{
+            $verify = 'Y';
+        }
+
         $validator = Validator::make($data, [
             'acc_no' => [
                 'required',
@@ -297,6 +303,8 @@ class LoginController extends AppBaseController
         }
         $acc_bay = substr($acc_no, -7);
 
+
+
         $data = array_merge($data, [
             'password'    => Hash::make($pass),
             'refer_code'  => $refer,
@@ -309,7 +317,7 @@ class LoginController extends AppBaseController
             'acc_bay'  => $acc_bay,
             'acc_kbank'  => '',
             'bank_code'  => $bank_code,
-            'confirm' => 'Y',
+            'confirm' => $verify,
             'freecredit' => $freecredit,
             'check_status' => 'N',
             'promotion' => $pro,

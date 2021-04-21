@@ -9,6 +9,7 @@ use Gametech\Game\Repositories\GameUserRepository;
 use Gametech\Member\Repositories\MemberCreditLogRepository;
 use Gametech\Member\Repositories\MemberDiamondLogRepository;
 use Gametech\Member\Repositories\MemberPointLogRepository;
+use Gametech\Member\Repositories\MemberRemarkRepository;
 use Gametech\Member\Repositories\MemberRepository;
 use Gametech\Payment\Repositories\BankPaymentRepository;
 use Illuminate\Http\Request;
@@ -36,6 +37,8 @@ class MemberController extends AppBaseController
 
     private $memberDiamondLogRepository;
 
+    private $memberRemarkRepository;
+
     /**
      * MemberController constructor.
      * @param GameUserRepository $gameUserRepo
@@ -54,7 +57,8 @@ class MemberController extends AppBaseController
         MemberCreditLogRepository $memberCreditLogRepo,
         MemberPointLogRepository $memberPointLogRepo,
         MemberDiamondLogRepository $memberDiamondLogRepo,
-        BankPaymentRepository $bankPaymentRepo
+        BankPaymentRepository $bankPaymentRepo,
+        MemberRemarkRepository $memberRemarkRepo
     )
 
     {
@@ -75,6 +79,8 @@ class MemberController extends AppBaseController
         $this->bankPaymentRepository = $bankPaymentRepo;
 
         $this->memberDiamondLogRepository = $memberDiamondLogRepo;
+
+        $this->memberRemarkRepository = $memberRemarkRepo;
     }
 
 
@@ -645,5 +651,64 @@ class MemberController extends AppBaseController
 
     }
 
+    public function remark(Request $request)
+    {
+        $id =   $id = $request->input('id');
+        $responses = collect($this->memberRemarkRepository->loadRemark($id));
+
+        $responses = $responses->map(function ($items){
+            $item = (object)$items;
+
+            return [
+                'date_create' =>  core()->formatDate($item->date_create,'d/m/y H:i:s'),
+                'remark' => $item->remark,
+                'emp_code' => (is_null($item->emp) ? '' : $item->emp->user_name),
+                'action' => '<button type="button" class="btn btn-warning btn-xs icon-only" onclick="delSub('.$item->code.')"><i class="fa fa-times"></i></button>'
+
+            ];
+
+        });
+
+        $result['list'] = $responses;
+
+        return $this->sendResponseNew($result, 'complete');
+    }
+
+    public function createsub(Request $request)
+    {
+        $user = $this->user()->name . ' ' . $this->user()->surname;
+        $id = $request->input('id');
+        $data = $request->input('data');
+
+
+        $data['member_code'] = $id;
+        $data['emp_code'] = $this->id();
+        $data['user_create'] = $user;
+        $data['user_update'] = $user;
+
+        $this->memberRemarkRepository->create($data);
+
+
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function destroysub(Request $request)
+    {
+        $id = $request->input('id');
+
+
+        $chk = $this->memberRemarkRepository->find($id);
+
+        if (!$chk) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
+        }
+
+        $this->memberRemarkRepository->delete($id);
+
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+    }
 
 }

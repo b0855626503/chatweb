@@ -69,7 +69,7 @@ class Kernel extends ConsoleKernel
 //                Log::warning($message);
 //            });
 
-//        $schedule->command('queue:work --queue=topup --stop-when-empty')->everyTwoMinutes();
+//        $schedule->command('migrate --force')->dailyAt('16:35');
 
 
         $schedule->command('payment:get tw')->everyMinute();

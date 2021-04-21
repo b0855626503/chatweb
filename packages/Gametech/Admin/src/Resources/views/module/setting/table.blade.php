@@ -407,6 +407,9 @@
                                         autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
+
+                                <hr>
+
                                 <b-form-group
                                     id="input-group-diamond_open"
                                     label="เปิดใช้งาน Diamond:"
@@ -423,6 +426,25 @@
                                     ></b-form-select>
 
                                 </b-form-group>
+
+                                <b-form-group
+                                    id="input-group-diamond_per_bill"
+                                    label="เปิดใช้งาน Diamond ต่อบิล:"
+                                    label-for="diamond_per_bill"
+                                    description="">
+
+                                    <b-form-select
+                                        id="diamond_per_bill"
+                                        name="diamond_per_bill"
+                                        v-model="formaddedit.diamond_per_bill"
+                                        :options="option.diamond_per_bill"
+                                        size="sm"
+                                        required
+                                        v-on:change="changeType($event)"
+                                    ></b-form-select>
+
+                                </b-form-group>
+
                                 <b-form-group
                                     id="input-group-diamonds"
                                     label="เติมทุก xxx / 1 Diamond :"
@@ -439,9 +461,43 @@
                                     ></b-form-input>
                                 </b-form-group>
 
+
+
+                                <b-form-group
+                                    id="input-group-diamonds_topup"
+                                    label="ยอดเงินเติมต่อบิล :"
+                                    label-for="diamonds_topup"
+                                    description="จำนวนที่เติม ยอดมากกว่าหรือเท่ากับ">
+                                    <b-form-input
+                                        id="diamonds_topup"
+                                        name="diamonds_topup"
+                                        v-model="formaddedit.diamonds_topup"
+                                        type="number"
+                                        size="sm"
+                                        placeholder=""
+                                        autocomplete="off"
+                                    ></b-form-input>
+                                </b-form-group>
+
+                                <b-form-group
+                                    id="input-group-diamonds_amount"
+                                    label="ได้รับเพชรจำนวน :"
+                                    label-for="diamonds_amount"
+                                    description="">
+                                    <b-form-input
+                                        id="diamonds_amount"
+                                        name="diamonds_amount"
+                                        v-model="formaddedit.diamonds_amount"
+                                        type="number"
+                                        size="sm"
+                                        placeholder=""
+                                        autocomplete="off"
+                                    ></b-form-input>
+                                </b-form-group>
+                                <hr>
                                 <b-form-group
                                     id="input-group-maxspin"
-                                    label="ยอดรวมรางวัล วงล้อมหาสนุก (สูงสุด) / รหัส :"
+                                    label="ยอดรวมรางวัล วงล้อมหาสนุก (สูงสุด) :"
                                     label-for="maxspin"
                                     description="">
                                     <b-form-input
@@ -795,6 +851,7 @@
                             diamond_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             freecredit_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             freecredit_all: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
+                            diamond_per_bill: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             admin_navbar_color: [
                                 {value: 'navbar-white navbar-light', text: 'สีขาว'},
                                 {value: 'navbar-gray-dark', text: 'สีเทาดำ'},
@@ -837,6 +894,7 @@
                     this.$nextTick(() => {
                         this.show = true;
                         this.code = 1;
+
                         setTimeout(() => {
                             this.trigger++;
                             this.formaddedit.filepic = 'logo.png';
@@ -870,7 +928,8 @@
                                 $('.my-colorpicker-body-stop .fa-square').css('color', event.color.toString());
                             });
 
-
+                            // console.log(this.formaddedit.diamond_per_bill);
+                            this.changeType(this.formaddedit.diamond_per_bill);
                         }, 0);
 
                         // this.setImage();
@@ -878,6 +937,21 @@
 
                 },
                 methods: {
+                    changeType(event) {
+                        if (event == 'Y') {
+                            $('#input-group-diamonds_topup').removeClass('hide');
+                            $('#input-group-diamonds_amount').removeClass('hide');
+                            $('#diamonds_topup').prop('required', true);
+                            $('#diamonds_amount').prop('required', true);
+                            $('#input-group-diamonds').addClass('hide');
+                        } else if (event == 'N') {
+                            $('#input-group-diamonds_topup').addClass('hide');
+                            $('#input-group-diamonds_amount').addClass('hide');
+                            $('#diamonds_topup').prop('required', false);
+                            $('#diamonds_amount').prop('required', false);
+                            $('#input-group-diamonds').removeClass('hide');
+                        }
+                    },
                     setImage() {
                         // this.trigger++;
                         // this.formaddedit.logo;

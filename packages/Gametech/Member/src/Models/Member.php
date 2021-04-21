@@ -407,4 +407,9 @@ class Member extends Authenticatable implements MemberContract
         return $this->hasMany(MemberRewardLogProxy::modelClass(),'member_code');
     }
 
+    public function member_remark()
+    {
+        return $this->hasMany(MemberRemarkProxy::modelClass(),'member_code');
+    }
+
 }

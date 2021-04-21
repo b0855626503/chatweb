@@ -67,9 +67,11 @@ return [
 
     'mix_url' => env('MIX_ASSET_URL', null),
 
-    'admin_domain_url' => env('APP_ADMIN_DOMAIN_URL', 'null'),
+    'domain_url' => env('APP_DOMAIN_URL', null),
 
-    'user_domain_url' => env('APP_USER_DOMAIN_URL', 'null'),
+    'admin_domain_url' => env('APP_ADMIN_DOMAIN_URL', null),
+
+    'user_domain_url' => env('APP_USER_DOMAIN_URL', null),
 
     /*
     |--------------------------------------------------------------------------

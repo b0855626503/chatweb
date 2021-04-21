@@ -27,6 +27,8 @@
         <div class="dropdown-divider"></div>
         <a class="dropdown-item" href="javascript:void(0)" onclick="editModal({{ $code }})">แก้ไขข้อมูล</a>
         <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="javascript:void(0)" onclick="commentModal({{ $code }})">เพิ่มหมายเหตุ</a>
+        <div class="dropdown-divider"></div>
         <a class="dropdown-item" href="javascript:void(0)" onclick="delModal({{ $code }})">ลบข้อมูล</a>
     </div>
 </div>

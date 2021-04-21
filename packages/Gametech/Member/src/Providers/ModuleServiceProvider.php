@@ -11,6 +11,7 @@ use Gametech\Member\Models\MemberIc;
 use Gametech\Member\Models\MemberLog;
 use Gametech\Member\Models\MemberPointLog;
 use Gametech\Member\Models\MemberPromotionLog;
+use Gametech\Member\Models\MemberRemark;
 use Gametech\Member\Models\MemberRewardLog;
 use Gametech\Member\Models\MemberSatang;
 use Konekt\Concord\BaseModuleServiceProvider;
@@ -29,5 +30,6 @@ class ModuleServiceProvider extends BaseModuleServiceProvider
         MemberSatang::class,
         MemberRewardLog::class,
         MemberPromotionLog::class,
+        MemberRemark::class,
     ];
 }

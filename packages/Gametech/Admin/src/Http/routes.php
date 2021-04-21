@@ -1,5 +1,5 @@
 <?php
-Route::domain(config('app.admin_url') . '.' . config('app.admin_domain_url'))->group(function () {
+Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_url')) ? config('app.domain_url') : config('app.admin_domain_url')))->group(function () {
 
 
 //Route::prefix('admin')->group(function () {
@@ -439,6 +439,8 @@ Route::domain(config('app.admin_url') . '.' . config('app.admin_domain_url'))->g
 
                 Route::post('create', $route['controller'] . '@create')->name('admin.' . $route['name'] . '.create');
 
+                Route::post('createsub', $route['controller'] . '@createsub')->name('admin.' . $route['name'] . '.createsub');
+
                 Route::get('loaddata', $route['controller'] . '@loadData')->name('admin.' . $route['name'] . '.loaddata');
 
                 Route::get('loadbank', $route['controller'] . '@loadBank')->name('admin.' . $route['name'] . '.loadbank');
@@ -446,6 +448,8 @@ Route::domain(config('app.admin_url') . '.' . config('app.admin_domain_url'))->g
                 Route::get('loadbankaccount', $route['controller'] . '@loadBankAccount')->name('admin.' . $route['name'] . '.loadbankaccount');
 
                 Route::get('gamelog', $route['controller'] . '@gameLog')->name('admin.' . $route['name'] . '.gamelog');
+
+                Route::get('remark', $route['controller'] . '@remark')->name('admin.' . $route['name'] . '.remark');
 
                 Route::post('setwallet', $route['controller'] . '@setWallet')->name('admin.' . $route['name'] . '.setwallet');
 
@@ -460,6 +464,9 @@ Route::domain(config('app.admin_url') . '.' . config('app.admin_domain_url'))->g
                 Route::post('update/{id?}', $route['controller'] . '@update')->name('admin.' . $route['name'] . '.update');
 
                 Route::post('delete', $route['controller'] . '@destroy')->name('admin.' . $route['name'] . '.delete');
+
+                Route::post('deletesub', $route['controller'] . '@destroysub')->name('admin.' . $route['name'] . '.deletesub');
+
 
                 Route::post('refill', $route['controller'] . '@refill')->name('admin.' . $route['name'] . '.refill');
 

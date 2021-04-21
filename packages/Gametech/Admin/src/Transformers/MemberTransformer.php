@@ -26,7 +26,7 @@ class MemberTransformer extends TransformerAbstract
     {
 
 
-//dd($model->banks_account->toJson(JSON_PRETTY_PRINT));
+//        dd($model->toJson(JSON_PRETTY_PRINT));
 
         $config = $this->config;
         $permiss = $this->permiss;
@@ -42,7 +42,8 @@ class MemberTransformer extends TransformerAbstract
 //            $pro = '<button class="btn btn-xs icon-only ' . ($model->promotion == 'Y' ? 'btn-success' : 'btn-danger') . '" onclick="editdata(' . $model->code . "," . "'" . core()->flip($model->promotion) . "'" . "," . "'promotion'" . ')">' . ($model->promotion == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>') . '</button>';
 
         } else {
-            $pro = '<button class="btn btn-xs icon-only ' . ($model->promotion == 'Y' ? 'btn-success' : 'btn-danger') . '" onclick="editdata(' . $model->code . "," . "'" . core()->flip($model->promotion) . "'" . "," . "'promotion'" . ')">' . ($model->promotion == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>') . '</button>';
+//            $pro = '<button class="btn btn-xs icon-only ' . ($model->promotion == 'Y' ? 'btn-success' : 'btn-danger') . '" onclick="editdata(' . $model->code . "," . "'" . core()->flip($model->promotion) . "'" . "," . "'promotion'" . ')">' . ($model->promotion == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>') . '</button>';
+            $pro = '<button class="btn btn-xs icon-only ' . ($model->status_pro == 1 ? 'btn-success' : 'btn-danger') . '" onclick="editdata(' . $model->code . "," . "'" . core()->flipnum($model->status_pro) . "'" . "," . "'status_pro'" . ')">' . ($model->status_pro == 1 ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>') . '</button>';
 
         }
         return [
@@ -57,7 +58,7 @@ class MemberTransformer extends TransformerAbstract
             'user_name' => $model->user_name,
             'tel' => $tel,
             'pass' => $model->user_pass,
-            'remark' => $model->remark,
+            'remark' => (is_null($model->member_remark->first()) ? $model->remark : $model->member_remark->first()->remark),
             'lineid' => $model->lineid,
             'deposit' => $model->count_deposit,
             'point' => "<span class='text-primary'>" . $model->point_deposit . "</span>",

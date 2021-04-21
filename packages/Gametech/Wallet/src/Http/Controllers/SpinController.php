@@ -107,8 +107,14 @@ class SpinController extends AppBaseController
         $ip = $request->ip();
         $config = core()->getConfigData();
         $maxbonus = $config->maxspin;
-        $bonustoday_sum = $this->memberRepository->sumBonus($this->id(), now()->toDateString())->bonus_spin_credit_sum;
-        $bonustoday = (is_null($bonustoday_sum) ? 0 : $bonustoday_sum);
+        $bonustoday_sum = $this->bonusSpinRepository->scopeQuery(function($query){
+            return $query->where('enable','Y')->whereDate('date_create', now()->toDateString());
+        });
+
+        $bonustoday = $bonustoday_sum->sum('amount');
+
+
+
 
 
         $diamond = ($this->user()->diamond - 1);
@@ -164,6 +170,7 @@ class SpinController extends AppBaseController
         }
 
         if ($bonustoday > $maxbonus) {
+//            dd($no_change);
             $spinid = getRandomWeightedElement($no_change);
         } else {
             $spinid = getRandomWeightedElement($change);

@@ -31,7 +31,7 @@ class MemberDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-            ->setTransformer(new MemberTransformer($config,$prem));
+            ->setTransformer(new MemberTransformer($config, $prem));
 //        return $dataTable->setTransformer(new WithdrawTransformer);
 //        return $dataTables->addColumn('action', 'admins::withdraw.datatables_confirm');
 //        return $dataTable
@@ -50,6 +50,9 @@ class MemberDataTable extends DataTable
 
 
         return $model->newQuery()
+            ->with(['member_remark' => function ($query) {
+                $query->orderBy('code', 'desc')->latest();
+            }])
             ->confirm()
             ->select('members.*')->with(['bank', 'up'])->withCount(['downs' => function ($model) {
                 $model->active();
@@ -91,9 +94,9 @@ class MemberDataTable extends DataTable
     public function html()
     {
         $prem = bouncer()->hasPermission('wallet.member.tel');
-        if($prem){
-            $btn = ['pageLength','excel'];
-        }else{
+        if ($prem) {
+            $btn = ['pageLength', 'excel'];
+        } else {
             $btn = ['pageLength'];
         }
 
@@ -154,6 +157,7 @@ class MemberDataTable extends DataTable
             ['data' => 'balance', 'name' => 'members.balance', 'title' => 'Wallet', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'pro', 'name' => 'members.promotion', 'title' => 'รับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+//            ['data' => 'pro', 'name' => 'members.promotion', 'title' => 'รับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'enable', 'name' => 'members.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
         ];
@@ -174,7 +178,7 @@ class MemberDataTable extends DataTable
 
 
         return function ($row) {
-            if($prem = bouncer()->hasPermission('wallet.member.tel')){
+            if ($prem = bouncer()->hasPermission('wallet.member.tel')) {
                 return [
                     'Register Date' => $row['date_regis'],
                     'UserName' => $row['user_name'],
@@ -183,7 +187,7 @@ class MemberDataTable extends DataTable
                     'Line ID' => $row['lineid'],
                     'Mobile Number' => $row['tel'],
                 ];
-            }else{
+            } else {
                 return [
                     'Register Date' => $row['date_regis'],
                     'UserName' => $row['user_name'],

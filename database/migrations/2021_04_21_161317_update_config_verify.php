@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateWebsocketsStatisticsEntriesTable extends Migration
+class UpdateConfigVerify extends Migration
 {
     /**
      * Run the migrations.
@@ -14,10 +14,8 @@ class CreateWebsocketsStatisticsEntriesTable extends Migration
     public function up()
     {
         Schema::table('configs', function (Blueprint $table) {
-            $table->enum('diamond_per_bill', ['Y', 'N'])->default('N');
-            $table->decimal('diamonds_topup', 10, 2)->default('0.00');
-            $table->decimal('diamonds_amount', 10, 2)->default('0.00');
-        });
+            $table->enum('verify_open', ['Y', 'N'])->default('N');
+       });
     }
 
     /**
@@ -28,7 +26,7 @@ class CreateWebsocketsStatisticsEntriesTable extends Migration
     public function down()
     {
         Schema::table('configs', function (Blueprint $table) {
-            $table->dropColumn(['diamond_per_bill', 'diamonds_topup', 'diamonds_amount']);
+            $table->dropColumn(['verify_open']);
         });
     }
 }

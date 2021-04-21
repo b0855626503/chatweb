@@ -352,6 +352,60 @@
     </b-form>
 </b-modal>
 
+<b-modal ref="remark" id="remark" centered size="md" title="หมายเหตุ" :no-stacking="true"
+         :no-close-on-backdrop="true" :hide-footer="true">
+    <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRemark" :fields="fieldsRemark" :busy="isBusyRemark"
+             ref="tbdataremark" v-if="showremark">
+        <template #table-busy>
+            <div class="text-center text-danger my-2">
+                <b-spinner class="align-middle"></b-spinner>
+                <strong>Loading...</strong>
+            </div>
+        </template>
+
+        <template #cell(action)="data">
+            <span v-html="data.value"></span>
+        </template>
+
+        <template #thead-top="data">
+            <b-tr>
+                <b-th colspan="3"></b-th>
+                <b-th variant="secondary" class="text-center">
+                    <button type="button" class="btn btn-xs btn-primary"
+                            @click="addSubModal()"><i class="fa fa-plus"></i> Add
+                    </button>
+                </b-th>
+
+            </b-tr>
+        </template>
+
+    </b-table>
+</b-modal>
+
+<b-modal ref="addeditsub" id="addeditsub" centered size="sm" title="เพิ่มรายการ" :no-stacking="false"
+         :no-close-on-backdrop="true" :hide-footer="true">
+    <b-form @submit.stop.prevent="addEditSubmitNewSub" v-if="showsub">
+        <b-form-group
+            id="input-group-remark"
+            label="หมายเหตุ:"
+            label-for="remark"
+            description="">
+            <b-form-textarea
+                id="remark"
+                name="remark"
+                v-model="formsub.remark"
+                placeholder=""
+                rows="3"
+                max-rows="6"
+                required
+            ></b-form-textarea>
+        </b-form-group>
+
+        <b-button type="submit" variant="primary">บันทึก</b-button>
+
+    </b-form>
+</b-modal>
+
 
 @push('scripts')
     <script type="text/javascript">
@@ -375,16 +429,32 @@
             window.app.diamond(id);
         }
 
+        function commentModal(id) {
+            window.app.commentModal(id);
+        }
+
+        function delSub(id, table) {
+            window.app.delSub(id, table);
+        }
+
         (() => {
             window.app = new Vue({
                 el: '#app',
                 data() {
                     return {
                         show: false,
+                        showsub: false,
+                        showremark: false,
+                        fieldsRemark: [],
                         fields: [],
                         items: [],
                         caption: null,
                         isBusy: false,
+                        isBusyRemark: false,
+                        formmethodsub: 'edit',
+                        formsub: {
+                            remark: ''
+                        },
                         formmethod: 'edit',
                         formaddedit: {
                             firstname: '',
@@ -443,6 +513,16 @@
                         this.$nextTick(() => {
                             this.show = true;
                             this.$refs.gamelog.show();
+                        })
+
+                    },
+                    commentModal(code) {
+                        this.code = code;
+
+                        this.showremark = false;
+                        this.$nextTick(() => {
+                            this.showremark = true;
+                            this.$refs.remark.show();
                         })
 
                     },
@@ -731,6 +811,74 @@
                         return this.items;
 
                     },
+                    async myRemark() {
+                        const response = await axios.get("{{ url($menu->currentRoute.'/remark') }}", {
+                            params: {
+                                id: this.code
+                            }
+                        });
+
+
+                        this.fieldsRemark = [
+                            {key: 'date_create', label: 'วันที่'},
+                            {key: 'remark', label: 'หมายเหตุ'},
+                            {key: 'emp_code', label: 'ผู้เพิ่มรายการ'},
+                            {key: 'action', label: '', class: 'text-center'}
+                        ];
+
+                        this.items = response.data.list;
+                        return this.items;
+
+                    },
+                    addSubModal() {
+
+                        this.formsub = {
+                            remark: ''
+                        }
+                        this.formmethodsub = 'add';
+
+                        this.showsub = false;
+                        this.$nextTick(() => {
+                            this.showsub = true;
+                            this.$refs.addeditsub.show();
+
+                        })
+                    },
+                    delSub(code, table) {
+                        this.$bvModal.msgBoxConfirm('ต้องการดำเนินการ ลบข้อมูลหรือไม่.', {
+                            title: 'โปรดยืนยันการทำรายการ',
+                            size: 'sm',
+                            buttonSize: 'sm',
+                            okVariant: 'danger',
+                            okTitle: 'ตกลง',
+                            cancelTitle: 'ยกเลิก',
+                            footerClass: 'p-2',
+                            hideHeaderClose: false,
+                            centered: true
+                        })
+                            .then(value => {
+                                if (value) {
+                                    this.$http.post("{{ url($menu->currentRoute.'/deletesub') }}", {
+                                        id: code, method: table
+                                    })
+                                        .then(response => {
+                                            this.$bvModal.msgBoxOk(response.data.message, {
+                                                title: 'ผลการดำเนินการ',
+                                                size: 'sm',
+                                                buttonSize: 'sm',
+                                                okVariant: 'success',
+                                                headerClass: 'p-2 border-bottom-0',
+                                                footerClass: 'p-2 border-top-0',
+                                                centered: true
+                                            });
+                                            this.$refs.tbdata.refresh();
+
+                                        })
+                                        .catch(errors => console.log(errors));
+                                }
+                            })
+                            .catch(errors => console.log(errors));
+                    },
                     addEditSubmitNew(event) {
                         event.preventDefault();
                         var url = "{{ url($menu->currentRoute.'/update') }}/" + this.code;
@@ -783,7 +931,31 @@
                                 })
                             });
 
-                    }
+                    },
+                    addEditSubmitNewSub(event) {
+                        event.preventDefault();
+
+                        var url = "{{ url($menu->currentRoute.'/createsub') }}";
+
+                        this.$http.post(url, {id: this.code, data: this.formsub})
+                            .then(response => {
+                                this.$bvModal.hide('addeditsub');
+                                this.$bvModal.msgBoxOk(response.data.message, {
+                                    title: 'ผลการดำเนินการ',
+                                    size: 'sm',
+                                    buttonSize: 'sm',
+                                    okVariant: 'success',
+                                    headerClass: 'p-2 border-bottom-0',
+                                    footerClass: 'p-2 border-top-0',
+                                    centered: true
+                                });
+
+                                this.$refs.tbdataremark.refresh()
+
+                            })
+                            .catch(errors => console.log(errors));
+
+                    },
                 },
             });
 
