@@ -27,6 +27,12 @@ class RedirectIfNotCustomer
                 session()->flash('warning', 'สมาชิกถูกระงับการใช้งาน โปรดติดต่อทีมงาน');
 
                 return redirect()->route('customer.session.index');
+            }else if(Auth::guard($guard)->user()->confirm != 'Y'){
+                Auth::guard($guard)->logout();
+
+                session()->flash('warning', 'สถานะ User ID อยู่ระหว่างตรวจสอบ โดยทีมงาน');
+
+                return redirect()->route('customer.session.index');
             }
         }
 

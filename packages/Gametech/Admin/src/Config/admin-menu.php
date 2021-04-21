@@ -53,15 +53,23 @@ return [
         'key' => 'payment',
         'name' => 'ค่าใช้จ่าย',
         'route' => 'admin.payment.index',
-        'sort' => 7,
+        'sort' => 10,
         'icon-class' => 'fa-cubes',
         'badge' => 0,
         'badge-color' => 'badge-purple'
     ], [
+        'key' => 'member_confirm',
+        'name' => 'สมาชิกรอยืนยัน',
+        'route' => 'admin.member_confirm.index',
+        'sort' => 15,
+        'icon-class' => 'fa-user',
+        'badge' => 1,
+        'badge-color' => 'badge-warning'
+    ], [
         'key' => 'wallet',
         'name' => 'Members',
         'route' => 'admin.member.index',
-        'sort' => 8,
+        'sort' => 20,
         'icon-class' => 'fa-users',
         'badge' => 0,
         'badge-color' => 'badge-primary'
@@ -125,7 +133,7 @@ return [
         'key' => 'credit',
         'name' => 'Members Cashback',
         'route' => 'admin.member_free.index',
-        'sort' => 9,
+        'sort' => 30,
         'icon-class' => 'fa-dollar-sign',
         'badge' => 0,
         'badge-color' => 'badge-primary'
@@ -165,7 +173,7 @@ return [
         'key' => 'mop',
         'name' => 'รายงาน (กิจกรรม)',
         'route' => 'admin.rp_reward_point.index',
-        'sort' => 10,
+        'sort' => 40,
         'icon-class' => 'fa-flag-checkered',
         'badge' => 0,
         'badge-color' => 'badge-primary'
@@ -205,7 +213,7 @@ return [
         'key' => 'mep',
         'name' => 'รายงานสมาชิก',
         'route' => 'admin.rp_billturn.index',
-        'sort' => 11,
+        'sort' => 50,
         'icon-class' => 'fa-address-book',
         'badge' => 0,
         'badge-color' => 'badge-primary'
@@ -253,7 +261,7 @@ return [
         'key' => 'mon',
         'name' => 'รายงานการเงิน',
         'route' => 'admin.rp_alllog.index',
-        'sort' => 12,
+        'sort' => 60,
         'icon-class' => 'fa-chart-line',
         'badge' => 0,
         'badge-color' => 'badge-primary'
@@ -293,7 +301,7 @@ return [
         'key' => 'ats',
         'name' => 'ตั้งค่าบัญชี',
         'route' => 'admin.bank_account_in.index',
-        'sort' => 15,
+        'sort' => 70,
         'icon-class' => 'fa-university',
         'badge' => 0,
         'badge-color' => 'badge-primary'
@@ -317,7 +325,7 @@ return [
         'key' => 'top',
         'name' => 'เกมส์ & โปรโมชั่น',
         'route' => 'admin.game.index',
-        'sort' => 20,
+        'sort' => 80,
         'icon-class' => 'fa-gamepad',
         'badge' => 0,
         'badge-color' => 'badge-primary'
@@ -357,7 +365,7 @@ return [
         'key' => 'st',
         'name' => 'ตั้งค่า ระบบ',
         'route' => 'admin.setting.index',
-        'sort' => 30,
+        'sort' => 90,
         'icon-class' => 'fa-cog',
         'badge' => 0,
         'badge-color' => 'badge-primary'
@@ -413,7 +421,7 @@ return [
         'key' => 'dev',
         'name' => 'Admin Zone',
         'route' => 'admin.employees.index',
-        'sort' => 50,
+        'sort' => 100,
         'icon-class' => 'fa-cog',
         'badge' => 0,
         'badge-color' => 'badge-primary'

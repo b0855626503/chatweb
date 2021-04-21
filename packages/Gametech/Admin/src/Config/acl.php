@@ -101,12 +101,12 @@ return [
         'key' => 'confirm_wallet.delete',
         'name' => 'สิทธิ์ ลบรายการโยกเงิน',
         'route' => 'admin.confirm_wallet.delete',
-        'sort' => 2
+        'sort' => 3
     ], [
         'key' => 'payment',
         'name' => 'ค่าใช้จ่าย',
         'route' => 'admin.payment.index',
-        'sort' => 7
+        'sort' => 10
     ], [
         'key' => 'payment.create',
         'name' => 'เพิ่ม ค่าใช้จ่าย',
@@ -123,10 +123,31 @@ return [
         'route' => 'admin.payment.delete',
         'sort' => 3
     ], [
+        'key' => 'member_confirm',
+        'name' => 'สมาชิกรอยืนยัน',
+        'route' => 'admin.member_confirm.index',
+        'sort' => 15
+    ], [
+        'key' => 'member_confirm.update',
+        'name' => 'สิทธิ์ อนุมัติ',
+        'route' => 'admin.member_confirm.update',
+        'sort' => 1
+    ], [
+        'key' => 'member_confirm.delete',
+        'name' => 'สิทธิ์ ลบข้อมูล',
+        'route' => 'admin.member_confirm.delete',
+        'sort' => 2
+    ], [
+        'key' => 'member_confirm.tel',
+        'name' => 'สิทธิ์ เห็นเบอร์โทร',
+        'route' => 'admin.member_confirm.index',
+        'sort' => 3
+
+    ], [
         'key' => 'wallet',
         'name' => 'Members',
         'route' => 'admin.member.index',
-        'sort' => 8
+        'sort' => 20
     ], [
         'key' => 'wallet.member',
         'name' => 'สมาชิก (Wallet)',
@@ -204,7 +225,7 @@ return [
         'key' => 'credit',
         'name' => 'Members Cashback',
         'route' => 'admin.member_free.index',
-        'sort' => 9
+        'sort' => 30
     ], [
         'key' => 'credit.member_free',
         'name' => 'สมาชิก (Credit)',
@@ -235,7 +256,7 @@ return [
         'key' => 'mop',
         'name' => 'รายงาน (กิจกรรม)',
         'route' => 'admin.rp_reward_point.index',
-        'sort' => 10
+        'sort' => 40
     ], [
         'key' => 'mop.rp_reward_point',
         'name' => 'Point Reward',
@@ -260,7 +281,7 @@ return [
         'key' => 'mep',
         'name' => 'รายงานสมาชิก',
         'route' => 'admin.rp_billturn.index',
-        'sort' => 11
+        'sort' => 50
     ], [
         'key' => 'mep.rp_billturn',
         'name' => 'ทำเทรินโยกออก',
@@ -290,7 +311,7 @@ return [
         'key' => 'mon',
         'name' => 'รายงานการเงิน',
         'route' => 'admin.rp_alllog.index',
-        'sort' => 12,
+        'sort' => 60
     ], [
         'key' => 'mon.rp_alllog',
         'name' => 'All Log',
@@ -319,7 +340,7 @@ return [
         'key' => 'ats',
         'name' => 'ตั้งค่าบัญชี',
         'route' => 'admin.bank_account_in.index',
-        'sort' => 15
+        'sort' => 70
     ], [
         'key' => 'ats.bank_account_in',
         'name' => 'บัญชีรับเข้า',
@@ -366,7 +387,7 @@ return [
         'key' => 'top',
         'name' => 'เกมส์ & โปรโมชั่น',
         'route' => 'admin.game.index',
-        'sort' => 20
+        'sort' => 80
     ], [
         'key' => 'top.game',
         'name' => 'เกมส์',
@@ -422,7 +443,7 @@ return [
         'key' => 'st',
         'name' => 'ตั้งค่า ระบบ',
         'route' => 'admin.setting.index',
-        'sort' => 30
+        'sort' => 90
     ], [
         'key' => 'st.setting',
         'name' => 'ค่าพื้นฐานเว็บไซต์',
@@ -507,7 +528,7 @@ return [
         'key' => 'dev',
         'name' => 'Admin Zone',
         'route' => 'admin.employees.index',
-        'sort' => 50
+        'sort' => 100
     ], [
         'key' => 'dev.employees',
         'name' => 'ผู้ใช้งานระบบ',

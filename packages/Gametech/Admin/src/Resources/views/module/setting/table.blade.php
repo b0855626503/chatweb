@@ -21,6 +21,31 @@
 
                 <b-form-row>
                     <b-col>
+                        <b-card title="การยืนยันตน">
+                            <b-card-text>
+                                <b-form-group
+                                    id="input-group-verify_open"
+                                    label="เลือกเปิด เมื่อต้องการ ตรวจสอบรหัสของลูกค้า:"
+                                    label-for="verify_open"
+                                    description="เมื่อสมัครสมาชิกเสร็จ จะเข้าระบบไม่ได้ ถ้าเปิดการใช้งาน โดยทีมงานต้องเข้าไปอนุมัติการใช้งานก่อน">
+
+                                    <b-form-select
+                                        id="verify_open"
+                                        name="verify_open"
+                                        v-model="formaddedit.verify_open"
+                                        :options="option.verify_open"
+                                        size="sm"
+                                        required
+                                    ></b-form-select>
+
+                                </b-form-group>
+                            </b-card-text>
+                        </b-card>
+                    </b-col>
+                </b-form-row>
+
+                <b-form-row>
+                    <b-col>
                         <b-card title="แก้ไขข้อมูลติดต่อ">
                             <b-card-text>
                                 <b-form-group
@@ -852,6 +877,7 @@
                             freecredit_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             freecredit_all: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             diamond_per_bill: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
+                            verify_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             admin_navbar_color: [
                                 {value: 'navbar-white navbar-light', text: 'สีขาว'},
                                 {value: 'navbar-gray-dark', text: 'สีเทาดำ'},

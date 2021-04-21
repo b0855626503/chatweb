@@ -367,14 +367,23 @@ class LoginController extends AppBaseController
             return redirect()->back();
         }
 
-        $games = app('Gametech\Game\Repositories\GameRepository')->findWhere(['auto_open' => 'Y','status_open' => 'Y']);
+        if($config->verify_open === 'N') {
 
-        foreach($games as $i => $game){
-            app('Gametech\Game\Repositories\GameUserRepository')->addGameUser($game->code,$response->code,$data);
+            $games = app('Gametech\Game\Repositories\GameRepository')->findWhere(['auto_open' => 'Y', 'status_open' => 'Y']);
+
+            foreach ($games as $i => $game) {
+                app('Gametech\Game\Repositories\GameUserRepository')->addGameUser($game->code, $response->code, $data);
+            }
+
+            session()->flash('success', 'สมัครสมาชิกสำเร็จแล้ว สามารถเข้าระบบได้เลย');
+            return redirect()->intended(route($this->_config['redirect']));
+
+        }else{
+
+            session()->flash('success', 'ขณะนี้ข้อมูลการสมัครของท่าน อยู่ในกระบวนการตรวจสอบโดยทีมงาน เมื่อทีมงานดพเนินการเสร็จ ท่านสมาชิกจะสามารถเข้าสู่ระบบของเวบไซต์ได้');
+            return redirect()->intended(route($this->_config['redirect']));
+
         }
-
-        session()->flash('success', 'สมัครสมาชิกสำเร็จแล้ว สามารถเข้าระบบได้เลย');
-        return redirect()->intended(route($this->_config['redirect']));
 
     }
 
