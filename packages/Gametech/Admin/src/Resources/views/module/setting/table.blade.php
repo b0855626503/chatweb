@@ -453,6 +453,23 @@
                                 </b-form-group>
 
                                 <b-form-group
+                                    id="input-group-diamond_transfer_in"
+                                    label="ได้รับเพชร เมื่อ โยกเงินเข้าเกม:"
+                                    label-for="diamond_transfer_in"
+                                    description="">
+
+                                    <b-form-select
+                                        id="diamond_transfer_in"
+                                        name="diamond_transfer_in"
+                                        v-model="formaddedit.diamond_transfer_in"
+                                        :options="option.diamond_transfer_in"
+                                        size="sm"
+                                        required
+                                    ></b-form-select>
+
+                                </b-form-group>
+
+                                <b-form-group
                                     id="input-group-diamond_per_bill"
                                     label="เปิดใช้งาน Diamond ต่อบิล:"
                                     label-for="diamond_per_bill"
@@ -877,6 +894,7 @@
                             freecredit_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             freecredit_all: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             diamond_per_bill: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
+                            diamond_transfer_in: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             verify_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             admin_navbar_color: [
                                 {value: 'navbar-white navbar-light', text: 'สีขาว'},

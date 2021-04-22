@@ -3,6 +3,7 @@
 namespace Gametech\Admin\DataTables;
 
 
+use App\Exports\UsersExport;
 use Gametech\Admin\Transformers\MemberTransformer;
 use Gametech\Member\Contracts\Member;
 use Yajra\DataTables\DataTableAbstract;
@@ -13,8 +14,8 @@ use Yajra\DataTables\Services\DataTable;
 
 class MemberDataTable extends DataTable
 {
-
-    protected $fastExcel = true;
+    protected $exportClass = UsersExport::class;
+//    protected $fastExcel = true;
 
     /**
      * Build DataTable class.

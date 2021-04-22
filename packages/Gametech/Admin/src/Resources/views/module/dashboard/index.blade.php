@@ -805,6 +805,7 @@
                         document.getElementById('badge_withdraw').textContent = response.data.withdraw;
                         document.getElementById('badge_withdraw_free').textContent = response.data.withdraw_free;
                         document.getElementById('badge_confirm_wallet').textContent = response.data.payment_waiting;
+                        document.getElementById('badge_member_confirm').textContent = response.data.member_confirm;
                         if (this.loopcnts == 0) {
                             document.getElementById('announce').textContent = response.data.announce;
                             this.runMarquee();

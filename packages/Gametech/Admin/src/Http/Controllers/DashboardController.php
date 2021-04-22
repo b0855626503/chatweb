@@ -91,6 +91,10 @@ class DashboardController extends AppBaseController
             ->active()->waiting()
             ->count();
 
+        $member_confirm = app('Gametech\Member\Repositories\MemberRepository')
+            ->active()->waiting()
+            ->count();
+
 
         $announce = [
             'content' => '',
@@ -128,6 +132,7 @@ class DashboardController extends AppBaseController
 
 
 
+        $result['member_confirm'] = $member_confirm;
         $result['bank_in_today'] = $bank_in_today;
         $result['bank_in'] = $bank_in;
         $result['bank_out'] = $bank_out;

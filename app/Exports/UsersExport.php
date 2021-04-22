@@ -24,7 +24,7 @@ class UsersExport extends DataTablesCollectionExport implements WithMapping
             $row['date_regis'],
             $row['firstname'],
             $row['lastname'],
-            $row['line_id'],
+            $row['lineid'],
             $row['tel'],
         ];
     }

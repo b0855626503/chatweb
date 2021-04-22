@@ -13,6 +13,10 @@ use Yajra\DataTables\Services\DataTable;
 
 class RoleDataTable extends DataTable
 {
+
+    protected $fastExcel = true;
+    protected $fastExcelCallback = false;
+
     /**
      * Build DataTable class.
      *
@@ -39,7 +43,7 @@ class RoleDataTable extends DataTable
 
         return $model->newQuery()
             ->when($admin, function ($query) {
-                $query->where('code','<>',1);
+                $query->where('code', '<>', 1);
             })
             ->select('roles.*');
 
@@ -57,7 +61,7 @@ class RoleDataTable extends DataTable
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->parameters([
-                'dom'       => 'Bfrtip',
+                'dom' => 'Bfrtip',
 
                 'processing' => true,
                 'serverSide' => true,
@@ -68,14 +72,14 @@ class RoleDataTable extends DataTable
                 'searching' => false,
                 'deferRender' => true,
                 'retrieve' => true,
-'ordering' => true,
+                'ordering' => true,
 
-                'order'     => [[0, 'desc']],
-                'buttons'   => [
-                    'pageLength'
+                'order' => [[0, 'desc']],
+                'buttons' => [
+                    'pageLength','excel'
                 ],
                 'columnDefs' => [
-                    [ 'targets' => '_all' , 'className' => 'text-nowrap']
+                    ['targets' => '_all', 'className' => 'text-nowrap']
                 ]
             ]);
     }
@@ -88,11 +92,11 @@ class RoleDataTable extends DataTable
     protected function getColumns()
     {
         return [
-            ['data' => 'code' , 'name' => 'code' , 'title' => '#' , 'orderable' => true , 'searchable' => true , 'className' => 'text-center text-nowrap'],
-            ['data' => 'name' , 'name' => 'name' , 'title' => 'ชื่อ' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'description' , 'name' => 'description' , 'title' => 'รายละเอียด' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'permission_type' , 'name' => 'permission_type' , 'title' => 'ประเภทสิทธิ์' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'action' , 'name' => 'action' , 'title' => 'Action' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
+            ['data' => 'code', 'name' => 'code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'name', 'name' => 'name', 'title' => 'ชื่อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+            ['data' => 'description', 'name' => 'description', 'title' => 'รายละเอียด', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'permission_type', 'name' => 'permission_type', 'title' => 'ประเภทสิทธิ์', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];
     }
 

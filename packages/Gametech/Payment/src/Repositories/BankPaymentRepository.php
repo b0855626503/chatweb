@@ -131,17 +131,17 @@ class BankPaymentRepository extends Repository
 
 
         $payment = $this->find($data['code']);
-        if(!$payment){
+        if (!$payment) {
             return false;
         }
 
         $member = $this->memberRepository->find($data['member_topup']);
-        if(!$member){
+        if (!$member) {
             return false;
         }
 
         $bank_acc = $this->bankAccountRepository->find($data['account_code']);
-        if(!$bank_acc){
+        if (!$bank_acc) {
             return false;
         }
 
@@ -231,7 +231,6 @@ class BankPaymentRepository extends Repository
             $alllog->save();
 
 
-
             if ($config->pro_wallet == 'N') {
                 $promotion = $this->promotionRepository->CalculatePro($member, $amount, $datenow);
                 $bonus = $promotion['bonus'];
@@ -260,45 +259,48 @@ class BankPaymentRepository extends Repository
             }
             if ($config->diamond_open == 'Y') {
 
-                if($config->diamond_per_bill == 'N'){
+                if ($config->diamond_transfer_in == 'N') {
 
-                    if ($amount >= $config->diamonds && $config->diamonds > 0) {
-                        $diamond = floor($amount / $config->diamonds);
+                    if ($config->diamond_per_bill == 'N') {
 
-                        $this->memberDiamondLogRepository->create([
-                            'diamond_type' => 'D',
-                            'diamond_amount' => $diamond,
-                            'diamond_before' => $member->diamond,
-                            'diamond_balance' => ($member->diamond + $diamond),
-                            'member_code' => $member_code,
-                            'remark' => 'ได้รับเพชร จากการเติมเงิน '.$amount.' บาท เติม '.$config->diamonds.' ได้รับ 1 เม็ด สรุปได้รับ '.$diamond,
-                            'emp_code' => $data['emp_topup'],
-                            'ip' => $ip,
-                            'user_create' => "System Auto",
-                            'user_update' => "System Auto",
-                        ]);
+                        if ($amount >= $config->diamonds && $config->diamonds > 0) {
+                            $diamond = floor($amount / $config->diamonds);
+
+                            $this->memberDiamondLogRepository->create([
+                                'diamond_type' => 'D',
+                                'diamond_amount' => $diamond,
+                                'diamond_before' => $member->diamond,
+                                'diamond_balance' => ($member->diamond + $diamond),
+                                'member_code' => $member_code,
+                                'remark' => 'ได้รับเพชร จากการเติมเงิน ' . $amount . ' บาท เติม ' . $config->diamonds . ' ได้รับ 1 เม็ด สรุปได้รับ ' . $diamond,
+                                'emp_code' => $data['emp_topup'],
+                                'ip' => $ip,
+                                'user_create' => "System Auto",
+                                'user_update' => "System Auto",
+                            ]);
+                        }
+
+                    } else {
+
+                        if ($amount >= $config->diamonds_topup && $config->diamonds_topup > 0 && $config->diamonds_amount > 0) {
+                            $diamond = $config->diamonds_amount;
+
+                            $this->memberDiamondLogRepository->create([
+                                'diamond_type' => 'D',
+                                'diamond_amount' => $diamond,
+                                'diamond_before' => $member->diamond,
+                                'diamond_balance' => ($member->diamond + $diamond),
+                                'member_code' => $member_code,
+                                'remark' => 'ได้รับเพชร จากการเติมเงิน ' . $amount . ' บาท ประเภทนับเป็นบิล เติมยอดมากกว่าหรือเท่ากับ ' . $config->diamonds_topup . ' ได้รับ ' . $diamond . ' เม็ด',
+                                'emp_code' => $data['emp_topup'],
+                                'ip' => $ip,
+                                'user_create' => "System Auto",
+                                'user_update' => "System Auto",
+                            ]);
+
+                        }
+
                     }
-
-                }else{
-
-                    if($amount >= $config->diamonds_topup && $config->diamonds_topup > 0 && $config->diamonds_amount > 0){
-                        $diamond = $config->diamonds_amount;
-
-                        $this->memberDiamondLogRepository->create([
-                            'diamond_type' => 'D',
-                            'diamond_amount' => $diamond,
-                            'diamond_before' => $member->diamond,
-                            'diamond_balance' => ($member->diamond + $diamond),
-                            'member_code' => $member_code,
-                            'remark' => 'ได้รับเพชร จากการเติมเงิน '.$amount.' บาท ประเภทนับเป็นบิล เติมยอดมากกว่าหรือเท่ากับ '.$config->diamonds_topup.' ได้รับ '.$diamond.' เม็ด',
-                            'emp_code' => $data['emp_topup'],
-                            'ip' => $ip,
-                            'user_create' => "System Auto",
-                            'user_update' => "System Auto",
-                        ]);
-
-                    }
-
                 }
 
             }
