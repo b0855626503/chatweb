@@ -101,6 +101,7 @@ class LiveRepository extends Repository
     public function addUser($username, $data): array
     {
         $return['success'] = false;
+        $return['msg'] = 'Error';
 
         $user_pass = "Aa" . rand(100000, 999999);
         $param = [
@@ -127,11 +128,7 @@ class LiveRepository extends Repository
                 $return['user_name'] = $response['player_id'];
                 $return['user_pass'] = $response['player_password'];
 
-            } else {
-                $return['msg'] = $return['error'];
             }
-        } else {
-            $return['msg'] = $response['error'];
         }
 
         return $return;

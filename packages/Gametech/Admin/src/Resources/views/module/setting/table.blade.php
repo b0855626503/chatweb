@@ -452,22 +452,22 @@
 
                                 </b-form-group>
 
-                                <b-form-group
-                                    id="input-group-diamond_transfer_in"
-                                    label="ได้รับเพชร เมื่อ โยกเงินเข้าเกม:"
-                                    label-for="diamond_transfer_in"
-                                    description="">
+{{--                                <b-form-group--}}
+{{--                                    id="input-group-diamond_transfer_in"--}}
+{{--                                    label="ได้รับเพชร เมื่อ โยกเงินเข้าเกม:"--}}
+{{--                                    label-for="diamond_transfer_in"--}}
+{{--                                    description="">--}}
 
-                                    <b-form-select
-                                        id="diamond_transfer_in"
-                                        name="diamond_transfer_in"
-                                        v-model="formaddedit.diamond_transfer_in"
-                                        :options="option.diamond_transfer_in"
-                                        size="sm"
-                                        required
-                                    ></b-form-select>
+{{--                                    <b-form-select--}}
+{{--                                        id="diamond_transfer_in"--}}
+{{--                                        name="diamond_transfer_in"--}}
+{{--                                        v-model="formaddedit.diamond_transfer_in"--}}
+{{--                                        :options="option.diamond_transfer_in"--}}
+{{--                                        size="sm"--}}
+{{--                                        required--}}
+{{--                                    ></b-form-select>--}}
 
-                                </b-form-group>
+{{--                                </b-form-group>--}}
 
                                 <b-form-group
                                     id="input-group-diamond_per_bill"

@@ -196,6 +196,12 @@ class DreamtechRepository extends Repository
 
         $response = $this->GameCurl($param, $username . '/authenticate');
 
+        if ($this->debug) {
+            $return = $this->Debug($response);
+        }
+
+
+
         if ($response->successful()) {
 
             $response = $response->json();
@@ -231,15 +237,22 @@ class DreamtechRepository extends Repository
 
                     $response = $response->json();
 
-                    if (!empty($response['platformLoginId'])) {
-                        DB::table('users_dreamtech')
-                            ->where('user_name', $username)
-                            ->update(['date_join' => now()->toDateString(), 'ip' => request()->ip(), 'use_account' => 'Y', 'user_update' => 'SYSTEM']);
+                    if ($response['platformLoginId']) {
                         $return['msg'] = 'Complete';
                         $return['success'] = true;
                         $return['user_name'] = $username;
                         $return['user_pass'] = $user_pass;
+
+                        $return['debug']['json'][]['user_name'] = $username;
+                        $return['debug']['json'][]['user_pass'] = $user_pass;
+
+                        DB::table('users_dreamtech')
+                            ->where('user_name', $username)
+                            ->update(['date_join' => now()->toDateString(), 'ip' => request()->ip(), 'use_account' => 'Y', 'user_update' => 'SYSTEM']);
+
                     }
+
+
                 }
 
             } else {
