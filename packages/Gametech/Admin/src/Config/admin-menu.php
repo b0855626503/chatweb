@@ -8,7 +8,8 @@ return [
         'sort' => 1,
         'icon-class' => 'fa-tachometer-alt',
         'badge' => 0,
-        'badge-color' => 'badge-info'
+        'badge-color' => 'badge-info',
+        'status' => 1
     ], [
         'key' => 'bank_in',
         'name' => 'รายการ เงินเข้า',
@@ -16,7 +17,8 @@ return [
         'sort' => 2,
         'icon-class' => 'fa-arrow-circle-left',
         'badge' => 1,
-        'badge-color' => 'badge-warning'
+        'badge-color' => 'badge-warning',
+        'status' => 1
     ], [
         'key' => 'bank_out',
         'name' => 'รายการ เงินออก',
@@ -24,7 +26,8 @@ return [
         'sort' => 3,
         'icon-class' => 'fa-arrow-circle-right',
         'badge' => 1,
-        'badge-color' => 'badge-warning'
+        'badge-color' => 'badge-warning',
+        'status' => 1
     ], [
         'key' => 'withdraw',
         'name' => 'รายการ ถอนเงิน',
@@ -32,7 +35,8 @@ return [
         'sort' => 4,
         'icon-class' => 'fa-wallet',
         'badge' => 1,
-        'badge-color' => 'badge-warning'
+        'badge-color' => 'badge-warning',
+        'status' => 1
     ], [
         'key' => 'withdraw_free',
         'name' => 'รายการ ถอนเงิน [Free]',
@@ -40,7 +44,8 @@ return [
         'sort' => 5,
         'icon-class' => 'fa-credit-card',
         'badge' => 1,
-        'badge-color' => 'badge-warning'
+        'badge-color' => 'badge-warning',
+        'status' => 1
     ], [
         'key' => 'confirm_wallet',
         'name' => 'รออนุมัติการโยกเงิน',
@@ -48,7 +53,8 @@ return [
         'sort' => 6,
         'icon-class' => 'fa-clock',
         'badge' => 1,
-        'badge-color' => 'badge-warning'
+        'badge-color' => 'badge-warning',
+        'status' => 1
     ], [
         'key' => 'payment',
         'name' => 'ค่าใช้จ่าย',
@@ -56,7 +62,8 @@ return [
         'sort' => 10,
         'icon-class' => 'fa-cubes',
         'badge' => 0,
-        'badge-color' => 'badge-purple'
+        'badge-color' => 'badge-purple',
+        'status' => 1
     ], [
         'key' => 'member_confirm',
         'name' => 'สมาชิกรอยืนยัน',
@@ -64,7 +71,8 @@ return [
         'sort' => 15,
         'icon-class' => 'fa-user',
         'badge' => 1,
-        'badge-color' => 'badge-warning'
+        'badge-color' => 'badge-warning',
+        'status' => 0
     ], [
         'key' => 'wallet',
         'name' => 'Members',
@@ -72,7 +80,8 @@ return [
         'sort' => 20,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'wallet.member',
         'name' => 'สมาชิก (Wallet)',
@@ -80,7 +89,8 @@ return [
         'sort' => 1,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'wallet.rp_wallet',
         'name' => 'รายงาน เพิ่ม-ลด (Wallet)',
@@ -88,7 +98,8 @@ return [
         'sort' => 2,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'wallet.rp_bill',
         'name' => 'รายงาน โยกเงิน (Wallet)',
@@ -96,7 +107,8 @@ return [
         'sort' => 3,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'wallet.rp_deposit',
         'name' => 'รายงาน ฝากเงิน (Wallet)',
@@ -104,7 +116,8 @@ return [
         'sort' => 4,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'wallet.rp_withdraw',
         'name' => 'รายงาน ถอนเงิน (Wallet)',
@@ -112,7 +125,8 @@ return [
         'sort' => 5,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'wallet.rp_setpoint',
         'name' => 'รายงาน เพิ่ม-ลด (Point)',
@@ -120,7 +134,8 @@ return [
         'sort' => 6,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'wallet.rp_setdiamond',
         'name' => 'รายงาน เพิ่ม-ลด (Diamond)',
@@ -128,7 +143,8 @@ return [
         'sort' => 7,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'credit',
         'name' => 'Members Cashback',
@@ -136,7 +152,8 @@ return [
         'sort' => 30,
         'icon-class' => 'fa-dollar-sign',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'credit.member_free',
         'name' => 'สมาชิก (Credit)',
@@ -144,7 +161,8 @@ return [
         'sort' => 1,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'credit.rp_credit',
         'name' => 'รายงาน เพิ่ม-ลด (Credit)',
@@ -152,7 +170,8 @@ return [
         'sort' => 2,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'credit.rp_bill_free',
         'name' => 'รายงาน โยกเงิน (Credit)',
@@ -160,7 +179,8 @@ return [
         'sort' => 3,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'credit.rp_withdraw_free',
         'name' => 'รายงาน ถอนเงิน (Credit)',
@@ -168,7 +188,8 @@ return [
         'sort' => 4,
         'icon-class' => 'fa-users',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mop',
         'name' => 'รายงาน (กิจกรรม)',
@@ -176,7 +197,8 @@ return [
         'sort' => 40,
         'icon-class' => 'fa-flag-checkered',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mop.rp_reward_point',
         'name' => 'Point Reward',
@@ -184,7 +206,8 @@ return [
         'sort' => 1,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mop.rp_cashback',
         'name' => 'Cashback',
@@ -192,7 +215,8 @@ return [
         'sort' => 2,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mop.rp_member_ic',
         'name' => 'Member IC',
@@ -200,7 +224,8 @@ return [
         'sort' => 3,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mop.rp_top_promotion',
         'name' => 'โปรยอดนิยม',
@@ -208,7 +233,8 @@ return [
         'sort' => 4,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mep',
         'name' => 'รายงานสมาชิก',
@@ -216,7 +242,8 @@ return [
         'sort' => 50,
         'icon-class' => 'fa-address-book',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mep.rp_billturn',
         'name' => 'รายการเทรินโปร',
@@ -224,7 +251,8 @@ return [
         'sort' => 1,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mep.rp_spin',
         'name' => 'การหมุนวงล้อ',
@@ -232,7 +260,8 @@ return [
         'sort' => 2,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mep.rp_sponsor',
         'name' => 'แนะนำเพื่อน',
@@ -240,7 +269,8 @@ return [
         'sort' => 3,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mep.rp_online_behavior',
         'name' => 'Online Behavior',
@@ -248,7 +278,8 @@ return [
         'sort' => 4,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mep.rp_user_log',
         'name' => 'Activity Log',
@@ -256,7 +287,8 @@ return [
         'sort' => 5,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mon',
         'name' => 'รายงานการเงิน',
@@ -264,7 +296,8 @@ return [
         'sort' => 60,
         'icon-class' => 'fa-chart-line',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mon.rp_alllog',
         'name' => 'All Log',
@@ -272,7 +305,8 @@ return [
         'sort' => 1,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mon.rp_sum_game',
         'name' => 'สรุปยอดแต่ละเกมส์',
@@ -280,7 +314,8 @@ return [
         'sort' => 2,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mon.rp_sum_stat',
         'name' => 'สรุปยอดรายเดือน',
@@ -288,7 +323,8 @@ return [
         'sort' => 3,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'mon.rp_sum_payment',
         'name' => 'สรุปยอดค่าใช้จ่าย',
@@ -296,7 +332,8 @@ return [
         'sort' => 4,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'ats',
         'name' => 'ตั้งค่าบัญชี',
@@ -304,7 +341,8 @@ return [
         'sort' => 70,
         'icon-class' => 'fa-university',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'ats.bank_account_in',
         'name' => 'บัญชีรับเข้า',
@@ -312,7 +350,8 @@ return [
         'sort' => 1,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'ats.bank_account_out',
         'name' => 'บัญชีถอนออก',
@@ -320,7 +359,8 @@ return [
         'sort' => 2,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'top',
         'name' => 'เกมส์ & โปรโมชั่น',
@@ -328,7 +368,8 @@ return [
         'sort' => 80,
         'icon-class' => 'fa-gamepad',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'top.game',
         'name' => 'เกมส์',
@@ -336,7 +377,8 @@ return [
         'sort' => 1,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'top.batch_user',
         'name' => 'Batch User',
@@ -344,7 +386,8 @@ return [
         'sort' => 2,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'top.promotion',
         'name' => 'โปรโมชั่น (ระบบ)',
@@ -352,7 +395,8 @@ return [
         'sort' => 3,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'top.pro_content',
         'name' => 'โปรโมชั่น (เพิ่มเติม)',
@@ -360,7 +404,8 @@ return [
         'sort' => 4,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'st',
         'name' => 'ตั้งค่า ระบบ',
@@ -368,7 +413,8 @@ return [
         'sort' => 90,
         'icon-class' => 'fa-cog',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'st.setting',
         'name' => 'ค่าพื้นฐานเว็บไซต์',
@@ -376,7 +422,8 @@ return [
         'sort' => 1,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'st.faq',
         'name' => 'คู่มือ',
@@ -384,7 +431,8 @@ return [
         'sort' => 2,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'st.refer',
         'name' => 'แหล่งที่มาการสมัคร',
@@ -392,7 +440,8 @@ return [
         'sort' => 3,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'st.bank',
         'name' => 'ธนาคาร',
@@ -400,7 +449,8 @@ return [
         'sort' => 4,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'st.spin',
         'name' => 'วงล้อมหาสนุก',
@@ -408,7 +458,8 @@ return [
         'sort' => 5,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'st.reward',
         'name' => 'ตั้งค่าของรางวัล',
@@ -416,7 +467,8 @@ return [
         'sort' => 6,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'dev',
         'name' => 'Admin Zone',
@@ -424,7 +476,8 @@ return [
         'sort' => 100,
         'icon-class' => 'fa-cog',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'dev.employees',
         'name' => 'ผู้ใช้งานระบบ',
@@ -432,7 +485,8 @@ return [
         'sort' => 1,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'dev.roles',
         'name' => 'สิทธิ์ใช้งานระบบ',
@@ -440,7 +494,8 @@ return [
         'sort' => 2,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ], [
         'key' => 'dev.rp_staff_log',
         'name' => 'Staff Activity Log',
@@ -448,6 +503,7 @@ return [
         'sort' => 3,
         'icon-class' => '',
         'badge' => 0,
-        'badge-color' => 'badge-primary'
+        'badge-color' => 'badge-primary',
+        'status' => 1
     ]
 ];
