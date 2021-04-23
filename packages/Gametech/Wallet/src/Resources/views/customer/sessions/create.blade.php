@@ -36,7 +36,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-user"></i></span>
                                         </div>
-                                        <input class="form-control" v-validate="'required'"
+                                        <input class="form-control text-lowercase" v-validate="'required'"
                                                :class="[errors.has('user_name') ? 'is-invalid' : '']"
                                                id="user_name" name="user_name" maxlength="10"
                                                data-vv-as="&quot;Username&quot;"

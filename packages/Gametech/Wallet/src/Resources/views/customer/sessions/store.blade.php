@@ -142,7 +142,7 @@
                                         </div>
                                         <input autocomplete="off"
                                                data-vv-as="&quot;User ID&quot;"
-                                               class="form-control" id="user_name"
+                                               class="form-control text-lowercase" id="user_name"
                                                name="user_name" maxlength="10"
                                                placeholder="User Name ไม่เกิน 10 ตัวอักษร"
                                                value="{{ old('user_name') }}"
