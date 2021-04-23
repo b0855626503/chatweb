@@ -208,7 +208,9 @@ class JokerRepository extends Repository
         $response = $this->GameCurl($param, '');
 
         if ($this->debug) {
-            $return = $this->Debug($response);
+            return $this->Debug($response);
+
+
         }
 
         if ($response->successful()) {

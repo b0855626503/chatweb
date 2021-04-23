@@ -197,7 +197,8 @@ class DreamtechRepository extends Repository
         $response = $this->GameCurl($param, $username . '/authenticate');
 
         if ($this->debug) {
-            $return = $this->Debug($response);
+            return $this->Debug($response);
+
         }
 
 
