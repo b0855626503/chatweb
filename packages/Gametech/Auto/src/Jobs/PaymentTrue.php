@@ -60,7 +60,7 @@ class PaymentTrue implements ShouldQueue
 
         $success = false;
         foreach ((array)$url as $file) {
-            $response = Http::get($file);
+            $response = Http::timeout(5)->get($file);
 
             if ($response->successful()) {
                 $response = $response->json();

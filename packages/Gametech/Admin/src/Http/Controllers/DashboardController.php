@@ -170,8 +170,9 @@ class DashboardController extends AppBaseController
                 $data = core()->currency($data);
                 break;
             case  'withdraw':
-                $data = app('Gametech\Payment\Repositories\WithdrawRepository')->active()->complete()->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$startdate])->sum('amount');
-                $data = core()->currency($data);
+                $data1 = app('Gametech\Payment\Repositories\WithdrawRepository')->active()->complete()->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$startdate])->sum('amount');
+//                $data2 = app('Gametech\Payment\Repositories\WithdrawFreeRepository')->active()->complete()->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$startdate])->sum('amount');
+                $data = core()->currency($data1);
                 break;
             case  'bonus':
                 $data1 = app('Gametech\Payment\Repositories\PaymentPromotionRepository')->active()->aff()->whereRaw(DB::raw("DATE_FORMAT(date_create,'%Y-%m-%d') = ?"), [$startdate])->sum('credit_bonus');

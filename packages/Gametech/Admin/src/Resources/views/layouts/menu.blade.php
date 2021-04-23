@@ -1,6 +1,6 @@
 @foreach ($menu->items as $menuItem)
-    @if($menuItem['status'] == 1)
-        <li class="nav-item {{ $menu->getActives($menuItem) }}">
+
+        <li class="nav-item {{ $menu->getActives($menuItem) }} {{ ($menuItem['status'] == 0 ? 'hide' : '') }}">
             <a href="{{ count($menuItem['children']) ? 'javascript:void(0)' : $menuItem['url'] }}"
                class="nav-link {{ $menu->getActive($menuItem) }}">
                 <i class="text-sm nav-icon fas {{ $menuItem['icon-class'] }}"></i>
@@ -31,5 +31,5 @@
                 </ul>
             @endif
         </li>
-    @endif
+
 @endforeach

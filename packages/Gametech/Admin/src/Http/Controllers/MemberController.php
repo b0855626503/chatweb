@@ -3,9 +3,11 @@
 namespace Gametech\Admin\Http\Controllers;
 
 
+use App\Exports\UsersExport;
 use Gametech\Admin\DataTables\MemberDataTable;
 use Gametech\Game\Repositories\GameRepository;
 use Gametech\Game\Repositories\GameUserRepository;
+use Gametech\Member\Models\Member;
 use Gametech\Member\Repositories\MemberCreditLogRepository;
 use Gametech\Member\Repositories\MemberDiamondLogRepository;
 use Gametech\Member\Repositories\MemberPointLogRepository;
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class MemberController extends AppBaseController
@@ -709,6 +712,13 @@ class MemberController extends AppBaseController
 
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+    }
+
+
+
+    public function export(UsersExport $export)
+    {
+        return Excel::download($export, 'member_'.date('Y-m-d').'.xlsx');
     }
 
 }

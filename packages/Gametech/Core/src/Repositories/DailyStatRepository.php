@@ -45,11 +45,18 @@ class DailyStatRepository extends Repository
         $deposit_count = (clone $payments)->count();
         $deposit_sum = (clone $payments)->sum('value');
 
-        $withdraws =app('Gametech\Payment\Repositories\WithdrawRepository')->active()->complete()
+        $withdraws1 =app('Gametech\Payment\Repositories\WithdrawRepository')->active()->complete()
             ->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$date]);
 
-        $withdraw_count = (clone $withdraws)->count();
-        $withdraw_sum = (clone $withdraws)->sum('amount');
+//        $withdraws2 =app('Gametech\Payment\Repositories\WithdrawFreeRepository')->active()->complete()
+//            ->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$date]);
+
+        $withdraw_count1 = (clone $withdraws1)->count();
+//        $withdraw_count2 = (clone $withdraws2)->count();
+        $withdraw_count = ($withdraw_count1);
+        $withdraw_sum1 = (clone $withdraws1)->sum('amount');
+//        $withdraw_sum2 = (clone $withdraws2)->sum('amount');
+        $withdraw_sum = ($withdraw_sum1);
 
         $setwallet_d_sum = app('Gametech\Member\Repositories\MemberCreditLogRepository')
             ->where('kind','SETWALLET')->where('credit_type','D')->where('enable','Y')

@@ -96,7 +96,7 @@ class MemberDataTable extends DataTable
     {
         $prem = bouncer()->hasPermission('wallet.member.tel');
         if ($prem) {
-            $btn = ['pageLength', 'excel'];
+            $btn = ['pageLength', 'postExcel'];
         } else {
             $btn = ['pageLength'];
         }

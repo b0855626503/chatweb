@@ -437,6 +437,10 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
                     'view' => 'admin::module.' . $route['name'] . '.index',
                 ])->name('admin.' . $route['name'] . '.index');
 
+
+
+                Route::post('export', $route['controller'] . '@export')->name('admin.' . $route['name'] . '.export');
+
                 Route::post('create', $route['controller'] . '@create')->name('admin.' . $route['name'] . '.create');
 
                 Route::post('createsub', $route['controller'] . '@createsub')->name('admin.' . $route['name'] . '.createsub');

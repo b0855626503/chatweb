@@ -211,6 +211,7 @@ return [
         Intervention\Image\ImageServiceProvider::class,
         Rainwater\Active\ActiveServiceProvider::class,
         PragmaRX\Google2FALaravel\ServiceProvider::class,
+        Maatwebsite\Excel\ExcelServiceProvider::class,
 //        App\Providers\LaravelLoggerServiceProvider::class,
         /*
          * Application Service Providers...
@@ -295,6 +296,7 @@ return [
         'Active' => Rainwater\Active\ActiveFacade::class,
         'Google2FA' => PragmaRX\Google2FALaravel\Facade::class,
         'FastExcel' => Rap2hpoutre\FastExcel\Facades\FastExcel::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
     ],
 
 ];
