@@ -3,12 +3,10 @@
 namespace Gametech\Wallet\Http\Controllers;
 
 use App\Providers\RouteServiceProvider;
-use Carbon\Carbon;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
@@ -17,13 +15,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 
 class LoginController extends AppBaseController
 {
     use AuthenticatesUsers;
+
     /**
      * Contains route related configuration
      *
@@ -34,12 +32,11 @@ class LoginController extends AppBaseController
     protected $redirectTo = RouteServiceProvider::HOME;
 
 
-
     /**
      * Create a new Repository instance.
      *
      * @return void
-    */
+     */
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
@@ -60,13 +57,13 @@ class LoginController extends AppBaseController
         $username = $request->input('user_name');
 //        dd($request);
 
-        $chk = app('Gametech\Member\Repositories\MemberRepository')->findOneByField($this->username(),$username);
+        $chk = app('Gametech\Member\Repositories\MemberRepository')->findOneByField($this->username(), $username);
 
-        if(is_null($chk)){
+        if (is_null($chk)) {
             return $this->sendFailedLoginResponse($request);
         }
 
-        if(is_null($chk->password)){
+        if (is_null($chk->password)) {
             $dataadd['password'] = Hash::make($chk->user_pass);
             app('Gametech\Member\Repositories\MemberRepository')->update($dataadd, $chk->code);
         }
@@ -164,22 +161,22 @@ class LoginController extends AppBaseController
         return Auth::guard('customer');
     }
 
-    public function store($id,Request $request){
-        if(!is_numeric($id)){
+    public function store($id, Request $request)
+    {
+        if (!is_numeric($id)) {
             $id = null;
         }
-        $banks = app('Gametech\Payment\Repositories\BankRepository')->findWhere(['enable' => 'Y' ,['code' , '<>' , 0]]);
-//        $banks = app('Gametech\Payment\Repositories\BankRepository')->findWhere(['enable' => 'Y' ,['code' , '<>' , 0],['shortcode' , '<>' , 'TW']]);
-        $refers = app('Gametech\Core\Repositories\ReferRepository')->findWhere(['enable' => 'Y' ,['code' , '<>' , 0]]);
-        return view($this->_config['view'],compact('banks','refers'))->with('id',$id);
+        $banks = app('Gametech\Payment\Repositories\BankRepository')->findWhere(['enable' => 'Y', 'show_regis' => 'Y', ['code', '<>', 0]]);
+        $refers = app('Gametech\Core\Repositories\ReferRepository')->findWhere(['enable' => 'Y', ['code', '<>', 0]]);
+        return view($this->_config['view'], compact('banks', 'refers'))->with('id', $id);
     }
 
     public function register(Request $request)
     {
         $config = core()->getConfigData();
 
-        $datenow =  now()->toDateTimeString();
-        $today =  now()->toDateString();
+        $datenow = now()->toDateTimeString();
+        $today = now()->toDateString();
         $ip = $request->ip();
 //        $data = $request->input();
 
@@ -192,15 +189,15 @@ class LoginController extends AppBaseController
         $data['acc_no'] = $acc_no;
         $bank_code = $data['bank'];
 
-        if($config->freecredit_all === 'Y'){
+        if ($config->freecredit_all === 'Y') {
             $freecredit = 'Y';
-        }else{
+        } else {
             $freecredit = 'N';
         }
 
-        if($config->verify_open === 'Y'){
+        if ($config->verify_open === 'Y') {
             $verify = 'N';
-        }else{
+        } else {
             $verify = 'Y';
         }
 
@@ -208,19 +205,19 @@ class LoginController extends AppBaseController
             'acc_no' => [
                 'required',
                 'digits_between:1,14',
-                Rule::unique('members', 'acc_no')->where(function ($query) use ($bank_code){
+                Rule::unique('members', 'acc_no')->where(function ($query) use ($bank_code) {
                     return $query->where('bank_code', $bank_code);
                 })
             ],
             'firstname' => 'required|string',
-            'lastname'  => 'required|string',
+            'lastname' => 'required|string',
             'password' => 'required|min:6',
             'password_confirm' => 'min:6|same:password',
-            'tel'   => 'required|numeric|unique:members,tel',
-            'user_name'   => 'required|string|different:tel|unique:members,user_name|max:10|regex:/^[a-z][a-z0-9]*$/',
-            'bank'   => 'required|numeric',
-            'lineid'   => 'required|alpha_dash',
-            'refer'   => 'required|numeric',
+            'tel' => 'required|numeric|unique:members,tel',
+            'user_name' => 'required|string|different:tel|unique:members,user_name|max:10|regex:/^[a-z][a-z0-9]*$/',
+            'bank' => 'required|numeric',
+            'lineid' => 'required|alpha_dash',
+            'refer' => 'required|numeric',
             'g-recaptcha-response' => 'required'
         ]);
 
@@ -246,9 +243,9 @@ class LoginController extends AppBaseController
         Event::dispatch('customer.register.before', $data);
 
 
-        if(!isset($data['upline'])){
+        if (!isset($data['upline'])) {
             $upline = 0;
-        }else{
+        } else {
             $upline = $data['upline'];
             unset($data['upline']);
         }
@@ -261,10 +258,10 @@ class LoginController extends AppBaseController
         unset($data['password_confirm']);
         unset($data['password']);
 
-        $name = $data['firstname'].' '.$data['lastname'];
-        if(isset($data['promotion'])){
+        $name = $data['firstname'] . ' ' . $data['lastname'];
+        if (isset($data['promotion'])) {
             $pro = 'Y';
-        }else{
+        } else {
             $pro = 'N';
         }
 
@@ -279,15 +276,15 @@ class LoginController extends AppBaseController
         $response = Http::asForm()->post($captcha_verify_url, $param);
 
 
-        if($response->failed()){
+        if ($response->failed()) {
 
             session()->flash('error', 'พบข้อผิดพลาดในการตรวจสอบ Captcha');
             return redirect()->back();
 
-        }elseif($response->successful()){
+        } elseif ($response->successful()) {
             $response = $response->json();
 //            dd($response);
-            if($response['success'] != true){
+            if ($response['success'] != true) {
                 session()->flash('error', 'คุณป้อน Captcha ไม่ถูกต้อง');
                 return redirect()->back();
             }
@@ -297,26 +294,25 @@ class LoginController extends AppBaseController
 
         unset($data['bank']);
         if ($bank_code == 4) {
-            $acc_check  = substr($acc_no, -4);
+            $acc_check = substr($acc_no, -4);
         } else {
-            $acc_check  = substr($acc_no, -6);
+            $acc_check = substr($acc_no, -6);
         }
         $acc_bay = substr($acc_no, -7);
 
 
-
         $data = array_merge($data, [
-            'password'    => Hash::make($pass),
-            'refer_code'  => $refer,
-            'upline_code'  => $upline,
-            'user_name'  => $username,
-            'user_pass'    => $pass,
-            'tel'  => $tel,
-            'acc_no'  => $acc_no,
-            'acc_check'  => $acc_check,
-            'acc_bay'  => $acc_bay,
-            'acc_kbank'  => '',
-            'bank_code'  => $bank_code,
+            'password' => Hash::make($pass),
+            'refer_code' => $refer,
+            'upline_code' => $upline,
+            'user_name' => $username,
+            'user_pass' => $pass,
+            'tel' => $tel,
+            'acc_no' => $acc_no,
+            'acc_check' => $acc_check,
+            'acc_bay' => $acc_bay,
+            'acc_kbank' => '',
+            'bank_code' => $bank_code,
             'confirm' => $verify,
             'freecredit' => $freecredit,
             'check_status' => 'N',
@@ -357,17 +353,16 @@ class LoginController extends AppBaseController
 //        }
 
 
-
         $response = app('Gametech\Member\Repositories\MemberRepository')->create($data);
 
         Event::dispatch('customer.register.after', $response);
 
-        if(!$response->code){
+        if (!$response->code) {
             session()->flash('error', 'พบข้อผิดพลาด ไม่สามารถบันทึกบ้อมูลได้');
             return redirect()->back();
         }
 
-        if($config->verify_open === 'N') {
+        if ($config->verify_open === 'N') {
 
             $games = app('Gametech\Game\Repositories\GameRepository')->findWhere(['auto_open' => 'Y', 'status_open' => 'Y']);
 
@@ -378,7 +373,7 @@ class LoginController extends AppBaseController
             session()->flash('success', 'สมัครสมาชิกสำเร็จแล้ว สามารถเข้าระบบได้เลย');
             return redirect()->intended(route($this->_config['redirect']));
 
-        }else{
+        } else {
 
             session()->flash('success', 'ขณะนี้ข้อมูลการสมัครของท่าน อยู่ในกระบวนการตรวจสอบโดยทีมงาน เมื่อทีมงานดพเนินการเสร็จ ท่านสมาชิกจะสามารถเข้าสู่ระบบของเวบไซต์ได้');
             return redirect()->intended(route($this->_config['redirect']));
@@ -398,12 +393,12 @@ class LoginController extends AppBaseController
     {
         $responses = [];
 
-        $results = collect(app('Gametech\Game\Repositories\GameRepository')->getGameUserById($this->id(),false)->toArray());
+        $results = collect(app('Gametech\Game\Repositories\GameRepository')->getGameUserById($this->id(), false)->toArray());
 
 
-        foreach($results as $i => $result){
+        foreach ($results as $i => $result) {
             $responses[strtolower($result['game_type'])][$i] = $result;
-            $responses[strtolower($result['game_type'])][$i]['image'] = Storage::url('game_img/'.$result['filepic']);
+            $responses[strtolower($result['game_type'])][$i]['image'] = Storage::url('game_img/' . $result['filepic']);
         }
 
         return $responses;
@@ -473,7 +468,7 @@ class LoginController extends AppBaseController
 
             default:
                 $ret['status'] = 0;
-                return $this->sendResponseNew($ret,'Complete');
+                return $this->sendResponseNew($ret, 'Complete');
                 break;
         }
 
@@ -483,7 +478,7 @@ class LoginController extends AppBaseController
         ];
 
         $response = Http::asForm()->post('https://ks.pg-game888.com/web/api_ckaccname/sbo', $param);
-        if($response->successful()){
+        if ($response->successful()) {
             $response = $response->json();
             if ($response['status'] == 1000) {
 
@@ -491,7 +486,7 @@ class LoginController extends AppBaseController
                     'acc_no' => [
                         'required',
                         'digits_between:1,15',
-                        Rule::unique('members', 'acc_no')->where(function ($query) use ($bankid){
+                        Rule::unique('members', 'acc_no')->where(function ($query) use ($bankid) {
                             return $query->where('bank_code', $bankid);
                         })
                     ],
@@ -499,16 +494,16 @@ class LoginController extends AppBaseController
 
 
                 $name = $response['name'];
-                $name = explode(' ',$name);
-                if(count($name) == 2){
+                $name = explode(' ', $name);
+                if (count($name) == 2) {
 
 //                    $firstname = Str::of($name[0])->after('นาย');
                     $firstname = Str::of($name[0])->after('นาย')->after('นาง')->after('นายสาว')->after('น.ส.')->__toString();
                     $lastname = $name[1];
-                }elseif(count($name) == 3){
+                } elseif (count($name) == 3) {
                     $firstname = $name[1];
                     $lastname = $name[2];
-                }elseif(count($name) == 4){
+                } elseif (count($name) == 4) {
                     $firstname = $name[1];
                     $lastname = $name[3];
                 }
@@ -518,13 +513,13 @@ class LoginController extends AppBaseController
 
                 if ($validator->fails()) {
                     $response['status'] = 0;
-                    return $this->sendResponseNew($response,'มีเลขที่บัญชีนี้ในระบบแล้ว');
+                    return $this->sendResponseNew($response, 'มีเลขที่บัญชีนี้ในระบบแล้ว');
                 }
 
-                return $this->sendResponseNew($response,'Complete');
-            }else{
+                return $this->sendResponseNew($response, 'Complete');
+            } else {
                 $ret['status'] = 0;
-                return $this->sendResponseNew($ret,'ไม่พบข้อมูลของเลขที่บัญชีนี้');
+                return $this->sendResponseNew($ret, 'ไม่พบข้อมูลของเลขที่บัญชีนี้');
             }
         }
     }

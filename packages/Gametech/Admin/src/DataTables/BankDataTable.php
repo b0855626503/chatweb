@@ -89,6 +89,7 @@ class BankDataTable extends DataTable
             ['data' => 'name_en', 'name' => 'banks.name_en', 'title' => 'ชื่อ (EN)', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
             ['data' => 'shortcode', 'name' => 'banks.shortcode', 'title' => 'ชื่อย่อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
             ['data' => 'enable', 'name' => 'banks.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'show', 'name' => 'banks.show_regis', 'title' => 'แสดงหน้าสมัคร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];
     }

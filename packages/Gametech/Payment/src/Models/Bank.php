@@ -34,6 +34,7 @@ class Bank extends Model implements BankContract
         'enable',
         'name_en',
         'status_auto',
+        'show_regis',
         'website',
         'filepic',
         'user_create',
