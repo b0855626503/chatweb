@@ -60,7 +60,7 @@
                                         @csrf
                                         <div class="col-12">
                                             <input type="hidden" name="game" id="game">
-                                            <p class="text-center text-warning">ระบุจำนวนเงินที่โยก</p>
+                                            <p class="text-center text-warning">ระบุจำนวนเงินที่โยกเข้ากระเป๋า</p>
 
                                             <div class="form-group">
                                                 <div class="input-group mb-3">
@@ -79,7 +79,7 @@
                                             <p class="text-center text-warning">
                                                 โยกเงินออกเกมส์ขั้นต่ำ {{ core()->currency($config->mintransferback) }} บาท</p>
 
-                                            <button class="btn btn-primary btn-block shadow-box">ดำเนินการต่อ</button>
+                                            <button class="btn btn-danger btn-block shadow-box">ดำเนินการต่อ</button>
                                         </div>
                                     </form>
 

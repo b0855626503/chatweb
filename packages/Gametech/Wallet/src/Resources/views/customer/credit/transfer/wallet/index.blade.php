@@ -59,7 +59,7 @@
                                         @csrf
                                         <div class="col-12">
                                             <input type="hidden" name="game" id="game">
-                                            <p class="text-center text-warning">ระบุจำนวน Cashback ที่โยก</p>
+                                            <p class="text-center text-warning">ระบุจำนวนเงินที่โยกเข้ากระเป๋า (Cashback)</p>
 
                                             <div class="form-group">
                                                 <div class="input-group mb-3">
@@ -78,7 +78,7 @@
                                             <p class="text-center text-warning">
                                                 โยก Cashback ออกเกมส์ขั้นต่ำ {{ core()->currency($config->free_mintransferback) }} บาท</p>
 
-                                            <button class="btn btn-primary btn-block shadow-box">ดำเนินการต่อ</button>
+                                            <button class="btn btn-danger btn-block shadow-box">ดำเนินการต่อ</button>
                                         </div>
                                     </form>
 

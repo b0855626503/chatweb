@@ -60,7 +60,7 @@
                                         @csrf
                                         <div class="col-12">
                                             <input type="hidden" name="game" id="game">
-                                            <p class="text-center text-warning">ระบุจำนวนเงินที่โยก</p>
+                                            <p class="text-center text-warning">ระบุจำนวนเงินที่โยกเข้าเกม</p>
 
                                             <div class="form-group">
                                                 <div class="input-group mb-3">
