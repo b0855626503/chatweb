@@ -64,7 +64,7 @@
                 </b-col>
 
             </b-form-row>
-
+            @if(auth()->guard('admin')->user()->superadmin == 'Y')
             <b-form-row>
                 <b-col>
                     <b-form-group
@@ -101,7 +101,7 @@
                     </b-form-group>
                 </b-col>
             </b-form-row>
-
+            @endif
 
             <b-form-row>
                 <b-col>

@@ -259,7 +259,7 @@ class BankPaymentRepository extends Repository
             }
             if ($config->diamond_open == 'Y') {
 
-                if ($config->diamond_transfer_in == 'N') {
+
 
                     if ($config->diamond_per_bill == 'N') {
 
@@ -301,7 +301,7 @@ class BankPaymentRepository extends Repository
                         }
 
                     }
-                }
+
 
             }
 

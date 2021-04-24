@@ -3,8 +3,6 @@
 namespace Gametech\Admin\DataTables;
 
 
-
-
 use Gametech\Admin\Transformers\GameTransformer;
 use Gametech\Game\Contracts\Game;
 use Yajra\DataTables\DataTableAbstract;
@@ -41,7 +39,7 @@ class GameDataTable extends DataTable
 
         return $model->newQuery()
             ->when($admin, function ($query) {
-                $query->where('enable','Y');
+                $query->where('enable', 'Y');
             })
             ->select('games.*');
 
@@ -59,7 +57,7 @@ class GameDataTable extends DataTable
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->parameters([
-                'dom'       => 'Bfrtip',
+                'dom' => 'Bfrtip',
 
                 'processing' => true,
                 'serverSide' => true,
@@ -69,16 +67,16 @@ class GameDataTable extends DataTable
                 'searching' => false,
                 'deferRender' => true,
                 'retrieve' => true,
-'ordering' => true,
+                'ordering' => true,
                 'autoWidth' => false,
                 'scrollX' => true,
 
-                'order'     => [[0, 'asc']],
-                'buttons'   => [
+                'order' => [[0, 'asc']],
+                'buttons' => [
                     'pageLength'
                 ],
                 'columnDefs' => [
-                    [ 'targets' => '_all' , 'className' => 'text-nowrap']
+                    ['targets' => '_all', 'className' => 'text-nowrap']
                 ]
             ]);
     }
@@ -92,21 +90,21 @@ class GameDataTable extends DataTable
     protected function getColumns()
     {
         return [
-            ['data' => 'code' , 'name' => 'games.code' , 'title' => '#' , 'orderable' => true , 'searchable' => true , 'className' => 'text-center text-nowrap' , 'width' => '3%'],
-            ['data' => 'filepic' , 'name' => 'games.filepic' , 'title' => 'ภาพ' , 'orderable' => false , 'searchable' => true , 'className' => 'text-center text-nowrap' ],
-            ['data' => 'game_type' , 'name' => 'games.game_type' , 'title' => 'ประเภท' , 'orderable' => false , 'searchable' => true , 'className' => 'text-center text-nowrap' ],
-            ['data' => 'name' , 'name' => 'games.name' , 'title' => 'ชื่อเกม' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'demo' , 'name' => 'games.name' , 'title' => 'User Demo' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'batch_game' , 'name' => 'games.batch_game' , 'title' => 'บัญชีเกมได้จาก' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'account' , 'name' => 'games.name' , 'title' => 'บัญชีคงเหลือ' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
+            ['data' => 'code', 'name' => 'games.code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap', 'width' => '3%'],
+            ['data' => 'filepic', 'name' => 'games.filepic', 'title' => 'ภาพ', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'game_type', 'name' => 'games.game_type', 'title' => 'ประเภท', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'name', 'name' => 'games.name', 'title' => 'ชื่อเกม', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+            ['data' => 'demo', 'name' => 'games.name', 'title' => 'ID Test', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+            ['data' => 'batch_game', 'name' => 'games.batch_game', 'title' => 'บัญชีเกมได้จาก', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'account', 'name' => 'games.name', 'title' => 'บัญชีคงเหลือ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
 //            ['data' => 'user_demofree' , 'name' => 'games.name' , 'title' => 'User Demo Free' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
 //            ['data' => 'sort' , 'name' => 'games.sort' , 'title' => 'ลำดับ' , 'orderable' => false , 'searchable' => true , 'className' => 'text-center text-nowrap' ],
-            ['data' => 'status' , 'name' => 'games.batch_game' , 'title' => 'สถานะเกม' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
+            ['data' => 'status', 'name' => 'games.batch_game', 'title' => 'สถานะเกม', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
 
-            ['data' => 'auto_open' , 'name' => 'games.auto_open' , 'title' => 'เปิดบัญชีอัตโนมัติ' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
-            ['data' => 'status_open' , 'name' => 'games.status_open' , 'title' => 'แสดงผล' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
+            ['data' => 'auto_open', 'name' => 'games.auto_open', 'title' => 'เปิดบัญชีอัตโนมัติ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
+            ['data' => 'status_open', 'name' => 'games.status_open', 'title' => 'แสดงผล', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
 //            ['data' => 'enable' , 'name' => 'games.enable' , 'title' => 'เปิดใช้งาน' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
-            ['data' => 'action' , 'name' => 'action' , 'title' => 'Action' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
+            ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];
     }
 

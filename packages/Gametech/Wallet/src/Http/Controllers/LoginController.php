@@ -201,6 +201,8 @@ class LoginController extends AppBaseController
             $verify = 'Y';
         }
 
+        $data['user_name'] = strtolower($data['user_name']);
+
         $validator = Validator::make($data, [
             'acc_no' => [
                 'required',
