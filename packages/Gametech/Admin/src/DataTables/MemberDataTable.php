@@ -52,12 +52,12 @@ class MemberDataTable extends DataTable
         $startdate = request()->input('startDate');
         $enddate = request()->input('endDate');
 
-        if (empty($startdate)) {
-            $startdate = now()->toDateString() . ' 00:00:00';
-        }
-        if (empty($enddate)) {
-            $enddate = now()->toDateString() . ' 23:59:59';
-        }
+//        if (empty($startdate)) {
+//            $startdate = now()->toDateString() . ' 00:00:00';
+//        }
+//        if (empty($enddate)) {
+//            $enddate = now()->toDateString() . ' 23:59:59';
+//        }
 
         return $model->newQuery()
             ->with(['member_remark' => function ($query) {
