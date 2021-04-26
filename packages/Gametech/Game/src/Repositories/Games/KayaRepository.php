@@ -75,7 +75,7 @@ class KayaRepository extends Repository
         $signMsg = $pAgent->sign($str_to_sign);
         $url = $this->url . $action;
 
-        dd($url);
+
 
         return Http::withHeaders([
             'Content-Type' => 'application/json',
@@ -144,13 +144,13 @@ class KayaRepository extends Repository
             $return = $this->Debug($response);
         }
 
-        dd($return);
+//        dd($return);
 
         if ($response->successful()) {
 
             $response = $response->json();
 
-            if (isset($response['rtStatus']) === 1) {
+            if (isset($response['rtStatus']) == 1) {
 
                 if (isset($response['accountName'])) {
 
@@ -198,7 +198,7 @@ class KayaRepository extends Repository
         if ($response->successful()) {
             $response = $response->json();
 
-            if (isset($response['rtStatus']) === 1) {
+            if (isset($response['rtStatus']) == 1) {
 
                 $return['msg'] = $response['msg'];
                 $return['success'] = true;
@@ -229,7 +229,7 @@ class KayaRepository extends Repository
 
             $response = $response->json();
 
-            if (isset($response['rtStatus']) === 1) {
+            if (isset($response['rtStatus']) == 1) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['score'] = ($response['balance'] / 1000);
@@ -270,7 +270,7 @@ class KayaRepository extends Repository
 
                 $response = $response->json();
 
-                if (isset($response['rtStatus']) === 1) {
+                if (isset($response['rtStatus']) == 1) {
 
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
@@ -316,7 +316,7 @@ class KayaRepository extends Repository
             if ($response->successful()) {
                 $response = $response->json();
 
-                if (isset($response['rtStatus']) === 1) {
+                if (isset($response['rtStatus']) == 1) {
 
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
