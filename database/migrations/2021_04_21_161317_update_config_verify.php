@@ -13,9 +13,12 @@ class UpdateConfigVerify extends Migration
      */
     public function up()
     {
-        Schema::table('configs', function (Blueprint $table) {
-            $table->enum('verify_open', ['Y', 'N'])->default('N');
-       });
+        if (!Schema::hasColumn('configs', 'verify_open')) {
+
+            Schema::table('configs', function (Blueprint $table) {
+                $table->enum('verify_open', ['Y', 'N'])->default('N');
+            });
+        }
     }
 
     /**

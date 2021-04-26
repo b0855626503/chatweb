@@ -13,9 +13,11 @@ class CreateMemberCreditLog extends Migration
      */
     public function up()
     {
-        Schema::table('banks', function (Blueprint $table) {
-            $table->enum('show_regis', ['Y', 'N'])->default('Y');
-        });
+        if (!Schema::hasColumn('banks', 'banks')) {
+            Schema::table('banks', function (Blueprint $table) {
+                $table->enum('banks', ['Y', 'N'])->default('Y');
+            });
+        }
     }
 
     /**

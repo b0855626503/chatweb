@@ -13,11 +13,13 @@ class CreateWebsocketsStatisticsEntriesTable extends Migration
      */
     public function up()
     {
-        Schema::table('configs', function (Blueprint $table) {
-            $table->enum('diamond_per_bill', ['Y', 'N'])->default('N');
-            $table->decimal('diamonds_topup', 10, 2)->default('0.00');
-            $table->decimal('diamonds_amount', 10, 2)->default('0.00');
-        });
+        if (!Schema::hasColumn('configs', 'diamond_per_bill','diamonds_topup','diamonds_amount')) {
+            Schema::table('configs', function (Blueprint $table) {
+                $table->enum('diamond_per_bill', ['Y', 'N'])->default('N');
+                $table->decimal('diamonds_topup', 10, 2)->default('0.00');
+                $table->decimal('diamonds_amount', 10, 2)->default('0.00');
+            });
+        }
     }
 
     /**
