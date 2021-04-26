@@ -200,7 +200,7 @@ class KayaRepository extends Repository
 
             if (isset($response['rtStatus']) == 1) {
 
-                $return['msg'] = $response['msg'];
+                $return['msg'] = 'Complete';
                 $return['success'] = true;
 
             }
