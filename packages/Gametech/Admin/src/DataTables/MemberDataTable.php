@@ -104,7 +104,7 @@ class MemberDataTable extends DataTable
 
         return $this->builder()
             ->columns($this->getColumns())
-            ->minifiedAjax()
+            ->ajaxWithForm('', '#frmsearch')
             ->parameters([
                 'dom' => 'Bfrtip',
 
