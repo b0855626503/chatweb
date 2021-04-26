@@ -371,7 +371,7 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
                 Route::post('create', $route['controller'] . '@create')->name('admin.' . $route['name'] . '.create');
 
-                Route::post('loaddata', $route['controller'] . '@loadData')->name('admin.' . $route['name'] . '.loaddata');
+                Route::get('getrule', $route['controller'] . '@getrule')->name('admin.' . $route['name'] . '.getrule');
 
                 Route::post('loadbank', $route['controller'] . '@loadBank')->name('admin.' . $route['name'] . '.loadbank');
 

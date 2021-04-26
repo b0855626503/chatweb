@@ -64,17 +64,18 @@ class TopupController extends AppBaseController
         $bankss = collect($this->bankRepository->getBankInAccountAll()->toArray());
 
 
-        $banks = $bankss->transform(function ($item, $key) {
+        $bankss = $bankss->transform(function ($item, $key) {
             $item['filepic'] = Storage::url('bank_img/' . $item['filepic']);
             return $item;
         });
 
-//        if($profile->bank->shortcode === 'KBANK'){
+        if($profile->bank->shortcode === 'KBANK'){
+            $banks = $bankss->whereIn('shortcode',['KBANK'])->all();
 //            $banks = $bankss;
-//
-//        }else{
+        }else{
 //            $banks = $bankss->whereNotIn('shortcode',['KBANK'])->all();
-//        }
+            $banks = $bankss;
+        }
 
 
         return view($this->_config['view'], compact('banks', 'profile'));

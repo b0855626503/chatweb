@@ -21,7 +21,11 @@
 
                 <b-form-row>
                     <b-col>
-                        <b-card title="การยืนยันตน">
+                        <b-card border-variant="danger"
+                                header="ใช้ระบบ ยืนยันตนสมาชิก ก่อนให้เข้าใช้งาน"
+                                header-bg-variant="danger"
+                                header-text-variant="black">
+
                             <b-card-text>
                                 <b-form-group
                                     id="input-group-verify_open"
@@ -46,7 +50,11 @@
 
                 <b-form-row>
                     <b-col>
-                        <b-card title="แก้ไขข้อมูลติดต่อ">
+
+                            <b-card border-variant="success"
+                                    header="แก้ไขข้อมูลติดต่อ"
+                                    header-bg-variant="success"
+                                    header-text-variant="black">
                             <b-card-text>
                                 <b-form-group
                                     id="input-group-lineid"
@@ -104,7 +112,11 @@
 
                 <b-form-row>
                     <b-col>
-                        <b-card title="Wallet Setting">
+                        <b-card
+                            border-variant="primary"
+                            header="Wallet Setting"
+                            header-bg-variant="primary"
+                            header-text-variant="white">
                             <b-card-text>
                                 <b-form-group
                                     id="input-group-maxtransfer_time"
@@ -208,7 +220,10 @@
 
                 <b-form-row>
                     <b-col>
-                        <b-card title="Free Credit Setting">
+                        <b-card border-variant="info"
+                                header="Free Credit Setting"
+                                header-bg-variant="info"
+                                header-text-variant="white">
                             <b-card-text>
                                 <b-form-group
                                     id="input-group-freecredit_open"
@@ -344,7 +359,11 @@
                 @if(auth()->guard('admin')->user()->superadmin == 'Y')
                     <b-form-row>
                         <b-col>
-                            <b-card title="Core Config">
+                            <b-card border-variant="danger"
+                                    header="Admin Core Setting"
+                                    header-bg-variant="danger"
+                                    header-text-variant="black">
+
                                 <b-card-text>
                                     <b-form-group
                                         id="input-group-multigame_open"
@@ -400,7 +419,11 @@
                 @endif
                 <b-form-row>
                     <b-col>
-                        <b-card title="Special Config">
+
+                            <b-card border-variant="secondary"
+                                    header="Point Setting"
+                                    header-bg-variant="secondary"
+                                    header-text-variant="white">
                             <b-card-text>
                                 <b-form-group
                                     id="input-group-point_open"
@@ -433,7 +456,19 @@
                                     ></b-form-input>
                                 </b-form-group>
 
-                                <hr>
+                            </b-card-text>
+                        </b-card>
+                    </b-col>
+                </b-form-row>
+
+                <b-form-row>
+                    <b-col>
+
+                        <b-card border-variant="secondary"
+                                header="Diamond and Spin Limit Setting"
+                                header-bg-variant="secondary"
+                                header-text-variant="white">
+                            <b-card-text>
 
                                 <b-form-group
                                     id="input-group-diamond_open"
@@ -452,22 +487,22 @@
 
                                 </b-form-group>
 
-{{--                                <b-form-group--}}
-{{--                                    id="input-group-diamond_transfer_in"--}}
-{{--                                    label="ได้รับเพชร เมื่อ โยกเงินเข้าเกม:"--}}
-{{--                                    label-for="diamond_transfer_in"--}}
-{{--                                    description="">--}}
+                                {{--                                <b-form-group--}}
+                                {{--                                    id="input-group-diamond_transfer_in"--}}
+                                {{--                                    label="ได้รับเพชร เมื่อ โยกเงินเข้าเกม:"--}}
+                                {{--                                    label-for="diamond_transfer_in"--}}
+                                {{--                                    description="">--}}
 
-{{--                                    <b-form-select--}}
-{{--                                        id="diamond_transfer_in"--}}
-{{--                                        name="diamond_transfer_in"--}}
-{{--                                        v-model="formaddedit.diamond_transfer_in"--}}
-{{--                                        :options="option.diamond_transfer_in"--}}
-{{--                                        size="sm"--}}
-{{--                                        required--}}
-{{--                                    ></b-form-select>--}}
+                                {{--                                    <b-form-select--}}
+                                {{--                                        id="diamond_transfer_in"--}}
+                                {{--                                        name="diamond_transfer_in"--}}
+                                {{--                                        v-model="formaddedit.diamond_transfer_in"--}}
+                                {{--                                        :options="option.diamond_transfer_in"--}}
+                                {{--                                        size="sm"--}}
+                                {{--                                        required--}}
+                                {{--                                    ></b-form-select>--}}
 
-{{--                                </b-form-group>--}}
+                                {{--                                </b-form-group>--}}
 
                                 <b-form-group
                                     id="input-group-diamond_per_bill"
@@ -502,7 +537,6 @@
                                         autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
-
 
 
                                 <b-form-group
@@ -560,7 +594,12 @@
 
                 <b-form-row>
                     <b-col>
-                        <b-card title="Logo And Favicon">
+                        <b-card
+                            border-variant="primary"
+                            header="Website Logo And Favicon"
+                            header-bg-variant="primary"
+                            header-text-variant="white">
+
                             <b-card-text>
                                 <b-row>
                                     <b-col cols="12" md="6">
@@ -601,7 +640,12 @@
 
                 <b-form-row>
                     <b-col>
-                        <b-card title="Website Wallet Setting">
+                        <b-card
+                            border-variant="primary"
+                            header="Website Setting"
+                            header-bg-variant="primary"
+                            header-text-variant="white">
+
                             <b-card-text>
                                 <b-form-group
                                     id="input-group-sitename"
@@ -759,7 +803,6 @@
                                 </b-form-group>
 
 
-
                                 <b-form-group
                                     id="input-group-wallet_footer_active"
                                     label="Wallet Footer Active Color :"
@@ -818,7 +861,12 @@
 
                 <b-form-row>
                     <b-col>
-                        <b-card title="Website Kiosk Setting">
+                        <b-card
+                            border-variant="primary"
+                            header="Service Color Setting"
+                            header-bg-variant="primary"
+                            header-text-variant="white">
+
                             <b-card-text>
 
                                 <b-form-group
@@ -861,6 +909,39 @@
                     </b-col>
                 </b-form-row>
 
+                <b-form-row>
+                    <b-col>
+                        <b-card
+                            border-variant="primary"
+                            header="ตั้งค่าลูกค้าเห็นธนาคาร"
+                            header-bg-variant="primary"
+                            header-text-variant="white">
+
+                            <b-card-text>
+
+                                <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRule" :fields="fields" :busy="isBusy"
+                                         ref="tbrule" v-if="show">
+                                    <template #table-busy>
+                                        <div class="text-center text-danger my-2">
+                                            <b-spinner class="align-middle"></b-spinner>
+                                            <strong>Loading...</strong>
+                                        </div>
+                                    </template>
+                                    <template #cell(transfer)="data">
+                                        <span v-html="data.value"></span>
+                                    </template>
+                                    <template #cell(credit_type)="data">
+                                        <span v-html="data.value"></span>
+                                    </template>
+                                </b-table>
+
+
+
+                            </b-card-text>
+                        </b-card>
+                    </b-col>
+                </b-form-row>
+
                 <b-button type="submit" variant="primary">บันทึก</b-button>
 
             </b-form>
@@ -880,11 +961,15 @@
                 data() {
                     return {
                         show: false,
+                        fields: [],
+                        items: [],
+                        isBusy: false,
                         code: 1,
                         trigger: 0,
                         triggernew: 0,
                         fileupload: '',
                         fileuploadnew: '',
+
                         option: {
                             multigame_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             pro_onoff: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
@@ -981,6 +1066,25 @@
 
                 },
                 methods: {
+                    async myRule() {
+                        const response = await axios.get("{{ url($menu->currentRoute.'/getrule') }}", {
+                            params: {
+                                id: this.code
+                            }
+                        });
+
+
+                        this.fields = [
+                            {key: 'bank', label: 'สมาชิก(ธนาคาร)'},
+                            {key: 'method', label: 'สามารถ'},
+                            {key: 'bank_number', label: 'ธนาคารดังต่อไปนี้'},
+                            {key: 'action', label: '', class: 'text-center'}
+                        ];
+
+                        this.items = response.data.list;
+                        return this.items;
+
+                    },
                     changeType(event) {
                         if (event == 'Y') {
                             $('#input-group-diamonds_topup').removeClass('hide');
@@ -1143,7 +1247,7 @@
                     },
                     async loadCnt() {
                         const response = await axios.get("{{ url('loadcnt') }}");
-                        document.getElementById('badge_bank_in').textContent = response.data.bank_in_today +' / '+ response.data.bank_in;
+                        document.getElementById('badge_bank_in').textContent = response.data.bank_in_today + ' / ' + response.data.bank_in;
                         document.getElementById('badge_bank_out').textContent = response.data.bank_out;
                         document.getElementById('badge_withdraw').textContent = response.data.withdraw;
                         document.getElementById('badge_withdraw_free').textContent = response.data.withdraw_free;
