@@ -48,7 +48,16 @@ class MemberDataTable extends DataTable
      */
     public function query(Member $model)
     {
+        $user = request()->input('user_name');
+        $startdate = request()->input('startDate');
+        $enddate = request()->input('endDate');
 
+        if (empty($startdate)) {
+            $startdate = now()->toDateString() . ' 00:00:00';
+        }
+        if (empty($enddate)) {
+            $enddate = now()->toDateString() . ' 23:59:59';
+        }
 
         return $model->newQuery()
             ->with(['member_remark' => function ($query) {
@@ -60,7 +69,12 @@ class MemberDataTable extends DataTable
             }])->withCasts([
                 'date_regis' => 'date:Y-m-d'
 
-            ]);
+            ])->when($startdate, function ($query, $startdate) use ($enddate) {
+                $query->whereBetween('date_create', array($startdate, $enddate));
+            })->when($user, function ($query, $user) {
+                $query->where('user_name', $user);
+            });
+
 
 //        return $model->newQuery()
 //            ->confirm()->active()
