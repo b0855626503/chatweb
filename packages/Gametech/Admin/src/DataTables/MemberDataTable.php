@@ -114,7 +114,7 @@ class MemberDataTable extends DataTable
                 'stateSave' => true,
                 'scrollX' => false,
                 'paging' => true,
-                'searching' => true,
+                'searching' => false,
                 'deferRender' => true,
                 'retrieve' => true,
                 'ordering' => true,
