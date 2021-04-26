@@ -95,6 +95,9 @@
                 html += '<tr>';
                 html += '<th style="text-align:right;color:red">รวมยอดโยกออกเกม (ไม่สำเร็จ)</th><th style="text-align:right;color:red;">' + table.ajax.json().out_no + '</th>';
                 html += '</tr>';
+                html += '<tr>';
+                html += '<th style="text-align:right;color:red">รวมยอดโยกออกเกม (ส่วนต่าง)</th><th style="text-align:right;color:red;">' + table.ajax.json().diff + '</th>';
+                html += '</tr>';
 
                 $("#customfooter tbody").append(html);
 

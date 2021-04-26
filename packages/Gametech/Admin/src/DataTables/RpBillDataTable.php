@@ -4,6 +4,7 @@ namespace Gametech\Admin\DataTables;
 
 use Gametech\Admin\Transformers\RpBillTransformer;
 use Gametech\Payment\Contracts\Bill;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder;
@@ -43,6 +44,9 @@ class RpBillDataTable extends DataTable
             ->with('out_no', function () use ($query) {
                 return core()->currency((clone $query)->where('transfer_type', 2)->where('enable', 'N')->sum('amount'));
             })
+            ->with('diff', function () use ($query) {
+                return core()->currency((clone $query)->where('transfer_type', 2)->where('enable', 'Y')->sum(DB::raw('amount_request - amount_limit')));
+            })
 
             ->with('p1', function () use ($query) {
                 return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 1)->sum('amount'));
@@ -53,6 +57,7 @@ class RpBillDataTable extends DataTable
             ->with('p4', function () use ($query) {
                 return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 4)->sum('amount'));
             })
+
 
 
             ->setTransformer(new RpBillTransformer);
@@ -184,11 +189,13 @@ class RpBillDataTable extends DataTable
             ['data' => 'transfer_type', 'name' => 'bills.transfer_type', 'title' => 'การโอน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'game_user', 'name' => 'bills.game_user', 'title' => 'Game User', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
             ['data' => 'enable', 'name' => 'bills.enable', 'title' => 'สถานะการโยก', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'amount_request', 'name' => 'bills.amount_request', 'title' => 'จำนวนที่แจ้ง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'amount_limit', 'name' => 'bills.amount_limit', 'title' => 'ถูกลิมิตที่', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'credit', 'name' => 'bills.credit', 'title' => 'จำนวน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'pro_name', 'name' => 'bills.pro_name', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'credit_bonus', 'name' => 'bills.credit_bonus', 'title' => 'โบนัส', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'credit_balance', 'name' => 'bills.credit_balance', 'title' => 'รวม', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'balance_before', 'name' => 'bills.balance_before', 'title' => 'Wallet (ก่อน)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+           ['data' => 'balance_before', 'name' => 'bills.balance_before', 'title' => 'Wallet (ก่อน)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'balance_after', 'name' => 'bills.balance_after', 'title' => 'Wallet (หลัง)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'credit_before', 'name' => 'bills.credit_before', 'title' => 'Game (ก่อน)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'credit_after', 'name' => 'bills.credit_after', 'title' => 'Game (หลัง)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],

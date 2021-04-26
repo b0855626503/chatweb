@@ -14,6 +14,24 @@ class RpBillTransformer extends TransformerAbstract
 
 //        dd($model->toJson(JSON_PRETTY_PRINT));
 
+        if($model->transfer_type == 1){
+            $amount = $model->credit;
+            $amount_request = $amount;
+            $amount_limit = 0;
+        }else{
+            $amount = $model->amount;
+            if($model->amount_request > 0){
+                $amount_request = $model->amount_request;
+            }else{
+                $amount_request = $model->amount;
+            }
+            if($model->amount_limit > 0) {
+                $amount_limit = $model->amount_limit;
+            }else{
+                $amount_limit = 0;
+            }
+        }
+
         return [
             'code' => (int) $model->code,
             'id' => '#BL'.Str::of($model->code)->padLeft(8,0),
@@ -23,7 +41,9 @@ class RpBillTransformer extends TransformerAbstract
             'game_user' => (is_null($model->game_user) ? '' : $model->game_user->user_name),
 //            'game_user' => $model->game_user->user_name,
             'enable' => ($model->enable == 'Y' ? "<span class='text-success'>โยกสำเร็จ</span>" : "<span class='text-danger'>โยกไม่สำเร็จ</span>"),
-            'credit' => "<span class='text-info'>".core()->currency($model->credit)."</span>",
+            'amount_request' => "<span class='text-primary'>".core()->currency($amount_request)."</span>",
+            'amount_limit' => "<span class='text-orange'>".core()->currency($amount_limit)."</span>",
+            'credit' => "<span class='text-info'>".core()->currency($amount)."</span>",
             'pro_name' => (!is_null($model->promotion) ? $model->promotion->name_th : ''),
             'credit_bonus' => $model->credit_bonus,
             'credit_balance' => $model->credit_balance,
