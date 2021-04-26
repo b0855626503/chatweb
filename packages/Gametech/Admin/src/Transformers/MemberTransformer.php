@@ -48,7 +48,7 @@ class MemberTransformer extends TransformerAbstract
         }
         return [
             'code' => (int)$model->code,
-            'date' => $model->date_regis->format('d/m/Y'),
+            'date_regis' => $model->date_regis->format('d/m/Y'),
             'firstname' => $model->firstname,
             'lastname' => $model->lastname,
             'up' => ($model->upline_code == 0 ? '' : (is_null($model->up) ? '' : $model->up->name)),

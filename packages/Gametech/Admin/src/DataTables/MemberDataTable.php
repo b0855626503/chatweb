@@ -2,7 +2,6 @@
 
 namespace Gametech\Admin\DataTables;
 
-
 use App\Exports\UsersExport;
 use Gametech\Admin\Transformers\MemberTransformer;
 use Gametech\Member\Contracts\Member;
@@ -52,12 +51,12 @@ class MemberDataTable extends DataTable
         $startdate = request()->input('startDate');
         $enddate = request()->input('endDate');
 
-//        if (empty($startdate)) {
-//            $startdate = now()->toDateString() . ' 00:00:00';
-//        }
-//        if (empty($enddate)) {
-//            $enddate = now()->toDateString() . ' 23:59:59';
-//        }
+        if (empty($startdate)) {
+            $startdate = now()->subMonths(3)->startOfMonth()->startOfDay()->toDateString() . ' 00:00:00';
+        }
+        if (empty($enddate)) {
+            $enddate = now()->toDateString() . ' 23:59:59';
+        }
 
         return $model->newQuery()
             ->with(['member_remark' => function ($query) {
@@ -68,7 +67,6 @@ class MemberDataTable extends DataTable
                 $model->active();
             }])->withCasts([
                 'date_regis' => 'date:Y-m-d'
-
             ])->when($startdate, function ($query, $startdate) use ($enddate) {
                 $query->whereBetween('date_create', array($startdate, $enddate));
             })->when($user, function ($query, $user) {
@@ -110,7 +108,7 @@ class MemberDataTable extends DataTable
     {
         $prem = bouncer()->hasPermission('wallet.member.tel');
         if ($prem) {
-            $btn = ['pageLength', 'postExcel'];
+            $btn = ['pageLength', 'excel'];
         } else {
             $btn = ['pageLength'];
         }
@@ -155,7 +153,7 @@ class MemberDataTable extends DataTable
     {
         return [
             ['data' => 'code', 'name' => 'members.code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
-            ['data' => 'date', 'name' => 'members.date_regis', 'title' => 'วันที่สม้คร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'date_regis', 'name' => 'members.date_regis', 'title' => 'วันที่สม้คร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'firstname', 'name' => 'members.firstname', 'title' => 'ชื่อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
             ['data' => 'lastname', 'name' => 'members.lastname', 'title' => 'นามสกุล', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
             ['data' => 'up', 'name' => 'members.upline_code', 'title' => 'Upline', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
@@ -195,7 +193,7 @@ class MemberDataTable extends DataTable
         return function ($row) {
             if ($prem = bouncer()->hasPermission('wallet.member.tel')) {
                 return [
-                    'Register Date' => $row['date_regis'],
+                    'Date Regis' => $row['date_regis'],
                     'UserName' => $row['user_name'],
                     'FirstName' => $row['firstname'],
                     'LastName' => $row['lastname'],
@@ -204,7 +202,7 @@ class MemberDataTable extends DataTable
                 ];
             } else {
                 return [
-                    'Register Date' => $row['date_regis'],
+                    'Date Regis' => $row['date_regis'],
                     'UserName' => $row['user_name'],
                     'FirstName' => $row['firstname'],
                     'LastName' => $row['lastname'],

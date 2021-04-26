@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 
-use Gametech\Member\Models\Member;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Yajra\DataTables\Exports\DataTablesCollectionExport;
 
@@ -23,10 +22,10 @@ class UsersExport extends DataTablesCollectionExport implements WithMapping
         ];
     }
 
-    public function collection()
-    {
-        return  Member::query()->select('date_regis','user_name','firstname','lastname','lineid','tel')->where('enable','Y')->whereBetween('date_regis',[now()->startOfMonth()->toDateString(),now()->toDateString()])->cursor();
-    }
+//    public function collection()
+//    {
+//        return  Member::query()->select('date_regis','user_name','firstname','lastname','lineid','tel')->where('enable','Y')->whereBetween('date_regis',[now()->startOfMonth()->toDateString(),now()->toDateString()])->cursor();
+//    }
 
     public function map($row): array
     {
