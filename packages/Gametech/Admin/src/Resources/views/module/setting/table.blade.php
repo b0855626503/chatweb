@@ -909,38 +909,38 @@
                     </b-col>
                 </b-form-row>
 
-{{--                <b-form-row>--}}
-{{--                    <b-col>--}}
-{{--                        <b-card--}}
-{{--                            border-variant="primary"--}}
-{{--                            header="ตั้งค่าลูกค้าเห็นธนาคาร"--}}
-{{--                            header-bg-variant="primary"--}}
-{{--                            header-text-variant="white">--}}
+                <b-form-row>
+                    <b-col>
+                        <b-card
+                            border-variant="primary"
+                            header="ตั้งค่าลูกค้าเห็นธนาคาร"
+                            header-bg-variant="primary"
+                            header-text-variant="white">
 
-{{--                            <b-card-text>--}}
+                            <b-card-text>
 
-{{--                                <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRule" :fields="fields" :busy="isBusy"--}}
-{{--                                         ref="tbrule" v-if="show">--}}
-{{--                                    <template #table-busy>--}}
-{{--                                        <div class="text-center text-danger my-2">--}}
-{{--                                            <b-spinner class="align-middle"></b-spinner>--}}
-{{--                                            <strong>Loading...</strong>--}}
-{{--                                        </div>--}}
-{{--                                    </template>--}}
-{{--                                    <template #cell(transfer)="data">--}}
-{{--                                        <span v-html="data.value"></span>--}}
-{{--                                    </template>--}}
-{{--                                    <template #cell(credit_type)="data">--}}
-{{--                                        <span v-html="data.value"></span>--}}
-{{--                                    </template>--}}
-{{--                                </b-table>--}}
+                                <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRule" :fields="fields" :busy="isBusy"
+                                         ref="tbrule" v-if="show">
+                                    <template #table-busy>
+                                        <div class="text-center text-danger my-2">
+                                            <b-spinner class="align-middle"></b-spinner>
+                                            <strong>Loading...</strong>
+                                        </div>
+                                    </template>
+                                    <template #cell(transfer)="data">
+                                        <span v-html="data.value"></span>
+                                    </template>
+                                    <template #cell(credit_type)="data">
+                                        <span v-html="data.value"></span>
+                                    </template>
+                                </b-table>
 
 
 
-{{--                            </b-card-text>--}}
-{{--                        </b-card>--}}
-{{--                    </b-col>--}}
-{{--                </b-form-row>--}}
+                            </b-card-text>
+                        </b-card>
+                    </b-col>
+                </b-form-row>
 
                 <b-button type="submit" variant="primary">บันทึก</b-button>
 
@@ -1066,25 +1066,25 @@
 
                 },
                 methods: {
-                    {{--async myRule() {--}}
-                    {{--    const response = await axios.get("{{ url($menu->currentRoute.'/getrule') }}", {--}}
-                    {{--        params: {--}}
-                    {{--            id: this.code--}}
-                    {{--        }--}}
-                    {{--    });--}}
+                    async myRule() {
+                        const response = await axios.get("{{ url($menu->currentRoute.'/getrule') }}", {
+                            params: {
+                                id: this.code
+                            }
+                        });
 
 
-                    {{--    this.fields = [--}}
-                    {{--        {key: 'bank', label: 'สมาชิก(ธนาคาร)'},--}}
-                    {{--        {key: 'method', label: 'สามารถ'},--}}
-                    {{--        {key: 'bank_number', label: 'ธนาคารดังต่อไปนี้'},--}}
-                    {{--        {key: 'action', label: '', class: 'text-center'}--}}
-                    {{--    ];--}}
+                        this.fields = [
+                            {key: 'bank', label: 'สมาชิก(ธนาคาร)'},
+                            {key: 'method', label: 'สามารถ'},
+                            {key: 'bank_number', label: 'ธนาคารดังต่อไปนี้'},
+                            {key: 'action', label: '', class: 'text-center'}
+                        ];
 
-                    {{--    this.items = response.data.list;--}}
-                    {{--    return this.items;--}}
+                        this.items = response.data.list;
+                        return this.items;
 
-                    {{--},--}}
+                    },
                     changeType(event) {
                         if (event == 'Y') {
                             $('#input-group-diamonds_topup').removeClass('hide');
