@@ -84,10 +84,10 @@ class ConfigController extends AppBaseController
 
         $responses = $responses->map(function ($items){
             $item = (object)$items;
-
+            $bank = (!is_null($item->bank) ? (object)$item->bank : '');
             return [
 
-                'bank' => $item->bank->shortcode,
+                'bank' => $bank->shortcode,
                 'method' => $item->method,
                 'bank_number' => $item->bank_number,
                 'action' => '<button type="button" class="btn btn-warning btn-xs icon-only" onclick="delSub('.$item->code.')"><i class="fa fa-times"></i></button>'
