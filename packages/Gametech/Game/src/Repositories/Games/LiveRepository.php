@@ -114,7 +114,8 @@ class LiveRepository extends Repository
         $response = $this->GameCurl($param, 'createmember');
 
         if ($this->debug) {
-            $return = $this->Debug($response);
+            return $this->Debug($response);
+
         }
 
         if ($response->successful()) {

@@ -101,5 +101,29 @@ class ConfigController extends AppBaseController
         return $this->sendResponseNew($result, 'complete');
     }
 
+    public function loadBank()
+    {
+        $banks = [
+            'value' => '',
+            'text' => '== เลือกธนาคาร =='
+        ];
+
+        $responses = collect(app('Gametech\Payment\Repositories\BankRepository')->findWhere(['enable' => 'Y'])->toArray());
+
+        $responses = $responses->map(function ($items){
+            $item = (object)$items;
+            return [
+                'value' => $item->code,
+                'text' => $item->name_th
+            ];
+
+        })->prepend($banks);
+
+
+
+        $result['banks'] = $responses;
+        return $this->sendResponseNew($result,'ดำเนินการเสร็จสิ้น');
+    }
+
 
 }

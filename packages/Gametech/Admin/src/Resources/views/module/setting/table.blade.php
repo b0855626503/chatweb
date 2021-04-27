@@ -7,9 +7,72 @@
     </style>
 @endpush
 
+<b-modal ref="addeditsub" id="addeditsub" centered size="sm" title="เพิ่มรายการ" :no-stacking="false"
+         :no-close-on-backdrop="true" :hide-footer="true">
+    <b-form @submit.stop.prevent="addEditSubmitNewSub">
+
+        <b-form-group
+                id="input-group-bank_code"
+                label="ลูกค้าที่สมัครด้วย:"
+                label-for="bank_code"
+                description="ลูกค้าที่สมัครด้วย ธนาคารนี้">
+
+            <b-form-select
+                    id="bank_code"
+                    name="bank_code"
+                    v-model="formsub.bank_code"
+                    :options="optionsub.bank_code"
+                    size="sm"
+                    required
+            ></b-form-select>
+
+        </b-form-group>
+
+        <b-form-group
+                id="input-group-method"
+                label="รูปแบบ:"
+                label-for="method"
+                description="">
+
+            <b-form-select
+                    id="method"
+                    name="method"
+                    v-model="formsub.method"
+                    :options="optionsub.method"
+                    size="sm"
+                    required
+            ></b-form-select>
+
+        </b-form-group>
+
+
+        <b-form-group
+                id="input-group-bank_number"
+                label="ธนาคาร:"
+                label-for="bank_number"
+                description="">
+            <b-form-select
+                    class="select2"
+                    multiple="multiple"
+                    id="bank_number"
+                    name="bank_number"
+                    v-model="formsub.bank_number"
+                    :options="optionsub.bank_number"
+                    size="sm"
+                    required
+            ></b-form-select>
+
+        </b-form-group>
+
+        <b-button type="submit" variant="primary">บันทึก</b-button>
+
+    </b-form>
+</b-modal>
 
 
 <configs :formaddedit="{{ json_encode($configs) }}"></configs>
+
+
 
 @push('scripts')
     <script src="{{ asset('/vendor/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js') }}"></script>
@@ -17,6 +80,48 @@
     <script type="text/x-template" id="configs-template">
 
         <b-container class="bv-example-row" v-if="show">
+
+            <b-row>
+                <b-col>
+                    <b-card
+                            border-variant="primary"
+                            header="ตั้งค่าลูกค้าเห็นธนาคาร"
+                            header-bg-variant="primary"
+                            header-text-variant="white">
+
+                        <b-card-text>
+
+                            <b-table striped hover small outlined show-empty v-bind:items="myRule" :fields="fields"
+                                     :busy="isBusy" ref="tbdata" v-if="show">
+                                <template #table-busy>
+                                    <div class="text-center text-danger my-2">
+                                        <b-spinner class="align-middle"></b-spinner>
+                                        <strong>Loading...</strong>
+                                    </div>
+                                </template>
+                                <template #thead-top="data">
+                                    <b-tr>
+                                        <b-th colspan="3"></b-th>
+                                        <b-th variant="secondary" class="text-center">
+                                            <button type="button" class="btn btn-xs btn-primary"
+                                                    @click="addSubModal()"><i class="fa fa-plus"></i> Add
+                                            </button>
+                                        </b-th>
+
+                                    </b-tr>
+                                </template>
+                                <template #cell(action)="data">
+                                    <span v-html="data.value"></span>
+                                </template>
+                            </b-table>
+
+
+
+                        </b-card-text>
+                    </b-card>
+                </b-col>
+            </b-row>
+
             <b-form @submit.stop.prevent="addEditSubmitNew" id="frmaddedit">
 
                 <b-form-row>
@@ -28,18 +133,18 @@
 
                             <b-card-text>
                                 <b-form-group
-                                    id="input-group-verify_open"
-                                    label="เลือกเปิด เมื่อต้องการ ตรวจสอบรหัสของลูกค้า:"
-                                    label-for="verify_open"
-                                    description="เมื่อสมัครสมาชิกเสร็จ จะเข้าระบบไม่ได้ ถ้าเปิดการใช้งาน โดยทีมงานต้องเข้าไปอนุมัติการใช้งานก่อน">
+                                        id="input-group-verify_open"
+                                        label="เลือกเปิด เมื่อต้องการ ตรวจสอบรหัสของลูกค้า:"
+                                        label-for="verify_open"
+                                        description="เมื่อสมัครสมาชิกเสร็จ จะเข้าระบบไม่ได้ ถ้าเปิดการใช้งาน โดยทีมงานต้องเข้าไปอนุมัติการใช้งานก่อน">
 
                                     <b-form-select
-                                        id="verify_open"
-                                        name="verify_open"
-                                        v-model="formaddedit.verify_open"
-                                        :options="option.verify_open"
-                                        size="sm"
-                                        required
+                                            id="verify_open"
+                                            name="verify_open"
+                                            v-model="formaddedit.verify_open"
+                                            :options="option.verify_open"
+                                            size="sm"
+                                            required
                                     ></b-form-select>
 
                                 </b-form-group>
@@ -51,57 +156,57 @@
                 <b-form-row>
                     <b-col>
 
-                            <b-card border-variant="success"
-                                    header="แก้ไขข้อมูลติดต่อ"
-                                    header-bg-variant="success"
-                                    header-text-variant="black">
+                        <b-card border-variant="success"
+                                header="แก้ไขข้อมูลติดต่อ"
+                                header-bg-variant="success"
+                                header-text-variant="black">
                             <b-card-text>
                                 <b-form-group
-                                    id="input-group-lineid"
-                                    label="ID Line :"
-                                    label-for="lineid"
-                                    description="">
+                                        id="input-group-lineid"
+                                        label="ID Line :"
+                                        label-for="lineid"
+                                        description="">
                                     <b-form-input
-                                        id="lineid"
-                                        name="lineid"
-                                        v-model="formaddedit.lineid"
-                                        type="text"
-                                        size="sm"
-                                        placeholder="ID Line"
-                                        autocomplete="off"
+                                            id="lineid"
+                                            name="lineid"
+                                            v-model="formaddedit.lineid"
+                                            type="text"
+                                            size="sm"
+                                            placeholder="ID Line"
+                                            autocomplete="off"
 
 
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-linelink"
-                                    label="Link Line:"
-                                    label-for="linelink"
-                                    description="">
+                                        id="input-group-linelink"
+                                        label="Link Line:"
+                                        label-for="linelink"
+                                        description="">
                                     <b-form-input
-                                        id="linelink"
-                                        name="linelink"
-                                        v-model="formaddedit.linelink"
-                                        type="text"
-                                        size="sm"
-                                        placeholder="Link Line"
-                                        autocomplete="off"
+                                            id="linelink"
+                                            name="linelink"
+                                            v-model="formaddedit.linelink"
+                                            type="text"
+                                            size="sm"
+                                            placeholder="Link Line"
+                                            autocomplete="off"
 
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-notice"
-                                    label="ข้อความแจ้งเตือนหน้าแรก ก่อนเข้าระบบ:"
-                                    label-for="notice"
-                                    description="">
+                                        id="input-group-notice"
+                                        label="ข้อความแจ้งเตือนหน้าแรก ก่อนเข้าระบบ:"
+                                        label-for="notice"
+                                        description="">
                                     <b-form-input
-                                        id="notice"
-                                        name="notice"
-                                        v-model="formaddedit.notice"
-                                        type="text"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="notice"
+                                            name="notice"
+                                            v-model="formaddedit.notice"
+                                            type="text"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
 
                                     ></b-form-input>
                                 </b-form-group>
@@ -113,103 +218,103 @@
                 <b-form-row>
                     <b-col>
                         <b-card
-                            border-variant="primary"
-                            header="Wallet Setting"
-                            header-bg-variant="primary"
-                            header-text-variant="white">
+                                border-variant="primary"
+                                header="Wallet Setting"
+                                header-bg-variant="primary"
+                                header-text-variant="white">
                             <b-card-text>
                                 <b-form-group
-                                    id="input-group-maxtransfer_time"
-                                    label="สูงสุด โยก Wallet เข้า Game :"
-                                    label-for="maxtransfer_time"
-                                    description="">
+                                        id="input-group-maxtransfer_time"
+                                        label="สูงสุด โยก Wallet เข้า Game :"
+                                        label-for="maxtransfer_time"
+                                        description="">
                                     <b-form-input
-                                        id="maxtransfer_time"
-                                        name="maxtransfer_time"
-                                        v-model="formaddedit.maxtransfer_time"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="maxtransfer_time"
+                                            name="maxtransfer_time"
+                                            v-model="formaddedit.maxtransfer_time"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-mintransfer"
-                                    label="ขั้นต่ำ โยก Wallet เข้า Game:"
-                                    label-for="mintransfer"
-                                    description="">
+                                        id="input-group-mintransfer"
+                                        label="ขั้นต่ำ โยก Wallet เข้า Game:"
+                                        label-for="mintransfer"
+                                        description="">
                                     <b-form-input
-                                        id="mintransfer"
-                                        name="mintransfer"
-                                        v-model="formaddedit.mintransfer"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="mintransfer"
+                                            name="mintransfer"
+                                            v-model="formaddedit.mintransfer"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-mintransfer_pro"
-                                    label="เมื่อรับโปร โยก Wallet เข้า Game ได้ เมื่อเงินในเกมน้อยกว่า:"
-                                    label-for="mintransfer_pro"
-                                    description="">
+                                        id="input-group-mintransfer_pro"
+                                        label="เมื่อรับโปร โยก Wallet เข้า Game ได้ เมื่อเงินในเกมน้อยกว่า:"
+                                        label-for="mintransfer_pro"
+                                        description="">
                                     <b-form-input
-                                        id="mintransfer_pro"
-                                        name="mintransfer_pro"
-                                        v-model="formaddedit.mintransfer_pro"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="mintransfer_pro"
+                                            name="mintransfer_pro"
+                                            v-model="formaddedit.mintransfer_pro"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-mintransferback"
-                                    label="ขั้นต่ำ โยก Game เข้า Wallet:"
-                                    label-for="mintransferback"
-                                    description="">
+                                        id="input-group-mintransferback"
+                                        label="ขั้นต่ำ โยก Game เข้า Wallet:"
+                                        label-for="mintransferback"
+                                        description="">
                                     <b-form-input
-                                        id="mintransferback"
-                                        name="mintransferback"
-                                        v-model="formaddedit.mintransferback"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="mintransferback"
+                                            name="mintransferback"
+                                            v-model="formaddedit.mintransferback"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-minwithdraw"
-                                    label="ขั้นต่ำ ถอนเงิน :"
-                                    label-for="minwithdraw"
-                                    description="">
+                                        id="input-group-minwithdraw"
+                                        label="ขั้นต่ำ ถอนเงิน :"
+                                        label-for="minwithdraw"
+                                        description="">
                                     <b-form-input
-                                        id="minwithdraw"
-                                        name="minwithdraw"
-                                        v-model="formaddedit.minwithdraw"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="minwithdraw"
+                                            name="minwithdraw"
+                                            v-model="formaddedit.minwithdraw"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-maxwithdraw_day"
-                                    label="วงเงินถอน / วัน:"
-                                    label-for="maxwithdraw_day"
-                                    description="">
+                                        id="input-group-maxwithdraw_day"
+                                        label="วงเงินถอน / วัน:"
+                                        label-for="maxwithdraw_day"
+                                        description="">
                                     <b-form-input
-                                        id="maxwithdraw_day"
-                                        name="maxwithdraw_day"
-                                        v-model="formaddedit.maxwithdraw_day"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="maxwithdraw_day"
+                                            name="maxwithdraw_day"
+                                            v-model="formaddedit.maxwithdraw_day"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
 
@@ -226,129 +331,129 @@
                                 header-text-variant="white">
                             <b-card-text>
                                 <b-form-group
-                                    id="input-group-freecredit_open"
-                                    label="เปิดใช้งาน Free Credit:"
-                                    label-for="freecredit_open"
-                                    description="">
+                                        id="input-group-freecredit_open"
+                                        label="เปิดใช้งาน Free Credit:"
+                                        label-for="freecredit_open"
+                                        description="">
 
                                     <b-form-select
-                                        id="freecredit_open"
-                                        name="freecredit_open"
-                                        v-model="formaddedit.freecredit_open"
-                                        :options="option.freecredit_open"
-                                        size="sm"
-                                        required
+                                            id="freecredit_open"
+                                            name="freecredit_open"
+                                            v-model="formaddedit.freecredit_open"
+                                            :options="option.freecredit_open"
+                                            size="sm"
+                                            required
                                     ></b-form-select>
 
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-freecredit_all"
-                                    label="สมาชิกทุกคน เปิดใช้งาน Free Credit:"
-                                    label-for="freecredit_all"
-                                    description="">
+                                        id="input-group-freecredit_all"
+                                        label="สมาชิกทุกคน เปิดใช้งาน Free Credit:"
+                                        label-for="freecredit_all"
+                                        description="">
 
                                     <b-form-select
-                                        id="freecredit_all"
-                                        name="freecredit_all"
-                                        v-model="formaddedit.freecredit_all"
-                                        :options="option.freecredit_all"
-                                        size="sm"
-                                        required
+                                            id="freecredit_all"
+                                            name="freecredit_all"
+                                            v-model="formaddedit.freecredit_all"
+                                            :options="option.freecredit_all"
+                                            size="sm"
+                                            required
                                     ></b-form-select>
 
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-free_mintransfer"
-                                    label="ขั้นต่ำโยก Credit เข้า Game :"
-                                    label-for="free_mintransfer"
-                                    description="">
+                                        id="input-group-free_mintransfer"
+                                        label="ขั้นต่ำโยก Credit เข้า Game :"
+                                        label-for="free_mintransfer"
+                                        description="">
                                     <b-form-input
-                                        id="free_mintransfer"
-                                        name="free_mintransfer"
-                                        v-model="formaddedit.free_mintransfer"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="free_mintransfer"
+                                            name="free_mintransfer"
+                                            v-model="formaddedit.free_mintransfer"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-free_mintransferback"
-                                    label="ขั้นต่ำโยก Credit ออก Game :"
-                                    label-for="free_mintransferback"
-                                    description="">
+                                        id="input-group-free_mintransferback"
+                                        label="ขั้นต่ำโยก Credit ออก Game :"
+                                        label-for="free_mintransferback"
+                                        description="">
                                     <b-form-input
-                                        id="free_mintransferback"
-                                        name="free_mintransferback"
-                                        v-model="formaddedit.free_mintransferback"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="free_mintransferback"
+                                            name="free_mintransferback"
+                                            v-model="formaddedit.free_mintransferback"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-free_maxtransfer"
-                                    label="สูงสุดในการโยกเข้า / ครั้ง:"
-                                    label-for="free_maxtransfer"
-                                    description="">
+                                        id="input-group-free_maxtransfer"
+                                        label="สูงสุดในการโยกเข้า / ครั้ง:"
+                                        label-for="free_maxtransfer"
+                                        description="">
                                     <b-form-input
-                                        id="free_maxtransfer"
-                                        name="free_maxtransfer"
-                                        v-model="formaddedit.free_maxtransfer"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="free_maxtransfer"
+                                            name="free_maxtransfer"
+                                            v-model="formaddedit.free_maxtransfer"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-free_maxout"
-                                    label="สูงสุดการโยกออก / ครั้ง:"
-                                    label-for="free_maxout"
-                                    description="">
+                                        id="input-group-free_maxout"
+                                        label="สูงสุดการโยกออก / ครั้ง:"
+                                        label-for="free_maxout"
+                                        description="">
                                     <b-form-input
-                                        id="free_maxout"
-                                        name="free_maxout"
-                                        v-model="formaddedit.free_maxout"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="free_maxout"
+                                            name="free_maxout"
+                                            v-model="formaddedit.free_maxout"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-free_minwithdraw"
-                                    label="ขั้นต่ำ ถอนเงิน / ครั้ง:"
-                                    label-for="free_minwithdraw"
-                                    description="">
+                                        id="input-group-free_minwithdraw"
+                                        label="ขั้นต่ำ ถอนเงิน / ครั้ง:"
+                                        label-for="free_minwithdraw"
+                                        description="">
                                     <b-form-input
-                                        id="free_minwithdraw"
-                                        name="free_minwithdraw"
-                                        v-model="formaddedit.free_minwithdraw"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="free_minwithdraw"
+                                            name="free_minwithdraw"
+                                            v-model="formaddedit.free_minwithdraw"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-free_maxwithdraw"
-                                    label="จำกัด ถอนเงินทั้งหมด:"
-                                    label-for="free_maxwithdraw"
-                                    description="">
+                                        id="input-group-free_maxwithdraw"
+                                        label="จำกัด ถอนเงินทั้งหมด:"
+                                        label-for="free_maxwithdraw"
+                                        description="">
                                     <b-form-input
-                                        id="free_maxwithdraw"
-                                        name="free_maxwithdraw"
-                                        v-model="formaddedit.free_maxwithdraw"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="free_maxwithdraw"
+                                            name="free_maxwithdraw"
+                                            v-model="formaddedit.free_maxwithdraw"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                             </b-card-text>
@@ -366,50 +471,50 @@
 
                                 <b-card-text>
                                     <b-form-group
-                                        id="input-group-multigame_open"
-                                        label="รองรับเกมหลายค่าย:"
-                                        label-for="multigame_open"
-                                        description="เมื่อ On ใช้ระบบสมาชิกรูปแบบ กระเป๋า Wallet">
+                                            id="input-group-multigame_open"
+                                            label="รองรับเกมหลายค่าย:"
+                                            label-for="multigame_open"
+                                            description="เมื่อ On ใช้ระบบสมาชิกรูปแบบ กระเป๋า Wallet">
 
                                         <b-form-select
-                                            id="multigame_open"
-                                            name="multigame_open"
-                                            v-model="formaddedit.multigame_open"
-                                            :options="option.multigame_open"
-                                            size="sm"
-                                            required
+                                                id="multigame_open"
+                                                name="multigame_open"
+                                                v-model="formaddedit.multigame_open"
+                                                :options="option.multigame_open"
+                                                size="sm"
+                                                required
                                         ></b-form-select>
                                     </b-form-group>
 
                                     <b-form-group
-                                        id="input-group-pro_onoff"
-                                        label="Promotion:"
-                                        label-for="pro_onoff"
-                                        description="เมื่อเลือก Off จะไม่มีโปรโมชั่นแสดงที่ หน้า โยกเงิน">
+                                            id="input-group-pro_onoff"
+                                            label="Promotion:"
+                                            label-for="pro_onoff"
+                                            description="เมื่อเลือก Off จะไม่มีโปรโมชั่นแสดงที่ หน้า โยกเงิน">
 
                                         <b-form-select
-                                            id="pro_onoff"
-                                            name="pro_onoff"
-                                            v-model="formaddedit.pro_onoff"
-                                            :options="option.pro_onoff"
-                                            size="sm"
-                                            required
+                                                id="pro_onoff"
+                                                name="pro_onoff"
+                                                v-model="formaddedit.pro_onoff"
+                                                :options="option.pro_onoff"
+                                                size="sm"
+                                                required
                                         ></b-form-select>
                                     </b-form-group>
 
                                     <b-form-group
-                                        id="input-group-reward_open"
-                                        label="เปิดใช้งานเมนู แต้มแลกรางวัล:"
-                                        label-for="reward_open"
-                                        description="">
+                                            id="input-group-reward_open"
+                                            label="เปิดใช้งานเมนู แต้มแลกรางวัล:"
+                                            label-for="reward_open"
+                                            description="">
 
                                         <b-form-select
-                                            id="reward_open"
-                                            name="reward_open"
-                                            v-model="formaddedit.reward_open"
-                                            :options="option.reward_open"
-                                            size="sm"
-                                            required
+                                                id="reward_open"
+                                                name="reward_open"
+                                                v-model="formaddedit.reward_open"
+                                                :options="option.reward_open"
+                                                size="sm"
+                                                required
                                         ></b-form-select>
                                     </b-form-group>
                                 </b-card-text>
@@ -420,39 +525,39 @@
                 <b-form-row>
                     <b-col>
 
-                            <b-card border-variant="secondary"
-                                    header="Point Setting"
-                                    header-bg-variant="secondary"
-                                    header-text-variant="white">
+                        <b-card border-variant="secondary"
+                                header="Point Setting"
+                                header-bg-variant="secondary"
+                                header-text-variant="white">
                             <b-card-text>
                                 <b-form-group
-                                    id="input-group-point_open"
-                                    label="เปิดใช้งาน Point:"
-                                    label-for="point_open"
-                                    description="">
+                                        id="input-group-point_open"
+                                        label="เปิดใช้งาน Point:"
+                                        label-for="point_open"
+                                        description="">
 
                                     <b-form-select
-                                        id="point_open"
-                                        name="point_open"
-                                        v-model="formaddedit.point_open"
-                                        :options="option.point_open"
-                                        size="sm"
-                                        required
+                                            id="point_open"
+                                            name="point_open"
+                                            v-model="formaddedit.point_open"
+                                            :options="option.point_open"
+                                            size="sm"
+                                            required
                                     ></b-form-select>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-points"
-                                    label="เติมทุก xxx / 1 Point :"
-                                    label-for="points"
-                                    description="">
+                                        id="input-group-points"
+                                        label="เติมทุก xxx / 1 Point :"
+                                        label-for="points"
+                                        description="">
                                     <b-form-input
-                                        id="points"
-                                        name="points"
-                                        v-model="formaddedit.points"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="points"
+                                            name="points"
+                                            v-model="formaddedit.points"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
 
@@ -471,18 +576,18 @@
                             <b-card-text>
 
                                 <b-form-group
-                                    id="input-group-diamond_open"
-                                    label="เปิดใช้งาน Diamond:"
-                                    label-for="diamond_open"
-                                    description="">
+                                        id="input-group-diamond_open"
+                                        label="เปิดใช้งาน Diamond:"
+                                        label-for="diamond_open"
+                                        description="">
 
                                     <b-form-select
-                                        id="diamond_open"
-                                        name="diamond_open"
-                                        v-model="formaddedit.diamond_open"
-                                        :options="option.diamond_open"
-                                        size="sm"
-                                        required
+                                            id="diamond_open"
+                                            name="diamond_open"
+                                            v-model="formaddedit.diamond_open"
+                                            :options="option.diamond_open"
+                                            size="sm"
+                                            required
                                     ></b-form-select>
 
                                 </b-form-group>
@@ -505,85 +610,85 @@
                                 {{--                                </b-form-group>--}}
 
                                 <b-form-group
-                                    id="input-group-diamond_per_bill"
-                                    label="เปิดใช้งาน Diamond ต่อบิล:"
-                                    label-for="diamond_per_bill"
-                                    description="">
+                                        id="input-group-diamond_per_bill"
+                                        label="เปิดใช้งาน Diamond ต่อบิล:"
+                                        label-for="diamond_per_bill"
+                                        description="">
 
                                     <b-form-select
-                                        id="diamond_per_bill"
-                                        name="diamond_per_bill"
-                                        v-model="formaddedit.diamond_per_bill"
-                                        :options="option.diamond_per_bill"
-                                        size="sm"
-                                        required
-                                        v-on:change="changeType($event)"
+                                            id="diamond_per_bill"
+                                            name="diamond_per_bill"
+                                            v-model="formaddedit.diamond_per_bill"
+                                            :options="option.diamond_per_bill"
+                                            size="sm"
+                                            required
+                                            v-on:change="changeType($event)"
                                     ></b-form-select>
 
                                 </b-form-group>
 
                                 <b-form-group
-                                    id="input-group-diamonds"
-                                    label="เติมทุก xxx / 1 Diamond :"
-                                    label-for="diamonds"
-                                    description="">
+                                        id="input-group-diamonds"
+                                        label="เติมทุก xxx / 1 Diamond :"
+                                        label-for="diamonds"
+                                        description="">
                                     <b-form-input
-                                        id="diamonds"
-                                        name="diamonds"
-                                        v-model="formaddedit.diamonds"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="diamonds"
+                                            name="diamonds"
+                                            v-model="formaddedit.diamonds"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
 
 
                                 <b-form-group
-                                    id="input-group-diamonds_topup"
-                                    label="ยอดเงินเติมต่อบิล :"
-                                    label-for="diamonds_topup"
-                                    description="จำนวนที่เติม ยอดมากกว่าหรือเท่ากับ">
+                                        id="input-group-diamonds_topup"
+                                        label="ยอดเงินเติมต่อบิล :"
+                                        label-for="diamonds_topup"
+                                        description="จำนวนที่เติม ยอดมากกว่าหรือเท่ากับ">
                                     <b-form-input
-                                        id="diamonds_topup"
-                                        name="diamonds_topup"
-                                        v-model="formaddedit.diamonds_topup"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="diamonds_topup"
+                                            name="diamonds_topup"
+                                            v-model="formaddedit.diamonds_topup"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
 
                                 <b-form-group
-                                    id="input-group-diamonds_amount"
-                                    label="ได้รับเพชรจำนวน :"
-                                    label-for="diamonds_amount"
-                                    description="">
+                                        id="input-group-diamonds_amount"
+                                        label="ได้รับเพชรจำนวน :"
+                                        label-for="diamonds_amount"
+                                        description="">
                                     <b-form-input
-                                        id="diamonds_amount"
-                                        name="diamonds_amount"
-                                        v-model="formaddedit.diamonds_amount"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="diamonds_amount"
+                                            name="diamonds_amount"
+                                            v-model="formaddedit.diamonds_amount"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
                                 <hr>
                                 <b-form-group
-                                    id="input-group-maxspin"
-                                    label="ยอดรวมรางวัล วงล้อมหาสนุก (สูงสุด) :"
-                                    label-for="maxspin"
-                                    description="">
+                                        id="input-group-maxspin"
+                                        label="ยอดรวมรางวัล วงล้อมหาสนุก (สูงสุด) :"
+                                        label-for="maxspin"
+                                        description="">
                                     <b-form-input
-                                        id="maxspin"
-                                        name="maxspin"
-                                        v-model="formaddedit.maxspin"
-                                        type="number"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
+                                            id="maxspin"
+                                            name="maxspin"
+                                            v-model="formaddedit.maxspin"
+                                            type="number"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
                                     ></b-form-input>
                                 </b-form-group>
                             </b-card-text>
@@ -595,10 +700,10 @@
                 <b-form-row>
                     <b-col>
                         <b-card
-                            border-variant="primary"
-                            header="Website Logo And Favicon"
-                            header-bg-variant="primary"
-                            header-text-variant="white">
+                                border-variant="primary"
+                                header="Website Logo And Favicon"
+                                header-bg-variant="primary"
+                                header-text-variant="white">
 
                             <b-card-text>
                                 <b-row>
@@ -606,30 +711,30 @@
                                         <div class="form-group {!! $errors->has('filepic.*') ? 'has-error' : '' !!}">
                                             <label>Logo Image (png)</label>
                                             <image-wrapper
-                                                @clear="clearImage($event,'filepic')"
-                                                @upload="handleUpload($event,'filepic')"
-                                                button-label="เพิ่มรูปภาพ"
-                                                :removed="true"
-                                                input-name="filepic"
-                                                :multiple="false"
-                                                :images="formaddedit.filepic"
-                                                :imgpath="imgpath"
-                                                v-bind:testProp.sync="trigger"></image-wrapper>
+                                                    @clear="clearImage($event,'filepic')"
+                                                    @upload="handleUpload($event,'filepic')"
+                                                    button-label="เพิ่มรูปภาพ"
+                                                    :removed="true"
+                                                    input-name="filepic"
+                                                    :multiple="false"
+                                                    :images="formaddedit.filepic"
+                                                    :imgpath="imgpath"
+                                                    v-bind:testProp.sync="trigger"></image-wrapper>
                                         </div>
                                     </b-col>
                                     <b-col cols="12" md="6">
                                         <div class="form-group {!! $errors->has('favicon.*') ? 'has-error' : '' !!}">
                                             <label>Favicon Image (png)</label>
                                             <image-wrapper
-                                                @clear="clearImage($event,'fileimg')"
-                                                @upload="handleUpload($event,'fileimg')"
-                                                button-label="เพิ่มรูปภาพ"
-                                                :removed="true"
-                                                input-name="fileimg"
-                                                :multiple="false"
-                                                :images="formaddedit.fileimg"
-                                                :imgpath="imgpath"
-                                                v-bind:testProp.sync="triggernew"></image-wrapper>
+                                                    @clear="clearImage($event,'fileimg')"
+                                                    @upload="handleUpload($event,'fileimg')"
+                                                    button-label="เพิ่มรูปภาพ"
+                                                    :removed="true"
+                                                    input-name="fileimg"
+                                                    :multiple="false"
+                                                    :images="formaddedit.fileimg"
+                                                    :imgpath="imgpath"
+                                                    v-bind:testProp.sync="triggernew"></image-wrapper>
                                         </div>
                                     </b-col>
                                 </b-row>
@@ -641,77 +746,77 @@
                 <b-form-row>
                     <b-col>
                         <b-card
-                            border-variant="primary"
-                            header="Website Setting"
-                            header-bg-variant="primary"
-                            header-text-variant="white">
+                                border-variant="primary"
+                                header="Website Setting"
+                                header-bg-variant="primary"
+                                header-text-variant="white">
 
                             <b-card-text>
                                 <b-form-group
-                                    id="input-group-sitename"
-                                    label="ชื่อเวบไซต์ :"
-                                    label-for="sitename"
-                                    description="">
+                                        id="input-group-sitename"
+                                        label="ชื่อเวบไซต์ :"
+                                        label-for="sitename"
+                                        description="">
                                     <b-form-input
-                                        id="sitename"
-                                        name="sitename"
-                                        v-model="formaddedit.sitename"
-                                        type="text"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="sitename"
+                                            name="sitename"
+                                            v-model="formaddedit.sitename"
+                                            type="text"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-title"
-                                    label="Title :"
-                                    label-for="title"
-                                    description="">
+                                        id="input-group-title"
+                                        label="Title :"
+                                        label-for="title"
+                                        description="">
                                     <b-form-input
-                                        id="title"
-                                        name="title"
-                                        v-model="formaddedit.title"
-                                        type="text"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
+                                            id="title"
+                                            name="title"
+                                            v-model="formaddedit.title"
+                                            type="text"
+                                            size="sm"
+                                            placeholder=""
+                                            autocomplete="off"
+                                            required
                                     ></b-form-input>
                                 </b-form-group>
                                 <b-form-group
-                                    id="input-group-description"
-                                    label="Description :"
-                                    label-for="description"
-                                    description="">
+                                        id="input-group-description"
+                                        label="Description :"
+                                        label-for="description"
+                                        description="">
                                     <b-form-textarea
-                                        id="description"
-                                        name="description"
-                                        v-model="formaddedit.description"
-                                        placeholder=""
-                                        rows="3"
-                                        max-rows="6"
+                                            id="description"
+                                            name="description"
+                                            v-model="formaddedit.description"
+                                            placeholder=""
+                                            rows="3"
+                                            max-rows="6"
                                     ></b-form-textarea>
                                 </b-form-group>
 
 
                                 <b-form-group
-                                    id="input-group-wallet_navbar_color"
-                                    label="Wallet Navbar Color :"
-                                    label-for="wallet_navbar_color"
-                                    description="">
+                                        id="input-group-wallet_navbar_color"
+                                        label="Wallet Navbar Color :"
+                                        label-for="wallet_navbar_color"
+                                        description="">
                                     <b-input-group class="my-colorpicker my-colorpicker-navbar">
                                         <b-input-group-append>
                                             <b-form-input
-                                                id="wallet_navbar_color"
-                                                name="wallet_navbar_color"
-                                                v-model="formaddedit.wallet_navbar_color"
-                                                type="text"
-                                                size="sm"
-                                                placeholder=""
-                                                autocomplete="off"
+                                                    id="wallet_navbar_color"
+                                                    name="wallet_navbar_color"
+                                                    v-model="formaddedit.wallet_navbar_color"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder=""
+                                                    autocomplete="off"
 
-                                                required
+                                                    required
                                             ></b-form-input>
                                             <b-input-group-text>
                                                 <i class="fa fa-square"></i>
@@ -724,22 +829,22 @@
 
 
                                 <b-form-group
-                                    id="input-group-wallet_footer_color"
-                                    label="Wallet Footer Color :"
-                                    label-for="wallet_footer_color"
-                                    description="">
+                                        id="input-group-wallet_footer_color"
+                                        label="Wallet Footer Color :"
+                                        label-for="wallet_footer_color"
+                                        description="">
                                     <b-input-group class="my-colorpicker my-colorpicker-footer">
                                         <b-input-group-append>
                                             <b-form-input
-                                                id="wallet_footer_color"
-                                                name="wallet_footer_color"
-                                                v-model="formaddedit.wallet_footer_color"
-                                                type="text"
-                                                size="sm"
-                                                placeholder=""
-                                                autocomplete="off"
+                                                    id="wallet_footer_color"
+                                                    name="wallet_footer_color"
+                                                    v-model="formaddedit.wallet_footer_color"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder=""
+                                                    autocomplete="off"
 
-                                                required
+                                                    required
                                             ></b-form-input>
                                             <b-input-group-text>
                                                 <i class="fa fa-square footer"></i>
@@ -751,22 +856,22 @@
                                 </b-form-group>
 
                                 <b-form-group
-                                    id="input-group-wallet_body_start_color"
-                                    label="Wallet Body Start Color :"
-                                    label-for="wallet_body_start_color"
-                                    description="สีเริ่มต้นของพื้นหลังหลัก ซึ่งจะค่อยๆ ไล่เฉดสีไปอ่อน">
+                                        id="input-group-wallet_body_start_color"
+                                        label="Wallet Body Start Color :"
+                                        label-for="wallet_body_start_color"
+                                        description="สีเริ่มต้นของพื้นหลังหลัก ซึ่งจะค่อยๆ ไล่เฉดสีไปอ่อน">
                                     <b-input-group class="my-colorpicker my-colorpicker-body-start">
                                         <b-input-group-append>
                                             <b-form-input
-                                                id="wallet_body_start_color"
-                                                name="wallet_body_start_color"
-                                                v-model="formaddedit.wallet_body_start_color"
-                                                type="text"
-                                                size="sm"
-                                                placeholder=""
-                                                autocomplete="off"
+                                                    id="wallet_body_start_color"
+                                                    name="wallet_body_start_color"
+                                                    v-model="formaddedit.wallet_body_start_color"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder=""
+                                                    autocomplete="off"
 
-                                                required
+                                                    required
                                             ></b-form-input>
                                             <b-input-group-text>
                                                 <i class="fa fa-square body-start"></i>
@@ -778,22 +883,22 @@
                                 </b-form-group>
 
                                 <b-form-group
-                                    id="input-group-wallet_body_stop_color"
-                                    label="Wallet Body Stop Color :"
-                                    label-for="wallet_body_stop_color"
-                                    description="สีของพื้นหลัง ที่ไล่เฉดสีมาจาก Body Start">
+                                        id="input-group-wallet_body_stop_color"
+                                        label="Wallet Body Stop Color :"
+                                        label-for="wallet_body_stop_color"
+                                        description="สีของพื้นหลัง ที่ไล่เฉดสีมาจาก Body Start">
                                     <b-input-group class="my-colorpicker my-colorpicker-body-stop">
                                         <b-input-group-append>
                                             <b-form-input
-                                                id="wallet_body_stop_color"
-                                                name="wallet_body_stop_color"
-                                                v-model="formaddedit.wallet_body_stop_color"
-                                                type="text"
-                                                size="sm"
-                                                placeholder=""
-                                                autocomplete="off"
+                                                    id="wallet_body_stop_color"
+                                                    name="wallet_body_stop_color"
+                                                    v-model="formaddedit.wallet_body_stop_color"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder=""
+                                                    autocomplete="off"
 
-                                                required
+                                                    required
                                             ></b-form-input>
                                             <b-input-group-text>
                                                 <i class="fa fa-square body-stop"></i>
@@ -804,22 +909,22 @@
 
 
                                 <b-form-group
-                                    id="input-group-wallet_footer_active"
-                                    label="Wallet Footer Active Color :"
-                                    label-for="wallet_footer_active"
-                                    description="สีของการ Active Menu ตรง Footer">
+                                        id="input-group-wallet_footer_active"
+                                        label="Wallet Footer Active Color :"
+                                        label-for="wallet_footer_active"
+                                        description="สีของการ Active Menu ตรง Footer">
                                     <b-input-group class="my-colorpicker my-colorpicker-footer-active">
                                         <b-input-group-append>
                                             <b-form-input
-                                                id="wallet_footer_active"
-                                                name="wallet_footer_active"
-                                                v-model="formaddedit.wallet_footer_active"
-                                                type="text"
-                                                size="sm"
-                                                placeholder=""
-                                                autocomplete="off"
+                                                    id="wallet_footer_active"
+                                                    name="wallet_footer_active"
+                                                    v-model="formaddedit.wallet_footer_active"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder=""
+                                                    autocomplete="off"
 
-                                                required
+                                                    required
                                             ></b-form-input>
                                             <b-input-group-text>
                                                 <i class="fa fa-square footer-active"></i>
@@ -829,22 +934,22 @@
                                 </b-form-group>
 
                                 <b-form-group
-                                    id="input-group-wallet_footer_exchange"
-                                    label="Wallet Footer Exchage Color :"
-                                    label-for="wallet_footer_exchange"
-                                    description="สีของ Menu โยกเงิน ตรง Footer">
+                                        id="input-group-wallet_footer_exchange"
+                                        label="Wallet Footer Exchage Color :"
+                                        label-for="wallet_footer_exchange"
+                                        description="สีของ Menu โยกเงิน ตรง Footer">
                                     <b-input-group class="my-colorpicker my-colorpicker-footer-exchange">
                                         <b-input-group-append>
                                             <b-form-input
-                                                id="wallet_footer_exchange"
-                                                name="wallet_footer_exchange"
-                                                v-model="formaddedit.wallet_footer_exchange"
-                                                type="text"
-                                                size="sm"
-                                                placeholder=""
-                                                autocomplete="off"
+                                                    id="wallet_footer_exchange"
+                                                    name="wallet_footer_exchange"
+                                                    v-model="formaddedit.wallet_footer_exchange"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder=""
+                                                    autocomplete="off"
 
-                                                required
+                                                    required
                                             ></b-form-input>
                                             <b-input-group-text>
                                                 <i class="fa fa-square footer-exchange"></i>
@@ -862,43 +967,43 @@
                 <b-form-row>
                     <b-col>
                         <b-card
-                            border-variant="primary"
-                            header="Service Color Setting"
-                            header-bg-variant="primary"
-                            header-text-variant="white">
+                                border-variant="primary"
+                                header="Service Color Setting"
+                                header-bg-variant="primary"
+                                header-text-variant="white">
 
                             <b-card-text>
 
                                 <b-form-group
-                                    id="input-group-admin_navbar_color"
-                                    label="สีของ Navbar (หัวเวบ):"
-                                    label-for="admin_navbar_color"
-                                    description="">
+                                        id="input-group-admin_navbar_color"
+                                        label="สีของ Navbar (หัวเวบ):"
+                                        label-for="admin_navbar_color"
+                                        description="">
 
                                     <b-form-select
-                                        id="admin_navbar_color"
-                                        name="admin_navbar_color"
-                                        v-model="formaddedit.admin_navbar_color"
-                                        :options="option.admin_navbar_color"
-                                        size="sm"
-                                        required
+                                            id="admin_navbar_color"
+                                            name="admin_navbar_color"
+                                            v-model="formaddedit.admin_navbar_color"
+                                            :options="option.admin_navbar_color"
+                                            size="sm"
+                                            required
                                     ></b-form-select>
 
                                 </b-form-group>
 
                                 <b-form-group
-                                    id="input-group-admin_brand_color"
-                                    label="สีของ Brand (ตรงที่มี Logo):"
-                                    label-for="admin_brand_color"
-                                    description="">
+                                        id="input-group-admin_brand_color"
+                                        label="สีของ Brand (ตรงที่มี Logo):"
+                                        label-for="admin_brand_color"
+                                        description="">
 
                                     <b-form-select
-                                        id="admin_brand_color"
-                                        name="admin_brand_color"
-                                        v-model="formaddedit.admin_brand_color"
-                                        :options="option.admin_brand_color"
-                                        size="sm"
-                                        required
+                                            id="admin_brand_color"
+                                            name="admin_brand_color"
+                                            v-model="formaddedit.admin_brand_color"
+                                            :options="option.admin_brand_color"
+                                            size="sm"
+                                            required
                                     ></b-form-select>
 
                                 </b-form-group>
@@ -909,57 +1014,22 @@
                     </b-col>
                 </b-form-row>
 
-                <b-form-row>
-                    <b-col>
-                        <b-card
-                            border-variant="primary"
-                            header="ตั้งค่าลูกค้าเห็นธนาคาร"
-                            header-bg-variant="primary"
-                            header-text-variant="white">
-
-                            <b-card-text>
-
-                                <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRule" :fields="fields" :busy="isBusy"
-                                         ref="tbrule" v-if="show">
-                                    <template #table-busy>
-                                        <div class="text-center text-danger my-2">
-                                            <b-spinner class="align-middle"></b-spinner>
-                                            <strong>Loading...</strong>
-                                        </div>
-                                    </template>
-                                    <template #thead-top="data">
-                                        <b-tr>
-                                            <b-th colspan="3"></b-th>
-                                            <b-th variant="secondary" class="text-center">
-                                                <button type="button" class="btn btn-xs btn-primary"
-                                                        @click="addSubModal()"><i class="fa fa-plus"></i> Add
-                                                </button>
-                                            </b-th>
-
-                                        </b-tr>
-                                    </template>
-                                    <template #cell(transfer)="data">
-                                        <span v-html="data.value"></span>
-                                    </template>
-                                    <template #cell(credit_type)="data">
-                                        <span v-html="data.value"></span>
-                                    </template>
-                                </b-table>
-
-
-
-                            </b-card-text>
-                        </b-card>
-                    </b-col>
-                </b-form-row>
 
                 <b-button type="submit" variant="primary">บันทึก</b-button>
 
             </b-form>
+
         </b-container>
+
+
     </script>
 
     <script type="text/javascript">
+
+        function delSub(id, table) {
+            window.app.delSub(id, table);
+        }
+
         (() => {
 
 
@@ -972,15 +1042,15 @@
                 data() {
                     return {
                         show: false,
-                        fields: [],
-                        items: [],
-                        isBusy: false,
+                        showtable: false,
                         code: 1,
                         trigger: 0,
                         triggernew: 0,
                         fileupload: '',
                         fileuploadnew: '',
-
+                        fields: [],
+                        items: [],
+                        isBusy: false,
                         option: {
                             multigame_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             pro_onoff: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
@@ -1028,13 +1098,16 @@
 
                     this.code = null;
                     this.show = false;
+                    this.showtable = false;
+
+
                     this.fileupload = '';
                     this.fileuploadnew = '';
 
                     this.$nextTick(() => {
                         this.show = true;
                         this.code = 1;
-
+                        this.showtable = true;
                         setTimeout(() => {
                             this.trigger++;
                             this.formaddedit.filepic = 'logo.png';
@@ -1070,6 +1143,8 @@
 
                             // console.log(this.formaddedit.diamond_per_bill);
                             this.changeType(this.formaddedit.diamond_per_bill);
+
+
                         }, 0);
 
                         // this.setImage();
@@ -1077,13 +1152,28 @@
 
                 },
                 methods: {
+                    addSubModal() {
+                        console.log('here');
+                        this.formsub = {
+                            deposit_amount: 0,
+                            deposit_stop: 0,
+                            amount: 0
+                        }
+                        this.formmethodsub = 'add';
+
+                        this.showsub = false;
+                        this.$nextTick(() => {
+                            this.showsub = true;
+                            console.log(this);
+
+                        })
+                    },
                     async myRule() {
                         const response = await axios.get("{{ url($menu->currentRoute.'/getrule') }}", {
                             params: {
                                 id: this.code
                             }
                         });
-
 
                         this.fields = [
                             {key: 'bank', label: 'สมาชิก(ธนาคาร)'},
@@ -1092,8 +1182,7 @@
                             {key: 'action', label: '', class: 'text-center'}
                         ];
 
-                        this.items = response.data.list;
-                        return this.items;
+                        return response.data.list;
 
                     },
                     changeType(event) {
@@ -1193,8 +1282,8 @@
 
             })
 
-
             window.app = new Vue({
+                el: '#app',
                 data: function () {
                     return {
                         loopcnts: 0,
@@ -1202,13 +1291,30 @@
                         pushmenu: '',
                         toast: '',
                         withdraw_cnt: 0,
-                        played: false
+                        played: false,
+                        showsub: false,
+                        fields: [],
+                        items: [],
+                        isBusy: false,
+                        formsub: {
+                            deposit_amount: 0,
+                            deposit_stop: 0,
+                            amount: 0,
+                        },
+                        optionsub: {
+                            method: [{text: 'เท่านั้น', value: 'ONLY'}, {text: 'ยกเว้น', value: 'EXCEPT'}],
+                            bank_code: [],
+                            bank_number: [],
+                        }
                     }
                 },
                 created() {
                     const self = this;
                     self.autoCnt(false);
+                    this.loadBank();
+
                 },
+
                 watch: {
                     withdraw_cnt: function (event) {
                         if (event > 0) {
@@ -1216,8 +1322,68 @@
                         }
                     }
                 },
-                methods: {
 
+                methods: {
+                    async loadBank() {
+                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loadbank') }}");
+                        this.optionsub.bank_code = response.data.banks;
+                        return this.optionsub;
+                        // console.log(response.data.banks)
+                        // this.option = {
+                        //     bank_code: response.data.banks,
+                        //     bank_number: response.data.banks
+                        // };
+                    },
+                    addSubModal() {
+                        this.formsub = {
+                            deposit_amount: 0,
+                            deposit_stop: 0,
+                            amount: 0
+                        }
+                        this.formmethodsub = 'add';
+
+                        this.showsub = false;
+                        this.$nextTick(() => {
+                            this.showsub = true;
+                            this.$refs.addeditsub.show();
+
+                        })
+                    },
+                    delSub(code, table) {
+                        this.$bvModal.msgBoxConfirm('ต้องการดำเนินการ ลบข้อมูลหรือไม่.', {
+                            title: 'โปรดยืนยันการทำรายการ',
+                            size: 'sm',
+                            buttonSize: 'sm',
+                            okVariant: 'danger',
+                            okTitle: 'ตกลง',
+                            cancelTitle: 'ยกเลิก',
+                            footerClass: 'p-2',
+                            hideHeaderClose: false,
+                            centered: true
+                        })
+                            .then(value => {
+                                if (value) {
+                                    this.$http.post("{{ url($menu->currentRoute.'/deletesub') }}", {
+                                        id: code, method: table
+                                    })
+                                        .then(response => {
+                                            this.$bvModal.msgBoxOk(response.data.message, {
+                                                title: 'ผลการดำเนินการ',
+                                                size: 'sm',
+                                                buttonSize: 'sm',
+                                                okVariant: 'success',
+                                                headerClass: 'p-2 border-bottom-0',
+                                                footerClass: 'p-2 border-top-0',
+                                                centered: true
+                                            });
+                                            this.$refs.tbdata.refresh();
+
+                                        })
+                                        .catch(errors => console.log(errors));
+                                }
+                            })
+                            .catch(errors => console.log(errors));
+                    },
                     autoCnt(draw) {
                         const self = this;
                         this.toast = new Toasty({
@@ -1283,6 +1449,7 @@
                     }
                 }
             });
+
 
         })()
     </script>
