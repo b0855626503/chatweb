@@ -463,6 +463,8 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
                 Route::post('edit', $route['controller'] . '@edit')->name('admin.' . $route['name'] . '.edit');
 
+                Route::post('editsub', $route['controller'] . '@editsub')->name('admin.' . $route['name'] . '.editsub');
+
                 Route::post('clear', $route['controller'] . '@clear')->name('admin.' . $route['name'] . '.clear');
 
                 Route::post('update/{id?}', $route['controller'] . '@update')->name('admin.' . $route['name'] . '.update');

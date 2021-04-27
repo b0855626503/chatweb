@@ -111,6 +111,25 @@ class MemberController extends AppBaseController
 
     }
 
+    public function editsub(Request $request)
+    {
+        $id = $request->input('id');
+        $status = $request->input('status');
+        $method = $request->input('method');
+
+        $data[$method] = $status;
+
+        $member = $this->gameUserRepository->find($id);
+        if(!$member){
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        }
+
+        $member = $this->gameUserRepository->update($data, $id);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
     public function destroy(Request $request)
     {
         $id = $request->input('id');
@@ -400,7 +419,9 @@ class MemberController extends AppBaseController
                 'turn' => ($item->game_user['pro_code'] > 0 ? $item->game_user['turnpro'] : '-'),
                 'amount_balance' => ($item->game_user['pro_code'] > 0 ? $item->game_user['amount_balance'] : '-'),
                 'withdraw_limit' => ($item->game_user['pro_code'] > 0 ? ($item->game_user['withdraw_limit'] > 0 ? $item->game_user['withdraw_limit'] : '-') : '-'),
-            ];
+                'action' => '<button class="btn btn-xs icon-only ' . ($item->game_user['enable'] == 'Y' ? 'btn-warning' : 'btn-danger') . '" onclick="editdatasub(' . $item->game_user['code'] . "," . "'" . core()->flip($item->game_user['enable']) . "'" . "," . "'enable'" . ')">' . ($item->game_user['enable'] == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-trash"></i>') . '</button>',
+        ];
+
 
         });
 

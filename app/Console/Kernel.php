@@ -70,6 +70,7 @@ class Kernel extends ConsoleKernel
 //            });
 
 //        $schedule->command('migrate --force')->dailyAt('00:25');
+//        $schedule->command('composer update')->dailyAt('03:08');
 
 
         $schedule->command('payment:get tw')->everyMinute();

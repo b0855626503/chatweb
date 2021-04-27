@@ -138,6 +138,9 @@
         <template #cell(credit_type)="data">
             <span v-html="data.value"></span>
         </template>
+        <template #cell(action)="data">
+            <span v-html="data.value"></span>
+        </template>
     </b-table>
 </b-modal>
 
@@ -437,6 +440,10 @@
             window.app.delSub(id, table);
         }
 
+        function editdatasub(id, status, method) {
+            window.app.editdatasub(id, status, method);
+        }
+
         (() => {
             window.app = new Vue({
                 el: '#app',
@@ -506,6 +513,49 @@
                     this.loadBankAccount();
                 },
                 methods: {
+                    editdatasub(code, status, method) {
+
+                        this.$bvModal.msgBoxConfirm('ต้องการดำเนินการ ยกเลิก GAME ID นี้หรือไม่ เมื่อยกเลิกแล้ว ลูกค้าสามารถกด สมัครเข้ามาใหม่ได้.', {
+                            title: 'โปรดยืนยันการทำรายการ',
+                            size: 'sm',
+                            buttonSize: 'sm',
+                            okVariant: 'danger',
+                            okTitle: 'ตกลง',
+                            cancelTitle: 'ยกเลิก',
+                            footerClass: 'p-2',
+                            hideHeaderClose: false,
+                            centered: true
+                        })
+                            .then(value => {
+                                if (value) {
+                                    this.$http.post("{{ url($menu->currentRoute.'/editsub') }}", {
+                                        id: code,
+                                        status: status,
+                                        method: method
+                                    })
+                                        .then(response => {
+                                            this.$bvModal.msgBoxOk(response.data.message, {
+                                                title: 'ผลการดำเนินการ',
+                                                size: 'sm',
+                                                buttonSize: 'sm',
+                                                okVariant: 'success',
+                                                headerClass: 'p-2 border-bottom-0',
+                                                footerClass: 'p-2 border-top-0',
+                                                centered: true
+                                            });
+                                            this.$refs.gamelog.refresh()
+                                            // window.LaravelDataTables["dataTableBuilder"].draw(false);
+                                        })
+                                        .catch(exception => {
+                                            console.log('error');
+                                        });
+                                }
+                            })
+                            .catch(err => {
+                                // An error occurred
+                            })
+
+                    },
                     showModalNew(code, method) {
                         this.code = code;
                         this.method = method;
@@ -756,6 +806,7 @@
                                 {key: 'turn', label: 'Turn', class: 'text-center'},
                                 {key: 'amount_balance', label: 'ยอดเทินขั้นต่ำ', class: 'text-right'},
                                 {key: 'withdraw_limit', label: 'ถอนได้รับไม่เกิน', class: 'text-right'},
+                                {key: 'action', label: 'ยกเลิก ID', class: 'text-center'},
                             ];
                         } else if (this.method === 'deposit') {
                             this.fields = [

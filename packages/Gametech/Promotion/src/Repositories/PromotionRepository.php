@@ -8,6 +8,7 @@ use Gametech\Member\Repositories\MemberRepository;
 use Illuminate\Container\Container as App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PromotionRepository extends Repository
 {
@@ -419,7 +420,7 @@ class PromotionRepository extends Repository
         $hasfile = is_null($request->fileupload);
 
         if (!$hasfile) {
-            $file = $order->id . '.' . $request->fileupload->getClientOriginalExtension();
+            $file = Str::random(10).'.'.$request->fileupload->extension();
             $dir = 'promotion_img';
 
             Storage::putFileAs($dir, $request->fileupload, $file);

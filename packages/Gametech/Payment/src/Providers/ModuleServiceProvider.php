@@ -21,5 +21,6 @@ class ModuleServiceProvider extends BaseModuleServiceProvider
         \Gametech\Payment\Models\PaymentWaiting::class,
         \Gametech\Payment\Models\Withdraw::class,
         \Gametech\Payment\Models\WithdrawFree::class,
+        \Gametech\Payment\Models\BankRule::class,
     ];
 }
