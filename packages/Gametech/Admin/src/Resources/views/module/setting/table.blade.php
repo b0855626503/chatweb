@@ -1107,7 +1107,7 @@
                     this.$nextTick(() => {
                         this.show = true;
                         this.code = 1;
-                        this.showtable = true;
+
                         setTimeout(() => {
                             this.trigger++;
                             this.formaddedit.filepic = 'logo.png';
@@ -1181,8 +1181,10 @@
                             {key: 'bank_number', label: 'ธนาคารดังต่อไปนี้'},
                             {key: 'action', label: '', class: 'text-center'}
                         ];
-
-                        return response.data.list;
+                        this.showtable = true;
+                        this.isBusy = false;
+                        this.items = response.data.list;
+                        return this.items;
 
                     },
                     changeType(event) {
