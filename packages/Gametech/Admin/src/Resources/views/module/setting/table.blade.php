@@ -927,6 +927,17 @@
                                             <strong>Loading...</strong>
                                         </div>
                                     </template>
+                                    <template #thead-top="data">
+                                        <b-tr>
+                                            <b-th colspan="3"></b-th>
+                                            <b-th variant="secondary" class="text-center">
+                                                <button type="button" class="btn btn-xs btn-primary"
+                                                        @click="addSubModal()"><i class="fa fa-plus"></i> Add
+                                                </button>
+                                            </b-th>
+
+                                        </b-tr>
+                                    </template>
                                     <template #cell(transfer)="data">
                                         <span v-html="data.value"></span>
                                     </template>

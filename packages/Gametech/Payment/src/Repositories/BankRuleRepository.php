@@ -18,6 +18,6 @@ class BankRuleRepository extends Repository
 
     public function getRule()
     {
-        return $this->with('bank');
+        return $this->with('bank')->all();
     }
 }
