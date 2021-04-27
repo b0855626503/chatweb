@@ -59,4 +59,9 @@ class BankRule extends Model implements BankRuleContract
         'date_create' => 'nullable',
         'date_update' => 'nullable'
     ];
+
+    public function bank()
+    {
+        return $this->belongsTo(BankProxy::modelClass(), 'bank_code');
+    }
 }

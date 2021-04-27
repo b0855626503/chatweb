@@ -4,6 +4,7 @@ namespace Gametech\Admin\Http\Controllers;
 
 
 use Gametech\Core\Repositories\ConfigRepository;
+use Gametech\Payment\Repositories\BankRuleRepository;
 use Illuminate\Http\Request;
 
 class ConfigController extends AppBaseController
@@ -12,13 +13,21 @@ class ConfigController extends AppBaseController
 
     protected $repository;
 
-    public function __construct(ConfigRepository $repository)
+    protected $bankRuleRepository;
+
+    public function __construct(
+        ConfigRepository $repository,
+        BankRuleRepository $bankRuleRepo
+
+    )
     {
         $this->_config = request('_config');
 
         $this->middleware('admin');
 
         $this->repository = $repository;
+
+        $this->bankRuleRepository = $bankRuleRepo;
     }
 
 
@@ -71,15 +80,16 @@ class ConfigController extends AppBaseController
     public function getrule(Request $request)
     {
         $id =   $id = $request->input('id');
-        $responses = collect($this->memberRemarkRepository->loadRemark($id));
+        $responses = collect($this->bankRuleRepository->getRule());
 
         $responses = $responses->map(function ($items){
             $item = (object)$items;
 
             return [
-                'date_create' =>  core()->formatDate($item->date_create,'d/m/y H:i:s'),
-                'remark' => $item->remark,
-                'emp_code' => (is_null($item->emp) ? '' : $item->emp->user_name),
+
+                'bank' => $item->bank->shortcode,
+                'method' => $item->method,
+                'bank_number' => $item->bank_number,
                 'action' => '<button type="button" class="btn btn-warning btn-xs icon-only" onclick="delSub('.$item->code.')"><i class="fa fa-times"></i></button>'
 
             ];
