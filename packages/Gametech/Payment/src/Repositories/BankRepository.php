@@ -38,9 +38,9 @@ class BankRepository extends Repository
     public function getBankInAccountAll()
     {
         return $this->with(['banks_account' => function ($query) {
-            $query->in()->active()->topup()->show();
+            $query->in()->active()->show();
         }])->whereHas('banks_account', function ($query) {
-            $query->in()->active()->topup()->show();
+            $query->in()->active()->show();
         })->findWhere(['enable' => 'Y', ['code', '<>', 0]]);
 
     }

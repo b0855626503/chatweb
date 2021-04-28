@@ -5,6 +5,7 @@ namespace Gametech\Wallet\Http\Controllers;
 
 use Gametech\Member\Repositories\MemberRepository;
 use Gametech\Payment\Repositories\BankRepository;
+use Gametech\Payment\Repositories\BankRuleRepository;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -21,6 +22,8 @@ class TopupController extends AppBaseController
 
     protected $memberRepository;
 
+    protected $bankRuleRepository;
+
 
     /**
      * Create a new Repository instance.
@@ -31,7 +34,8 @@ class TopupController extends AppBaseController
     public function __construct
     (
         BankRepository $bankRepo,
-        MemberRepository $memberRepo
+        MemberRepository $memberRepo,
+        BankRuleRepository $bankRuleRepo
     )
     {
         $this->middleware('customer');
@@ -41,6 +45,8 @@ class TopupController extends AppBaseController
         $this->bankRepository = $bankRepo;
 
         $this->memberRepository = $memberRepo;
+
+        $this->bankRuleRepository = $bankRuleRepo;
     }
 
     public function indextest()
@@ -64,16 +70,73 @@ class TopupController extends AppBaseController
         $bankss = collect($this->bankRepository->getBankInAccountAll()->toArray());
 
 
+
         $bankss = $bankss->transform(function ($item, $key) {
             $item['filepic'] = Storage::url('bank_img/' . $item['filepic']);
             return $item;
         });
 
-        if($profile->bank->shortcode === 'KBANK'){
-            $banks = $bankss->whereIn('shortcode',['KBANK'])->all();
-//            $banks = $bankss;
+//        dd($bankss);
+
+
+
+        $rules = collect($this->bankRuleRepository->all())->toArray();
+        $pass = false;
+        if(count($rules) > 0){
+            foreach($rules as $i => $item){
+
+
+            if($pass)break;
+            if($item['types'] == 'IF'){
+                if($profile->bank->code == $item['bank_code']){
+                    if($item['method'] == 'CAN'){
+                        $bcode = explode(',',$item['bank_number']);
+                        if(count($bcode) > 1){
+                            $banks = $bankss->whereIn('code',$bcode)->all();
+                        }else{
+                            $banks = $bankss->whereIn('code',[$item['bank_number']])->all();
+                        }
+
+
+                    }else{
+                        $bcode = explode(',',$item['bank_number']);
+                        if(count($bcode) > 1){
+                            $banks = $bankss->whereNotIn('code',$bcode)->all();
+                        }else{
+                            $banks = $bankss->whereNotIn('code',[$item['bank_number']])->all();
+                        }
+
+                    }
+                    $pass = true;
+                }
+            }else{
+
+                if($profile->bank->code != $item['bank_code']){
+                    if($item['method'] == 'CAN'){
+                        $bcode = explode(',',$item['bank_number']);
+                        if(count($bcode) > 1){
+                            $banks = $bankss->whereIn('code',$bcode)->all();
+                        }else{
+                            $banks = $bankss->whereIn('code',[$item['bank_number']])->all();
+                        }
+
+                    }else{
+                        $bcode = explode(',',$item['bank_number']);
+                        if(count($bcode) > 1){
+                            $banks = $bankss->whereNotIn('code',$bcode)->all();
+                        }else{
+                            $banks = $bankss->whereNotIn('code',[$item['bank_number']])->all();
+                        }
+
+                    }
+                    $pass = true;
+                }
+
+
+
+            }
+        }
         }else{
-//            $banks = $bankss->whereNotIn('shortcode',['KBANK'])->all();
             $banks = $bankss;
         }
 
