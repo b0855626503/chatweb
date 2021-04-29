@@ -495,23 +495,23 @@ return [
         'route' => 'admin.bank.update',
         'sort' => 1
     ], [
-        'key' => 'st.ban_rule',
+        'key' => 'st.bank_rule',
         'name' => 'การมองเห็นธนาคาร',
         'route' => 'admin.bank_rule.index',
         'sort' => 5
     ], [
         'key' => 'st.bank_rule.create',
-        'name' => 'เพิ่ม กฏมองเห็นธนาคาร',
+        'name' => 'เพิ่ม การมองเห็นธนาคาร',
         'route' => 'admin.bank_rule.create',
         'sort' => 1
     ], [
         'key' => 'st.bank_rule.update',
-        'name' => 'แก้ไข กฏมองเห็นธนาคาร',
+        'name' => 'แก้ไข การมองเห็นธนาคาร',
         'route' => 'admin.bank_rule.update',
         'sort' => 2
     ], [
         'key' => 'st.bank_rule.delete',
-        'name' => 'ลบ กฏมองเห็นธนาคาร',
+        'name' => 'ลบ การมองเห็นธนาคาร',
         'route' => 'admin.bank_rule.delete',
         'sort' => 3
     ], [

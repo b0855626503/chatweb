@@ -26,6 +26,7 @@ class BankRule extends Model implements BankRuleContract
     public $fillable = [
         'bank_code',
         'method',
+        'types',
         'bank_number',
         'user_create',
         'user_update'
@@ -39,6 +40,7 @@ class BankRule extends Model implements BankRuleContract
     protected $casts = [
         'code' => 'integer',
         'bank_code' => 'integer',
+        'types' => 'string',
         'method' => 'string',
         'bank_number' => 'string',
         'user_create' => 'string',
@@ -52,6 +54,7 @@ class BankRule extends Model implements BankRuleContract
      */
     public static $rules = [
         'bank_code' => 'nullable|integer',
+        'types' => 'required|string',
         'method' => 'required|string',
         'bank_number' => 'required|string',
         'user_create' => 'required|string|max:100',

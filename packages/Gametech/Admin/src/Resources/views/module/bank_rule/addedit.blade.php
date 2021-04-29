@@ -138,11 +138,7 @@
                             this.loadData();
                             this.$refs.addedit.show();
                             this.show = true;
-                            setTimeout(() => {
-                                $('.select2').select2({
-                                    theme: 'bootstrap4'
-                                });
-                            }, 0);
+
                         })
                     },
                     addModal() {
@@ -157,10 +153,14 @@
 
                         this.show = false;
                         this.$nextTick(() => {
-                            this.$refs.addedit.show();
+
                             this.show = true;
-
-
+                            setTimeout(() => {
+                                $('.select2').select2({
+                                    theme: 'bootstrap4'
+                                });
+                            }, 0);
+                            this.$refs.addedit.show();
                         })
                     },
                     async loadData() {
@@ -172,11 +172,20 @@
                             method: response.data.data.method,
                             types: response.data.data.types,
                         }
+
+
+
+
+
                         setTimeout(() => {
                             $('.select2').select2({
                                 theme: 'bootstrap4'
                             });
+                            var arrayArea = response.data.data.bank_number.split(',');
+                            console.log(arrayArea);
+                            $(".select2").val(arrayArea).trigger('change');
                         }, 0);
+
                     },
                     async loadBank() {
                         const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loadbank') }}");
