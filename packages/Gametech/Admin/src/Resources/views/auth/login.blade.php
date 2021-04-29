@@ -57,8 +57,8 @@
 
             </div>
             <!-- /.card-body -->
-            <p>เวอชั่นปัจจุบัน {{ $current }}</p>
-            <p>เวอชั่นล่าสุด {{ $version }} ใหม่</p>
+            <p class="text-center">เวอชั่นปัจจุบัน {{ $current }}</p>
+
         </div>
         <!-- /.card -->
     </div>
