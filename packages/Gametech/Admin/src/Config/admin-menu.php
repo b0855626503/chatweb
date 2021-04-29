@@ -452,10 +452,19 @@ return [
         'badge-color' => 'badge-primary',
         'status' => 1
     ], [
+        'key' => 'st.bank_rule',
+        'name' => 'การมองเห็นธนาคาร',
+        'route' => 'admin.bank_rule.index',
+        'sort' => 5,
+        'icon-class' => '',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
         'key' => 'st.spin',
         'name' => 'วงล้อมหาสนุก',
         'route' => 'admin.spin.index',
-        'sort' => 5,
+        'sort' => 6,
         'icon-class' => '',
         'badge' => 0,
         'badge-color' => 'badge-primary',
@@ -464,7 +473,7 @@ return [
         'key' => 'st.reward',
         'name' => 'ตั้งค่าของรางวัล',
         'route' => 'admin.reward.index',
-        'sort' => 6,
+        'sort' => 7,
         'icon-class' => '',
         'badge' => 0,
         'badge-color' => 'badge-primary',

@@ -11,7 +11,6 @@
         <div class="card">
 
             <div class="card-body">
-{{--                @includeIf('admin::module.'.$menu->currentRoute.'.create')--}}
                 @include('admin::module.'.$menu->currentRoute.'.table')
             </div>
             <!-- /.card-body -->

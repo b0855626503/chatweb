@@ -495,6 +495,26 @@ return [
         'route' => 'admin.bank.update',
         'sort' => 1
     ], [
+        'key' => 'st.ban_rule',
+        'name' => 'การมองเห็นธนาคาร',
+        'route' => 'admin.bank_rule.index',
+        'sort' => 4
+    ], [
+        'key' => 'st.bank_rule.create',
+        'name' => 'เพิ่ม กฏมองเห็นธนาคาร',
+        'route' => 'admin.bank_rule.create',
+        'sort' => 1
+    ], [
+        'key' => 'st.bank_rule.update',
+        'name' => 'แก้ไข กฏมองเห็นธนาคาร',
+        'route' => 'admin.bank_rule.update',
+        'sort' => 2
+    ], [
+        'key' => 'st.bank_rule.delete',
+        'name' => 'ลบ กฏมองเห็นธนาคาร',
+        'route' => 'admin.bank_rule.delete',
+        'sort' => 3
+    ], [
         'key' => 'st.spin',
         'name' => 'วงล้อมหาสนุก',
         'route' => 'admin.spin.index',

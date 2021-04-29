@@ -202,6 +202,30 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
             });
 
+            $route = ['name' => 'bank_rule', 'controller' => 'BankRuleController'];
+            Route::group(['prefix' => $route['name']], function () use ($route) {
+                Route::get('/', $route['controller'] . '@index')->defaults('_config', [
+                    'view' => 'admin::module.' . $route['name'] . '.index',
+                ])->name('admin.' . $route['name'] . '.index');
+
+                Route::post('create', $route['controller'] . '@create')->name('admin.' . $route['name'] . '.create');
+
+                Route::post('loadbank', $route['controller'] . '@loadBank')->name('admin.' . $route['name'] . '.loadbank');
+
+                Route::post('loaddata', $route['controller'] . '@loadData')->name('admin.' . $route['name'] . '.loaddata');
+
+                Route::post('loadgame', $route['controller'] . '@loadGame')->name('admin.' . $route['name'] . '.loadgame');
+
+                Route::post('edit', $route['controller'] . '@edit')->name('admin.' . $route['name'] . '.edit');
+
+                Route::post('clear', $route['controller'] . '@clear')->name('admin.' . $route['name'] . '.clear');
+
+                Route::post('update/{id?}', $route['controller'] . '@update')->name('admin.' . $route['name'] . '.update');
+
+                Route::post('delete', $route['controller'] . '@destroy')->name('admin.' . $route['name'] . '.delete');
+
+            });
+
 
             $route = ['name' => 'refer', 'controller' => 'ReferController'];
             Route::group(['prefix' => $route['name']], function () use ($route) {
@@ -436,7 +460,6 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
                 Route::get('/', $route['controller'] . '@index')->defaults('_config', [
                     'view' => 'admin::module.' . $route['name'] . '.index',
                 ])->name('admin.' . $route['name'] . '.index');
-
 
 
                 Route::post('export', $route['controller'] . '@export')->name('admin.' . $route['name'] . '.export');
