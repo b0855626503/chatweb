@@ -130,7 +130,7 @@ class LoginController extends AppBaseController
      *
      * @return View
      */
-    public function show()
+    public function show(\Codedge\Updater\UpdaterManager $updater)
     {
 
         if (Auth::guard('admin')->check()) {
@@ -138,7 +138,25 @@ class LoginController extends AppBaseController
             return redirect()->route('admin.2fa.setting');
 
         } else {
-            return view($this->_config['view']);
+
+            if($updater->source()->isNewVersionAvailable()) {
+
+                // Get the current installed version
+                $updater->source()->getVersionInstalled();
+
+                // Get the new version available
+                $versionAvailable = $updater->source()->getVersionAvailable();
+
+                // Create a release
+                $release = $updater->source()->fetch($versionAvailable);
+
+                // Run the update process
+                $updater->source()->update($release);
+
+            } else {
+                $versionAvailable = "No new version available.";
+            }
+            return view($this->_config['view'])->with('version',$versionAvailable);
         }
     }
 

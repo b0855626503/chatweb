@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', ''),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '1.2.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -39,12 +39,12 @@ return [
     'repository_types' => [
         'github' => [
             'type' => 'github',
-            'repository_vendor' => env('SELF_UPDATER_REPO_VENDOR', ''),
-            'repository_name' => env('SELF_UPDATER_REPO_NAME', ''),
+            'repository_vendor' => env('SELF_UPDATER_REPO_VENDOR', 'DetectiveZ'),
+            'repository_name' => env('SELF_UPDATER_REPO_NAME', 'gametech'),
             'repository_url' => 'https://github.com/DetectiveZ/gametech.git',
-            'download_path' => env('SELF_UPDATER_DOWNLOAD_PATH', '/tmp'),
-            'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', ''),
-            'use_branch' => env('SELF_UPDATER_USE_BRANCH', ''),
+            'download_path' => env('SELF_UPDATER_DOWNLOAD_PATH', 'storage/tmp'),
+            'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', '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'),
+            'use_branch' => env('SELF_UPDATER_USE_BRANCH', 'master'),
         ],
         'http' => [
             'type' => 'http',
@@ -114,8 +114,8 @@ return [
 
         'mail' => [
             'to' => [
-                'address' => env('SELF_UPDATER_MAILTO_ADDRESS', 'notifications@example.com'),
-                'name' => env('SELF_UPDATER_MAILTO_NAME', ''),
+                'address' => env('SELF_UPDATER_MAILTO_ADDRESS', 'b0855626503@gmail.com'),
+                'name' => env('SELF_UPDATER_MAILTO_NAME', 'Boatjunior'),
             ],
 
             'from' => [
