@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '1.6.0'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', ''),
 
     /*
     |--------------------------------------------------------------------------
@@ -39,12 +39,12 @@ return [
     'repository_types' => [
         'github' => [
             'type' => 'github',
-            'repository_vendor' => env('SELF_UPDATER_REPO_VENDOR', 'DetectiveZ'),
-            'repository_name' => env('SELF_UPDATER_REPO_NAME', 'gametech'),
+            'repository_vendor' => env('SELF_UPDATER_REPO_VENDOR', ''),
+            'repository_name' => env('SELF_UPDATER_REPO_NAME', ''),
             'repository_url' => 'https://github.com/DetectiveZ/gametech.git',
             'download_path' => env('SELF_UPDATER_DOWNLOAD_PATH', '/tmp'),
-            'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', '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'),
-            'use_branch' => env('SELF_UPDATER_USE_BRANCH', 'patch'),
+            'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', ''),
+            'use_branch' => env('SELF_UPDATER_USE_BRANCH', ''),
         ],
         'http' => [
             'type' => 'http',
