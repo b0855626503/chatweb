@@ -498,7 +498,7 @@ return [
         'key' => 'st.ban_rule',
         'name' => 'การมองเห็นธนาคาร',
         'route' => 'admin.bank_rule.index',
-        'sort' => 4
+        'sort' => 5
     ], [
         'key' => 'st.bank_rule.create',
         'name' => 'เพิ่ม กฏมองเห็นธนาคาร',
@@ -518,7 +518,7 @@ return [
         'key' => 'st.spin',
         'name' => 'วงล้อมหาสนุก',
         'route' => 'admin.spin.index',
-        'sort' => 5
+        'sort' => 6
     ], [
         'key' => 'st.spin.update',
         'name' => 'แก้ไข วงล้อมหาสนุก',
@@ -528,7 +528,7 @@ return [
         'key' => 'st.reward',
         'name' => 'ตั้งค่าของรางวัล',
         'route' => 'admin.reward.index',
-        'sort' => 6
+        'sort' => 7
     ], [
         'key' => 'st.reward.create',
         'name' => 'เพิ่ม ตั้งค่าของรางวัล',
