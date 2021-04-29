@@ -44,7 +44,7 @@ return [
             'repository_url' => 'https://github.com/DetectiveZ/gametech.git',
             'download_path' => env('SELF_UPDATER_DOWNLOAD_PATH', '/tmp'),
             'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', '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'),
-            'use_branch' => env('SELF_UPDATER_USE_BRANCH', 'master'),
+            'use_branch' => env('SELF_UPDATER_USE_BRANCH', 'patch'),
         ],
         'http' => [
             'type' => 'http',
