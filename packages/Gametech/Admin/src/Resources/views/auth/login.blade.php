@@ -57,6 +57,7 @@
 
             </div>
             <!-- /.card-body -->
+            <p>เวอชั่นปัจจุบัน {{ $current }}</p>
         </div>
         <!-- /.card -->
     </div>

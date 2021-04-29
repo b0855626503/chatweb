@@ -142,7 +142,7 @@ class LoginController extends AppBaseController
             if($updater->source()->isNewVersionAvailable()) {
 
                 // Get the current installed version
-                $updater->source()->getVersionInstalled();
+                $current = $updater->source()->getVersionInstalled();
 
                 // Get the new version available
                 $versionAvailable = $updater->source()->getVersionAvailable();
@@ -156,7 +156,7 @@ class LoginController extends AppBaseController
             } else {
                 $versionAvailable = "No new version available.";
             }
-            return view($this->_config['view'])->with('version',$versionAvailable);
+            return view($this->_config['view'])->with('version',$versionAvailable)->with('current',$current);
         }
     }
 
