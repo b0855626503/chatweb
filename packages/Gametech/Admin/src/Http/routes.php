@@ -13,30 +13,21 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
         Route::get('/update', function (\Codedge\Updater\UpdaterManager $updater) {
 
             // Check if new version is available
-            echo 'new version : '.$updater->source()->isNewVersionAvailable();
-            echo '<br>';
-            if($updater->source()->isNewVersionAvailable()) {
+            $current = $updater->source()->getVersionInstalled();
+            if($updater->source()->isNewVersionAvailable($current)) {
 
-                // Get the current installed version
-                echo $updater->source()->getVersionInstalled();
 
-                // Get the new version available
                 $versionAvailable = $updater->source()->getVersionAvailable();
-                echo '<br>';
-                echo $versionAvailable;
 
-                // Create a release
                 $release = $updater->source()->fetch($versionAvailable);
-                echo '<br>';
-                dd($release);
-                // Run the update process
+
                 $updater->source()->update($release);
 
-            } else {
-                echo "No new version available.";
             }
 
-        });
+            return redirect()->route('admin.session.index');
+
+        })->name('admin.update.index');
 
         // Login Routes
         Route::get('/login', 'LoginController@show')->defaults('_config', [
