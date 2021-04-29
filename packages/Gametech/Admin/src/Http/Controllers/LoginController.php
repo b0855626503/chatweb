@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use PragmaRX\Google2FALaravel\Support\Authenticator;
-
+use Updater;
 
 class LoginController extends AppBaseController
 {
@@ -141,24 +141,17 @@ class LoginController extends AppBaseController
 
             $current = $updater->source()->getVersionInstalled();
 
-            if($updater->source()->isNewVersionAvailable($current)) {
+            if($updater->source()->isNewVersionAvailable($current)){
 
-                // Get the current installed version
-                $current = $updater->source()->getVersionInstalled();
-
-                // Get the new version available
                 $versionAvailable = $updater->source()->getVersionAvailable();
-
-                // Create a release
-                $release = $updater->source()->fetch($versionAvailable);
-
-                // Run the update process
-                $updater->source()->update($release);
-
-            } else {
-                $versionAvailable = "No new version available.";
+                $current = '<a href="'.route('admin.update.index').'">มีอัพเดทเวอชั่นใหม่ กดตรงนี้เพื่ออัพเดท</a>';
+            }else{
+                $current = 'ขณะนี้ระบบเป็นเวอชั่น '.$current;
             }
-            return view($this->_config['view'])->with('version',$versionAvailable)->with('current',$current);
+
+
+
+            return view($this->_config['view'])->with('current',$current);
         }
     }
 

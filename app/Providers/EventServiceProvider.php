@@ -22,6 +22,7 @@ class EventServiceProvider extends ServiceProvider
         BatchUser::class => [
             BatchUserListen::class,
         ],
+
     ];
 
     /**
