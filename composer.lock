@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "522a4225bcc7ae8414578e17b96ef946",
+    "content-hash": "380944b878201cec560fc868cca968f4",
     "packages": [
         {
             "name": "alexmg86/laravel-sub-query",
@@ -907,88 +907,6 @@
                 "source": "https://github.com/ratchetphp/Ratchet/tree/master"
             },
             "time": "2020-07-07T15:50:14+00:00"
-        },
-        {
-            "name": "codedge/laravel-selfupdater",
-            "version": "3.2.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/codedge/laravel-selfupdater.git",
-                "reference": "26adfb40be7a84b8746ac01bc34d2b0f50dd3d52"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/codedge/laravel-selfupdater/zipball/26adfb40be7a84b8746ac01bc34d2b0f50dd3d52",
-                "reference": "26adfb40be7a84b8746ac01bc34d2b0f50dd3d52",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-zip": "*",
-                "guzzlehttp/guzzle": "6.*|7.*",
-                "laravel/framework": "^6.0|^7.0|^8.0",
-                "php": "^7.3|^7.4|^8.0"
-            },
-            "require-dev": {
-                "dg/bypass-finals": "^1.1",
-                "mikey179/vfsstream": "^1.6",
-                "mockery/mockery": "^1.3",
-                "orchestra/testbench": "^4.0|^5.0",
-                "phpunit/phpunit": "^8.4|^9.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Codedge\\Updater\\UpdaterServiceProvider"
-                    ],
-                    "aliases": {
-                        "Updater": "Codedge\\Updater\\UpdaterFacade"
-                    }
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Codedge\\Updater\\": "src/"
-                },
-                "files": [
-                    "src/helpers.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Holger Lösken",
-                    "email": "holger.loesken@codedge.de",
-                    "homepage": "http://codedge.de",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Providing an auto-updating functionality for your self-hosted Laravel application.",
-            "keywords": [
-                "auto update",
-                "auto-update",
-                "laravel",
-                "laravel application",
-                "self update",
-                "self-hosted laravel application",
-                "self-update",
-                "update"
-            ],
-            "support": {
-                "issues": "https://github.com/codedge/laravel-selfupdater/issues",
-                "source": "https://github.com/codedge/laravel-selfupdater"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/codedge",
-                    "type": "github"
-                }
-            ],
-            "time": "2020-11-29T21:42:26+00:00"
         },
         {
             "name": "dasprid/enum",
@@ -6845,6 +6763,133 @@
                 "source": "https://github.com/ringcentral/psr7/tree/master"
             },
             "time": "2018-05-29T20:21:04+00:00"
+        },
+        {
+            "name": "spatie/laravel-short-schedule",
+            "version": "1.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/laravel-short-schedule.git",
+                "reference": "fc986faea5133942406480bbcaaaba1c60065741"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/laravel-short-schedule/zipball/fc986faea5133942406480bbcaaaba1c60065741",
+                "reference": "fc986faea5133942406480bbcaaaba1c60065741",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/cache": "^7.0|^8.0",
+                "php": "^7.4|^8.0",
+                "react/event-loop": "^1.1",
+                "spatie/temporary-directory": "^1.2"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^2.16",
+                "mockery/mockery": "^1.3.3",
+                "orchestra/testbench": "^5.0|^6.0",
+                "phpunit/phpunit": "^9.0",
+                "sanmai/phpunit-legacy-adapter": "^8.2",
+                "spatie/test-time": "^1.2",
+                "vimeo/psalm": "^4.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Spatie\\ShortSchedule\\ShortScheduleServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\ShortSchedule\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Schedule artisan commands to run using a sub-minute frequency",
+            "homepage": "https://github.com/spatie/laravel-short-schedule",
+            "keywords": [
+                "laravel-short-schedule",
+                "spatie"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/laravel-short-schedule/issues",
+                "source": "https://github.com/spatie/laravel-short-schedule/tree/1.3.0"
+            },
+            "funding": [
+                {
+                    "url": "https://spatie.be/open-source/support-us",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/spatie",
+                    "type": "github"
+                }
+            ],
+            "time": "2020-12-23T23:01:27+00:00"
+        },
+        {
+            "name": "spatie/temporary-directory",
+            "version": "1.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/temporary-directory.git",
+                "reference": "f517729b3793bca58f847c5fd383ec16f03ffec6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/temporary-directory/zipball/f517729b3793bca58f847c5fd383ec16f03ffec6",
+                "reference": "f517729b3793bca58f847c5fd383ec16f03ffec6",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2|^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8.0|^9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\TemporaryDirectory\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alex Vanderbist",
+                    "email": "alex@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Easily create, use and destroy temporary directories",
+            "homepage": "https://github.com/spatie/temporary-directory",
+            "keywords": [
+                "php",
+                "spatie",
+                "temporary-directory"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/temporary-directory/issues",
+                "source": "https://github.com/spatie/temporary-directory/tree/1.3.0"
+            },
+            "time": "2020-11-09T15:54:21+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
