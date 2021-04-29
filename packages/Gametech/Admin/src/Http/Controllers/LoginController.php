@@ -145,7 +145,7 @@ class LoginController extends AppBaseController
                 $current = $updater->source()->getVersionInstalled();
 
                 // Get the new version available
-                $versionAvailable = $updater->source()->getVersionAvailable();
+                $versionAvailable = $updater->source()->getVersionAvailable('v');
 
                 // Create a release
                 $release = $updater->source()->fetch($versionAvailable);

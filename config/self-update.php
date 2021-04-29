@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '1.6.0'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', 'v1.6.0'),
 
     /*
     |--------------------------------------------------------------------------
