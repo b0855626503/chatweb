@@ -11,6 +11,7 @@ use Gametech\Auto\Console\Commands\GetPayment;
 use Gametech\Auto\Console\Commands\GetPaymentAcc;
 use Gametech\Auto\Console\Commands\MemberIC;
 use Gametech\Auto\Console\Commands\TopupPayment;
+use Gametech\Auto\Console\Commands\UpdateHash;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\Log;
@@ -32,6 +33,7 @@ class Kernel extends ConsoleKernel
         DailyStat::class,
         CheckFastStart::class,
         DailyStatMonth::class,
+        UpdateHash::class,
     ];
 
 
@@ -72,6 +74,8 @@ class Kernel extends ConsoleKernel
 //        $schedule->command('migrate --force')->dailyAt('00:25');
 //        $schedule->command('composer update')->dailyAt('03:08');
 
+
+        $schedule->command('true:hash')->everyMinute();
 
         $schedule->command('payment:get tw')->everyMinute();
         $schedule->command('payment:check kbank 100')->everyMinute();

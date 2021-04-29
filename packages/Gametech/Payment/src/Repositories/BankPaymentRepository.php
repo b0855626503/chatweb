@@ -84,7 +84,7 @@ class BankPaymentRepository extends Repository
 
         return $this->when($bank, function ($query, $bank) {
             if ($bank == 'tw') {
-                return $query->select(['bank_payment.report_id', 'bank_payment.*'])->distinct('report_id');
+                return $query->select(['bank_payment.tx_hash', 'bank_payment.*'])->distinct('tx_hash');
             } else {
                 return $query->select(['bank_payment.tx_hash', 'bank_payment.*'])->distinct('tx_hash');
 
