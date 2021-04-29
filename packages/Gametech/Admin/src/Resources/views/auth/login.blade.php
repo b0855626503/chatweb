@@ -57,7 +57,7 @@
 
             </div>
             <!-- /.card-body -->
-            <p class="text-center">{!! $current !!}</p>
+            <p class="text-center">{{ $current }}</p>
 
         </div>
         <!-- /.card -->
