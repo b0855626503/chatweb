@@ -75,7 +75,7 @@ class Kernel extends ConsoleKernel
 //        $schedule->command('composer update')->dailyAt('03:08');
 
 
-        $schedule->command('true:hash')->everyMinute();
+//        $schedule->command('true:hash')->everyMinute();
 
         $schedule->command('payment:get tw')->everyMinute();
         $schedule->command('payment:check kbank 100')->everyMinute();
