@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use PragmaRX\Google2FALaravel\Support\Authenticator;
-
+use Updater;
 
 class LoginController extends AppBaseController
 {
