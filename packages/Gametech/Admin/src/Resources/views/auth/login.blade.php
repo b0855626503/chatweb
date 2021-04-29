@@ -59,6 +59,7 @@
             <!-- /.card-body -->
         </div>
         <!-- /.card -->
+        <p>{{ $version }}</p>
     </div>
 
 
