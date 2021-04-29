@@ -43,6 +43,7 @@ class CheckPayments implements ShouldQueue
 
         $payment = $this->bankPaymentRepository->find($item->code);
 
+
         $members = $this->memberRepository->loadAccount($bank, $payment);
 
         $cnt = $members->count();

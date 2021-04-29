@@ -71,22 +71,19 @@ class PaymentTrue implements ShouldQueue
             }
         }
 
-        if(isset($header['Last-Modified'][0])){
+        if (isset($header['Last-Modified'][0])) {
             $timestamp = Carbon::parse($header['Last-Modified'][0])->timestamp;
-            if (!Cache::has('tw_'.$mobile_number)) {
-                Cache::put('tw_'.$mobile_number, $timestamp);
-            }else{
-                $cache_timestamp = Cache::get('tw_'.$mobile_number);
-                if($timestamp == $cache_timestamp){
+            if (!Cache::has('tw_' . $mobile_number)) {
+                Cache::put('tw_' . $mobile_number, $timestamp);
+            } else {
+                $cache_timestamp = Cache::get('tw_' . $mobile_number);
+                if ($timestamp == $cache_timestamp) {
                     return true;
-                }else{
-                    Cache::put('tw_'.$mobile_number, $timestamp);
+                } else {
+                    Cache::put('tw_' . $mobile_number, $timestamp);
                 }
             }
         }
-
-
-
 
 
         $path = storage_path('logs/tw/Transaction_' . $mobile_number . '_' . now()->format('Y_m_d') . '.log');
@@ -109,11 +106,11 @@ class PaymentTrue implements ShouldQueue
                         if ($value['original_type'] == 'p2p') {
                             if (empty($value['transaction_reference_id'])) continue;
 
-                        }elseif($value['original_type'] == 'transfer'){
+                        } elseif ($value['original_type'] == 'transfer') {
                             $value['transaction_reference_id'] = $value['sub_title'];
                             if (empty($value['transaction_reference_id'])) continue;
 
-                        }else{
+                        } else {
                             continue;
                         }
 
@@ -128,23 +125,31 @@ class PaymentTrue implements ShouldQueue
 
                         $detail = Str::of($value['transaction_reference_id'])->replace('-', '')->__toString();
 
+                        $hash = md5($data->code . $dates . $amount . $detail);
 
 
-                        $chk = app('Gametech\Payment\Repositories\BankPaymentRepository')->findOneWhere(['report_id' => $value['report_id'], 'account_code' => $data->code]);
+                        $chk = app('Gametech\Payment\Repositories\BankPaymentRepository')->findOneWhere(['tx_hash' => $hash]);
+
                         if (!$chk) {
 
-                            $newpayment = app('Gametech\Payment\Repositories\BankPaymentRepository')->firstOrNew(['bank_time' => $dates, 'account_code' => $data->code, 'value' => $amount, 'detail' => $detail]);
-                            $newpayment->bank = 'twl_' . $mobile_number;
-                            $newpayment->bankstatus = 1;
-                            $newpayment->report_id = $value['report_id'];
-                            $newpayment->bank_time = $dates;
-                            $newpayment->type = $value['type'];
-                            $newpayment->title = $value['title'];
-                            $newpayment->value = $amount;
-                            $newpayment->detail = $detail;
-                            $newpayment->time = $dates;
-                            $newpayment->create_by = 'SYSAUTO';
-                            $newpayment->save();
+                            $chk = app('Gametech\Payment\Repositories\BankPaymentRepository')->findOneWhere(['report_id' => $value['report_id'], 'account_code' => $data->code]);
+
+                            if (!$chk) {
+                                $newpayment = app('Gametech\Payment\Repositories\BankPaymentRepository')->firstOrNew(['bank_time' => $dates, 'account_code' => $data->code, 'value' => $amount, 'detail' => $detail]);
+                                $newpayment->bank = 'twl_' . $mobile_number;
+                                $newpayment->bankstatus = 1;
+                                $newpayment->report_id = $value['report_id'];
+                                $newpayment->bank_time = $dates;
+                                $newpayment->type = $value['type'];
+                                $newpayment->title = $value['title'];
+                                $newpayment->value = $amount;
+                                $newpayment->tx_hash = $hash;
+                                $newpayment->detail = $detail;
+                                $newpayment->time = $dates;
+                                $newpayment->create_by = 'SYSAUTO';
+                                $newpayment->save();
+                            }
+
                         }
                     }
 
