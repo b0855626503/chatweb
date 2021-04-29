@@ -139,25 +139,14 @@ class LoginController extends AppBaseController
 
         } else {
 
-            $current = $updater->source()->getVersionInstalled();
+            Updater::update();
 
-            if($updater->source()->isNewVersionAvailable($current)) {
+            // Just download the source and do the actual update elsewhere
+            Updater::fetch();
 
-                // Get the current installed version
-                $current = $updater->source()->getVersionInstalled();
+            // Check if a new version is available and pass current version
+            Updater::isNewVersionAvailable('1.2');
 
-                // Get the new version available
-                $versionAvailable = $updater->source()->getVersionAvailable();
-
-                // Create a release
-                $release = $updater->source()->fetch($versionAvailable);
-
-                // Run the update process
-                $updater->source()->update($release);
-
-            } else {
-                $versionAvailable = "No new version available.";
-            }
             return view($this->_config['view'])->with('version',$versionAvailable)->with('current',$current);
         }
     }

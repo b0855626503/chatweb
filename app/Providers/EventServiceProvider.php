@@ -22,6 +22,12 @@ class EventServiceProvider extends ServiceProvider
         BatchUser::class => [
             BatchUserListen::class,
         ],
+        \Codedge\Updater\Events\UpdateAvailable::class => [
+            \Codedge\Updater\Listeners\SendUpdateAvailableNotification::class
+        ],
+        \Codedge\Updater\Events\UpdateSucceeded::class => [
+            \Codedge\Updater\Listeners\SendUpdateSucceededNotification::class
+        ],
     ];
 
     /**
