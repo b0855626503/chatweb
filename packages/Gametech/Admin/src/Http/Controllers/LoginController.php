@@ -139,13 +139,15 @@ class LoginController extends AppBaseController
 
         } else {
 
-            if($updater->source()->isNewVersionAvailable()) {
+            $current = $updater->source()->getVersionInstalled();
+
+            if($updater->source()->isNewVersionAvailable($current)) {
 
                 // Get the current installed version
                 $current = $updater->source()->getVersionInstalled();
 
                 // Get the new version available
-                $versionAvailable = $updater->source()->getVersionAvailable('v');
+                $versionAvailable = $updater->source()->getVersionAvailable();
 
                 // Create a release
                 $release = $updater->source()->fetch($versionAvailable);
