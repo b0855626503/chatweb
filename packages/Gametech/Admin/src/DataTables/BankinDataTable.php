@@ -23,7 +23,7 @@ class BankinDataTable extends DataTable
     {
         $dataTable = new EloquentDataTable($query);
 
-        return $dataTable->addIndexColumn()
+        return $dataTable->skipTotalRecords()
             ->with('in_all', function () use ($query) {
                 return core()->currency((clone $query)->whereNotIn('status', [2, 3])->sum('value'));
             })
@@ -102,7 +102,7 @@ class BankinDataTable extends DataTable
                 'responsive' => false,
                 'stateSave' => true,
                 'scrollX' => true,
-                'paging' => true,
+                'paging' => false,
                 'searching' => false,
                 'deferRender' => true,
                 'retrieve' => true,
@@ -115,7 +115,7 @@ class BankinDataTable extends DataTable
                     ['50 rows', '100 rows', '200 rows']
                 ],
                 'buttons' => [
-                    'pageLength'
+
                 ],
                 'columnDefs' => [
                     ['targets' => '_all', 'className' => 'text-center text-nowrap']

@@ -78,7 +78,7 @@ class DreamtechRepository extends Repository
 
         $url = $this->url . $action;
 
-        return Http::withHeaders([
+        return Http::timeout(15)->withHeaders([
             'Pass-Key' => $this->passkey,
             'Session-Id' => request()->getSession()->getId(),
             'Hash' => md5($postString),

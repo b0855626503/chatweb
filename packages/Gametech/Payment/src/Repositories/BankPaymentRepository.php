@@ -135,7 +135,7 @@ class BankPaymentRepository extends Repository
             return false;
         }
 
-        $member = $this->memberRepository->find($data['member_topup']);
+        $member = $this->memberRepository->lockForUpdate()->find($data['member_topup']);
         if (!$member) {
             return false;
         }
@@ -323,7 +323,7 @@ class BankPaymentRepository extends Repository
 
 
             $member->status_pro = $status_pro;
-            $member->balance = $credit_after;
+            $member->balance += $total;
             $member->point_deposit += $point;
             $member->diamond += $diamond;
             $member->count_deposit += $count_deposit;

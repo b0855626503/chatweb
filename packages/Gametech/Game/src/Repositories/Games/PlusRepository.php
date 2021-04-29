@@ -67,7 +67,7 @@ class PlusRepository extends Repository
         $url = $this->url . $action . '?hash=' .$hash. '&from=' . $agentid . '&secret=' . $agentpass;
 
 
-        return Http::withHeaders([
+        return Http::timeout(15)->withHeaders([
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-store'
         ])->post($url, $param);

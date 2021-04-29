@@ -60,7 +60,7 @@ class PgslotRepository extends Repository
         $hash = hash_pbkdf2("sha512", $postString, $this->secretkey, 1000, 64, true);
         $signature = base64_encode($hash);
 
-        return Http::withHeaders([
+        return Http::timeout(15)->withHeaders([
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-store',
             'x-amb-signature' => $signature,

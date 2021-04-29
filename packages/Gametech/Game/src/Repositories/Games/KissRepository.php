@@ -70,7 +70,7 @@ class KissRepository extends Repository
 
         $url = $this->url . $action;
 
-        return Http::asForm()->post($url, $param);
+        return Http::timeout(15)->asForm()->post($url, $param);
 
     }
 

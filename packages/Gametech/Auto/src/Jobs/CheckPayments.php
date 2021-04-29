@@ -53,9 +53,9 @@ class CheckPayments implements ShouldQueue
             $payment->save();
             return false;
         } elseif ($cnt > 1) {
-
+            $users = collect($members)->pluck('user_name')->implode(' , ');
             $payment->autocheck = 'Y';
-            $payment->remark_admin = 'พบหมายเลขบัญชี ' . $cnt . ' บัญชี';
+            $payment->remark_admin = 'พบหมายเลขบัญชี ' . $cnt . ' บัญชี : '.$users;
             $payment->topup_by = 'System Auto';
             $payment->save();
             return false;

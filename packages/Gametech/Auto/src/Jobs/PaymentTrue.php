@@ -7,6 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Throwable;
@@ -16,13 +18,13 @@ class PaymentTrue implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 60;
+    public $timeout = 120;
 
     public $tries = 1;
 
     public $maxExceptions = 5;
 
-    public $retryAfter = 70;
+    public $retryAfter = 130;
 
     protected $id;
 
@@ -37,7 +39,8 @@ class PaymentTrue implements ShouldQueue
 
     public function handle(): bool
     {
-
+        $timestamp = 0;
+        $header = [];
         $response = [];
         $mobile_number = $this->id;
 
@@ -46,8 +49,6 @@ class PaymentTrue implements ShouldQueue
 
         $datenow = now()->toDateTimeString();
         $date = now()->format('Y_m_d');
-
-
 
 
         $url = [
@@ -60,19 +61,37 @@ class PaymentTrue implements ShouldQueue
 
         $success = false;
         foreach ((array)$url as $file) {
-            $response = Http::timeout(5)->get($file);
+            $response = Http::timeout(10)->get($file);
 
             if ($response->successful()) {
+                $header = $response->headers();
                 $response = $response->json();
                 $success = true;
                 break;
             }
         }
 
+        if(isset($header['Last-Modified'][0])){
+            $timestamp = Carbon::parse($header['Last-Modified'][0])->timestamp;
+            if (!Cache::has('tw_'.$mobile_number)) {
+                Cache::put('tw_'.$mobile_number, $timestamp);
+            }else{
+                $cache_timestamp = Cache::get('tw_'.$mobile_number);
+                if($timestamp == $cache_timestamp){
+                    return true;
+                }else{
+                    Cache::put('tw_'.$mobile_number, $timestamp);
+                }
+            }
+        }
+
+
+
 
 
         $path = storage_path('logs/tw/Transaction_' . $mobile_number . '_' . now()->format('Y_m_d') . '.log');
         file_put_contents($path, print_r($response, true));
+
 
         if ($success) {
 
@@ -81,12 +100,24 @@ class PaymentTrue implements ShouldQueue
             $data->save();
 
             $lists = $response['activities'];
-            if ($lists) {
+            if (count($lists) > 0) {
 
                 try {
 
                     foreach ($lists as $value) {
-                        if (!isset($value['transaction_reference_id'])) continue;
+
+                        if ($value['original_type'] == 'p2p') {
+                            if (empty($value['transaction_reference_id'])) continue;
+
+                        }elseif($value['original_type'] == 'transfer'){
+                            $value['transaction_reference_id'] = $value['sub_title'];
+                            if (empty($value['transaction_reference_id'])) continue;
+
+                        }else{
+                            continue;
+                        }
+
+
                         $str = $value['date_time'];
                         $arr = explode(" ", $str);
                         $dtmp = explode('/', $arr[0]);
@@ -94,15 +125,13 @@ class PaymentTrue implements ShouldQueue
 
                         $amount = Str::of($value['amount'])->replace('+', '');
                         $amount = Str::of($amount)->replace(',', '')->__toString();
-                        if ($value['transaction_reference_id']) {
-                            $detail = Str::of($value['transaction_reference_id'])->replace('-', '')->__toString();
-                        } else {
-                            $detail = '';
-                        }
+
+                        $detail = Str::of($value['transaction_reference_id'])->replace('-', '')->__toString();
+
 
 
                         $chk = app('Gametech\Payment\Repositories\BankPaymentRepository')->findOneWhere(['report_id' => $value['report_id'], 'account_code' => $data->code]);
-                        if(!$chk) {
+                        if (!$chk) {
 
                             $newpayment = app('Gametech\Payment\Repositories\BankPaymentRepository')->firstOrNew(['bank_time' => $dates, 'account_code' => $data->code, 'value' => $amount, 'detail' => $detail]);
                             $newpayment->bank = 'twl_' . $mobile_number;
@@ -124,7 +153,6 @@ class PaymentTrue implements ShouldQueue
                     report($e);
                     return false;
                 }
-
 
             }
 

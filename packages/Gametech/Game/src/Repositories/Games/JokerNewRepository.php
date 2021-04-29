@@ -341,7 +341,7 @@ class JokerNewRepository extends Repository
         $sign = hash('sha256', $this->agent . $this->auth . time() . $this->secretkey);
         $param['sign'] = $sign;
 
-        return Http::asForm()->post($url, $param);
+        return Http::timeout(15)->asForm()->post($url, $param);
 
     }
 

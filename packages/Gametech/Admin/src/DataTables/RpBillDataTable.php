@@ -44,18 +44,27 @@ class RpBillDataTable extends DataTable
             ->with('out_no', function () use ($query) {
                 return core()->currency((clone $query)->where('transfer_type', 2)->where('enable', 'N')->sum('amount'));
             })
-            ->with('diff', function () use ($query) {
-                return core()->currency((clone $query)->where('transfer_type', 2)->where('enable', 'Y')->sum(DB::raw('amount_request - amount_limit')));
+            ->with('request', function () use ($query) {
+                return core()->currency((clone $query)->where('transfer_type', 2)->where('enable', 'Y')->sum('amount_request'));
+            })
+            ->with('limit', function () use ($query) {
+                return core()->currency((clone $query)->where('transfer_type', 2)->where('enable', 'Y')->sum('amount_limit'));
+            })
+//            ->with('diff', function () use ($query) {
+//                return core()->currency((clone $query)->where('transfer_type', 2)->where('enable', 'Y')->sum(DB::raw('amount_request - amount_limit')));
+//            })
+            ->with('bonus', function () use ($query) {
+                return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->sum('credit_bonus'));
             })
 
             ->with('p1', function () use ($query) {
-                return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 1)->sum('amount'));
+                return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 1)->sum('credit_bonus'));
             })
             ->with('p2', function () use ($query) {
-                return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 2)->sum('amount'));
+                return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 2)->sum('credit_bonus'));
             })
             ->with('p4', function () use ($query) {
-                return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 4)->sum('amount'));
+                return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 4)->sum('credit_bonus'));
             })
 
 

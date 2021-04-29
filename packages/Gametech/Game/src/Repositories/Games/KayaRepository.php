@@ -77,7 +77,7 @@ class KayaRepository extends Repository
 
 
 
-        return Http::withHeaders([
+        return Http::timeout(15)->withHeaders([
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-store',
             'AES-ENCODE' => $signMsg

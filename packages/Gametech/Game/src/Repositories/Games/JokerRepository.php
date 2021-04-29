@@ -76,7 +76,7 @@ class JokerRepository extends Repository
         $signature = urlencode($signature);
         $url = $this->url . "?AppID=" . $this->login . "&Signature=$signature";
 
-        return Http::asForm()->post($url, $param);
+        return Http::timeout(15)->asForm()->post($url, $param);
 
 
     }
