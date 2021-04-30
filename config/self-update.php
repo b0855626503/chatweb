@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', 'v1'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '2020-04-19T22:35:48Z'),
 
     /*
     |--------------------------------------------------------------------------
