@@ -19,7 +19,7 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
                 $versionAvailable = $updater->source()->getVersionAvailable();
 
-                $release = $updater->source()->fetch($versionAvailable);
+                $release = $updater->source()->fetch();
 
                 $updater->source()->update($release);
 
