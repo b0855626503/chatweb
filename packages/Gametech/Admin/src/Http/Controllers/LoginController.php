@@ -143,7 +143,7 @@ class LoginController extends AppBaseController
             $current = $updater->source()->getVersionInstalled();
             echo $current;
             echo '<br>';
-            echo 'New ? '.$updater->source()->isNewVersionAvailable();
+            echo 'New ? '.$updater->source()->isNewVersionAvailable($current);
             echo '<br>';
 
             $versionAvailable = $updater->source()->getVersionAvailable();
