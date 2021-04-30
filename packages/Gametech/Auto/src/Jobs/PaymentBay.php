@@ -3,8 +3,6 @@
 namespace Gametech\Auto\Jobs;
 
 
-
-
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,7 +18,7 @@ class PaymentBay implements ShouldQueue
     protected $data;
 
 
-    public function __construct($list,$data)
+    public function __construct($list, $data)
     {
         $this->list = $list;
         $this->data = $data;
@@ -29,10 +27,10 @@ class PaymentBay implements ShouldQueue
 
     public function handle()
     {
-        $list =  $this->list;
-        $data =  $this->data;
+        $list = $this->list;
+        $data = $this->data;
 
-        $list['value'] = str_replace(",", "",number_format($list['value'],2));
+        $list['value'] = str_replace(",", "", number_format($list['value'], 2));
         $list['tx_hash'] = md5($list['date'] . $list['detail'] . $list['value'] . $list['channel']);
 
         $chk = app('Gametech\Payment\Repositories\BankPaymentRepository')->findWhere(['bank' => 'bay_' . $data['acc_no'], 'bank_time' => $list['date'], 'detail' => $list['detail'], 'channel' => $list['channel'], 'value' => $list['value']]);
@@ -40,9 +38,9 @@ class PaymentBay implements ShouldQueue
             return false;
         }
 
-        $report_id = time().random_int(0,1000);
+        $report_id = time() . random_int(0, 1000);
         $response = app('Gametech\Payment\Repositories\BankPaymentRepository')->create([
-            'bank' => 'bay_'.$data['acc_no'],
+            'bank' => 'bay_' . $data['acc_no'],
             'report_id' => $report_id,
             'account_code' => $data['bankcode'],
             'bankstatus' => 1,
@@ -59,9 +57,9 @@ class PaymentBay implements ShouldQueue
             'user_update' => ''
         ]);
 
-        if($response->code){
+        if ($response->code) {
             return true;
-        }else{
+        } else {
             return false;
         }
 

@@ -66,12 +66,12 @@ class PaymentKtb
         $config = new Ktb();
 
         $datenow = now()->toDateTimeString();
-        $account =  $this->account;
+        $account = $this->account;
 
-        $bank = $this->bankAccountRepository->getAccountOne('ktb',$account);
+        $bank = $this->bankAccountRepository->getAccountOne('ktb', $account);
 
         $path = storage_path('auto');
-        $cookie = $path.'/ktb/ktb-cookies'.$bank->code;
+        $cookie = $path . '/ktb/ktb-cookies' . $bank->code;
         if (file_exists($cookie)) {
             $x = 1400; //0.5 hours 1800
             $current_time = time();
@@ -112,7 +112,7 @@ class PaymentKtb
         $account_name = Str::of($account_name)->replace('-', '');
         if (isset($session_key) && $session_key != '') {
             $r = microtime(true);
-            $response = Http::withOptions($option)->get($baseurl. '/consumer/SavingAccount.do?cmd=init&sessId=' . $session_key . '&_=' . $r);
+            $response = Http::withOptions($option)->get($baseurl . '/consumer/SavingAccount.do?cmd=init&sessId=' . $session_key . '&_=' . $r);
             if ($response->successful()) {
                 $xml = simplexml_load_string($response->body());
                 $bank->balance = Str::of($xml->DATA->AMOUNT)->replace(',', '');
@@ -123,9 +123,9 @@ class PaymentKtb
         if (empty($xml) || strpos($response->body(), 'Your session has been expired, please log in again') !== false || strpos($response->body(), 'Your session has been terminated, please Close Page') !== false) {
 
             //Login KTB
-            $response = Http::withOptions($option)->get($baseurl. '/consumer/');
+            $response = Http::withOptions($option)->get($baseurl . '/consumer/');
             if ($response->successful()) {
-                $response = Http::withOptions($option)->get($baseurl. '/consumer/captcha/verifyImg');
+                $response = Http::withOptions($option)->get($baseurl . '/consumer/captcha/verifyImg');
                 if ($response->successful()) {
                     $html = HtmlDomParser::str_get_html($response->body());
                     $form_field = array();
@@ -154,9 +154,9 @@ class PaymentKtb
                     }
                     $post_string = substr($post_string, 0, -1);
 
-                    $options = collect($option)->merge(['headers' => ['Referer' => $baseurl.'/consumer/']])->all();
+                    $options = collect($option)->merge(['headers' => ['Referer' => $baseurl . '/consumer/']])->all();
 
-                    $response = Http::withOptions($options)->post($baseurl. '/consumer/Login.do',$post_string);
+                    $response = Http::withOptions($options)->post($baseurl . '/consumer/Login.do', $post_string);
                     if ($response->successful()) {
 
                         preg_match("/sessionKey = '(.*)'/", $response->body(), $output_array);
@@ -169,7 +169,7 @@ class PaymentKtb
                         fclose($fp);
 
                         $r = microtime(true);
-                        $response = Http::withOptions($option)->get($baseurl. '/consumer/SavingAccount.do?cmd=init&sessId=' . $session_key . '&_=' . $r);
+                        $response = Http::withOptions($option)->get($baseurl . '/consumer/SavingAccount.do?cmd=init&sessId=' . $session_key . '&_=' . $r);
                         if ($response->successful()) {
                             $xml = simplexml_load_string($response->body());
                             $bank->balance = str_replace(',', '', $xml->DATA->AMOUNT);
@@ -189,9 +189,9 @@ class PaymentKtb
                             $form_field['txnRefNoTo'] = '';
                             $r = microtime(true);
 
-                            $options = collect($option)->merge(['headers' => ['Referer' => $baseurl.'/consumer/main.jsp']])->all();
+                            $options = collect($option)->merge(['headers' => ['Referer' => $baseurl . '/consumer/main.jsp']])->all();
 
-                            $response = Http::withOptions($options)->post($baseurl. '/consumer/SearchSpecific.do?cmd=search&r=' . $r,$form_field);
+                            $response = Http::withOptions($options)->post($baseurl . '/consumer/SearchSpecific.do?cmd=search&r=' . $r, $form_field);
                             if ($response->successful()) {
                                 $html = HtmlDomParser::str_get_html($response->body());
                                 $table = $html->find('table.subcontenttable', 0);
@@ -212,7 +212,7 @@ class PaymentKtb
                                         if ($pos !== false) {
                                             continue;
                                         }
-                                        $amount = (float) str_replace(',', '', $config->clean($tr->find('td', 3)->plaintext));
+                                        $amount = (float)str_replace(',', '', $config->clean($tr->find('td', 3)->plaintext));
                                         $pos = strpos($info, "Fee");
                                         if ($pos !== false && $amount < 0 && $amount > -50) {
                                             $total[$row - 1]['in'] = $total[$row - 1]['in'] + $amount;
@@ -246,7 +246,7 @@ class PaymentKtb
                                 }
 
 
-                                if(!is_null($total)) {
+                                if (!is_null($total)) {
                                     $bankkey = $bank->bank->shortcode; // . $account_code;
                                     $staffkey = $bankkey . 'AUTO';
                                     $staff = $staffkey . '1';
@@ -257,19 +257,19 @@ class PaymentKtb
                                             continue;
                                         }
                                         $value = $row["in"] > 0 ? $row["in"] : "-" . str_replace("-", "", $row["out"]);
-                                        $rechk = $this->bankPaymentRepository->findOneWhere(['account_code' => $bank->acc_no, 'bank_time' =>  $row['date'] , 'value' => $value , 'detail' => $row["info"]]);
+                                        $rechk = $this->bankPaymentRepository->findOneWhere(['account_code' => $bank->acc_no, 'bank_time' => $row['date'], 'value' => $value, 'detail' => $row["info"]]);
                                         if ($rechk->doesntExist()) {
 
                                             $dataadd = [
-                                                'account_code' =>  $bank->acc_no,
-                                                'bankname' =>  $bank->bank->shortcode,
-                                                'bank' =>  strtolower($bank->bank->shortcode) . '_' . $bank->acc_no,
-                                                'bankstatus' =>  $row["in"] > 0 ? 1 : 0,
+                                                'account_code' => $bank->acc_no,
+                                                'bankname' => $bank->bank->shortcode,
+                                                'bank' => strtolower($bank->bank->shortcode) . '_' . $bank->acc_no,
+                                                'bankstatus' => $row["in"] > 0 ? 1 : 0,
                                                 'atranferer' => $row['from_acc_no'],
                                                 'bank_time' => $row["date"],
                                                 'detail' => $row["info"],
                                                 'value' => $value,
-                                                'channel' =>  $row['channel'],
+                                                'channel' => $row['channel'],
                                                 'create_by' => 'AUTO'
                                             ];
 
@@ -283,8 +283,6 @@ class PaymentKtb
                                         }
                                     }
                                 }
-
-
 
 
                             }
