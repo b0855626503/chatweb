@@ -13,13 +13,13 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
         Route::get('/update', function (\Codedge\Updater\UpdaterManager $updater) {
 
             // Check if new version is available
-            $current = $updater->source()->getVersionInstalled();
 
-            if($updater->source()->isNewVersionAvailable($current)) {
+
+            if($updater->source()->isNewVersionAvailable()) {
 
                 $versionAvailable = $updater->source()->getVersionAvailable();
 
-                $release = $updater->source()->fetch($versionAvailable);
+                $release = $updater->source()->fetch();
 
                 $updater->source()->update($release);
 
