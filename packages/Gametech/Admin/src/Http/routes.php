@@ -14,8 +14,8 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
             // Check if new version is available
             $current = $updater->source()->getVersionInstalled();
-            if($updater->source()->isNewVersionAvailable($current)) {
 
+            if($updater->source()->isNewVersionAvailable($current)) {
 
                 $versionAvailable = $updater->source()->getVersionAvailable();
 
