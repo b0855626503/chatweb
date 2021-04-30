@@ -75,12 +75,12 @@ class BatchUserController extends AppBaseController
         $data['batch_start'] = ($data['batch_stop'] + 1);
         $data['batch_stop'] = ($data['batch_stop'] + 30000);
 
-//        if($data['batch_stop'] == 90000){
-//            $data = $this->newLoop($data);
-//        }else{
-//            $data['batch_start'] = ($data['batch_stop'] + 1);
-//            $data['batch_stop'] = (($data['batch_stop'] + 30000) > 90000 ? 90000 : ($data['batch_stop'] + 30000));
-//        }
+        if($data['batch_stop'] >= 90000){
+            $data = $this->newLoop($data);
+        }else{
+            $data['batch_start'] = ($data['batch_stop'] + 1);
+            $data['batch_stop'] = (($data['batch_stop'] + 30000) > 90000 ? 90000 : ($data['batch_stop'] + 30000));
+        }
 
         return $this->sendResponse($data,'ดำเนินการเสร็จสิ้น');
 

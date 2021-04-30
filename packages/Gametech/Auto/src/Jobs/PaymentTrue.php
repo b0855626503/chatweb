@@ -103,16 +103,7 @@ class PaymentTrue implements ShouldQueue
 
                     foreach ($lists as $value) {
 
-                        if ($value['original_type'] == 'p2p') {
-                            if (empty($value['transaction_reference_id'])) continue;
-
-                        } elseif ($value['original_type'] == 'transfer') {
-                            $value['transaction_reference_id'] = $value['sub_title'];
-                            if (empty($value['transaction_reference_id'])) continue;
-
-                        } else {
-                            continue;
-                        }
+                        if (empty($value['transaction_reference_id'])) continue;
 
 
                         $str = $value['date_time'];

@@ -140,10 +140,15 @@ class LoginController extends AppBaseController
         } else {
 
             $current = $updater->source()->getVersionInstalled();
+            echo $current;
+            echo '<br>';
+            echo 'New ? '.$updater->source()->isNewVersionAvailable();
+            echo '<br>';
+            echo 'Avai '.$updater->source()->getVersionAvailable();
 
             if($updater->source()->isNewVersionAvailable($current)){
 
-                $versionAvailable = $updater->source()->getVersionAvailable('v');
+                $versionAvailable = $updater->source()->getVersionAvailable();
                 $current = '<a href="'.route('admin.update.index').'">มีอัพเดทเวอชั่นใหม่ '.$versionAvailable.' กดตรงนี้เพื่ออัพเดท</a>';
             }else{
                 $current = 'ขณะนี้ระบบเป็นเวอชั่น '.$current;
