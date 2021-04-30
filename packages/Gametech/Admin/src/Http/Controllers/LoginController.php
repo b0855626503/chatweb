@@ -145,6 +145,7 @@ class LoginController extends AppBaseController
             echo 'New ? '.$updater->source()->isNewVersionAvailable();
             echo '<br>';
             echo 'Avai '.$updater->source()->getVersionAvailable();
+
             if($updater->source()->isNewVersionAvailable($current)){
 
                 $versionAvailable = $updater->source()->getVersionAvailable();
