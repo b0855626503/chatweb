@@ -145,7 +145,7 @@ class LoginController extends AppBaseController
 
             if($updater->source()->isNewVersionAvailable($current)){
 
-                return redirect()->route('admin.session.index');
+                return redirect()->route('admin.update.index');
 
             }else{
 
