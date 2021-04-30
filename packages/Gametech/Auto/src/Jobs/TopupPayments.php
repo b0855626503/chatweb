@@ -32,7 +32,6 @@ class TopupPayments implements ShouldQueue
     protected $item;
 
 
-
     public function __construct($item)
     {
         $this->item = $item;

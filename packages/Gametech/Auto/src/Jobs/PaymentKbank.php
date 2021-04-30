@@ -73,7 +73,7 @@ class PaymentKbank
         $password = $bank->user_pass;
         $account_name = Str::substr($account, 0, 3) . '-' . Str::substr($account, 3, 1);
         $accname = Str::of($account)->replace('-', '');
-        $cookie = storage_path('auto/kbank/'.$accname);
+        $cookie = storage_path('auto/kbank/' . $accname);
         $path = storage_path('auto');
 
         if (!is_writable($cookie)) {
