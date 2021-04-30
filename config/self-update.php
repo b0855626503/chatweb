@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', 'v1'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '2020-04-19T22:35:48Z'),
 
     /*
     |--------------------------------------------------------------------------
@@ -41,8 +41,8 @@ return [
             'type' => 'github',
             'repository_vendor' => env('SELF_UPDATER_REPO_VENDOR', 'b0855626503'),
             'repository_name' => env('SELF_UPDATER_REPO_NAME', 'gametech'),
-            'repository_url' => 'https://github.com/b0855626503/gametech.git',
-            'download_path' => env('SELF_UPDATER_DOWNLOAD_PATH', '../storage/self-update/tmp'),
+            'repository_url' => '',
+            'download_path' => env('SELF_UPDATER_DOWNLOAD_PATH', '/tmp'),
             'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', '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'),
             'use_branch' => env('SELF_UPDATER_USE_BRANCH', 'v1'),
         ],
