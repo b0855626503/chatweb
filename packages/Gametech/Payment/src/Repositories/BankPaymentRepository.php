@@ -90,7 +90,7 @@ class BankPaymentRepository extends Repository
 
             }
         })->orderBy('code', 'asc')
-            ->waiting()->active()->income()
+            ->waiting()->active()->income()->where('tx_hash','!=','')
             ->where('bankstatus', 1)
             ->where('autocheck', 'N')
             ->with('bank_account')
