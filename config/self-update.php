@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', ''),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', 'v1'),
 
     /*
     |--------------------------------------------------------------------------
@@ -39,11 +39,11 @@ return [
     'repository_types' => [
         'github' => [
             'type' => 'github',
-            'repository_vendor' => env('SELF_UPDATER_REPO_VENDOR', ''),
-            'repository_name' => env('SELF_UPDATER_REPO_NAME', ''),
+            'repository_vendor' => env('SELF_UPDATER_REPO_VENDOR', 'b0855626503'),
+            'repository_name' => env('SELF_UPDATER_REPO_NAME', 'gametech'),
             'repository_url' => '',
             'download_path' => env('SELF_UPDATER_DOWNLOAD_PATH', '/tmp'),
-            'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', ''),
+            'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', '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'),
             'use_branch' => env('SELF_UPDATER_USE_BRANCH', ''),
         ],
         'http' => [
