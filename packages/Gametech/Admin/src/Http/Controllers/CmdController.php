@@ -60,5 +60,22 @@ class CmdController extends AppBaseController
         return 'Cache Clear';
     }
 
+    public function updatePatch(\Codedge\Updater\UpdaterManager $updater)
+    {
+        $current = $updater->source()->getVersionInstalled();
+
+        if($updater->source()->isNewVersionAvailable($current)) {
+
+            $versionAvailable = $updater->source()->getVersionAvailable();
+
+            $release = $updater->source()->fetch($versionAvailable);
+
+            $updater->source()->update($release);
+
+        }
+
+        return redirect()->back();
+    }
+
 
 }

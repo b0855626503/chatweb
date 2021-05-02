@@ -36,6 +36,7 @@ class Kernel extends ConsoleKernel
         DailyStatMonth::class,
         UpdateHash::class,
         PostUpdate::class,
+
     ];
 
 
@@ -54,7 +55,7 @@ class Kernel extends ConsoleKernel
                 Log::warning($message);
             });
 
-        $schedule->command('ic:list')->dailyAt('00:30')->runInBackground()
+        $schedule->command('ic:list')->dailyAt('00:40')->runInBackground()
             ->onFailure(function ($message) {
                 Log::warning($message);
             });

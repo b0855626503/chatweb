@@ -43,24 +43,8 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
         Route::group(['middleware' => ['admin', 'auth', '2fa']], function () {
 
-            Route::get('/update', function (\Codedge\Updater\UpdaterManager $updater) {
+            Route::get('/update', 'CmdController@updatePatch')->name('admin.update.index');
 
-                // Check if new version is available
-                $current = $updater->source()->getVersionInstalled();
-
-                if($updater->source()->isNewVersionAvailable($current)) {
-
-                    $versionAvailable = $updater->source()->getVersionAvailable();
-
-                    $release = $updater->source()->fetch($versionAvailable);
-
-                    $updater->source()->update($release);
-
-                }
-
-                return redirect()->back();
-
-            })->name('admin.update.index');
 
             Route::get('/link', 'CmdController@storeLink');
 
