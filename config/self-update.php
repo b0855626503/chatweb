@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '3.3.3'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '3.3.4'),
 
     /*
     |--------------------------------------------------------------------------
@@ -143,7 +143,10 @@ return [
         'post_update' => [
             'postupdate:work' => [
                 'class' => \Gametech\Auto\Console\Commands\PostUpdate::class,
-                'params' => []
+                'params' => [
+                    'log' => 1,
+                    'reset' => false,
+                ]
             ]
         ],
     ],
