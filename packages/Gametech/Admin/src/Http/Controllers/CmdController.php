@@ -72,7 +72,7 @@ class CmdController extends AppBaseController
 
             $updater->source()->update($release);
 
-            $updater->source()->postUpdateArtisanCommands();
+            Artisan::call('postupdate:work');
 
         }
 
