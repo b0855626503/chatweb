@@ -140,7 +140,7 @@ return [
             //]
         ],
         'post_update' => [
-            'command:signature' => [
+            'postupdate:work' => [
                 'class' => \Gametech\Auto\Console\Commands\PostUpdate::class
             ]
         ],
