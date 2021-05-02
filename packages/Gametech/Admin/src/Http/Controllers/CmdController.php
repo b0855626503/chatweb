@@ -72,6 +72,8 @@ class CmdController extends AppBaseController
 
             $updater->source()->update($release);
 
+            $updater->source()->postUpdateArtisanCommands();
+
         }
 
         return redirect()->back();

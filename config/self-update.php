@@ -142,7 +142,8 @@ return [
         ],
         'post_update' => [
             'postupdate:work' => [
-                'class' => \Gametech\Auto\Console\Commands\PostUpdate::class
+                'class' => \Gametech\Auto\Console\Commands\PostUpdate::class,
+                'params' => []
             ]
         ],
     ],
