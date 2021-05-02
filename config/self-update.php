@@ -72,6 +72,7 @@ return [
         'node_modules',
         'bootstrap/cache',
         'bower',
+        'storage',
         'storage/app',
         'storage/framework',
         'storage/logs',
