@@ -4,6 +4,7 @@ namespace App\Http;
 
 
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\AuthenticateUser;
 use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\LastSeenUserActivity;
@@ -88,6 +89,7 @@ class Kernel extends HttpKernel
      */
     protected $routeMiddleware = [
         'auth' => Authenticate::class,
+        'authuser' => AuthenticateUser::class,
         'auth.basic' => AuthenticateWithBasicAuth::class,
         'bindings' => SubstituteBindings::class,
         'cache.headers' => SetCacheHeaders::class,

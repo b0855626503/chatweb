@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '3.2.0'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '3.2.1'),
 
     /*
     |--------------------------------------------------------------------------
@@ -77,6 +77,7 @@ return [
         'storage/logs',
         'storage/self-update',
         'vendor',
+        'game',
     ],
 
     /*
@@ -139,7 +140,12 @@ return [
             //]
         ],
         'post_update' => [
-
+            'migrate' => [
+                '--force' => true,
+            ],
+            'optimize:clear' => [
+                '--force' => true,
+            ]
         ],
     ],
 

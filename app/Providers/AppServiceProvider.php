@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app['request']->server->set('HTTPS', true);
 
+        $this->registerConfig();
+
     }
 
     /**
@@ -35,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
         URL::forceScheme('https');
         JsonResource::withoutWrapping();
+
 //        DB::listen(function($query) {
 //            Log::debug($query->sql, $query->bindings, $query->time);
 //        });
@@ -59,5 +62,18 @@ class AppServiceProvider extends ServiceProvider
             $view->with('config', $config);
 
         });
+    }
+
+    protected function registerConfig()
+    {
+        $this->mergeConfigFrom(
+            dirname(__DIR__) . '/../game/game.php', 'game'
+        );
+
+        $this->mergeConfigFrom(
+            dirname(__DIR__) . '/../game/gamefree.php', 'gamefree'
+        );
+
+
     }
 }

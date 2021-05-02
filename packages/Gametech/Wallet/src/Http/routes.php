@@ -40,7 +40,7 @@ Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_ur
 
         Route::prefix('member')->group(function () {
 
-            Route::group(['middleware' => ['customer']], function () {
+            Route::group(['middleware' => ['customer' , 'authuser']], function () {
 
                 Route::get('logout', 'Gametech\Wallet\Http\Controllers\LoginController@logout')->defaults('_config', [
                     'redirect' => 'customer.session.index'
@@ -146,7 +146,7 @@ Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_ur
 
                 Route::post('withdraw/request', 'Gametech\Wallet\Http\Controllers\WithdrawController@store')->defaults('_config', [
                     'redirect' => 'customer.withdraw.index'
-                ])->name('customer.withdraw.store')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.withdraw.store')->block(30,30);
 
 
                 Route::get('credit', 'Gametech\Wallet\Http\Controllers\CreditController@index')->defaults('_config', [
@@ -166,7 +166,7 @@ Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_ur
 
                 Route::post('credit/withdraw/request', 'Gametech\Wallet\Http\Controllers\CreditWithdrawController@store')->defaults('_config', [
                     'redirect' => 'customer.credit.withdraw.index'
-                ])->name('customer.credit.withdraw.store')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.credit.withdraw.store')->block(30,30);
 
                 Route::get('credit/transfer/game', 'Gametech\Wallet\Http\Controllers\CreditTransferGameController@index')->defaults('_config', [
                     'view' => 'wallet::customer.credit.transfer.game.index',
@@ -175,15 +175,15 @@ Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_ur
                 Route::post('credit/transfer/game/check', 'Gametech\Wallet\Http\Controllers\CreditTransferGameController@check')->defaults('_config', [
                     'redirect' => 'customer.credit.transfer.game.index',
                     'view' => 'wallet::customer.credit.transfer.game.check',
-                ])->name('customer.credit.transfer.game.check')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.credit.transfer.game.check')->block(30,30);
 
                 Route::post('credit/transfer/game/confirm', 'Gametech\Wallet\Http\Controllers\CreditTransferGameController@confirm')->defaults('_config', [
 
-                ])->name('customer.credit.transfer.game.confirm')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.credit.transfer.game.confirm')->block(30,30);
 
                 Route::get('credit/transfer/game/complete', 'Gametech\Wallet\Http\Controllers\CreditTransferGameController@complete')->defaults('_config', [
                     'view' => 'wallet::customer.credit.transfer.game.complete',
-                ])->name('customer.credit.transfer.game.complete')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.credit.transfer.game.complete')->block(30,30);
 
                 Route::get('credit/transfer/wallet', 'Gametech\Wallet\Http\Controllers\CreditTransferWalletController@index')->defaults('_config', [
                     'view' => 'wallet::customer.credit.transfer.wallet.index',
@@ -192,15 +192,15 @@ Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_ur
                 Route::post('credit/transfer/wallet/check', 'Gametech\Wallet\Http\Controllers\CreditTransferWalletController@check')->defaults('_config', [
                     'redirect' => 'customer.credit.transfer.wallet.index',
                     'view' => 'wallet::customer.credit.transfer.wallet.check',
-                ])->name('customer.credit.transfer.wallet.check')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.credit.transfer.wallet.check')->block(30,30);
 
                 Route::post('credit/transfer/wallet/confirm', 'Gametech\Wallet\Http\Controllers\CreditTransferWalletController@confirm')->defaults('_config', [
 
-                ])->name('customer.credit.transfer.wallet.confirm')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.credit.transfer.wallet.confirm')->block(30,30);
 
                 Route::get('credit/transfer/wallet/complete', 'Gametech\Wallet\Http\Controllers\CreditTransferWalletController@complete')->defaults('_config', [
                     'view' => 'wallet::customer.credit.transfer.wallet.complete',
-                ])->name('customer.credit.transfer.wallet.complete')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.credit.transfer.wallet.complete')->block(30,30);
 
                 // Transfer Wallet to Game
                 Route::get('transfer/game', 'Gametech\Wallet\Http\Controllers\TransferGameController@index')->defaults('_config', [
@@ -210,11 +210,11 @@ Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_ur
                 Route::post('transfer/game/check', 'Gametech\Wallet\Http\Controllers\TransferGameController@check')->defaults('_config', [
                     'redirect' => 'customer.transfer.game.index',
                     'view' => 'wallet::customer.transfer.game.check',
-                ])->name('customer.transfer.game.check')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.transfer.game.check')->block(30,30);
 
                 Route::post('transfer/game/confirm', 'Gametech\Wallet\Http\Controllers\TransferGameController@confirm')->defaults('_config', [
 
-                ])->name('customer.transfer.game.confirm')->block($lockSeconds = 30, $waitSeconds = 30);
+                ])->name('customer.transfer.game.confirm')->block(30,30);
 
                 Route::get('transfer/game/complete', 'Gametech\Wallet\Http\Controllers\TransferGameController@complete')->defaults('_config', [
                     'view' => 'wallet::customer.transfer.game.complete',

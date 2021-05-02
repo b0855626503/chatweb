@@ -77,7 +77,6 @@ class AdminServiceProvider extends ServiceProvider
             dirname(__DIR__) . '/Config/acl.php', 'acl'
         );
 
-//        $this->mergeConfigFrom(__DIR__.'/config/laravel-logger.php', 'LaravelLogger');
 
     }
 
