@@ -2,9 +2,10 @@
 
 namespace Gametech\Auto\Console\Commands;
 
-use Gametech\Admin\Contracts\Role;
+
+use Gametech\Admin\Models\Role;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
+
 
 class PostUpdate extends Command
 {
