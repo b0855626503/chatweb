@@ -297,7 +297,7 @@ return [
         'Google2FA' => PragmaRX\Google2FALaravel\Facade::class,
         'FastExcel' => Rap2hpoutre\FastExcel\Facades\FastExcel::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
-        'Updater' => Codedge\Updater\UpdaterFacade::class,
+        'UpdaterFacade' => Codedge\Updater\UpdaterFacade::class,
 
     ],
 

@@ -153,7 +153,7 @@
                                     id="input-group-mintransfer_pro"
                                     label="เมื่อรับโปร โยก Wallet เข้า Game ได้ เมื่อเงินในเกมน้อยกว่า:"
                                     label-for="mintransfer_pro"
-                                    description="">
+                                    description="0 = ไม่ทำงานโยกได้ตลอด โปรดใส่ค่ามากกว่า 0">
                                     <b-form-input
                                         id="mintransfer_pro"
                                         name="mintransfer_pro"

@@ -3,6 +3,7 @@
 namespace Gametech\Admin\Providers;
 
 
+use Codedge\Updater\UpdaterFacade;
 use Gametech\Admin\Bouncer;
 use Gametech\Admin\Facades\Bouncer as BouncerFacade;
 
@@ -128,6 +129,19 @@ class AdminServiceProvider extends ServiceProvider
 
         view()->composer(['admin::module.*'], function ($view) {
             $view->with('acl', $this->createACL());
+        });
+
+        view()->composer(['admin::layouts.header'], function ($view) {
+
+            $current = UpdaterFacade::source()->getVersionInstalled();
+            if(UpdaterFacade::source()->isNewVersionAvailable($current)){
+                $versionAvailable =  UpdaterFacade::source()->getVersionAvailable();
+                $current = '<a href="'.route('admin.update.index').'" style="font-size: 1.0rem;margin: 0 auto;font-weight:700;color:red"> >> มีอัพเดทเวอชั่นใหม่ '.$versionAvailable.' กดตรงนี้เพื่ออัพเดท<< </a>';
+            }else{
+                $current = '';
+            }
+
+            $view->with('version', $current);
         });
 
     }

@@ -10,24 +10,7 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
         Route::get('/', 'Controller@redirectToLogin')->name('admin');
 
-        Route::get('/update', function (\Codedge\Updater\UpdaterManager $updater) {
 
-            // Check if new version is available
-            $current = $updater->source()->getVersionInstalled();
-
-            if($updater->source()->isNewVersionAvailable($current)) {
-
-                $versionAvailable = $updater->source()->getVersionAvailable();
-
-                $release = $updater->source()->fetch($versionAvailable);
-
-                $updater->source()->update($release);
-
-            }
-
-            return redirect()->route('admin.session.index');
-
-        })->name('admin.update.index');
 
         // Login Routes
         Route::get('/login', 'LoginController@show')->defaults('_config', [
@@ -60,6 +43,24 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
         Route::group(['middleware' => ['admin', 'auth', '2fa']], function () {
 
+            Route::get('/update', function (\Codedge\Updater\UpdaterManager $updater) {
+
+                // Check if new version is available
+                $current = $updater->source()->getVersionInstalled();
+
+                if($updater->source()->isNewVersionAvailable($current)) {
+
+                    $versionAvailable = $updater->source()->getVersionAvailable();
+
+                    $release = $updater->source()->fetch($versionAvailable);
+
+                    $updater->source()->update($release);
+
+                }
+
+                return redirect()->back();
+
+            })->name('admin.update.index');
 
             Route::get('/link', 'CmdController@storeLink');
 
