@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '2020-04-19T22:35:48Z'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '3.2.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -44,7 +44,7 @@ return [
             'repository_url' => '',
             'download_path' => env('SELF_UPDATER_DOWNLOAD_PATH', '/tmp'),
             'private_access_token' => env('SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN', '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'),
-            'use_branch' => env('SELF_UPDATER_USE_BRANCH', 'master'),
+            'use_branch' => env('SELF_UPDATER_USE_BRANCH', ''),
         ],
         'http' => [
             'type' => 'http',
