@@ -10,6 +10,7 @@ use Gametech\Auto\Console\Commands\DailyStatMonth;
 use Gametech\Auto\Console\Commands\GetPayment;
 use Gametech\Auto\Console\Commands\GetPaymentAcc;
 use Gametech\Auto\Console\Commands\MemberIC;
+use Gametech\Auto\Console\Commands\PostUpdate;
 use Gametech\Auto\Console\Commands\TopupPayment;
 use Gametech\Auto\Console\Commands\UpdateHash;
 use Illuminate\Console\Scheduling\Schedule;
@@ -34,6 +35,7 @@ class Kernel extends ConsoleKernel
         CheckFastStart::class,
         DailyStatMonth::class,
         UpdateHash::class,
+        PostUpdate::class,
     ];
 
 

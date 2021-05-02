@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '3.2.1'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '3.2.2'),
 
     /*
     |--------------------------------------------------------------------------
@@ -140,11 +140,8 @@ return [
             //]
         ],
         'post_update' => [
-            'migrate' => [
-                '--force' => true,
-            ],
-            'optimize:clear' => [
-                '--force' => true,
+            'command:signature' => [
+                'class' => \Gametech\Auto\Console\Commands\PostUpdate::class
             ]
         ],
     ],
