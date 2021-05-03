@@ -63,13 +63,14 @@ class Handler extends AppExceptionHandler
         if($this->isAdminUri()){
             return redirect()->guest(route('admin.session.index'));
         }else{
-            return redirect()->guest(route('admin.session.index'));
+            return redirect()->guest(route('customer.session.index'));
         }
 
     }
 
     private function isAdminUri()
     {
+
         return strpos(Request::path(), 'admin') !== false ? true : false;
     }
 
