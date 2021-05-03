@@ -63,7 +63,7 @@ class Handler extends AppExceptionHandler
         if($this->isAdminUri()){
             return redirect()->guest(route('admin.session.index'));
         }else{
-            return redirect()->guest(route('customer.session.index'));
+            return redirect()->guest(route('admin.session.index'));
         }
 
     }
