@@ -17,8 +17,8 @@
                 timePicker24Hour: true,
                 timePickerSeconds: true,
                 autoUpdateInput: true,
-                startDate: moment().subtract(3, 'month').startOf('month').startOf('day'),
-                endDate: moment().endOf('day'),
+                startDate: moment().subtract(10, 'year').startOf('month').startOf('day'),
+                endDate: moment().endOf('month').endOf('day'),
                 locale: {
                     format: 'DD/MM/YYYY HH:mm:ss',
                     cancelLabel: 'Clear'
@@ -30,15 +30,15 @@
                     '30 วันที่ผ่านมา': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
                     'เดือนนี้': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
                     'เดือนที่ผ่านมา': [moment().subtract(1, 'month').startOf('month').startOf('day'), moment().subtract(1, 'month').endOf('month').endOf('day')],
-                    'แสดงทั้งหมด': [moment().subtract(5, 'year').startOf('month').startOf('day'), moment().endOf('month').endOf('day')]
+                    'แสดงทั้งหมด': [moment().subtract(10, 'year').startOf('month').startOf('day'), moment().endOf('month').endOf('day')]
                 }
             }, function (start, end, label) {
                 // $('#startDate').val(start.format('YYYY-MM-DD HH:mm:ss'));
                 // $('#endDate').val(end.format('YYYY-MM-DD HH:mm:ss'));
             });
 
-            // $('#startDate').val(moment().startOf('day').format('YYYY-MM-DD HH:mm:ss'));
-            // $('#endDate').val(moment().endOf('day').format('YYYY-MM-DD HH:mm:ss'));
+            $('#startDate').val(moment().subtract(10, 'year').startOf('month').startOf('day').format('YYYY-MM-DD HH:mm:ss'));
+            $('#endDate').val(moment().endOf('month').endOf('day').format('YYYY-MM-DD HH:mm:ss'));
 
             $('#search_date').on('apply.daterangepicker', function (ev, picker) {
                 var start = picker.startDate.format('YYYY-MM-DD HH:mm:ss');
