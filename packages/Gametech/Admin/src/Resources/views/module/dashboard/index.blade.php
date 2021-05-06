@@ -397,7 +397,7 @@
                 methods: {
                     async loadData() {
                         let err, result;
-                        [err, result] = await window.to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
+                        [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
                         if (err) {
                             return 0;
                         }

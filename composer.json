@@ -11,6 +11,7 @@
         "php": "^7.2.5",
         "ext-imagick": "*",
         "ext-json": "*",
+        "ext-pdo": "*",
         "ext-simplexml": "*",
         "alexmg86/laravel-sub-query": "^1.9",
         "algolia/algoliasearch-client-php": "^2.7",
@@ -45,10 +46,10 @@
         "pusher/pusher-php-server": "^4.1",
         "rairlie/laravel-locking-session": "^1.1",
         "rap2hpoutre/fast-excel": "^2.5",
+        "spiritix/lada-cache": "^5.1",
         "sunra/php-simple-html-dom-parser": "^1.5",
         "yajra/laravel-datatables": "1.5",
-        "yajra/laravel-datatables-oracle": "~9.0",
-        "ext-pdo": "*"
+        "yajra/laravel-datatables-oracle": "~9.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.5",
