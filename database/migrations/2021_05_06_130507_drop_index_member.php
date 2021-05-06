@@ -1,11 +1,18 @@
 <?php
 
+use Doctrine\DBAL\Types\Types;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class DropIndexMember extends Migration
 {
+
+    public function __construct()
+    {
+        DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', Types::STRING);
+    }
     /**
      * Run the migrations.
      *
@@ -13,7 +20,8 @@ class DropIndexMember extends Migration
      */
     public function up()
     {
-        Schema::table('members', function (Blueprint $table) {
+
+        Schema::table('members', function (Blueprint $table){
             $sm = Schema::getConnection()->getDoctrineSchemaManager();
             $doctrineTable = $sm->listTableDetails('members');
 
