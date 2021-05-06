@@ -7,9 +7,11 @@
                  :lock-scroll="true"
                  :color="color"
                  :loader="loader"
+                 opacity="0.9"
                  :background-color="bgColor">
             <template #default v-if="useSlot">
-                <h2>Patch Update  v .{{ version }}</h2>
+                <h2 class="text-danger">ขณะนี้มีอัพเดท v .{{ version }}</h2>
+                <br>
                 <a :href="linkurl" class="btn btn-primary">กดตรงนี้เพื่ออัพเดท</a>
             </template>
         </loading>
