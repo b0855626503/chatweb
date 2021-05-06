@@ -1286,6 +1286,6 @@ modal {
 }
 
 .vld-overlay.is-full-page {
-    z-index: 9999999;
+    z-index: 9999999 !important;
     position: fixed;
 }

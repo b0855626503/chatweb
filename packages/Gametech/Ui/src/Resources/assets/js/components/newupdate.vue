@@ -20,12 +20,12 @@ import Loading from 'vue-loading-overlay';
 import 'vue-loading-overlay/dist/vue-loading.css';
 
 export default {
+    props: ['version'],
     data() {
         return {
             isLoading: false,
             fullPage: true,
             useSlot: true,
-            version: '1.0.0',
             color: '#007bff',
             bgColor: '#ffffff',
             newindex: 999999,
