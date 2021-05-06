@@ -1,5 +1,3 @@
-
-
 <b-modal ref="addedit" id="addedit" centered scrollable size="lg" title="{{ $menu->currentName }}" :no-stacking="true"
          :no-close-on-backdrop="true"
          :hide-footer="true">
@@ -101,13 +99,13 @@
                             bank_code: '',
                             method: 'CAN',
                             types: 'IF',
-                            bank_number:''
+                            bank_number: ''
                         },
-                        option : {
+                        option: {
                             types: [{text: 'ถ้าเป็น', value: 'IF'}, {text: 'ถ้าไม่เป็น', value: 'IFNOT'}],
                             method: [{text: 'จะสามารถเห็น', value: 'CAN'}, {text: 'จะไม่สามารถเห็น', value: 'CANNOT'}],
-                            bank_code : [],
-                            bank_number : []
+                            bank_code: [],
+                            bank_number: []
                         }
                     };
                 },
@@ -174,9 +172,6 @@
                         }
 
 
-
-
-
                         setTimeout(() => {
                             $('.select2').select2({
                                 theme: 'bootstrap4'
@@ -204,7 +199,7 @@
                         if (this.formmethod === 'add') {
                             var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
                         } else if (this.formmethod === 'edit') {
-                            var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/"+ this.code;
+                            var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
                         }
 
                         let form = $('#frmaddedit')[0];

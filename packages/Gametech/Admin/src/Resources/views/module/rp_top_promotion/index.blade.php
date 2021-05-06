@@ -37,14 +37,11 @@
                                 </div>
 
 
-
-
                                 <div class="form-group col-6">
                                     <input type="text" class="form-control form-control-sm" id="user_name"
                                            placeholder="Username"
                                            name="user_name">
                                 </div>
-
 
 
                                 <div class="form-group col-6"></div>

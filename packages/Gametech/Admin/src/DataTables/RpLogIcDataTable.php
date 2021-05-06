@@ -3,6 +3,7 @@
 namespace Gametech\Admin\DataTables;
 
 use Gametech\Admin\Transformers\RpLogIcTransformer;
+use Gametech\Member\Contracts\MemberFreeCredit;
 use Gametech\Payment\Contracts\WithdrawFree;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
@@ -35,7 +36,7 @@ class RpLogIcDataTable extends DataTable
      * @param WithdrawFree $model
      * @return mixed
      */
-    public function query(WithdrawFree $model)
+    public function query(MemberFreeCredit $model)
     {
 
         $user = request()->input('user_name');
@@ -50,13 +51,13 @@ class RpLogIcDataTable extends DataTable
 
         return $model
             ->with(['member', 'admin'])
-            ->active()->notauto()->where('kind', 'IC')
-            ->select(['members_freecredit.code', 'members_freecredit.member_code', 'members_freecredit.credit_type', 'members_freecredit.credit_amount', 'members_freecredit.credit_before', 'members_freecredit.credit_balance', 'members_freecredit.remark', 'members_freecredit.emp_code', 'members_freecredit.ip', 'members_freecredit.date_create', 'members_freecredit.kind'])
+            ->active()->notauto()->where('members_freecredit.kind', 'IC')
+            ->select(['members_freecredit.code', 'members_freecredit.member_code', 'members_freecredit.credit_type', 'members_freecredit.credit_amount', 'members_freecredit.credit_before', 'members_freecredit.credit_balance', 'members_freecredit.remark', 'members_freecredit.emp_code', 'members_freecredit.ip', 'members_freecredit.date_create', 'members_freecredit.kind', 'members_freecredit.user_create'])
             ->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
             ])
             ->when($startdate, function ($query, $startdate) use ($enddate) {
-                $query->whereBetween('members_freecredit.date_create', array($startdate, $enddate));
+                $query->whereBetween('members_freecredit.date_create', [$startdate, $enddate]);
             })
             ->when($user, function ($query, $user) {
                 $query->whereIn('withdraws_free.member_code', function ($q) use ($user) {

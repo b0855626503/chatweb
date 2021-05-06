@@ -31,15 +31,16 @@
                                 </div>
 
 
-
                                 <div class="form-group col-6">
-                                    เมื่อกดใช้งาน แสดงข้อมูลตามช่วงวันที่ จะแสดงข้อมูลสมาชิกที่ สมัครในช่วงวันที่ เท่านั้น ใช้สำหรับ การ Export ข้อมูล
+                                    เมื่อกดใช้งาน แสดงข้อมูลตามช่วงวันที่ จะแสดงข้อมูลสมาชิกที่ สมัครในช่วงวันที่
+                                    เท่านั้น ใช้สำหรับ การ Export ข้อมูล
                                 </div>
 
 
-
                                 <div class="form-group col-auto">
-                                    <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> แสดงข้อมูลตามช่วงวันที่</button>
+                                    <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i>
+                                        แสดงข้อมูลตามช่วงวันที่
+                                    </button>
                                 </div>
                             </div>
                         </div>

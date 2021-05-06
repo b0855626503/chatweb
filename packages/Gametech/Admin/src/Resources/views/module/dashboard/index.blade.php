@@ -655,7 +655,7 @@
                             {key: 'bank', label: 'ธนาคาร'},
                             {key: 'acc_no', label: 'เลขที่บัญชี'},
                             {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
-                            {key: 'date_update', label: 'อัพเดทเมื่อ' , class: 'text-center'}
+                            {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
                         ];
 
                         this.items = res.data.list;
@@ -716,7 +716,7 @@
                             {key: 'bank', label: 'ธนาคาร'},
                             {key: 'acc_no', label: 'เลขที่บัญชี'},
                             {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
-                            {key: 'date_update', label: 'อัพเดทเมื่อ' , class: 'text-center'}
+                            {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
                         ];
 
                         this.items = res.data.list;
@@ -742,7 +742,7 @@
                         pushmenu: '',
                         toast: '',
                         withdraw_cnt: 0,
-                        played:false
+                        played: false
                     }
                 },
                 created() {
@@ -800,7 +800,7 @@
                     },
                     async loadCnt() {
                         const response = await axios.get("{{ url('loadcnt') }}");
-                        document.getElementById('badge_bank_in').textContent = response.data.bank_in_today +' / '+ response.data.bank_in;
+                        document.getElementById('badge_bank_in').textContent = response.data.bank_in_today + ' / ' + response.data.bank_in;
                         document.getElementById('badge_bank_out').textContent = response.data.bank_out;
                         document.getElementById('badge_withdraw').textContent = response.data.withdraw;
                         document.getElementById('badge_withdraw_free').textContent = response.data.withdraw_free;

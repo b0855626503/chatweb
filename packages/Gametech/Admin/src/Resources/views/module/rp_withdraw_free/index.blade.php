@@ -21,10 +21,12 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="far fa-clock"></i></span>
                                         </div>
-                                        <input type="text" class="form-control form-control-sm float-right" id="search_date" readonly>
+                                        <input type="text" class="form-control form-control-sm float-right"
+                                               id="search_date" readonly>
                                         <input type="hidden" class="form-control float-right" id="startDate"
                                                name="startDate">
-                                        <input type="hidden" class="form-control float-right" id="endDate" name="endDate">
+                                        <input type="hidden" class="form-control float-right" id="endDate"
+                                               name="endDate">
                                     </div>
                                 </div>
 
@@ -35,12 +37,14 @@
                                 </div>
 
                                 <div class="form-group col-6">
-                                    <input type="text" class="form-control form-control-sm" id="user_name" placeholder="Username"
+                                    <input type="text" class="form-control form-control-sm" id="user_name"
+                                           placeholder="Username"
                                            name="user_name">
                                 </div>
 
                                 <div class="form-group col-6">
-                                    <input type="text" class="form-control form-control-sm" id="ip" name="ip" placeholder="IP">
+                                    <input type="text" class="form-control form-control-sm" id="ip" name="ip"
+                                           placeholder="IP">
                                 </div>
 
                                 <div class="form-group col-auto">

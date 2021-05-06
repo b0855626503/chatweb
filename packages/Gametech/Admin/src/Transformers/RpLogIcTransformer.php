@@ -26,7 +26,7 @@ class RpLogIcTransformer extends TransformerAbstract
             'credit_before' => "<span class='text-info'> ".core()->currency($model->credit_before)." </span>",
             'credit_balance' => "<span class='text-danger'> ".core()->currency($model->credit_balance)." </span>",
             'remark' => $model->remark,
-            'emp_name' => ($model->emp_code == 0 ? $model->user_create : $model->admin->name),
+            'emp_name' => ($model->emp_code == 0 ? $model->user_create : (is_null($model->admin) ? $model->user_create : $model->admin->user_name)),
             'date_create' => $model->date_create->format('d/m/y H:i:s'),
             'ip' => $model->ip
         ];

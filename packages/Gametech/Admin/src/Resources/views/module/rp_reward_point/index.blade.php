@@ -15,38 +15,41 @@
 
                     <form id="frmsearch" method="post" onsubmit="return false;">
                         <div class="card-body">
-                        <div class="row">
-                            <div class="form-group col-12">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="far fa-clock"></i></span>
+                            <div class="row">
+                                <div class="form-group col-12">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm float-right"
+                                               id="search_date" readonly>
+                                        <input type="hidden" class="form-control float-right" id="startDate"
+                                               name="startDate">
+                                        <input type="hidden" class="form-control float-right" id="endDate"
+                                               name="endDate">
                                     </div>
-                                    <input type="text" class="form-control form-control-sm float-right" id="search_date" readonly>
-                                    <input type="hidden" class="form-control float-right" id="startDate"
-                                           name="startDate">
-                                    <input type="hidden" class="form-control float-right" id="endDate" name="endDate">
+                                </div>
+
+
+                                <div class="form-group col-6">
+                                    {!! Form::select('reward_code', ['' => '== รางวัล =='], '',['id' => 'reward_code', 'class' => 'form-control form-control-sm']) !!}
+
+                                </div>
+
+                                <div class="form-group col-6">
+                                    <input type="text" class="form-control form-control-sm" id="user_name"
+                                           placeholder="Username"
+                                           name="user_name">
+                                </div>
+
+                                <div class="form-group col-6">
+
+                                </div>
+
+                                <div class="form-group col-auto">
+                                    <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
                                 </div>
                             </div>
-
-
-                            <div class="form-group col-6">
-                                {!! Form::select('reward_code', ['' => '== รางวัล =='], '',['id' => 'reward_code', 'class' => 'form-control form-control-sm']) !!}
-
-                            </div>
-
-                            <div class="form-group col-6">
-                                <input type="text" class="form-control form-control-sm" id="user_name" placeholder="Username"
-                                       name="user_name">
-                            </div>
-
-                            <div class="form-group col-6">
-
-                            </div>
-
-                            <div class="form-group col-auto">
-                                <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
-                            </div>
-                        </div>
                         </div>
                     </form>
 
