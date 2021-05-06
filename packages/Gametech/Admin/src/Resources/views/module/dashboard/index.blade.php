@@ -96,12 +96,12 @@
             },
             methods: {
                 async loadData() {
-                    let result, error = [];
-                    { result, error } = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
-                    if (error) {
+                    let err, result;
+                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
+                    if (err) {
                         return 0;
                     }
-                    this.sum = res.data.sum;
+                    this.sum = result.data.sum;
                     return this.sum;
 
                 }
@@ -138,12 +138,13 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setwithdraw'});
-                        this.sum = res.data.sum;
-                    } catch (e) {
+                    let err, result;
+                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setwithdraw'}));
+                    if (err) {
                         return 0;
                     }
+                    this.sum = result.data.sum;
+                    return this.sum;
                 }
             }
         });
@@ -178,12 +179,13 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit'});
-                        this.sum = res.data.sum;
-                    } catch (e) {
+                    let err, result;
+                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit'}));
+                    if (err) {
                         return 0;
                     }
+                    this.sum = result.data.sum;
+                    return this.sum;
                 }
             }
         });
@@ -218,12 +220,13 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit_wait'});
-                        this.sum = res.data.sum;
-                    } catch (e) {
+                    let err, result;
+                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit_wait'}));
+                    if (err) {
                         return 0;
                     }
+                    this.sum = result.data.sum;
+                    return this.sum;
                 }
             }
         });
@@ -258,12 +261,13 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'withdraw'});
-                        this.sum = res.data.sum;
-                    } catch (e) {
+                    let err, result;
+                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'withdraw'}));
+                    if (err) {
                         return 0;
                     }
+                    this.sum = result.data.sum;
+                    return this.sum;
                 }
             }
         });
@@ -301,12 +305,13 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'bonus'});
-                        this.sum = res.data.sum;
-                    } catch (e) {
+                    let err, result;
+                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'bonus'}));
+                    if (err) {
                         return 0;
                     }
+                    this.sum = result.data.sum;
+                    return this.sum;
                 }
             }
         });
@@ -341,12 +346,13 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'balance'});
-                        this.sum = res.data.sum;
-                    } catch (e) {
+                    let err, result;
+                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'balance'}));
+                    if (err) {
                         return 0;
                     }
+                    this.sum = result.data.sum;
+                    return this.sum;
                 }
             }
         });
@@ -382,85 +388,86 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'income'});
-                        let ctx = this.chart;
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: res.data.label,
-                                datasets: [{
-                                    label: 'ฝาก ',
-                                    data: res.data.line_deposit,
-
-                                    borderColor: [
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)'
-                                    ],
-                                    borderWidth: 1
-                                }, {
-                                    label: 'ถอน ',
-                                    data: res.data.line_withdraw,
-
-                                    borderColor: [
-                                        'rgba(255,0,0,1)',
-                                        'rgba(255,0,0,1)',
-                                        'rgba(255,0,0,1)',
-                                        'rgba(255,0,0,1)',
-                                        'rgba(255,0,0,1)',
-                                        'rgba(255,0,0,1)',
-                                        'rgba(255,0,0,1)'
-                                    ],
-                                    borderWidth: 1
-                                }, {
-                                    label: 'โปร ',
-                                    data: res.data.line_bonus,
-
-                                    borderColor: [
-                                        'rgba(255,193,0,1)',
-                                        'rgba(255,193,0,1)',
-                                        'rgba(255,193,0,1)',
-                                        'rgba(255,193,0,1)',
-                                        'rgba(255,193,0,1)',
-                                        'rgba(255,193,0,1)',
-                                        'rgba(255,193,0,1)',
-                                    ],
-                                    borderWidth: 1
-                                }, {
-                                    label: 'คงเหลือ ',
-                                    data: res.data.line_balance,
-
-                                    borderColor: [
-                                        'rgba(0,153,0,1)',
-                                        'rgba(0,153,0,1)',
-                                        'rgba(0,153,0,1)',
-                                        'rgba(0,153,0,1)',
-                                        'rgba(0,153,0,1)',
-                                        'rgba(0,153,0,1)',
-                                        'rgba(0,153,0,1)'
-                                    ],
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    yAxes: [{
-                                        ticks: {
-                                            beginAtZero: true
-                                        }
-                                    }]
-                                }
-                            }
-                        });
-
-                    } catch (e) {
+                    let err, res;
+                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'income'}));
+                    if (err) {
                         return 0;
                     }
+
+                    let ctx = this.chart;
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: res.data.label,
+                            datasets: [{
+                                label: 'ฝาก ',
+                                data: res.data.line_deposit,
+
+                                borderColor: [
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)'
+                                ],
+                                borderWidth: 1
+                            }, {
+                                label: 'ถอน ',
+                                data: res.data.line_withdraw,
+
+                                borderColor: [
+                                    'rgba(255,0,0,1)',
+                                    'rgba(255,0,0,1)',
+                                    'rgba(255,0,0,1)',
+                                    'rgba(255,0,0,1)',
+                                    'rgba(255,0,0,1)',
+                                    'rgba(255,0,0,1)',
+                                    'rgba(255,0,0,1)'
+                                ],
+                                borderWidth: 1
+                            }, {
+                                label: 'โปร ',
+                                data: res.data.line_bonus,
+
+                                borderColor: [
+                                    'rgba(255,193,0,1)',
+                                    'rgba(255,193,0,1)',
+                                    'rgba(255,193,0,1)',
+                                    'rgba(255,193,0,1)',
+                                    'rgba(255,193,0,1)',
+                                    'rgba(255,193,0,1)',
+                                    'rgba(255,193,0,1)',
+                                ],
+                                borderWidth: 1
+                            }, {
+                                label: 'คงเหลือ ',
+                                data: res.data.line_balance,
+
+                                borderColor: [
+                                    'rgba(0,153,0,1)',
+                                    'rgba(0,153,0,1)',
+                                    'rgba(0,153,0,1)',
+                                    'rgba(0,153,0,1)',
+                                    'rgba(0,153,0,1)',
+                                    'rgba(0,153,0,1)',
+                                    'rgba(0,153,0,1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                    });
+
                 }
             }
         });
@@ -496,43 +503,43 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'topup'});
-                        let ctx = this.chart;
-                        new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: res.data.label,
-                                datasets: [{
-                                    label: 'เติมเงิน ',
-                                    data: res.data.bar,
-
-                                    backgroundColor: [
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)',
-                                        'rgba(0,51,255,1)'
-                                    ],
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    yAxes: [{
-                                        ticks: {
-                                            beginAtZero: true
-                                        }
-                                    }]
-                                }
-                            }
-                        });
-
-                    } catch (e) {
+                    let err, res;
+                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'topup'}));
+                    if (err) {
                         return 0;
                     }
+                    let ctx = this.chart;
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: res.data.label,
+                            datasets: [{
+                                label: 'เติมเงิน ',
+                                data: res.data.bar,
+
+                                backgroundColor: [
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)',
+                                    'rgba(0,51,255,1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                    });
+
                 }
             }
         });
@@ -568,43 +575,42 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'register'});
-                        let ctx = this.chart;
-                        new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: res.data.label,
-                                datasets: [{
-                                    label: 'สมาชิกใหม่ ',
-                                    data: res.data.bar,
-
-                                    backgroundColor: [
-                                        'rgba(0,51,0,1)',
-                                        'rgba(0,51,0,1)',
-                                        'rgba(0,51,0,1)',
-                                        'rgba(0,51,0,1)',
-                                        'rgba(0,51,0,1)',
-                                        'rgba(0,51,0,1)',
-                                        'rgba(0,51,0,1)'
-                                    ],
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    yAxes: [{
-                                        ticks: {
-                                            beginAtZero: true
-                                        }
-                                    }]
-                                }
-                            }
-                        });
-
-                    } catch (e) {
+                    let err, res;
+                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'register'}));
+                    if (err) {
                         return 0;
                     }
+                    let ctx = this.chart;
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: res.data.label,
+                            datasets: [{
+                                label: 'สมาชิกใหม่ ',
+                                data: res.data.bar,
+
+                                backgroundColor: [
+                                    'rgba(0,51,0,1)',
+                                    'rgba(0,51,0,1)',
+                                    'rgba(0,51,0,1)',
+                                    'rgba(0,51,0,1)',
+                                    'rgba(0,51,0,1)',
+                                    'rgba(0,51,0,1)',
+                                    'rgba(0,51,0,1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -651,21 +657,20 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadbank') }}", {method: 'bankin'});
-                        this.fields = [
-                            {key: 'bank', label: 'ธนาคาร'},
-                            {key: 'acc_no', label: 'เลขที่บัญชี'},
-                            {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
-                            {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
-                        ];
-
-                        this.items = res.data.list;
-                        return this.items;
-
-                    } catch (e) {
+                    let err, res;
+                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadbank') }}", {method: 'bankin'}));
+                    if (err) {
                         return 0;
                     }
+                    this.fields = [
+                        {key: 'bank', label: 'ธนาคาร'},
+                        {key: 'acc_no', label: 'เลขที่บัญชี'},
+                        {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
+                        {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
+                    ];
+
+                    this.items = res.data.list;
+                    return this.items;
                 }
             }
         });
@@ -712,21 +717,21 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadbank') }}", {method: 'bankout'});
-                        this.fields = [
-                            {key: 'bank', label: 'ธนาคาร'},
-                            {key: 'acc_no', label: 'เลขที่บัญชี'},
-                            {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
-                            {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
-                        ];
-
-                        this.items = res.data.list;
-                        return this.items;
-
-                    } catch (e) {
+                    let err, res;
+                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadbank') }}", {method: 'bankout'}));
+                    if (err) {
                         return 0;
                     }
+
+                    this.fields = [
+                        {key: 'bank', label: 'ธนาคาร'},
+                        {key: 'acc_no', label: 'เลขที่บัญชี'},
+                        {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
+                        {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
+                    ];
+
+                    this.items = res.data.list;
+                    return this.items;
                 }
             }
         });
@@ -801,7 +806,12 @@
                         this.toast.error('<span class="text-danger">มีการถอนรายการใหม่</span>');
                     },
                     async loadCnt() {
-                        const response = await axios.get("{{ url('loadcnt') }}");
+                        let err, response;
+                        [err, response] = await to(axios.get("{{ url('loadcnt') }}"));
+                        if (err) {
+                            return 0;
+                        }
+
                         document.getElementById('badge_bank_in').textContent = response.data.bank_in_today + ' / ' + response.data.bank_in;
                         document.getElementById('badge_bank_out').textContent = response.data.bank_out;
                         document.getElementById('badge_withdraw').textContent = response.data.withdraw;

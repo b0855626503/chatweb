@@ -1,15 +1,6 @@
-export default {
-    to : function (promise) {
-        return promise.then(data => {
-            return {
-                error: null,
-                result: data
-            }
-        })
-            .catch(err => {
-                return {
-                    error: err
-                }
-            })
-    }
+export default function to(promise) {
+    return promise.then(data => {
+        return [null, data];
+    })
+        .catch(err => [err]);
 }
