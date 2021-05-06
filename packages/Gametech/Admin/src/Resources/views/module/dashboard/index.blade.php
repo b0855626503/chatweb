@@ -97,7 +97,7 @@
             methods: {
                 async loadData() {
                     try {
-                        const res = await axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'});
+                        const res = axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'});
                         this.sum = res.data.sum;
                     } catch (e) {
                         return 0;
