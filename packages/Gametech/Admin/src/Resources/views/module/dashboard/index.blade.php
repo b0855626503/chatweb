@@ -85,7 +85,6 @@
     </script>
     <script>
 
-
         Vue.component('setdeposit-slot', {
             template: '#setdeposit-slot-template',
             data: function () {
@@ -99,7 +98,7 @@
             methods: {
                 async loadData() {
                     let err, result;
-                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
+                    [err, result] = await window.to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
                     if (err) {
                         return 0;
                     }
