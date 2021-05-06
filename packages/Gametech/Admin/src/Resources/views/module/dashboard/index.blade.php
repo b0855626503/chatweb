@@ -96,12 +96,14 @@
             },
             methods: {
                 async loadData() {
-                    try {
-                        const res = axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'});
-                        this.sum = res.data.sum;
-                    } catch (e) {
+                    let result, error = [];
+                    { result, error } = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
+                    if (error) {
                         return 0;
                     }
+                    this.sum = res.data.sum;
+                    return this.sum;
+
                 }
             }
         });
