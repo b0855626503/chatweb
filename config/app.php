@@ -298,7 +298,7 @@ return [
         'FastExcel' => Rap2hpoutre\FastExcel\Facades\FastExcel::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'UpdaterFacade' => Codedge\Updater\UpdaterFacade::class,
-
+        'RedisManager' => Illuminate\Support\Facades\Redis::class,
     ],
 
 ];
