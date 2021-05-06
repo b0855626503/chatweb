@@ -35,6 +35,8 @@ class BillRepository extends Repository
 
     private $paymentWaitingRepository;
 
+    private $bankPaymentRepository;
+
     /**
      * BillRepository constructor.
      * @param GameUserRepository $gameUserRepo
@@ -55,6 +57,7 @@ class BillRepository extends Repository
         MemberCreditLogRepository $memberCreditLogRepo,
         MemberPromotionLogRepository $memberPromotionLogRepo,
         PaymentWaitingRepository $paymentWaitingRepo,
+        BankPaymentRepository $bankPaymentRepo,
         App $app
     )
     {
@@ -72,6 +75,8 @@ class BillRepository extends Repository
         $this->memberPromotionLogRepository = $memberPromotionLogRepo;
 
         $this->paymentWaitingRepository = $paymentWaitingRepo;
+
+        $this->bankPaymentRepository = $bankPaymentRepo;
 
         parent::__construct($app);
     }
@@ -283,7 +288,7 @@ class BillRepository extends Repository
 
     }
 
-    public function transferGame(array $data): array
+    public function transferGame_(array $data): array
     {
         $return['success'] = false;
 
@@ -326,14 +331,20 @@ class BillRepository extends Repository
         ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, $money_text.' ระบบทำการฝากเงินเข้าเกมแล้ว');
 
         $member->balance -= $amount;
+
+        if ($pro_code == 1) {
+            $member->status_pro = 1;
+        }
+        if ($pro_code > 0) {
+            $member->pro_status = 'Y';
+            $member->promotion = 'Y';
+        }
+
         $member->save();
 
         DB::beginTransaction();
 
         try {
-            $member = $this->memberRepository->find($member_code);
-
-
 
             $bill = $this->create([
                 'enable' => 'Y',
@@ -366,12 +377,8 @@ class BillRepository extends Repository
                 'withdraw_limit' => $withdraw_limit
             ], $user_code);
 
-            if ($pro_code == 1) {
-                $member->status_pro = 1;
-            }
+
             if ($pro_code > 0) {
-                $member->pro_status = 'Y';
-                $member->promotion = 'Y';
 
                 $this->memberPromotionLogRepository->create([
                     'date_start' => now()->toDateString(),
@@ -392,40 +399,38 @@ class BillRepository extends Repository
                     'user_create' => $member['name'],
                     'user_update' => $member['name']
                 ]);
+
             }
 
-            $member->save();
+//            $this->paymentLogRepository->create([
+//                'msg' => 'โยกเงินออกจาก Wallet เข้าเกม เรียบร้อย',
+//                'status' => 'COMPLETE',
+//                'showmsg' => 'Y',
+//                'confirm' => 'Y',
+//                'enable' => 'Y',
+//                'bill_code' => $bill->code,
+//                'member_code' => $member_code,
+//                'game_code' => $game_code,
+//                'token' => '',
+//                'transfer_type' => 1,
+//                'amount' => $amount,
+//                'ip' => $ip,
+//                'user_create' => $member['name'],
+//                'user_update' => $member['name']
+//            ]);
 
 
-            $this->paymentLogRepository->create([
-                'msg' => 'โยกเงินออกจาก Wallet เข้าเกม เรียบร้อย',
-                'status' => 'COMPLETE',
-                'showmsg' => 'Y',
-                'confirm' => 'Y',
-                'enable' => 'Y',
-                'bill_code' => $bill->code,
-                'member_code' => $member_code,
-                'game_code' => $game_code,
-                'token' => '',
-                'transfer_type' => 1,
-                'amount' => $amount,
-                'ip' => $ip,
-                'user_create' => $member['name'],
-                'user_update' => $member['name']
-            ]);
-
-
-            $this->memberLogRepository->create([
-                'member_code' => $member_code,
-                'mode' => 'TRANSFER_IN',
-                'menu' => 'transfergame',
-                'record' => $member_code,
-                'remark' => 'โยกเงินออกจาก Wallet เข้าเกม '.$money_text,
-                'item_before' => '',
-                'item' => serialize($data),
-                'ip' => $ip,
-                'user_create' => $member['name']
-            ]);
+//            $this->memberLogRepository->create([
+//                'member_code' => $member_code,
+//                'mode' => 'TRANSFER_IN',
+//                'menu' => 'transfergame',
+//                'record' => $member_code,
+//                'remark' => 'โยกเงินออกจาก Wallet เข้าเกม '.$money_text,
+//                'item_before' => '',
+//                'item' => serialize($data),
+//                'ip' => $ip,
+//                'user_create' => $member['name']
+//            ]);
 
             $this->memberCreditLogRepository->create([
                 'ip' => $ip,
@@ -454,7 +459,7 @@ class BillRepository extends Repository
                 'user_update' => $member['name']
             ]);
 
-            $member->bankPayments()->where('member_topup', $member_code)->where('pro_check', 'N')->update([
+            $this->bankPaymentRepository->where('member_topup', $member_code)->where('pro_check', 'N')->update([
                 'pro_check' => 'Y',
                 'user_update' => $member['name']
             ]);

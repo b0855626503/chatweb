@@ -14,10 +14,24 @@ class DropIndexBankPayment extends Migration
     public function up()
     {
         Schema::table('bank_payment', function (Blueprint $table) {
-            $table->dropIndex('id'); // Drops index 'geo_state_index'
-            $table->dropIndex('report_id'); // Drops index 'geo_state_index'
-            $table->dropIndex('tx_hash'); // Drops index 'geo_state_index'
-            $table->dropIndex('bank_index'); // Drops index 'geo_state_index'
+            $sm = Schema::getConnection()->getDoctrineSchemaManager();
+            $doctrineTable = $sm->listTableDetails('bank_payment');
+
+            if ($doctrineTable->hasIndex('id')) {
+                $table->dropIndex('id');
+            }
+            if ($doctrineTable->hasIndex('report_id')) {
+                $table->dropIndex('report_id');
+            }
+            if ($doctrineTable->hasIndex('tx_hash')) {
+                $table->dropIndex('tx_hash');
+            }
+            if ($doctrineTable->hasIndex('bank_index')) {
+                $table->dropIndex('bank_index');
+            }
+            if ($doctrineTable->hasIndex('id')) {
+                $table->dropIndex('id');
+            }
 
         });
     }

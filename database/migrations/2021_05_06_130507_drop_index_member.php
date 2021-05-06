@@ -14,11 +14,25 @@ class DropIndexMember extends Migration
     public function up()
     {
         Schema::table('members', function (Blueprint $table) {
-            $table->dropIndex('upline_code'); // Drops index 'geo_state_index'
-            $table->dropIndex('acc_check'); // Drops index 'geo_state_index'
-            $table->dropIndex('acc_bay'); // Drops index 'geo_state_index'
-            $table->dropIndex('code'); // Drops index 'geo_state_index'
-            $table->dropIndex('id'); // Drops index 'geo_state_index'
+            $sm = Schema::getConnection()->getDoctrineSchemaManager();
+            $doctrineTable = $sm->listTableDetails('members');
+
+            if ($doctrineTable->hasIndex('upline_code')) {
+                $table->dropIndex('upline_code');
+            }
+            if ($doctrineTable->hasIndex('acc_check')) {
+                $table->dropIndex('acc_check');
+            }
+            if ($doctrineTable->hasIndex('acc_bay')) {
+                $table->dropIndex('acc_bay');
+            }
+            if ($doctrineTable->hasIndex('code')) {
+                $table->dropIndex('code');
+            }
+            if ($doctrineTable->hasIndex('id')) {
+                $table->dropIndex('id');
+            }
+
         });
     }
 

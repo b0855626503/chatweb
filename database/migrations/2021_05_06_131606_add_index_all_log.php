@@ -13,7 +13,7 @@ class AddIndexAllLog extends Migration
      */
     public function up()
     {
-        Schema::table('bank_payment', function (Blueprint $table) {
+        Schema::table('all_log', function (Blueprint $table) {
             $table->index(['bank_payment_id']);
         });
     }
