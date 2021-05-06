@@ -281,10 +281,11 @@
 
     </script>
 
-    <script>
+    <script type="module">
+
+        import to from "./js/toPromise.js";
 
         (() => {
-
             window.app = new Vue({
                 data: function () {
                     return {
