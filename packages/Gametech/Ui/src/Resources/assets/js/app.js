@@ -1,5 +1,6 @@
 import {Multiselect} from 'vue-multiselect';
-
+// import Loading from 'vue-loading-overlay';
+// import 'vue-loading-overlay/dist/vue-loading.css';
 import FlashWrapper from './components/flash-wrapper';
 import Flash from './components/flash';
 import Tabs from './components/tabs/tabs';
@@ -23,15 +24,21 @@ import TimeComponent from './components/time';
 import SwatchPicker from './components/swatch-picker';
 import Debounce from './directives/debounce';
 import OverlayLoader from './components/overlay-loader';
+import VueLoading from 'vue-loading-overlay';
+import 'vue-loading-overlay/dist/vue-loading.css';
+
+
 
 import VTooltip from 'v-tooltip';
+import VueToast from "vue-toast-notification";
 
 VTooltip.options.defaultDelay = 0;
 
 Vue.directive('tooltip', VTooltip.VTooltip)
 
 Vue.config.productionTip = false;
-
+Vue.use(VueLoading);
+Vue.component('loading', VueLoading)
 Vue.component('flash-wrapper', FlashWrapper);
 Vue.component('flash', Flash);
 Vue.component('tabs', Tabs);
@@ -55,6 +62,8 @@ Vue.component("time-component", TimeComponent);
 Vue.component('swatch-picker', SwatchPicker);
 Vue.directive('debounce', Debounce);
 Vue.component('overlay-loader', OverlayLoader);
+
+
 Vue.filter('truncate', function (value, limit, trail) {
 	if (! value)
         value = '';
@@ -68,6 +77,8 @@ Vue.filter('truncate', function (value, limit, trail) {
 Vue.component('multiselect', Multiselect);
 
 Vue.component('summernote', require('./components/summernote').default);
+
+Vue.component('newupdate', require('./components/newupdate').default);
 
 
 Vue.directive('uppercase', {

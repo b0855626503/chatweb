@@ -28,6 +28,7 @@
 <body class="hold-transition sidebar-mini text-sm">
 
 <div id="app">
+
     <div class="wrapper">
 
         @include('admin::layouts.header')
@@ -39,8 +40,9 @@
         @include('admin::layouts.footer')
 
     </div>
-</div>
 
+
+</div>
 
 <script type="text/javascript">
     window.flashMessages = [];

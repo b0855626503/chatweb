@@ -72,6 +72,7 @@ Vue.component('wheel', require('./components/wheel').default);
 Vue.component('wallet', require('./components/wallet').default);
 Vue.component('credit', require('./components/credit').default);
 
+
 Vue.component('recapcha', require('./components/recapcha').default);
 Vue.component('reward-list', require('./components/reward-list').default);
 Vue.component('reward-item', require('./components/reward-item').default);

@@ -1284,3 +1284,8 @@ modal {
         }
     }
 }
+
+.vld-overlay.is-full-page {
+    z-index: 9999999;
+    position: fixed;
+}

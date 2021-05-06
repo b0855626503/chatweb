@@ -9,6 +9,7 @@ import axios from 'axios';
 import moment from "moment";
 import {BootstrapVue, IconsPlugin} from 'bootstrap-vue';
 
+
 window.Vue = Vue;
 window.Carousel = VueCarousel;
 window.axios = axios;
@@ -30,16 +31,14 @@ window.Toast = Toast;
 window.Swal = Swal;
 
 
-
 Vue.prototype.$http = axios;
-
-
 
 
 Vue.use(VueToast);
 Vue.use(VueCarousel);
 Vue.use(BootstrapVue);
 Vue.use(IconsPlugin);
+
 Vue.use(VeeValidate, {
     dictionary: {
         th: th
