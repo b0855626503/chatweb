@@ -57,6 +57,15 @@ class ReportController extends AppBaseController
         $this->bankRepository = $bankRepository;
     }
 
+    public function rp_log_cashback(RpWalletDataTable $rpWalletDataTable)
+    {
+        return $rpWalletDataTable->render($this->_config['view']);
+    }
+
+    public function rp_log_ic(RpWalletDataTable $rpWalletDataTable)
+    {
+        return $rpWalletDataTable->render($this->_config['view']);
+    }
 
     public function rp_wallet(RpWalletDataTable $rpWalletDataTable)
     {

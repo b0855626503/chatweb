@@ -214,7 +214,7 @@ class Member extends Authenticatable implements MemberContract
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('members.code', '<>', 0);
+            $builder->where('members.code', '>', 0);
         });
     }
 

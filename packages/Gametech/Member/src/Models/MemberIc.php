@@ -46,12 +46,7 @@ class MemberIc extends Model implements MemberIcContract
         'user_update'
     ];
 
-    protected static function booted()
-    {
-        static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
-        });
-    }
+
 
     public function scopeActive($query)
     {

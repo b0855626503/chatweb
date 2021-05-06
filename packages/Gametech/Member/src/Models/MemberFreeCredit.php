@@ -101,31 +101,25 @@ class MemberFreeCredit extends Model implements MemberFreeCreditContract
         'date_update' => 'nullable'
     ];
 
-    protected static function booted()
-    {
-        static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
-        });
-    }
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('members_freecredit.enable','Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('members_freecredit.enable','N');
     }
 
     public function scopeAuto($query)
     {
-        return $query->where('auto','Y');
+        return $query->where('members_freecredit.auto','Y');
     }
 
     public function scopeNotauto($query)
     {
-        return $query->where('auto','N');
+        return $query->where('members_freecredit.auto','N');
     }
 
     public function member()

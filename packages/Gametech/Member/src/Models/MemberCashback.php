@@ -5,6 +5,7 @@ namespace Gametech\Member\Models;
 use DateTimeInterface;
 use Gametech\Member\Contracts\MemberCashback as MemberCashbackContract;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\Product\Models\ProductProxy;
 
 class MemberCashback extends Model implements MemberCashbackContract
@@ -63,4 +64,9 @@ class MemberCashback extends Model implements MemberCashbackContract
         'user_create' => 'string',
         'user_update' => 'string'
     ];
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(MemberProxy::modelClass(), 'downline_code');
+    }
 }

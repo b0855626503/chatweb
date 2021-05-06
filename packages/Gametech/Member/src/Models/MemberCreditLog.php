@@ -132,12 +132,6 @@ class MemberCreditLog extends Model implements MemberCreditLogContract
         'date_update' => 'nullable'
     ];
 
-    protected static function booted()
-    {
-        static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
-        });
-    }
 
     public function scopeActive($query)
     {

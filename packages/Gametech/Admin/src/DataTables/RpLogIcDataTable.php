@@ -2,16 +2,15 @@
 
 namespace Gametech\Admin\DataTables;
 
-
-use Gametech\Admin\Transformers\RpCreditTransformer;
-use Gametech\Member\Contracts\MemberFreeCredit;
+use Gametech\Admin\Transformers\RpLogIcTransformer;
+use Gametech\Payment\Contracts\WithdrawFree;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder;
 use Yajra\DataTables\Services\DataTable;
 
 
-class RpCreditDataTable extends DataTable
+class RpLogIcDataTable extends DataTable
 {
     /**
      * Build DataTable class.
@@ -24,25 +23,18 @@ class RpCreditDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-            ->with('withdraw', function () use ($query) {
-                return core()->currency((clone $query)->where('members_freecredit.credit_type', 'W')->sum('members_freecredit.credit_amount'));
-            })
-            ->with('deposit', function () use ($query) {
-                return core()->currency((clone $query)->where('members_freecredit.credit_type', 'D')->sum('members_freecredit.credit_amount'));
-            })
-            ->setTransformer(new RpCreditTransformer);
+            ->setTransformer(new RpLogIcTransformer);
 
     }
 
 
     /**
-     * @param MemberFreeCredit $model
+     * @param WithdrawFree $model
      * @return mixed
      */
-    public function query(MemberFreeCredit $model)
+    public function query(WithdrawFree $model)
     {
-        $ip = request()->input('ip');
-        $type = request()->input('credit_type');
+
         $user = request()->input('user_name');
         $startdate = request()->input('startDate');
         $enddate = request()->input('endDate');
@@ -55,21 +47,15 @@ class RpCreditDataTable extends DataTable
 
         return $model
             ->with(['member', 'admin'])
-            ->active()->notauto()->where('members_freecredit.kind', 'SETCREDIT')
-            ->select(['members_freecredit.code', 'members_freecredit.member_code', 'members_freecredit.credit_type', 'members_freecredit.credit_amount', 'members_freecredit.credit_before', 'members_freecredit.balance', 'members_freecredit.remark', 'members_freecredit.emp_code', 'members_freecredit.ip', 'members_freecredit.date_create', 'members_freecredit.kind'])->withCasts([
+            ->active()->notauto()->where('kind', 'CASHBACK')
+            ->select(['members_freecredit.code', 'members_freecredit.member_code', 'members_freecredit.credit_type', 'members_freecredit.credit_amount', 'members_freecredit.credit_before', 'members_freecredit.balance', 'members_freecredit.remark', 'members_freecredit.emp_code', 'members_freecredit.ip', 'members_freecredit.date_create'])->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
             ])
             ->when($startdate, function ($query, $startdate) use ($enddate) {
                 $query->whereBetween('members_freecredit.date_create', array($startdate, $enddate));
             })
-            ->when($type, function ($query, $type) {
-                $query->where('members_freecredit.credit_type', $type);
-            })
-            ->when($ip, function ($query, $ip) {
-                $query->where('members_freecredit.ip', 'like', "%" . $ip . "%");
-            })
             ->when($user, function ($query, $user) {
-                $query->whereIn('members_freecredit.member_code', function ($q) use ($user) {
+                $query->whereIn('withdraws_free.member_code', function ($q) use ($user) {
                     $q->from('members')->select('members.code')->where('members.user_name', $user);
                 });
             });

@@ -253,6 +253,16 @@ return [
         'route' => 'admin.rp_withdraw_free.index',
         'sort' => 4
     ], [
+        'key' => 'credit.rp_log_cashback',
+        'name' => 'รายงาน เครดิตเงินคืน',
+        'route' => 'admin.rp_log_cashback.index',
+        'sort' => 5
+    ], [
+        'key' => 'credit.rp_log_ic',
+        'name' => 'รายงาน หุ้นส่วน IC',
+        'route' => 'admin.rp_log_ic.index',
+        'sort' => 6
+    ], [
         'key' => 'mop',
         'name' => 'รายงาน (กิจกรรม)',
         'route' => 'admin.rp_reward_point.index',

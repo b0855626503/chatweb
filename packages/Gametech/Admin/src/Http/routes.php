@@ -78,6 +78,14 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
             Route::post('dashboard/loadbank', 'DashboardController@loadBank')->name('admin.dashboard.loadbank')->withoutMiddleware(['logadmin']);
 
 
+            Route::get('rp_log_cashback', 'ReportController@rp_log_cashback')->defaults('_config', [
+                'view' => 'admin::module.rp_log_cashback.index',
+            ])->name('admin.rp_log_cashback.index');
+
+            Route::get('rp_log_ic', 'ReportController@rp_log_ic')->defaults('_config', [
+                'view' => 'admin::module.rp_log_ic.index',
+            ])->name('admin.rp_log_ic.index');
+
             Route::get('rp_wallet', 'ReportController@rp_wallet')->defaults('_config', [
                 'view' => 'admin::module.rp_wallet.index',
             ])->name('admin.rp_wallet.index');
