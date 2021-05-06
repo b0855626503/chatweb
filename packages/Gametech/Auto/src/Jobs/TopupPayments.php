@@ -36,34 +36,28 @@ class TopupPayments implements ShouldQueue
     {
         $this->item = $item;
 
-
     }
 
 
     public function handle()
     {
 
+        $payment = BankPayment::find($this->item);
 
-        $payment = BankPayment::where('code', $this->item)->where('status', 0)->where('autocheck', 'W')->first();
+        if ($payment->status == 0 && $payment->autocheck == 'W') {
 
-        if (empty($payment)) {
-            return false;
+            $logs = Alllog::where('bank_payment_id', $payment->code)->first();
+
+            if (!empty($logs)) {
+                $payment->autocheck = 'Y';
+                $payment->status = 1;
+                $payment->save();
+            } else {
+                app('Gametech\Payment\Repositories\PaymentPromotionRepository')->checkFastStart($payment->value, $payment->member_topup, $payment->code);
+                app('Gametech\Payment\Repositories\BankPaymentRepository')->refillPayment(collect($payment)->toArray());
+            }
+
         }
-
-
-        $logs = Alllog::where('bank_payment_id', $payment->code);
-        if ($logs->exists()) {
-
-            $payment->autocheck = 'Y';
-            $payment->status = 1;
-            $payment->save();
-
-            return false;
-        }
-
-        app('Gametech\Payment\Repositories\PaymentPromotionRepository')->checkFastStart($payment->value, $payment->member_topup, $payment->code);
-        return app('Gametech\Payment\Repositories\BankPaymentRepository')->refillPayment(collect($payment)->toArray());
-
     }
 
     public function failed(Throwable $exception)

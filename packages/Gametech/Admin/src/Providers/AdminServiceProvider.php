@@ -3,6 +3,7 @@
 namespace Gametech\Admin\Providers;
 
 
+use Codedge\Updater\Traits\UseVersionFile;
 use Codedge\Updater\UpdaterFacade;
 use Gametech\Admin\Bouncer;
 use Gametech\Admin\Facades\Bouncer as BouncerFacade;
@@ -17,6 +18,8 @@ use Illuminate\Support\ServiceProvider;
 
 class AdminServiceProvider extends ServiceProvider
 {
+
+    use UseVersionFile;
     /**
      * Bootstrap services.
      *
@@ -133,15 +136,18 @@ class AdminServiceProvider extends ServiceProvider
 
         view()->composer(['admin::layouts.header'], function ($view) {
 
+            $this->deleteVersionFile();
+            $newpatch = false;
+
             $current = UpdaterFacade::source()->getVersionInstalled();
             if(UpdaterFacade::source()->isNewVersionAvailable($current)){
                 $versionAvailable =  UpdaterFacade::source()->getVersionAvailable();
-                $current = '<a href="'.route('admin.update.index').'" style="font-size: 1.0rem;margin: 0 auto;font-weight:700;color:red"> >> มีอัพเดทเวอชั่นใหม่ '.$versionAvailable.' กดตรงนี้เพื่ออัพเดท<< </a>';
-            }else{
-                $current = '';
+//                $current = '<a href="'.route('admin.update.index').'" style="font-size: 1.0rem;margin: 0 auto;font-weight:700;color:red"> >> มีอัพเดทเวอชั่นใหม่ '.$versionAvailable.' กดตรงนี้เพื่ออัพเดท<< </a>';
+                $current = $versionAvailable;
+                $newpatch = true;
             }
 
-            $view->with('version', $current);
+            $view->with('version', $current)->with('patch', $newpatch);
         });
 
     }

@@ -26,7 +26,8 @@ Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_ur
         ])->name('customer.checkacc.index')->withoutMiddleware(['loguser']);
 
         Route::post('register', 'Gametech\Wallet\Http\Controllers\LoginController@register')->defaults('_config', [
-            'redirect' => 'customer.session.index'
+            'redirect' => 'customer.home.index',
+            'verify' => 'customer.verify.index',
         ])->name('customer.session.register');
 
         Route::get('test', 'Gametech\Wallet\Http\Controllers\TestController@index')->defaults('_config', [
@@ -36,6 +37,12 @@ Route::domain(config('app.user_url') . '.' . (is_null(config('app.user_domain_ur
         Route::get('download', 'Gametech\Wallet\Http\Controllers\LoginController@download')->defaults('_config', [
             'view' => 'wallet::customer.download.home',
         ])->name('customer.home.download');
+
+        Route::get('verify', 'Gametech\Wallet\Http\Controllers\VerifyController@index')->defaults('_config', [
+            'view' => 'wallet::customer.verify.index'
+        ])->name('customer.verify.index')->middleware('customer' , 'authuser');
+
+        Route::post('verify', 'Gametech\Wallet\Http\Controllers\VerifyController@update')->name('customer.verify.update')->middleware('customer' , 'authuser');;
 
 
         Route::prefix('member')->group(function () {

@@ -50,8 +50,10 @@ class LoginController extends AppBaseController
         return 'user_name';
     }
 
+
     public function login(Request $request)
     {
+
         $this->validateLogin($request);
 
         $username = $request->input('user_name');
@@ -94,11 +96,24 @@ class LoginController extends AppBaseController
 
     protected function authenticated(Request $request, $user)
     {
-
+        $config = core()->getConfigData();
 
         Auth::guard('customer')->logoutOtherDevices(request('password'));
 
-        return redirect()->route('customer.home.index');
+        if ($config->verify_open === 'Y') {
+
+            if ($config->verify_sms === 'Y') {
+                return redirect()->route('customer.verify.index');
+            } else {
+                session()->flash('success', 'ขณะนี้ข้อมูลการสมัครของท่าน อยู่ในกระบวนการตรวจสอบโดยทีมงาน เมื่อทีมงานดพเนินการเสร็จ ท่านสมาชิกจะสามารถเข้าสู่ระบบของเวบไซต์ได้');
+
+                $this->logout($request);
+            }
+
+        } else {
+            return redirect()->route('customer.home.index');
+        }
+
 
     }
 
@@ -116,11 +131,23 @@ class LoginController extends AppBaseController
      *
      * @return View
      */
-    public function show()
+    public function show(Request $request)
     {
-        if (Auth::guard('customer')->check()) {
+        $config = core()->getConfigData();
 
-            return redirect()->route('customer.home.index');
+        if (Auth::guard('customer')->check()) {
+            $user = Auth::guard('customer')->user();
+            if ($user->confirm == 'Y') {
+                return redirect()->route('customer.home.index');
+            } else {
+                if ($config->verify_sms == 'Y') {
+                    return redirect()->route('customer.verify.index');
+                } else {
+                    session()->flash('success', 'ขณะนี้ข้อมูลการสมัครของท่าน อยู่ในกระบวนการตรวจสอบโดยทีมงาน เมื่อทีมงานดพเนินการเสร็จ ท่านสมาชิกจะสามารถเข้าสู่ระบบของเวบไซต์ได้');
+                    $this->logout($request);
+                }
+            }
+
 
         } else {
             return view($this->_config['view']);
@@ -173,6 +200,7 @@ class LoginController extends AppBaseController
 
     public function register(Request $request)
     {
+        $otp = '';
         $config = core()->getConfigData();
 
         $datenow = now()->toDateTimeString();
@@ -197,6 +225,10 @@ class LoginController extends AppBaseController
 
         if ($config->verify_open === 'Y') {
             $verify = 'N';
+            if ($config->verify_sms === 'Y') {
+                $otp = rand(100001, 999999);
+            }
+
         } else {
             $verify = 'Y';
         }
@@ -330,34 +362,13 @@ class LoginController extends AppBaseController
             'payment_delay' => null,
             'remark' => '',
             'gender' => 'M',
+            'otp' => $otp,
             'ip' => $ip
         ]);
-
-//        dd($data);
-
-
-//        $validator = Validator::make($data, [
-//            'acc_no' => 'required|digits_between:1,10|unique:members,acc_no',
-//            'firstname' => 'required|string',
-//            'lastname'  => 'required|string',
-//            'user_name'      => 'required|unique:members,user_name',
-//            'user_pass'   => 'confirmed|min:6|required',
-//            'tel'   => 'required|numeric|unique:members,tel',
-//            'bank_code'   => 'required|numeric',
-//            'lineid'   => 'required|string',
-//            'refer_code'   => 'required|numeric',
-//        ]);
-//        if ($validator->fails()) {
-//            $errors = $validator->errors();
-//            session()->flash('error', $errors->messages());
-//            return redirect()->back();
-//
-//        }
 
 
         $response = app('Gametech\Member\Repositories\MemberRepository')->create($data);
 
-        Event::dispatch('customer.register.after', $response);
 
         if (!$response->code) {
             session()->flash('error', 'พบข้อผิดพลาด ไม่สามารถบันทึกบ้อมูลได้');
@@ -372,13 +383,22 @@ class LoginController extends AppBaseController
                 app('Gametech\Game\Repositories\GameUserRepository')->addGameUser($game->code, $response->code, $data);
             }
 
-            session()->flash('success', 'สมัครสมาชิกสำเร็จแล้ว สามารถเข้าระบบได้เลย');
+            session()->flash('success', 'สมัครสมาชิกสำเร็จแล้ว ยินดีต้อนรับเข้าสู่ระบบ');
+            Auth::guard('customer')->login($response);
+
+
             return redirect()->intended(route($this->_config['redirect']));
 
         } else {
 
-            session()->flash('success', 'ขณะนี้ข้อมูลการสมัครของท่าน อยู่ในกระบวนการตรวจสอบโดยทีมงาน เมื่อทีมงานดพเนินการเสร็จ ท่านสมาชิกจะสามารถเข้าสู่ระบบของเวบไซต์ได้');
-            return redirect()->intended(route($this->_config['redirect']));
+            if ($config->verify_sms === 'Y') {
+                session()->flash('success', 'ขณะนี้ข้อมูลการสมัครของท่าน อยู่ในกระบวนการตรวจสอบโดยทีมงาน เมื่อทีมงานดำเนินการเสร็จ ท่านสมาชิกจะสามารถเข้าสู่ระบบของเวบไซต์ได้');
+                return redirect()->route($this->_config['redirect'])->withInput(['user_name' => $username, 'password' => $pass]);
+            } else {
+                session()->flash('success', 'ขณะนี้ข้อมูลการสมัครของท่าน อยู่ในกระบวนการตรวจสอบโดยทีมงาน เมื่อทีมงานดำเนินการเสร็จ ท่านสมาชิกจะสามารถเข้าสู่ระบบของเวบไซต์ได้');
+                return redirect()->back();
+            }
+
 
         }
 

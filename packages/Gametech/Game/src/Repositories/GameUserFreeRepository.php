@@ -146,6 +146,7 @@ class GameUserFreeRepository extends Repository
         if (is_file(base_path('packages/Gametech/Game/src/Repositories/Games/' . $game . 'Repository.php'))) {
             $result = app('Gametech\Game\Repositories\Games\\' . $game . 'Repository', ['method' => $this->gameMethod, 'debug' => $debug])->addGameAccount($data);
 
+
             if ($debug) {
                 return $result;
             }
@@ -172,6 +173,9 @@ class GameUserFreeRepository extends Repository
                     report($e);
                 }
 
+            }else{
+
+                $return['msg'] = $result['msg'];
             }
         }
         return $return;

@@ -65,42 +65,42 @@
 
             </b-form-row>
             @if(auth()->guard('admin')->user()->superadmin == 'Y')
-            <b-form-row>
-                <b-col>
-                    <b-form-group
-                        id="input-group-3"
-                        label="User Demo:"
-                        label-for="user_demo"
-                        description="">
-                        <b-form-input
-                            id="user_demo"
-                            v-model="formaddedit.user_demo"
-                            type="text"
-                            size="sm"
-                            placeholder=""
-                            autocomplete="off"
+                <b-form-row>
+                    <b-col>
+                        <b-form-group
+                            id="input-group-3"
+                            label="User Demo:"
+                            label-for="user_demo"
+                            description="">
+                            <b-form-input
+                                id="user_demo"
+                                v-model="formaddedit.user_demo"
+                                type="text"
+                                size="sm"
+                                placeholder=""
+                                autocomplete="off"
 
-                        ></b-form-input>
-                    </b-form-group>
-                </b-col>
-                <b-col>
-                    <b-form-group
-                        id="input-group-3"
-                        label="User Demo (Free):"
-                        label-for="user_demofree"
-                        description="">
-                        <b-form-input
-                            id="user_demofree"
-                            v-model="formaddedit.user_demofree"
-                            type="text"
-                            size="sm"
-                            placeholder=""
-                            autocomplete="off"
+                            ></b-form-input>
+                        </b-form-group>
+                    </b-col>
+                    <b-col>
+                        <b-form-group
+                            id="input-group-3"
+                            label="User Demo (Free):"
+                            label-for="user_demofree"
+                            description="">
+                            <b-form-input
+                                id="user_demofree"
+                                v-model="formaddedit.user_demofree"
+                                type="text"
+                                size="sm"
+                                placeholder=""
+                                autocomplete="off"
 
-                        ></b-form-input>
-                    </b-form-group>
-                </b-col>
-            </b-form-row>
+                            ></b-form-input>
+                        </b-form-group>
+                    </b-col>
+                </b-form-row>
             @endif
 
             <b-form-row>
@@ -434,7 +434,7 @@
                     clearImage() {
                         this.trigger++;
                         this.formaddedit.filepic = '';
-                        // console.log('Clear :' + this.formaddedit.filepic);
+
                     },
                     handleUpload(value) {
                         this.fileupload = value;
@@ -494,55 +494,84 @@
                         })
                     },
                     async loadDebug(id, method) {
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddebug') }}", {
-                            id: id,
-                            method: method
-                        });
 
-                        document.getElementById('body').textContent = JSON.stringify(JSON.parse(response.data.debug.body), null, 2);
-                        document.getElementById('json').textContent = JSON.stringify(response.data.debug.json, null, 2);
-                        document.getElementById('successful').textContent = response.data.debug.successful.toString();
-                        document.getElementById('failed').textContent = response.data.debug.failed.toString();
-                        document.getElementById('clientError').textContent = response.data.debug.clientError.toString();
-                        document.getElementById('serverError').textContent = response.data.debug.serverError.toString();
+                        try {
 
+                            const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddebug') }}", {
+                                id: id,
+                                method: method
+                            });
+
+                            const response = await responses;
+
+                            $.each(response.data.debug, function (k, v) {
+                                document.getElementById('body').textContent += JSON.stringify(JSON.parse(v.body), null, 2);
+                                document.getElementById('json').textContent += JSON.stringify(v.json, null, 2);
+                                document.getElementById('successful').textContent += v.successful.toString();
+                                document.getElementById('failed').textContent += v.failed.toString();
+                                document.getElementById('clientError').textContent += v.clientError.toString();
+                                document.getElementById('serverError').textContent += v.serverError.toString();
+                            });
+
+                        } catch (error) {
+                            console.error(error.message)
+                        }
 
                     },
                     async loadDebugFree(id, method) {
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddebugfree') }}", {
-                            id: id,
-                            method: method
-                        });
 
-                        document.getElementById('body_free').textContent = JSON.stringify(JSON.parse(response.data.debug.body), null, 2);
-                        document.getElementById('json_free').textContent = JSON.stringify(response.data.debug.json, null, 2);
-                        document.getElementById('successful_free').textContent = response.data.debug.successful.toString();
-                        document.getElementById('failed_free').textContent = response.data.debug.failed.toString();
-                        document.getElementById('clientError_free').textContent = response.data.debug.clientError.toString();
-                        document.getElementById('serverError_free').textContent = response.data.debug.serverError.toString();
+                        try {
 
+                            const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddebugfree') }}", {
+                                id: id,
+                                method: method
+                            });
+
+                            const response = await responses;
+
+                            $.each(response.data.debug, function (k, v) {
+                                document.getElementById('body_free').textContent = JSON.stringify(JSON.parse(v.body), null, 2);
+                                document.getElementById('json_free').textContent = JSON.stringify(v.json, null, 2);
+                                document.getElementById('successful_free').textContent = v.successful.toString();
+                                document.getElementById('failed_free').textContent = v.failed.toString();
+                                document.getElementById('clientError_free').textContent = v.clientError.toString();
+                                document.getElementById('serverError_free').textContent = v.serverError.toString();
+                            });
+
+                        } catch (error) {
+                            console.error(error.message)
+                        }
 
                     },
                     async loadData() {
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
-                        this.formaddedit = {
-                            name: response.data.data.name,
-                            game_type: response.data.data.game_type,
-                            user_demo: response.data.data.user_demo,
-                            user_demofree: response.data.data.user_demofree,
-                            sort: response.data.data.sort,
-                            link_ios: response.data.data.link_ios,
-                            link_android: response.data.data.link_android,
-                            link_web: response.data.data.link_web,
-                            batch_game: response.data.data.batch_game,
-                            auto_open: response.data.data.auto_open,
-                            status_open: response.data.data.status_open,
-                            enable: response.data.data.enable,
 
-                        };
-                        if (response.data.data.filepic) {
-                            this.trigger++;
-                            this.formaddedit.filepic = response.data.data.filepic;
+                        try {
+                            const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
+
+                            const response = await responses;
+
+                            this.formaddedit = {
+                                name: response.data.data.name,
+                                game_type: response.data.data.game_type,
+                                user_demo: response.data.data.user_demo,
+                                user_demofree: response.data.data.user_demofree,
+                                sort: response.data.data.sort,
+                                link_ios: response.data.data.link_ios,
+                                link_android: response.data.data.link_android,
+                                link_web: response.data.data.link_web,
+                                batch_game: response.data.data.batch_game,
+                                auto_open: response.data.data.auto_open,
+                                status_open: response.data.data.status_open,
+                                enable: response.data.data.enable,
+
+                            };
+                            if (response.data.data.filepic) {
+                                this.trigger++;
+                                this.formaddedit.filepic = response.data.data.filepic;
+                            }
+
+                        } catch (error) {
+                            console.log(error)
                         }
                     },
                     addEditSubmitNew(event) {

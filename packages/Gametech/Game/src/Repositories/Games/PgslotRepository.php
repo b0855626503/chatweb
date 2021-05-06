@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Http;
 
 class PgslotRepository extends Repository
 {
+    protected $responses;
+
     protected $method;
 
     protected $debug;
@@ -49,7 +51,33 @@ class PgslotRepository extends Repository
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
 
+        $this->responses = [];
+
         parent::__construct($app);
+    }
+
+    public function Debug($response, $custom = false)
+    {
+
+        if (!$custom) {
+            $return['body'] = $response->body();
+            $return['json'] = $response->json();
+            $return['successful'] = $response->successful();
+            $return['failed'] = $response->failed();
+            $return['clientError'] = $response->clientError();
+            $return['serverError'] = $response->serverError();
+        } else {
+            $return['body'] = json_encode($response);
+            $return['json'] = $response;
+            $return['successful'] = 1;
+            $return['failed'] = 1;
+            $return['clientError'] = 1;
+            $return['serverError'] = 1;
+        }
+
+        $this->responses[] = $return;
+
+
     }
 
     public function GameCurl($param, $action)
@@ -60,26 +88,20 @@ class PgslotRepository extends Repository
         $hash = hash_pbkdf2("sha512", $postString, $this->secretkey, 1000, 64, true);
         $signature = base64_encode($hash);
 
-        return Http::timeout(15)->withHeaders([
+        $response = Http::timeout(15)->withHeaders([
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-store',
             'x-amb-signature' => $signature,
         ])->post($url, $param);
 
+        if ($this->debug) {
+            $this->Debug($response);
+        }
+
+        return $response;
+
     }
 
-    public function Debug($response)
-    {
-
-        $return['debug']['body'][] = $response->body();
-        $return['debug']['json'][] = $response->json();
-        $return['debug']['successful'][] = $response->successful();
-        $return['debug']['failed'][] = $response->failed();
-        $return['debug']['clientError'][] = $response->clientError();
-        $return['debug']['serverError'][] = $response->serverError();
-
-        return $return;
-    }
 
     public function addGameAccount($data): array
     {
@@ -112,8 +134,14 @@ class PgslotRepository extends Repository
         if ($response->exists()) {
             $return['success'] = true;
             $return['account'] = $response->first()->user_name;
+        } else {
+            $return['success'] = false;
+            $return['msg'] = 'ไม่สามารถลงทะเบียนรหัสเกมได้ เนื่องจาก ID เกมหมด โปรดแจ้ง Staff';
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+        }
 
         return $return;
     }
@@ -129,18 +157,14 @@ class PgslotRepository extends Repository
             'agent' => $this->agent
         ];
 
-        $response = $this->GameCurl($param, 'partner/create');
+        $responses = $this->GameCurl($param, 'partner/create');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-
-        if ($response->successful()) {
-            $response = $response->json();
-
+        if ($responses->successful()) {
 
             if ($response['status']['code'] === 0) {
+
                 DB::table('users_pgslot')
                     ->where('user_name', $username)
                     ->update(['date_join' => now()->toDateString(), 'ip' => request()->ip(), 'use_account' => 'Y', 'user_update' => 'SYSTEM']);
@@ -150,7 +174,24 @@ class PgslotRepository extends Repository
                 $return['user_name'] = $username;
                 $return['user_pass'] = $user_pass;
 
+            } else {
+                DB::table('users_pgslot')
+                    ->where('user_name', $username)
+                    ->update(['use_account' => 'Y']);
+
+                $return['success'] = false;
+                $return['msg'] = $response['status']['message'];
             }
+
+        }else{
+
+            $return['success'] = false;
+            $return['msg'] = $response['status']['message'];
+
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -167,19 +208,19 @@ class PgslotRepository extends Repository
             'agent' => $this->agent
         ];
 
-        $response = $this->GameCurl($param, 'partner/password');
+        $responses = $this->GameCurl($param, 'partner/password');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['status']['code'] === 0) {
-                $return['msg'] = $response['status']['message'];
+                $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
 
+            }else{
+                $return['success'] = false;
+                $return['msg'] = $response['status']['message'];
             }
         }
 

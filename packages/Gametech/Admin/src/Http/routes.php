@@ -45,6 +45,9 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
             Route::get('/update', 'CmdController@updatePatch')->name('admin.update.index');
 
+            Route::get('/checkupdate', 'CmdController@checkPatch')->name('admin.checkupdate.index');
+
+
             Route::get('/link', 'CmdController@storeLink');
 
             Route::get('/webservice/start', 'CmdController@webServiceStart');

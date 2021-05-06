@@ -3,11 +3,14 @@
 namespace Gametech\Admin\Http\Controllers;
 
 
+use Codedge\Updater\Traits\UseVersionFile;
 use Illuminate\Support\Facades\Artisan;
 
 
 class CmdController extends AppBaseController
 {
+    use UseVersionFile;
+
     protected $_config;
 
     public function __construct()
@@ -76,7 +79,20 @@ class CmdController extends AppBaseController
 
         }
 
-        return redirect()->back();
+        return redirect()->route('admin.bank_in.index');
+    }
+
+    public function checkPatch(\Codedge\Updater\UpdaterManager $updater)
+    {
+        $this->deleteVersionFile();
+
+        $current = $updater->source()->getVersionInstalled();
+        $versionAvailable = $updater->source()->getVersionAvailable();
+        echo 'Current '.$current;
+        echo '<br>';
+        echo 'Last '.$versionAvailable;
+
+
     }
 
 

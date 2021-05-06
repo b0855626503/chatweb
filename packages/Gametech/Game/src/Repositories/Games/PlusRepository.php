@@ -4,12 +4,13 @@ namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class PlusRepository extends Repository
 {
+    protected $responses;
+
     protected $method;
 
     protected $debug;
@@ -50,50 +51,67 @@ class PlusRepository extends Repository
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
 
+        $this->responses = [];
+
         parent::__construct($app);
     }
 
-    public function GameCurl($param, $action)
+    public function GameCurl($param, $action): Response
     {
         $agentid = $this->agent;
         $agentpass = $this->agentPass;
         $secretkey = $this->secretkey;
         $key = $agentpass . $secretkey;
 
-        $message = json_encode($param,JSON_UNESCAPED_UNICODE);
+        $message = json_encode($param, JSON_UNESCAPED_UNICODE);
         $hash = hash_hmac('SHA256', $message, $key);
 
 
-        $url = $this->url . $action . '?hash=' .$hash. '&from=' . $agentid . '&secret=' . $agentpass;
+        $url = $this->url . $action . '?hash=' . $hash . '&from=' . $agentid . '&secret=' . $agentpass;
 
 
-        return Http::timeout(15)->withHeaders([
+        $response = Http::timeout(15)->withHeaders([
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-store'
         ])->post($url, $param);
 
+        if ($this->debug) {
+            $this->Debug($response);
+        }
 
+        return $response;
 
     }
 
-    public function Debug($response)
+    public function Debug($response, $custom = false)
     {
 
-        $return['debug']['body'][] = $response->body();
-        $return['debug']['json'][] = $response->json();
-        $return['debug']['successful'][] = $response->successful();
-        $return['debug']['failed'][] = $response->failed();
-        $return['debug']['clientError'][] = $response->clientError();
-        $return['debug']['serverError'][] = $response->serverError();
+        if (!$custom) {
+            $return['body'] = $response->body();
+            $return['json'] = $response->json();
+            $return['successful'] = $response->successful();
+            $return['failed'] = $response->failed();
+            $return['clientError'] = $response->clientError();
+            $return['serverError'] = $response->serverError();
+        } else {
+            $return['body'] = json_encode($response);
+            $return['json'] = $response;
+            $return['successful'] = 1;
+            $return['failed'] = 1;
+            $return['clientError'] = 1;
+            $return['serverError'] = 1;
+        }
 
-        return $return;
+        $this->responses[] = $return;
+
+
     }
 
     public function addGameAccount($data): array
     {
         $result = $this->newUser();
         if ($result['success'] === true) {
-            $account = '';
+            $account = $result['account'];
             $result = $this->addUser($account, $data);
         }
 
@@ -103,6 +121,11 @@ class PlusRepository extends Repository
     public function newUser(): array
     {
         $return['success'] = true;
+        $return['account'] = '';
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+        }
 
         return $return;
     }
@@ -121,17 +144,11 @@ class PlusRepository extends Repository
             'desc' => 'Player',
         ];
 
-        $response = $this->GameCurl($param, 'addAccount');
+        $responses = $this->GameCurl($param, 'addAccount');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-
-
-        if ($response->successful()) {
-
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['status'] === 'success') {
 
@@ -140,16 +157,27 @@ class PlusRepository extends Repository
                 $return['user_name'] = $response['account'];
                 $return['user_pass'] = $user_pass;
 
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['message'];
             }
+        } else {
+
+            $return['success'] = false;
+            $return['msg'] = $response['message'];
+
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
     public function changePass($data): array
     {
         $return['success'] = false;
-        $return['msg'] = 'ไม่สามารถทำรายการได้';
+
 
         $param = [
             'account' => $data['user_name'],
@@ -160,21 +188,29 @@ class PlusRepository extends Repository
         ];
 
 
-        $response = $this->GameCurl($param, 'editAccount');
+        $responses = $this->GameCurl($param, 'editAccount');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
+        $response = $responses->json();
+
+        if ($responses->successful()) {
+
+            if ($response['success'] === true) {
+
+                $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
+                $return['success'] = true;
+
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['message'];
+            }
+        } else {
+
+            $return['success'] = false;
+            $return['msg'] = $response['message'];
         }
 
-//        dd($return);
-
-        if ($response->successful()) {
-            $response = $response->json();
-
-            if ($response['status'] === 'success') {
-                $return['success'] = true;
-            }
-            $return['msg'] = isset($response['msg']) ?: 'ทำรายการสำเร็จ';
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -190,21 +226,30 @@ class PlusRepository extends Repository
         ];
 
 
-        $response = $this->GameCurl($param, 'getAccount');
+        $responses = $this->GameCurl($param, 'getAccount');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['status'] === 'success') {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['score'] = $response['score'] * 10;
 
+            } else {
+
+                $return['success'] = false;
+                $return['msg'] = $response['message'];
             }
+        } else {
+
+            $return['success'] = false;
+            $return['msg'] = $response['message'];
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -218,39 +263,59 @@ class PlusRepository extends Repository
 
         if ($score < 1) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
             $transID = "DP" . date('YmdHis');
             $before = $this->viewBalance($username);
+            if ($before['success'] == true) {
+                $param = [
+                    'account' => $username,
+                    'setScore' => strval($score)
+                ];
 
-            $param = [
-                'account' => $username,
-                'setScore' => strval($score)
-            ];
+                $responses = $this->GameCurl($param, 'setScore');
+                $response = $responses->json();
 
-            $response = $this->GameCurl($param, 'setScore');
+                if ($responses->successful()) {
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+                    if ($response['status'] === 'success') {
 
+                        $after = $this->viewBalance($username);
 
-            if ($response->successful()) {
-                $response = $response->json();
+                        if ($after['success'] == true) {
 
-                if ($response['status'] === 'success') {
+                            $return['success'] = true;
+                            $return['ref_id'] = (isset($response['acc']) ?: $transID);
+                            $return['after'] = $after['score'];
+                            $return['before'] = $before['score'];
 
-                    $after = $this->viewBalance($username);
+                        } else {
 
-                    $return['success'] = true;
-                    $return['ref_id'] = (isset($response['acc']) ? : $transID);
-                    $return['after'] = $after['score'];
-                    $return['before'] = $before['score'];
+                            $return['success'] = false;
+                            $return['msg'] = $after['msg'];
+                        }
 
+                    } else {
+                        $return['success'] = false;
+                        $return['msg'] = $response['message'];
+                    }
                 }
-            }
+            } else {
 
+                $return['success'] = false;
+                $return['msg'] = $before['msg'];
+            }
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -264,39 +329,60 @@ class PlusRepository extends Repository
 
         if ($score < 1) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
             $transID = "WD" . date('YmdHis');
             $before = $this->viewBalance($username);
+            if ($before['success'] == true) {
+                $score = ($score * -1);
 
-            $score = ($score * -1);
+                $param = [
+                    'account' => $username,
+                    'setScore' => strval($score)
+                ];
 
-            $param = [
-                'account' => $username,
-                'setScore' => strval($score)
-            ];
+                $responses = $this->GameCurl($param, 'setScore');
+                $response = $responses->json();
 
-            $response = $this->GameCurl($param, 'setScore');
+                if ($responses->successful()) {
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+                    if ($response['status'] === 'success') {
 
-            if ($response->successful()) {
-                $response = $response->json();
+                        $after = $this->viewBalance($username);
+                        if ($after['success'] == true) {
 
-                if ($response['status'] === 'success') {
+                            $return['success'] = true;
+                            $return['ref_id'] = (isset($response['acc']) ?: $transID);
+                            $return['after'] = $after['score'];
+                            $return['before'] = $before['score'];
 
-                    $after = $this->viewBalance($username);
+                        } else {
 
-                    $return['success'] = true;
-                    $return['ref_id'] = (isset($response['acc']) ? : $transID);
-                    $return['after'] = $after['score'];
-                    $return['before'] = $before['score'];
+                            $return['success'] = false;
+                            $return['msg'] = $after['msg'];
+                        }
 
+                    } else {
+                        $return['success'] = false;
+                        $return['msg'] = $response['message'];
+                    }
                 }
+            } else {
+
+                $return['success'] = false;
+                $return['msg'] = $before['msg'];
             }
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;

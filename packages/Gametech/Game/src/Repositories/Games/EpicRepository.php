@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Http;
 
 class EpicRepository extends Repository
 {
+    protected $responses;
+
     protected $method;
 
     protected $debug;
@@ -26,7 +28,7 @@ class EpicRepository extends Repository
 
     protected $auth;
 
-    public function __construct($method, $debug,App $app)
+    public function __construct($method, $debug, App $app)
     {
         $game = 'epic';
 
@@ -48,21 +50,34 @@ class EpicRepository extends Repository
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
 
+        $this->responses = [];
+
         parent::__construct($app);
     }
 
 
-    public function Debug($response)
+    public function Debug($response, $custom = false)
     {
 
-        $return['debug']['body'][] = $response->body();
-        $return['debug']['json'][] = $response->json();
-        $return['debug']['successful'][] = $response->successful();
-        $return['debug']['failed'][] = $response->failed();
-        $return['debug']['clientError'][] = $response->clientError();
-        $return['debug']['serverError'][] = $response->serverError();
+        if (!$custom) {
+            $return['body'] = $response->body();
+            $return['json'] = $response->json();
+            $return['successful'] = $response->successful();
+            $return['failed'] = $response->failed();
+            $return['clientError'] = $response->clientError();
+            $return['serverError'] = $response->serverError();
+        } else {
+            $return['body'] = json_encode($response);
+            $return['json'] = $response;
+            $return['successful'] = 1;
+            $return['failed'] = 1;
+            $return['clientError'] = 1;
+            $return['serverError'] = 1;
+        }
 
-        return $return;
+        $this->responses[] = $return;
+
+
     }
 
     public function GameCurl($param, $action)
@@ -70,19 +85,23 @@ class EpicRepository extends Repository
 
         $url = $this->url . $action;
 
-        return Http::timeout(15)->withHeaders([
+        $response = Http::timeout(15)->withHeaders([
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-store'
         ])->post($url, $param);
 
+        if ($this->debug) {
+            $this->Debug($response);
+        }
 
+        return $response;
     }
 
     public function addGameAccount($data): array
     {
         $result = $this->newUser();
         if ($result['success'] === true) {
-            $account = '';
+            $account = $result['account'];
             $result = $this->addUser($account, $data);
         }
 
@@ -92,7 +111,11 @@ class EpicRepository extends Repository
     public function newUser(): array
     {
         $return['success'] = true;
+        $return['account'] = '';
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+        }
         return $return;
     }
 
@@ -108,25 +131,30 @@ class EpicRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $response = $this->GameCurl($param, 'createmember');
+        $responses = $this->GameCurl($param, 'createmember');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['success'] === true) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['user_name'] = $response['player_id'];
                 $return['user_pass'] = $response['player_password'];
-
+            } else {
+                $return['success'] = true;
+                $return['msg'] = $response['error'];
             }
+
+        } else {
+            $return['success'] = true;
+            $return['msg'] = $response['error'];
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -142,20 +170,30 @@ class EpicRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $response = $this->GameCurl($param, 'updatepassword');
+        $responses = $this->GameCurl($param, 'updatepassword');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['success'] === true) {
-                $return['msg'] = 'Complete';
+
+                $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
 
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['error'];
+
             }
+
+        } else {
+            $return['success'] = false;
+            $return['msg'] = $response['error'];
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -173,21 +211,31 @@ class EpicRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $response = $this->GameCurl($param, 'newgetbalance');
+        $responses = $this->GameCurl($param, 'newgetbalance');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['success'] === true) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['score'] = doubleval($response['balance']);
 
+            } else {
+
+                $return['success'] = false;
+                $return['msg'] = $response['error'];
+
             }
+        } else {
+            $return['success'] = false;
+            $return['msg'] = $response['error'];
+
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -197,15 +245,21 @@ class EpicRepository extends Repository
     {
         $return['success'] = false;
 
-        $ip = request()->ip();
 
         $score = $amount;
 
         if ($score < 0) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
+            $transID = "DP" . date('YmdHis');
 
             $param = [
                 'agent_id' => $this->agent,
@@ -215,24 +269,34 @@ class EpicRepository extends Repository
                 'amount' => $score
             ];
 
-            $response = $this->GameCurl($param, 'deposit');
+            $responses = $this->GameCurl($param, 'deposit');
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+            $response = $responses->json();
 
-            if ($response->successful()) {
-                $response = $response->json();
+            if ($responses->successful()) {
 
                 if ($response['success'] === true) {
                     $return['success'] = true;
-                    $return['ref_id'] = "DP" . date('YmdHis');
+                    $return['ref_id'] = $transID;
                     $return['after'] = $response['after_balance'];
                     $return['before'] = $response['before_balance'];
+                } else {
+
+                    $return['success'] = false;
+                    $return['msg'] = $response['error'];
+
                 }
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['error'];
             }
 
         }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
+
 
         return $return;
     }
@@ -241,14 +305,21 @@ class EpicRepository extends Repository
     {
         $return['success'] = false;
 
-        $ip = request()->ip();
+
         $score = $amount;
 
         if ($score < 1) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
+            $transID = "WD" . date('YmdHis');
             $param = [
                 'agent_id' => $this->agent,
                 'password' => $this->agentPass,
@@ -257,23 +328,30 @@ class EpicRepository extends Repository
                 'amount' => $score
             ];
 
-            $response = $this->GameCurl($param, 'withdrawal');
+            $responses = $this->GameCurl($param, 'withdrawal');
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+            $response = $responses->json();
 
-            if ($response->successful()) {
-                $response = $response->json();
+            if ($responses->successful()) {
 
                 if ($response['success'] === true) {
                     $return['success'] = true;
-                    $return['ref_id'] = "WD" . date('YmdHis');
+                    $return['ref_id'] = $transID;
                     $return['after'] = $response['after_balance'];
                     $return['before'] = $response['before_balance'];
+                } else {
+                    $return['success'] = false;
+                    $return['msg'] = $response['error'];
                 }
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['error'];
             }
 
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;

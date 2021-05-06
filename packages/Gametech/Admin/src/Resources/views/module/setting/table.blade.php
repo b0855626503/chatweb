@@ -43,6 +43,59 @@
                                     ></b-form-select>
 
                                 </b-form-group>
+
+                                <b-form-group
+                                    id="input-group-verify_sms"
+                                    label="ใช้การยืนยัน ผ่าน SMS OTP:"
+                                    label-for="verify_sms"
+                                    description="">
+
+                                    <b-form-select
+                                        id="verify_sms"
+                                        name="verify_sms"
+                                        v-model="formaddedit.verify_sms"
+                                        :options="option.verify_sms"
+                                        size="sm"
+                                        required
+                                    ></b-form-select>
+                                </b-form-group>
+
+                                <b-form-group
+                                    id="input-group-sms_username"
+                                    label="SMS Username :"
+                                    label-for="sms_username"
+                                    description="">
+                                    <b-form-input
+                                        id="sms_username"
+                                        name="sms_username"
+                                        v-model="formaddedit.sms_username"
+                                        type="text"
+                                        size="sm"
+                                        placeholder=""
+                                        autocomplete="off"
+
+
+                                    ></b-form-input>
+                                </b-form-group>
+
+                                <b-form-group
+                                    id="input-group-sms_password"
+                                    label="SMS Password :"
+                                    label-for="sms_password"
+                                    description="">
+                                    <b-form-input
+                                        id="sms_password"
+                                        name="sms_password"
+                                        v-model="formaddedit.sms_password"
+                                        type="text"
+                                        size="sm"
+                                        placeholder=""
+                                        autocomplete="off"
+
+
+                                    ></b-form-input>
+                                </b-form-group>
+
                             </b-card-text>
                         </b-card>
                     </b-col>
@@ -981,6 +1034,7 @@
                             diamond_per_bill: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             diamond_transfer_in: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             verify_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
+                            verify_sms: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             admin_navbar_color: [
                                 {value: 'navbar-white navbar-light', text: 'สีขาว'},
                                 {value: 'navbar-gray-dark', text: 'สีเทาดำ'},

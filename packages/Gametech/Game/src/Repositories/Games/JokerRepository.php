@@ -4,12 +4,15 @@ namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class JokerRepository extends Repository
 {
+    protected $responses;
+
     protected $method;
 
     protected $debug;
@@ -50,24 +53,37 @@ class JokerRepository extends Repository
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
 
+        $this->responses = [];
+
         parent::__construct($app);
     }
 
 
-    public function Debug($response)
+    public function Debug($response, $custom = false)
     {
 
-        $return['debug']['body'][] = $response->body();
-        $return['debug']['json'][] = $response->json();
-        $return['debug']['successful'][] = $response->successful();
-        $return['debug']['failed'][] = $response->failed();
-        $return['debug']['clientError'][] = $response->clientError();
-        $return['debug']['serverError'][] = $response->serverError();
+        if (!$custom) {
+            $return['body'] = $response->body();
+            $return['json'] = $response->json();
+            $return['successful'] = $response->successful();
+            $return['failed'] = $response->failed();
+            $return['clientError'] = $response->clientError();
+            $return['serverError'] = $response->serverError();
+        } else {
+            $return['body'] = json_encode($response);
+            $return['json'] = $response;
+            $return['successful'] = 1;
+            $return['failed'] = 1;
+            $return['clientError'] = 1;
+            $return['serverError'] = 1;
+        }
 
-        return $return;
+        $this->responses[] = $return;
+
+
     }
 
-    public function GameCurl($param, $action)
+    public function GameCurl($param, $action): Response
     {
 
         $postString = Arr::query($param);
@@ -76,9 +92,13 @@ class JokerRepository extends Repository
         $signature = urlencode($signature);
         $url = $this->url . "?AppID=" . $this->login . "&Signature=$signature";
 
-        return Http::timeout(15)->asForm()->post($url, $param);
+        $response = Http::timeout(15)->asForm()->post($url, $param);
 
+        if ($this->debug) {
+            $this->Debug($response);
+        }
 
+        return $response;
     }
 
     public function addGameAccount($data): array
@@ -112,9 +132,14 @@ class JokerRepository extends Repository
         if ($response->exists()) {
             $return['success'] = true;
             $return['account'] = $response->first()->user_name;
+        } else {
+            $return['success'] = false;
+            $return['msg'] = 'ไม่สามารถลงทะเบียนรหัสเกมได้ เนื่องจาก ID เกมหมด โปรดแจ้ง Staff';
         }
 
-
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+        }
         return $return;
     }
 
@@ -129,16 +154,11 @@ class JokerRepository extends Repository
             'Username' => $username
         ];
 
-        $response = $this->GameCurl($param, '');
+        $responses = $this->GameCurl($param, '');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-
-        if ($response->successful()) {
-
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['Status'] === 'Created') {
                 $this->changePass([
@@ -155,9 +175,26 @@ class JokerRepository extends Repository
                 $return['user_name'] = $username;
                 $return['user_pass'] = $user_pass;
 
+            } else {
+
+                DB::table('users_joker')
+                    ->where('user_name', $username)
+                    ->update(['use_account' => 'Y']);
+
+                $return['msg'] = $response['Message'];
+                $return['success'] = false;
+
             }
+        } else {
+
+            $return['msg'] = $response['Message'];
+            $return['success'] = false;
+
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -172,30 +209,35 @@ class JokerRepository extends Repository
             'Username' => $data['user_name']
         ];
 
-        $response = $this->GameCurl($param, '');
+        $responses = $this->GameCurl($param, '');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
-
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['Status'] === 'OK') {
-                $return['msg'] = 'Complete';
+                $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
-
+            } else {
+                $return['msg'] = $response['Message'];
+                $return['success'] = false;
             }
+        } else {
+            $return['msg'] = $response['Message'];
+            $return['success'] = false;
         }
 
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
     public function viewBalance($username): array
     {
         $return['success'] = false;
-        $return['score']  = 0;
+        $return['score'] = 0;
 
         $param = [
             'Method' => 'GC',
@@ -204,24 +246,28 @@ class JokerRepository extends Repository
         ];
 
 
+        $responses = $this->GameCurl($param, '');
 
-        $response = $this->GameCurl($param, '');
+        $response = $responses->json();
 
-        if ($this->debug) {
-            return $this->Debug($response);
-
-
-        }
-
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['Username'] === $username) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['score'] = $response['Credit'];
 
+            } else {
+                $return['msg'] = $response['Message'];
+                $return['success'] = false;
             }
+        } else {
+            $return['msg'] = $response['Message'];
+            $return['success'] = false;
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -235,8 +281,14 @@ class JokerRepository extends Repository
 
         if ($score < 0) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
             $transID = "DP" . date('YmdHis') . rand(100, 999);
             $param = [
@@ -248,16 +300,10 @@ class JokerRepository extends Repository
             ];
 
 
-            $response = $this->GameCurl($param, '');
+            $responses = $this->GameCurl($param, '');
+            $response = $responses->json();
 
-
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
-
-
-            if ($response->successful()) {
-                $response = $response->json();
+            if ($responses->successful()) {
 
                 if ($response['Username'] === $username) {
                     $return['success'] = true;
@@ -265,9 +311,19 @@ class JokerRepository extends Repository
                     $return['after'] = $response['Credit'];
                     $return['before'] = $response['BeforeCredit'];
 
+                } else {
+                    $return['msg'] = $response['Message'];
+                    $return['success'] = false;
                 }
+            } else {
+                $return['msg'] = $response['Message'];
+                $return['success'] = false;
             }
 
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -282,8 +338,14 @@ class JokerRepository extends Repository
 
         if ($score < 1) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
             $score = $score * -1;
             $transID = "WD" . date('YmdHis') . rand(100, 999);
@@ -295,23 +357,30 @@ class JokerRepository extends Repository
                 'Username' => $username
             ];
 
-            $response = $this->GameCurl($param, '');
+            $responses = $this->GameCurl($param, '');
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+            $response = $responses->json();
 
-            if ($response->successful()) {
-                $response = $response->json();
+            if ($responses->successful()) {
 
                 if ($response['Username'] == $username) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = $response['Credit'];
                     $return['before'] = $response['BeforeCredit'];
+                } else {
+                    $return['msg'] = $response['Message'];
+                    $return['success'] = false;
                 }
+            } else {
+                $return['msg'] = $response['Message'];
+                $return['success'] = false;
             }
 
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;

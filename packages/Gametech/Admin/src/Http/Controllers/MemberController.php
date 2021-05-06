@@ -176,9 +176,13 @@ class MemberController extends AppBaseController
             return $this->sendError('ยอดเงินไม่ถูกต้อง',200);
         }
 
+        $detail = 'เพิ่มรายการฝากเงินโดย Staff : '.$user;
+
+        $hash = md5($account . $datenow . $amount . $detail);
+
         $data = [
             'bank' => strtolower($bank->shortcode.'_'.$bank_account->acc_no),
-            'detail' => 'เพิ่มรายการฝากเงินโดย Staff : '.$user,
+            'detail' => $detail,
             'account_code' => $account,
             'autocheck' => 'W',
             'bankstatus' => 1,
@@ -186,6 +190,7 @@ class MemberController extends AppBaseController
             'bank_time' => $datenow,
             'channel' => 'MANUAL',
             'value' => $amount,
+            'tx_hash' => $hash,
             'status' => 0,
             'ip_admin' => $ip,
             'member_topup' => $id,

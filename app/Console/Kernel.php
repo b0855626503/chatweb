@@ -10,6 +10,7 @@ use Gametech\Auto\Console\Commands\DailyStatMonth;
 use Gametech\Auto\Console\Commands\GetPayment;
 use Gametech\Auto\Console\Commands\GetPaymentAcc;
 use Gametech\Auto\Console\Commands\MemberIC;
+use Gametech\Auto\Console\Commands\OptimizeTable;
 use Gametech\Auto\Console\Commands\PostUpdate;
 use Gametech\Auto\Console\Commands\TopupPayment;
 use Gametech\Auto\Console\Commands\UpdateHash;
@@ -36,7 +37,7 @@ class Kernel extends ConsoleKernel
         DailyStatMonth::class,
         UpdateHash::class,
         PostUpdate::class,
-
+        OptimizeTable::class
     ];
 
 

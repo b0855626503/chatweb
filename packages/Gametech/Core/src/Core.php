@@ -23,6 +23,8 @@ class Core
         return $this->configRepository->first();
     }
 
+
+
     /**
      * Format and convert price with currency symbol
      *

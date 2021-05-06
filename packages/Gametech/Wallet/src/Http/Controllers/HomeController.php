@@ -167,7 +167,7 @@ class HomeController extends AppBaseController
             if ($response['success'] === true) {
                 return $this->sendResponseNew($response['data'], 'ระบบได้ทำการสร้างบัญชีเกม เรียบร้อยแล้ว');
             } else {
-                return $this->sendError('เกิดข้อผิดพลาด ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้งในภายหลัง', 200);
+                return $this->sendError($response['msg'], 200);
             }
         } else {
             return $this->sendError('ไม่สามารถดำเนินการได้ คุณมีบัญชีเกมนี้ในระบบแล้ว', 200);
@@ -183,7 +183,7 @@ class HomeController extends AppBaseController
             if ($response['success'] === true) {
                 return $this->sendResponseNew($response['data'], 'ระบบได้ทำการสร้างบัญชีเกม เรียบร้อยแล้ว');
             } else {
-                return $this->sendError('เกิดข้อผิดพลาด ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้งในภายหลัง', 200);
+                return $this->sendError($response['msg'], 200);
             }
         } else {
             return $this->sendError('ไม่สามารถดำเนินการได้ คุณมีบัญชีเกมนี้ในระบบแล้ว', 200);

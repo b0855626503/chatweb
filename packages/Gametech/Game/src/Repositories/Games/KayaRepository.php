@@ -5,11 +5,14 @@ namespace Gametech\Game\Repositories\Games;
 use App\Libraries\Agent;
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class KayaRepository extends Repository
 {
+    protected $responses;
+
     protected $method;
 
     protected $debug;
@@ -50,24 +53,37 @@ class KayaRepository extends Repository
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
 
+        $this->responses = [];
+
         parent::__construct($app);
     }
 
 
-    public function Debug($response)
+    public function Debug($response, $custom = false)
     {
 
-        $return['debug']['body'][] = $response->body();
-        $return['debug']['json'][] = $response->json();
-        $return['debug']['successful'][] = $response->successful();
-        $return['debug']['failed'][] = $response->failed();
-        $return['debug']['clientError'][] = $response->clientError();
-        $return['debug']['serverError'][] = $response->serverError();
+        if (!$custom) {
+            $return['body'] = $response->body();
+            $return['json'] = $response->json();
+            $return['successful'] = $response->successful();
+            $return['failed'] = $response->failed();
+            $return['clientError'] = $response->clientError();
+            $return['serverError'] = $response->serverError();
+        } else {
+            $return['body'] = json_encode($response);
+            $return['json'] = $response;
+            $return['successful'] = 1;
+            $return['failed'] = 1;
+            $return['clientError'] = 1;
+            $return['serverError'] = 1;
+        }
 
-        return $return;
+        $this->responses[] = $return;
+
+
     }
 
-    public function GameCurl($param, $action)
+    public function GameCurl($param, $action): Response
     {
 
         $pAgent = new Agent($this->secretkey, $this->passkey, $this->url . 'accountcreate');
@@ -76,13 +92,17 @@ class KayaRepository extends Repository
         $url = $this->url . $action;
 
 
-
-        return Http::timeout(15)->withHeaders([
+        $response = Http::timeout(15)->withHeaders([
             'Content-Type' => 'application/json',
             'Cache-Control' => 'no-store',
             'AES-ENCODE' => $signMsg
         ])->post($url, $param);
 
+        if ($this->debug) {
+            $this->Debug($response);
+        }
+
+        return $response;
 
     }
 
@@ -117,6 +137,13 @@ class KayaRepository extends Repository
         if ($response->exists()) {
             $return['success'] = true;
             $return['account'] = $response->first()->user_name;
+        } else {
+            $return['success'] = false;
+            $return['msg'] = 'ไม่สามารถลงทะเบียนรหัสเกมได้ เนื่องจาก ID เกมหมด โปรดแจ้ง Staff';
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
         }
 
 
@@ -136,23 +163,16 @@ class KayaRepository extends Repository
             'timeStamp' => time()
         ];
 
-//        dd($param);
 
-        $response = $this->GameCurl($param, 'accountcreate');
+        $responses = $this->GameCurl($param, 'accountcreate');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-//        dd($return);
+        if ($responses->successful()) {
 
-        if ($response->successful()) {
+            if ($response['rtStatus'] == 1) {
 
-            $response = $response->json();
-
-            if (isset($response['rtStatus']) == 1) {
-
-                if (isset($response['accountName'])) {
+                if (!empty($response['accountName'])) {
 
                     $this->changePass([
                         'user_name' => $response['accountName'],
@@ -164,16 +184,31 @@ class KayaRepository extends Repository
                         ->update(['date_join' => now()->toDateString(), 'ip' => request()->ip(), 'use_account' => 'Y', 'user_update' => 'SYSTEM']);
 
 
+                    $return['msg'] = 'Complete';
+                    $return['success'] = true;
+                    $return['user_name'] = $response['accountName'];
+                    $return['user_pass'] = $user_pass;
+
+                } else {
+                    $return['success'] = true;
+                    $return['msg'] = $response['errorMsg'];
                 }
 
-                $return['msg'] = 'Complete';
-                $return['success'] = true;
-                $return['user_name'] = $response['accountName'];
-                $return['user_pass'] = $user_pass;
 
+            } else {
+
+                $return['success'] = false;
+                $return['msg'] = $response['errorMsg'];
             }
+
+        } else {
+            $return['success'] = false;
+            $return['msg'] = $response['errorMsg'];
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -188,24 +223,28 @@ class KayaRepository extends Repository
             'timeStamp' => time()
         ];
 
-        $response = $this->GameCurl($param, 'accountpassword');
+        $responses = $this->GameCurl($param, 'accountpassword');
+        $response = $responses->json();
 
+        if ($responses->successful()) {
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
-
-        if ($response->successful()) {
-            $response = $response->json();
-
-            if (isset($response['rtStatus']) == 1) {
-
-                $return['msg'] = 'Complete';
+            if ($response['rtStatus'] == 1) {
+                $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
 
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['errorMsg'];
+
             }
+        } else {
+            $return['success'] = false;
+            $return['msg'] = $response['errorMsg'];
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -219,24 +258,32 @@ class KayaRepository extends Repository
             'timeStamp' => time()
         ];
 
-        $response = $this->GameCurl($param, 'accountbalance');
+        $responses = $this->GameCurl($param, 'accountbalance');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
+        if ($responses->successful()) {
 
-            $response = $response->json();
+            if ($response['rtStatus'] == 1) {
 
-            if (isset($response['rtStatus']) == 1) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['score'] = ($response['balance'] / 1000);
+            } else {
+
+                $return['msg'] = $response['errorMsg'];
+                $return['success'] = false;
+
             }
 
+        } else {
+            $return['msg'] = $response['errorMsg'];
+            $return['success'] = false;
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -248,8 +295,14 @@ class KayaRepository extends Repository
 
         if ($score < 0) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
             $transID = "DP" . date('YmdHis');
             $param = [
@@ -260,28 +313,34 @@ class KayaRepository extends Repository
                 'timeStamp' => time()
             ];
 
-            $response = $this->GameCurl($param, 'transferdeposit');
+            $responses = $this->GameCurl($param, 'transferdeposit');
+            $response = $responses->json();
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+            if ($responses->successful()) {
 
-            if ($response->successful()) {
-
-                $response = $response->json();
-
-                if (isset($response['rtStatus']) == 1) {
+                if ($response['rtStatus'] == 1) {
 
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = ($response['afterBalance'] / 1000);
                     $return['before'] = ($response['beforeBalance'] / 1000);
 
+                } else {
+
+                    $return['success'] = false;
+                    $return['msg'] = $response['errorMsg'];
+
                 }
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['errorMsg'];
             }
 
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -294,8 +353,14 @@ class KayaRepository extends Repository
 
         if ($score < 1) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
 
             $transID = "WD" . date('YmdHis');
@@ -307,25 +372,31 @@ class KayaRepository extends Repository
                 'timeStamp' => time()
             ];
 
-            $response = $this->GameCurl($param, 'transferwithdraw');
+            $responses = $this->GameCurl($param, 'transferwithdraw');
+            $response = $responses->json();
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+            if ($responses->successful()) {
 
-            if ($response->successful()) {
-                $response = $response->json();
-
-                if (isset($response['rtStatus']) == 1) {
+                if ($response['rtStatus'] == 1) {
 
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = ($response['afterBalance'] / 1000);
                     $return['before'] = ($response['beforeBalance'] / 1000);
 
+                } else {
+                    $return['success'] = false;
+                    $return['msg'] = $response['errorMsg'];
                 }
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['errorMsg'];
             }
 
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;

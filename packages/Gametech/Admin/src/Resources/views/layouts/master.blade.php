@@ -68,7 +68,6 @@
 <script src="{{ asset('assets/ui/js/ui.js') }}"></script>
 <script src="{{ asset('vendor/toasty/dist/toasty.min.js') }}"></script>
 
-
 @yield('script')
 @stack('scripts')
 </body>
