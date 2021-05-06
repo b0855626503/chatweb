@@ -83,32 +83,6 @@
         </div>
 
     </script>
-    <script>
-
-        Vue.component('setdeposit-slot', {
-            template: '#setdeposit-slot-template',
-            data: function () {
-                return {
-                    sum: 0
-                }
-            },
-            mounted() {
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, result;
-                    [err, result] = await window.to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
-                    if (err) {
-                        return 0;
-                    }
-                    this.sum = result.data.sum;
-                    return this.sum;
-
-                }
-            }
-        });
-    </script>
 
     <script type="text/x-template" id="setwithdraw-slot-template">
 
@@ -125,31 +99,6 @@
             <!-- /.info-box-content -->
         </div>
 
-    </script>
-    <script>
-
-        Vue.component('setwithdraw-slot', {
-            template: '#setwithdraw-slot-template',
-            data: function () {
-                return {
-                    sum: 0
-                }
-            },
-            mounted() {
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, result;
-                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setwithdraw'}));
-                    if (err) {
-                        return 0;
-                    }
-                    this.sum = result.data.sum;
-                    return this.sum;
-                }
-            }
-        });
     </script>
 
     <script type="text/x-template" id="deposit-slot-template">
@@ -168,31 +117,6 @@
         </div>
 
     </script>
-    <script>
-
-        Vue.component('deposit-slot', {
-            template: '#deposit-slot-template',
-            data: function () {
-                return {
-                    sum: 0
-                }
-            },
-            mounted() {
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, result;
-                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit'}));
-                    if (err) {
-                        return 0;
-                    }
-                    this.sum = result.data.sum;
-                    return this.sum;
-                }
-            }
-        });
-    </script>
 
     <script type="text/x-template" id="deposit_wait-slot-template">
 
@@ -210,31 +134,6 @@
         </div>
 
     </script>
-    <script>
-
-        Vue.component('deposit_wait-slot', {
-            template: '#deposit_wait-slot-template',
-            data: function () {
-                return {
-                    sum: 0
-                }
-            },
-            mounted() {
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, result;
-                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit_wait'}));
-                    if (err) {
-                        return 0;
-                    }
-                    this.sum = result.data.sum;
-                    return this.sum;
-                }
-            }
-        });
-    </script>
 
     <script type="text/x-template" id="withdraw-slot-template">
         <div class="info-box">
@@ -251,34 +150,6 @@
         </div>
 
     </script>
-    <script>
-
-        Vue.component('withdraw-slot', {
-            template: '#withdraw-slot-template',
-
-            data: function () {
-                return {
-                    sum: 0
-                }
-            },
-            mounted() {
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, result;
-                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'withdraw'}));
-                    if (err) {
-                        return 0;
-                    }
-                    this.sum = result.data.sum;
-                    return this.sum;
-                }
-            }
-        });
-    </script>
-
-
 
     <script type="text/x-template" id="bonus-slot-template">
         <div class="info-box">
@@ -294,33 +165,6 @@
             <!-- /.info-box-content -->
         </div>
 
-    </script>
-    <!--suppress JSAnnotator -->
-    <script>
-
-        Vue.component('bonus-slot', {
-            template: '#bonus-slot-template',
-
-            data: function () {
-                return {
-                    sum: 0
-                }
-            },
-            mounted() {
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, result;
-                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'bonus'}));
-                    if (err) {
-                        return 0;
-                    }
-                    this.sum = result.data.sum;
-                    return this.sum;
-                }
-            }
-        });
     </script>
 
     <script type="text/x-template" id="balance-slot-template">
@@ -338,32 +182,6 @@
         </div>
 
     </script>
-    <script>
-
-        Vue.component('balance-slot', {
-            template: '#balance-slot-template',
-
-            data: function () {
-                return {
-                    sum: 0
-                }
-            },
-            mounted() {
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, result;
-                    [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'balance'}));
-                    if (err) {
-                        return 0;
-                    }
-                    this.sum = result.data.sum;
-                    return this.sum;
-                }
-            }
-        });
-    </script>
 
     <script type="text/x-template" id="income-slot-template">
         <div class="card">
@@ -379,106 +197,6 @@
             </div>
         </div>
 
-    </script>
-    <script>
-
-        Vue.component('income-slot', {
-            template: '#income-slot-template',
-
-            data: function () {
-                return {
-                    chart: '',
-                }
-            },
-            mounted() {
-                this.chart = $('#income-chart');
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, res;
-                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'income'}));
-                    if (err) {
-                        return 0;
-                    }
-
-                    let ctx = this.chart;
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: res.data.label,
-                            datasets: [{
-                                label: 'ฝาก ',
-                                data: res.data.line_deposit,
-
-                                borderColor: [
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)'
-                                ],
-                                borderWidth: 1
-                            }, {
-                                label: 'ถอน ',
-                                data: res.data.line_withdraw,
-
-                                borderColor: [
-                                    'rgba(255,0,0,1)',
-                                    'rgba(255,0,0,1)',
-                                    'rgba(255,0,0,1)',
-                                    'rgba(255,0,0,1)',
-                                    'rgba(255,0,0,1)',
-                                    'rgba(255,0,0,1)',
-                                    'rgba(255,0,0,1)'
-                                ],
-                                borderWidth: 1
-                            }, {
-                                label: 'โปร ',
-                                data: res.data.line_bonus,
-
-                                borderColor: [
-                                    'rgba(255,193,0,1)',
-                                    'rgba(255,193,0,1)',
-                                    'rgba(255,193,0,1)',
-                                    'rgba(255,193,0,1)',
-                                    'rgba(255,193,0,1)',
-                                    'rgba(255,193,0,1)',
-                                    'rgba(255,193,0,1)',
-                                ],
-                                borderWidth: 1
-                            }, {
-                                label: 'คงเหลือ ',
-                                data: res.data.line_balance,
-
-                                borderColor: [
-                                    'rgba(0,153,0,1)',
-                                    'rgba(0,153,0,1)',
-                                    'rgba(0,153,0,1)',
-                                    'rgba(0,153,0,1)',
-                                    'rgba(0,153,0,1)',
-                                    'rgba(0,153,0,1)',
-                                    'rgba(0,153,0,1)'
-                                ],
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true
-                                    }
-                                }]
-                            }
-                        }
-                    });
-
-                }
-            }
-        });
     </script>
 
     <script type="text/x-template" id="topup-slot-template">
@@ -496,63 +214,6 @@
         </div>
 
     </script>
-    <script>
-
-        Vue.component('topup-slot', {
-            template: '#topup-slot-template',
-
-            data: function () {
-                return {
-                    chart: '',
-                }
-            },
-            mounted() {
-                this.chart = $('#topup-chart');
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, res;
-                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'topup'}));
-                    if (err) {
-                        return 0;
-                    }
-                    let ctx = this.chart;
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: res.data.label,
-                            datasets: [{
-                                label: 'เติมเงิน ',
-                                data: res.data.bar,
-
-                                backgroundColor: [
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)',
-                                    'rgba(0,51,255,1)'
-                                ],
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true
-                                    }
-                                }]
-                            }
-                        }
-                    });
-
-                }
-            }
-        });
-    </script>
 
     <script type="text/x-template" id="regis-slot-template">
         <div class="card">
@@ -568,62 +229,6 @@
             </div>
         </div>
 
-    </script>
-    <script>
-
-        Vue.component('regis-slot', {
-            template: '#regis-slot-template',
-
-            data: function () {
-                return {
-                    chart: '',
-                }
-            },
-            mounted() {
-                this.chart = $('#regis-chart');
-                this.loadData();
-            },
-            methods: {
-                async loadData() {
-                    let err, res;
-                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'register'}));
-                    if (err) {
-                        return 0;
-                    }
-                    let ctx = this.chart;
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: res.data.label,
-                            datasets: [{
-                                label: 'สมาชิกใหม่ ',
-                                data: res.data.bar,
-
-                                backgroundColor: [
-                                    'rgba(0,51,0,1)',
-                                    'rgba(0,51,0,1)',
-                                    'rgba(0,51,0,1)',
-                                    'rgba(0,51,0,1)',
-                                    'rgba(0,51,0,1)',
-                                    'rgba(0,51,0,1)',
-                                    'rgba(0,51,0,1)'
-                                ],
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true
-                                    }
-                                }]
-                            }
-                        }
-                    });
-                }
-            }
-        });
     </script>
 
     <script type="text/x-template" id="bankin-slot-template">
@@ -650,42 +255,6 @@
         </div>
 
     </script>
-    <script>
-
-        Vue.component('bankin-slot', {
-            template: '#bankin-slot-template',
-
-            data: function () {
-                return {
-                    show: true,
-                    isBusy: false,
-                    fields: [],
-                    items: [],
-                }
-            },
-            mounted() {
-
-            },
-            methods: {
-                async loadData() {
-                    let err, res;
-                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadbank') }}", {method: 'bankin'}));
-                    if (err) {
-                        return 0;
-                    }
-                    this.fields = [
-                        {key: 'bank', label: 'ธนาคาร'},
-                        {key: 'acc_no', label: 'เลขที่บัญชี'},
-                        {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
-                        {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
-                    ];
-
-                    this.items = res.data.list;
-                    return this.items;
-                }
-            }
-        });
-    </script>
 
     <script type="text/x-template" id="bankout-slot-template">
         <div class="card">
@@ -710,43 +279,6 @@
             </div>
         </div>
 
-    </script>
-    <script>
-
-        Vue.component('bankout-slot', {
-            template: '#bankout-slot-template',
-
-            data: function () {
-                return {
-                    show: true,
-                    isBusy: false,
-                    fields: [],
-                    items: [],
-                }
-            },
-            mounted() {
-
-            },
-            methods: {
-                async loadData() {
-                    let err, res;
-                    [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadbank') }}", {method: 'bankout'}));
-                    if (err) {
-                        return 0;
-                    }
-
-                    this.fields = [
-                        {key: 'bank', label: 'ธนาคาร'},
-                        {key: 'acc_no', label: 'เลขที่บัญชี'},
-                        {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
-                        {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
-                    ];
-
-                    this.items = res.data.list;
-                    return this.items;
-                }
-            }
-        });
     </script>
 
     <script>
@@ -850,6 +382,448 @@
                     }
                 }
             });
+
+            Vue.component('setdeposit-slot', {
+                template: '#setdeposit-slot-template',
+                data: function () {
+                    return {
+                        sum: 0
+                    }
+                },
+                mounted() {
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, result;
+                        [err, result] = await window.to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setdeposit'}));
+                        if (err) {
+                            return 0;
+                        }
+                        this.sum = result.data.sum;
+                        return this.sum;
+
+                    }
+                }
+            });
+
+            Vue.component('setwithdraw-slot', {
+                template: '#setwithdraw-slot-template',
+                data: function () {
+                    return {
+                        sum: 0
+                    }
+                },
+                mounted() {
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, result;
+                        [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'setwithdraw'}));
+                        if (err) {
+                            return 0;
+                        }
+                        this.sum = result.data.sum;
+                        return this.sum;
+                    }
+                }
+            });
+
+            Vue.component('deposit-slot', {
+                template: '#deposit-slot-template',
+                data: function () {
+                    return {
+                        sum: 0
+                    }
+                },
+                mounted() {
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, result;
+                        [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit'}));
+                        if (err) {
+                            return 0;
+                        }
+                        this.sum = result.data.sum;
+                        return this.sum;
+                    }
+                }
+            });
+
+            Vue.component('deposit_wait-slot', {
+                template: '#deposit_wait-slot-template',
+                data: function () {
+                    return {
+                        sum: 0
+                    }
+                },
+                mounted() {
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, result;
+                        [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'deposit_wait'}));
+                        if (err) {
+                            return 0;
+                        }
+                        this.sum = result.data.sum;
+                        return this.sum;
+                    }
+                }
+            });
+
+            Vue.component('withdraw-slot', {
+                template: '#withdraw-slot-template',
+
+                data: function () {
+                    return {
+                        sum: 0
+                    }
+                },
+                mounted() {
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, result;
+                        [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'withdraw'}));
+                        if (err) {
+                            return 0;
+                        }
+                        this.sum = result.data.sum;
+                        return this.sum;
+                    }
+                }
+            });
+
+            Vue.component('bonus-slot', {
+                template: '#bonus-slot-template',
+
+                data: function () {
+                    return {
+                        sum: 0
+                    }
+                },
+                mounted() {
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, result;
+                        [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'bonus'}));
+                        if (err) {
+                            return 0;
+                        }
+                        this.sum = result.data.sum;
+                        return this.sum;
+                    }
+                }
+            });
+
+            Vue.component('balance-slot', {
+                template: '#balance-slot-template',
+
+                data: function () {
+                    return {
+                        sum: 0
+                    }
+                },
+                mounted() {
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, result;
+                        [err, result] = await to(axios.post("{{ url($menu->currentRoute.'/loadsum') }}", {method: 'balance'}));
+                        if (err) {
+                            return 0;
+                        }
+                        this.sum = result.data.sum;
+                        return this.sum;
+                    }
+                }
+            });
+
+            Vue.component('income-slot', {
+                template: '#income-slot-template',
+
+                data: function () {
+                    return {
+                        chart: '',
+                    }
+                },
+                mounted() {
+                    this.chart = $('#income-chart');
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, res;
+                        [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'income'}));
+                        if (err) {
+                            return 0;
+                        }
+
+                        let ctx = this.chart;
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: res.data.label,
+                                datasets: [{
+                                    label: 'ฝาก ',
+                                    data: res.data.line_deposit,
+
+                                    borderColor: [
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)'
+                                    ],
+                                    borderWidth: 1
+                                }, {
+                                    label: 'ถอน ',
+                                    data: res.data.line_withdraw,
+
+                                    borderColor: [
+                                        'rgba(255,0,0,1)',
+                                        'rgba(255,0,0,1)',
+                                        'rgba(255,0,0,1)',
+                                        'rgba(255,0,0,1)',
+                                        'rgba(255,0,0,1)',
+                                        'rgba(255,0,0,1)',
+                                        'rgba(255,0,0,1)'
+                                    ],
+                                    borderWidth: 1
+                                }, {
+                                    label: 'โปร ',
+                                    data: res.data.line_bonus,
+
+                                    borderColor: [
+                                        'rgba(255,193,0,1)',
+                                        'rgba(255,193,0,1)',
+                                        'rgba(255,193,0,1)',
+                                        'rgba(255,193,0,1)',
+                                        'rgba(255,193,0,1)',
+                                        'rgba(255,193,0,1)',
+                                        'rgba(255,193,0,1)',
+                                    ],
+                                    borderWidth: 1
+                                }, {
+                                    label: 'คงเหลือ ',
+                                    data: res.data.line_balance,
+
+                                    borderColor: [
+                                        'rgba(0,153,0,1)',
+                                        'rgba(0,153,0,1)',
+                                        'rgba(0,153,0,1)',
+                                        'rgba(0,153,0,1)',
+                                        'rgba(0,153,0,1)',
+                                        'rgba(0,153,0,1)',
+                                        'rgba(0,153,0,1)'
+                                    ],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: true
+                                        }
+                                    }]
+                                }
+                            }
+                        });
+
+                    }
+                }
+            });
+
+            Vue.component('topup-slot', {
+                template: '#topup-slot-template',
+
+                data: function () {
+                    return {
+                        chart: '',
+                    }
+                },
+                mounted() {
+                    this.chart = $('#topup-chart');
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, res;
+                        [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'topup'}));
+                        if (err) {
+                            return 0;
+                        }
+                        let ctx = this.chart;
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: res.data.label,
+                                datasets: [{
+                                    label: 'เติมเงิน ',
+                                    data: res.data.bar,
+
+                                    backgroundColor: [
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)',
+                                        'rgba(0,51,255,1)'
+                                    ],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: true
+                                        }
+                                    }]
+                                }
+                            }
+                        });
+
+                    }
+                }
+            });
+
+            Vue.component('regis-slot', {
+                template: '#regis-slot-template',
+
+                data: function () {
+                    return {
+                        chart: '',
+                    }
+                },
+                mounted() {
+                    this.chart = $('#regis-chart');
+                    this.loadData();
+                },
+                methods: {
+                    async loadData() {
+                        let err, res;
+                        [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadsumall') }}", {method: 'register'}));
+                        if (err) {
+                            return 0;
+                        }
+                        let ctx = this.chart;
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: res.data.label,
+                                datasets: [{
+                                    label: 'สมาชิกใหม่ ',
+                                    data: res.data.bar,
+
+                                    backgroundColor: [
+                                        'rgba(0,51,0,1)',
+                                        'rgba(0,51,0,1)',
+                                        'rgba(0,51,0,1)',
+                                        'rgba(0,51,0,1)',
+                                        'rgba(0,51,0,1)',
+                                        'rgba(0,51,0,1)',
+                                        'rgba(0,51,0,1)'
+                                    ],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: true
+                                        }
+                                    }]
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            Vue.component('bankin-slot', {
+                template: '#bankin-slot-template',
+
+                data: function () {
+                    return {
+                        show: true,
+                        isBusy: false,
+                        fields: [],
+                        items: [],
+                    }
+                },
+                mounted() {
+
+                },
+                methods: {
+                    async loadData() {
+                        let err, res;
+                        [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadbank') }}", {method: 'bankin'}));
+                        if (err) {
+                            return 0;
+                        }
+                        this.fields = [
+                            {key: 'bank', label: 'ธนาคาร'},
+                            {key: 'acc_no', label: 'เลขที่บัญชี'},
+                            {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
+                            {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
+                        ];
+
+                        this.items = res.data.list;
+                        return this.items;
+                    }
+                }
+            });
+
+            Vue.component('bankout-slot', {
+                template: '#bankout-slot-template',
+
+                data: function () {
+                    return {
+                        show: true,
+                        isBusy: false,
+                        fields: [],
+                        items: [],
+                    }
+                },
+                mounted() {
+
+                },
+                methods: {
+                    async loadData() {
+                        let err, res;
+                        [err, res] = await to(axios.post("{{ url($menu->currentRoute.'/loadbank') }}", {method: 'bankout'}));
+                        if (err) {
+                            return 0;
+                        }
+
+                        this.fields = [
+                            {key: 'bank', label: 'ธนาคาร'},
+                            {key: 'acc_no', label: 'เลขที่บัญชี'},
+                            {key: 'balance', label: 'ยอดเงิน', class: 'text-right'},
+                            {key: 'date_update', label: 'อัพเดทเมื่อ', class: 'text-center'}
+                        ];
+
+                        this.items = res.data.list;
+                        return this.items;
+                    }
+                }
+            });
+
         })()
     </script>
 @endpush
