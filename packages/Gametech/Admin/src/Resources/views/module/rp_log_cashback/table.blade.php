@@ -68,14 +68,9 @@
 
 
                 let html = '<tr>';
-                html += '<th style="text-align:right;width:80%;color:red">รวมยอดถอน (ทั้งหมด)</th><th style="text-align:right;color:red;">'+table.ajax.json().withdraw_all+'</th>';
+                html += '<th style="text-align:right;width:80%;color:red">รวม Cashback (ทั้งหมด)</th><th style="text-align:right;color:red;">'+table.ajax.json().sum+'</th>';
                 html += '</tr>';
-                html += '<tr>';
-                html += '<th style="text-align:right;width:80%;color:red">รวมยอดถอน (อนุมัติ)</th><th style="text-align:right;color:red;">'+table.ajax.json().withdraw_yes+'</th>';
-                html += '</tr>';
-                html += '<tr>';
-                html += '<th style="text-align:right;width:80%;color:red">รวมยอดถอน (ไม่อนุมัติ)</th><th style="text-align:right;color:red;">'+table.ajax.json().withdraw_no+'</th>';
-                html += '</tr>';
+
 
                 $("#customfooter tbody").append(html);
 

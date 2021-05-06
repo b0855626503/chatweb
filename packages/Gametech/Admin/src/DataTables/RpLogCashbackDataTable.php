@@ -24,6 +24,9 @@ class RpLogCashbackDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
+            ->with('sum', function () use ($query) {
+                return core()->currency((clone $query)->active()->notauto()->where('members_freecredit.kind', 'CASHBACK')->sum('members_freecredit.credit_amount'));
+            })
             ->setTransformer(new RpLogCashbackTransformer);
 
     }
@@ -50,7 +53,8 @@ class RpLogCashbackDataTable extends DataTable
         return $model
             ->with(['member', 'admin'])
             ->active()->notauto()->where('kind', 'CASHBACK')
-            ->select(['members_freecredit.code', 'members_freecredit.member_code', 'members_freecredit.credit_type', 'members_freecredit.credit_amount', 'members_freecredit.credit_before', 'members_freecredit.balance', 'members_freecredit.remark', 'members_freecredit.emp_code', 'members_freecredit.ip', 'members_freecredit.date_create'])->withCasts([
+            ->select(['members_freecredit.code', 'members_freecredit.member_code', 'members_freecredit.credit_type', 'members_freecredit.credit_amount', 'members_freecredit.credit_before', 'members_freecredit.credit_balance', 'members_freecredit.remark', 'members_freecredit.emp_code', 'members_freecredit.ip', 'members_freecredit.date_create', 'members_freecredit.kind'])
+            ->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
             ])
             ->when($startdate, function ($query, $startdate) use ($enddate) {
