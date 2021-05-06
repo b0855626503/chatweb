@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class DropIndexMember extends Migration
+class DropIndexBankPayment extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,12 @@ class DropIndexMember extends Migration
      */
     public function up()
     {
-        Schema::table('members', function (Blueprint $table) {
-            $table->dropIndex('upline_code'); // Drops index 'geo_state_index'
-            $table->dropIndex('acc_check'); // Drops index 'geo_state_index'
-            $table->dropIndex('acc_bay'); // Drops index 'geo_state_index'
-            $table->dropIndex('code'); // Drops index 'geo_state_index'
+        Schema::table('bank_payment', function (Blueprint $table) {
             $table->dropIndex('id'); // Drops index 'geo_state_index'
+            $table->dropIndex('report_id'); // Drops index 'geo_state_index'
+            $table->dropIndex('tx_hash'); // Drops index 'geo_state_index'
+            $table->dropIndex('bank_index'); // Drops index 'geo_state_index'
+
         });
     }
 
