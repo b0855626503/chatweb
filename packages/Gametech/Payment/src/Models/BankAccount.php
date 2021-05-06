@@ -103,51 +103,45 @@ class BankAccount extends Model implements BankAccountContract
         'user_name', 'user_pass'
     ];
 
-    protected static function booted()
-    {
-        static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
-        });
-    }
 
     public function scopeIn($query)
     {
-        return $query->where('bank_type', 1);
+        return $query->where('banks_account.bank_type', 1);
     }
 
     public function scopeOut($query)
     {
-        return $query->where('bank_type', 2);
+        return $query->where('banks_account.bank_type', 2);
     }
 
     public function scopeActive($query)
     {
-        return $query->where('enable', 'Y');
+        return $query->where('banks_account.enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable', 'N');
+        return $query->where('banks_account.enable', 'N');
     }
 
     public function scopeShow($query)
     {
-        return $query->where('display_wallet', 'Y');
+        return $query->where('banks_account.display_wallet', 'Y');
     }
 
     public function scopeHide($query)
     {
-        return $query->where('display_wallet', 'N');
+        return $query->where('banks_account.display_wallet', 'N');
     }
 
     public function scopeTopup($query)
     {
-        return $query->where('status_topup', 'Y');
+        return $query->where('banks_account.status_topup', 'Y');
     }
 
     public function scopeUntopup($query)
     {
-        return $query->where('status_topup', 'N');
+        return $query->where('banks_account.status_topup', 'N');
     }
 
 

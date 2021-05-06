@@ -46,7 +46,7 @@ class Bank extends Model implements BankContract
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
+            $builder->where('banks.code', '>', 0);
         });
     }
 

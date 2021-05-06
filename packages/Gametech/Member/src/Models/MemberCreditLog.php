@@ -135,22 +135,22 @@ class MemberCreditLog extends Model implements MemberCreditLogContract
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('members_credit_log.enable','Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('members_credit_log.enable','N');
     }
 
     public function scopeAuto($query)
     {
-        return $query->where('auto','Y');
+        return $query->where('members_credit_log.auto','Y');
     }
 
     public function scopeNotauto($query)
     {
-        return $query->where('auto','N');
+        return $query->where('members_credit_log.auto','N');
     }
 
     public function member()
