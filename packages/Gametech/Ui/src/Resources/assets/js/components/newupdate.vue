@@ -9,7 +9,8 @@
                  :loader="loader"
                  :background-color="bgColor">
             <template #default v-if="useSlot">
-                <h3>Loading ... {{ version }}</h3>
+                <h2>Patch Update  v .{{ version }}</h2>
+                <a :href="linkurl" class="btn btn-primary">กดตรงนี้เพื่ออัพเดท</a>
             </template>
         </loading>
     </div>
@@ -20,7 +21,7 @@ import Loading from 'vue-loading-overlay';
 import 'vue-loading-overlay/dist/vue-loading.css';
 
 export default {
-    props: ['version'],
+    props: ['version','linkurl'],
     data() {
         return {
             isLoading: false,
@@ -35,14 +36,11 @@ export default {
         Loading
     },
     mounted() {
-        this.isLoading = true;
 
-        console.log('mounted');
-        // document.addEventListener("readystatechange", () => {
-        //     console.log('readystatechange');
-        //     this.isLoading = true
-        //     this.useSlot = true
-        // });
+        document.addEventListener("readystatechange", () => {
+            this.isLoading = true;
+            document.documentElement.classList.add('hide-scroll');
+        });
     }
 
 }

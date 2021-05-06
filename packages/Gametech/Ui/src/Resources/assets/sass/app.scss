@@ -1289,3 +1289,12 @@ modal {
     z-index: 9999999 !important;
     position: fixed;
 }
+
+.vld-icon {
+    text-align: center !important;
+}
+
+.hide-scroll {
+    overflow-y: hidden;
+    overflow-x: hidden;
+}

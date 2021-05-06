@@ -28,17 +28,7 @@
 </nav>
 <!-- /.navbar -->
 <nav class="main-header navbar navbar-expand navbar-light announce text-danger" id="announce"></nav>
-{{--<newupdate></newupdate>--}}
-{{--<newupdate :isLoading="true" :fullPage="true" :useSlot="true" version="2.3" link="aaa"></newupdate>--}}
-{{--<loading active="true"></loading>--}}
-{{--<loading :active="true" lockscroll="true" :z-index="999999"></loading>--}}
-
-<newupdate></newupdate>
 
 @if($patch)
-    {{--<loading :active="true"></loading>--}}
-
-    {{--  <newupdate :fullPage="true" :active="true" version="{{ $version }}" link="{{ route('admin.update.index') }}"></newupdate>--}}
-    {{--    <newupdate :show="true" version="{{ $version }}" link="{{ route('admin.update.index') }}"></newupdate>--}}
-    {{--    <nav class="main-header navbar navbar-expand navbar-light text-danger">{!! $version !!}</nav>--}}
+    <newupdate version="{{ $version }}" linkurl="{{ route('admin.update.index') }}"></newupdate>
 @endif
