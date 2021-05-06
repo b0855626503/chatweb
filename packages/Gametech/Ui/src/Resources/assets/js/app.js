@@ -27,7 +27,7 @@ import OverlayLoader from './components/overlay-loader';
 import VueLoading from 'vue-loading-overlay';
 import 'vue-loading-overlay/dist/vue-loading.css';
 
-import toPromise from "./toPromise";
+import to from "./toPromise";
 
 import VTooltip from 'v-tooltip';
 import VueToast from "vue-toast-notification";
@@ -38,7 +38,7 @@ Vue.directive('tooltip', VTooltip.VTooltip)
 
 Vue.config.productionTip = false;
 Vue.use(VueLoading);
-Vue.use(toPromise);
+Vue.use(to);
 Vue.component('loading', VueLoading);
 Vue.component('flash-wrapper', FlashWrapper);
 Vue.component('flash', Flash);
