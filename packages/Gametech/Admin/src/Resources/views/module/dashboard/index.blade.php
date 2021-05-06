@@ -84,6 +84,8 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
+
         Vue.component('setdeposit-slot', {
             template: '#setdeposit-slot-template',
             data: function () {
@@ -126,6 +128,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('setwithdraw-slot', {
             template: '#setwithdraw-slot-template',
             data: function () {
@@ -167,6 +170,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('deposit-slot', {
             template: '#deposit-slot-template',
             data: function () {
@@ -208,6 +212,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('deposit_wait-slot', {
             template: '#deposit_wait-slot-template',
             data: function () {
@@ -248,6 +253,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('withdraw-slot', {
             template: '#withdraw-slot-template',
 
@@ -292,6 +298,7 @@
     </script>
     <!--suppress JSAnnotator -->
     <script>
+        import to from './toPromise.js';
         Vue.component('bonus-slot', {
             template: '#bonus-slot-template',
 
@@ -333,6 +340,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('balance-slot', {
             template: '#balance-slot-template',
 
@@ -374,6 +382,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('income-slot', {
             template: '#income-slot-template',
 
@@ -489,6 +498,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('topup-slot', {
             template: '#topup-slot-template',
 
@@ -561,6 +571,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('regis-slot', {
             template: '#regis-slot-template',
 
@@ -641,6 +652,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('bankin-slot', {
             template: '#bankin-slot-template',
 
@@ -701,6 +713,7 @@
 
     </script>
     <script>
+        import to from './toPromise.js';
         Vue.component('bankout-slot', {
             template: '#bankout-slot-template',
 
@@ -740,7 +753,7 @@
     <script>
 
         (() => {
-
+            import to from './toPromise.js';
             window.app = new Vue({
                 data: function () {
                     return {
