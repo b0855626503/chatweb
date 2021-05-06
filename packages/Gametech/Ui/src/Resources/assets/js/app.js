@@ -38,7 +38,7 @@ Vue.directive('tooltip', VTooltip.VTooltip)
 
 Vue.config.productionTip = false;
 Vue.use(VueLoading);
-Vue.component('loading', VueLoading)
+Vue.component('loading', VueLoading);
 Vue.component('flash-wrapper', FlashWrapper);
 Vue.component('flash', Flash);
 Vue.component('tabs', Tabs);
