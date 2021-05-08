@@ -53,6 +53,8 @@
 </template>
 
 <script type="text/javascript">
+import to from "../toPromise";
+
 export default {
     props: [
         'product',
@@ -75,7 +77,6 @@ export default {
             this.loadGameId();
         })
 
-        // this.openQuickView({details: this.cardDetails[0]});
     },
 
     methods: {
@@ -84,7 +85,11 @@ export default {
 
         },
         async loadGameId() {
-            const res = await axios.get(`${this.$root.baseUrl}/member/loadgamefree/${this.product.code}`);
+            let err, res;
+            [err, res] = await to(axios.get(`${this.$root.baseUrl}/member/loadgamefree/${this.product.code}`));
+            if (err) {
+                return this.product;
+            }
             this.product = res.data;
             return this.product;
 
@@ -219,26 +224,20 @@ export default {
                         .then(response => {
 
                             if (response.data.success) {
-                                Swal.fire(
-                                    'สำเร็จ',
-                                    response.data.message,
-                                    'success'
-                                );
-                                // this.$emit('reload');
                                 this.reload();
                             } else {
                                 Swal.fire(
-                                    'ผิดพลาด',
+                                    'พบข้อผิดพลาด',
                                     response.data.message,
                                     'error'
                                 );
                             }
                         })
                         .catch(response => {
-                            console.log(response);
+
                             $('.modal').modal('hide');
                             Swal.fire(
-                                'เกิดปัญหาบางประการ',
+                                'การเชื่อมต่อระบบ มีปัญหา',
                                 response.data.message,
                                 'error'
                             );

@@ -316,7 +316,7 @@ export default {
 
         if (!this.loop) {
             this.owl.on('changed.owl.carousel', (event) => {
-                console.log(event);
+
                 if (event.item.index === 0) {
                     this.showPrev = false;
                     this.showNext = true;
