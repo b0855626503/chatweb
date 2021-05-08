@@ -110,26 +110,28 @@ class HomeController extends AppBaseController
     {
 
         $item = collect($this->gameUserRepository->getOneUser($this->id(), $game, true))->toArray();
-        if ($item['success'] === true) {
-
-
-            $response['connect'] = $item['connect'];
-            $response['user_code'] = $item['data']['code'];
-            $response['code'] = $item['data']['game']['code'];
-            $response['name'] = $item['data']['game']['name'];
-            $response['balance'] = $item['data']['balance'];
-            $response['image'] = Storage::url('game_img/' . $item['data']['game']['filepic']);
-
-        } else {
+        if ($item['new'] == true) {
             $games = $this->gameRepository->find($game);
 
-            $response['connect'] = false;
+            $response['connect'] = true;
             $response['user_code'] = 0;
             $response['code'] = $game;
             $response['name'] = $games->name;
             $response['balance'] = 0;
             $response['image'] = Storage::url('game_img/' . $games->filepic);
 
+        } else {
+
+            $response['connect'] = $item['connect'];
+            if ($item['success'] == false) {
+                $response['connect'] = false;
+            }
+
+            $response['user_code'] = $item['data']['code'];
+            $response['code'] = $item['data']['game']['code'];
+            $response['name'] = $item['data']['game']['name'];
+            $response['balance'] = $item['data']['balance'];
+            $response['image'] = Storage::url('game_img/' . $item['data']['game']['filepic']);
         }
 
 
@@ -140,21 +142,28 @@ class HomeController extends AppBaseController
     {
 
         $item = collect($this->gameUserFreeRepository->getOneUser($this->id(), $game, true))->toArray();
-        if ($item['success'] === true) {
-            $response['user_code'] = $item['data']['code'];
-            $response['code'] = $item['data']['game']['code'];
-            $response['name'] = $item['data']['game']['name'];
-            $response['balance'] = $item['data']['balance'];
-            $response['image'] = Storage::url('game_img/' . $item['data']['game']['filepic']);
-
-        } else {
+        if ($item['new'] == true) {
             $games = $this->gameRepository->find($game);
 
+            $response['connect'] = true;
             $response['user_code'] = 0;
             $response['code'] = $game;
             $response['name'] = $games->name;
             $response['balance'] = 0;
             $response['image'] = Storage::url('game_img/' . $games->filepic);
+
+        } else {
+
+            $response['connect'] = $item['connect'];
+            if ($item['success'] == false) {
+                $response['connect'] = false;
+            }
+
+            $response['user_code'] = $item['data']['code'];
+            $response['code'] = $item['data']['game']['code'];
+            $response['name'] = $item['data']['game']['name'];
+            $response['balance'] = $item['data']['balance'];
+            $response['image'] = Storage::url('game_img/' . $item['data']['game']['filepic']);
 
         }
         return $this->sendResponseNew($response, 'complete');
@@ -163,7 +172,7 @@ class HomeController extends AppBaseController
     public function create(Request $request): JsonResponse
     {
         $game = $request->input('id');
-        $user = $this->gameUserRepository->findOneWhere(['game_code' => $game, 'member_code' => $this->id(),'enable' => 'Y']);
+        $user = $this->gameUserRepository->findOneWhere(['game_code' => $game, 'member_code' => $this->id(), 'enable' => 'Y']);
         if (!$user) {
             $response = $this->gameUserRepository->addGameUser($game, $this->id(), collect($this->user())->toArray());
             if ($response['success'] === true) {
@@ -179,7 +188,7 @@ class HomeController extends AppBaseController
     public function createfree(Request $request): JsonResponse
     {
         $game = $request->input('id');
-        $user = $this->gameUserFreeRepository->findOneWhere(['game_code' => $game, 'member_code' => $this->id(),'enable' => 'Y']);
+        $user = $this->gameUserFreeRepository->findOneWhere(['game_code' => $game, 'member_code' => $this->id(), 'enable' => 'Y']);
         if (!$user) {
             $response = $this->gameUserFreeRepository->addGameUser($game, $this->id(), collect($this->user())->toArray());
             if ($response['success'] === true) {

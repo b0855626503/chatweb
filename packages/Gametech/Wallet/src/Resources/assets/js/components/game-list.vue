@@ -28,7 +28,7 @@
             <p class="mb-0"></p>
 
 
-            <p class="text-color-fixed text-center mb-0"> เกมไม่พร้อมบริการ</p>
+            <small class="text-color-fixed text-center mb-0">ระบบเกมมีปัญหา</small>
         </div>
     </div>
 
@@ -80,7 +80,7 @@ export default {
         },
         async loadGameId(){
             const res = await axios.get(`${this.$root.baseUrl}/member/loadgame/${this.product.code}`);
-            console.log(res.data);
+            // console.log(res.data);
             this.product = res.data;
             return this.product;
 

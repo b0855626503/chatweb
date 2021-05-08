@@ -52,6 +52,8 @@ class GameUserFreeRepository extends Repository
     public function getOneUser($id, $game, $update = true): array
     {
 
+        $return['new'] = false;
+        $return['connect'] = true;
         $return['success'] = false;
         $return['msg'] = 'พบปัญหาบางประการ โปลดลองใหม่อีกครั้ง';
 
@@ -60,6 +62,9 @@ class GameUserFreeRepository extends Repository
         }])->where('enable', 'Y')->where('game_code', $game)->where('member_code', $id)->first();
 
         if (empty($result)) {
+            $return['new'] = true;
+            $return['success'] = true;
+            $return['data'] = null;
             return $return;
         }
 
@@ -74,11 +79,29 @@ class GameUserFreeRepository extends Repository
 
             }
 
+            if ($response['success'] == true) {
+                $return['connect'] = $response['connect'];
+                $return['success'] = true;
+                $return['msg'] = 'อัพเดท Wallet แล้ว';
+                $result->balance = $response['score'];
+                $result->save();
 
+            } else {
+
+                $return['connect'] = $response['connect'];
+                $return['success'] = false;
+                $return['msg'] = $response['msg'];
+
+            }
+
+
+        } else {
+
+            $return['connect'] = true;
+            $return['success'] = true;
+            $return['msg'] = 'ไม่ได้อัพเดท Wallet';
         }
 
-        $return['success'] = true;
-        $return['msg'] = 'Complete';
         $return['data'] = $result;
         return $return;
 
@@ -173,7 +196,7 @@ class GameUserFreeRepository extends Repository
                     report($e);
                 }
 
-            }else{
+            } else {
 
                 $return['msg'] = $result['msg'];
             }

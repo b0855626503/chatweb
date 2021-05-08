@@ -2,7 +2,6 @@
 
 namespace Gametech\Game\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
 use Throwable;
@@ -51,6 +50,7 @@ class GameUserRepository extends Repository
 
     public function getOneUser($id, $game, $update = true): array
     {
+        $return['new'] = false;
         $return['connect'] = true;
         $return['success'] = false;
         $return['msg'] = 'พบปัญหาบางประการ โปลดลองใหม่อีกครั้ง';
@@ -60,8 +60,10 @@ class GameUserRepository extends Repository
         }])->where('enable', 'Y')->where('game_code', $game)->where('member_code', $id)->first();
 
 
-
         if (empty($result)) {
+            $return['new'] = true;
+            $return['success'] = true;
+            $return['data'] = null;
             return $return;
         }
 
@@ -76,7 +78,7 @@ class GameUserRepository extends Repository
                 $result->balance = $response['score'];
                 $result->save();
 
-            }else{
+            } else {
 
                 $return['connect'] = $response['connect'];
                 $return['success'] = false;
@@ -84,12 +86,12 @@ class GameUserRepository extends Repository
             }
 
 
-        }else{
+        } else {
+
             $return['connect'] = true;
             $return['success'] = true;
             $return['msg'] = 'ไม่ได้อัพเดท Wallet';
         }
-
 
 
         $return['data'] = $result;
@@ -203,7 +205,7 @@ class GameUserRepository extends Repository
                     report($e);
                 }
 
-            }else{
+            } else {
                 $return['msg'] = $result['msg'];
             }
         }
