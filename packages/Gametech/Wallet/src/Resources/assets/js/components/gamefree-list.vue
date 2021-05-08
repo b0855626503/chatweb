@@ -29,7 +29,7 @@
             <p class="mb-0"></p>
 
 
-            <small class="text-color-fixed text-center mb-0">ระบบเกมมีปัญหา</small>
+            <p class="text-color-fixed text-center mb-0">ระบบเกมมีปัญหา</p>
         </div>
     </div>
 
