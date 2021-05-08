@@ -113,6 +113,7 @@ class HomeController extends AppBaseController
         if ($item['success'] === true) {
 
 
+            $response['connect'] = $item['connect'];
             $response['user_code'] = $item['data']['code'];
             $response['code'] = $item['data']['game']['code'];
             $response['name'] = $item['data']['game']['name'];
@@ -122,6 +123,7 @@ class HomeController extends AppBaseController
         } else {
             $games = $this->gameRepository->find($game);
 
+            $response['connect'] = false;
             $response['user_code'] = 0;
             $response['code'] = $game;
             $response['name'] = $games->name;

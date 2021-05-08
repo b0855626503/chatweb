@@ -1,7 +1,7 @@
 <template>
 
     <div class="col-4 mb-4 col-md-3" v-if="product.user_code">
-        <div @click="openQuickView({details: product, event: $event})" v-if="connect">
+        <div @click="openQuickView({details: product, event: $event})" v-if="product.connect">
         <img
             loading="lazy"
             :alt="product.name"
@@ -61,8 +61,7 @@ export default {
             quickView: null,
             quickViewDetails: false,
             quickRegisDetails: false,
-            copycontent: '',
-            connect : true
+            copycontent: ''
 
         }
     },
@@ -83,7 +82,6 @@ export default {
             const res = await axios.get(`${this.$root.baseUrl}/member/loadgame/${this.product.code}`);
             console.log(res.data);
             this.product = res.data;
-            this.connect = res.connect;
             return this.product;
 
         },
