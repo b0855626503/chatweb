@@ -256,15 +256,18 @@ class SlotxRepository extends Repository
             if ($response['Username'] === $username) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $return['score'] = $response['Credit'];
 
             } else {
                 $return['msg'] = $response['Message'];
                 $return['success'] = false;
+                $return['connect'] = true;
             }
         } else {
             $return['msg'] = $response['Message'];
             $return['success'] = false;
+            $return['connect'] = false;
         }
 
 

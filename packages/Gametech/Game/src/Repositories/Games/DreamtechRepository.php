@@ -379,13 +379,24 @@ class DreamtechRepository extends Repository
 
             if ($responses->successful()) {
 
-                $return['msg'] = 'Complete';
-                $return['success'] = true;
-                $return['score'] = doubleval($response['balance']);
+                if($response['success'] === true){
+
+                    $return['msg'] = 'Complete';
+                    $return['success'] = true;
+                    $return['connect'] = true;
+                    $return['score'] = doubleval($response['balance']);
+
+                }else{
+
+                    $return['msg'] = $response['message'];
+                    $return['connect'] = true;
+                    $return['success'] = false;
+                }
 
             } else {
 
                 $return['msg'] = $response['message'];
+                $return['connect'] = false;
                 $return['success'] = false;
 
             }
@@ -393,6 +404,7 @@ class DreamtechRepository extends Repository
         } else {
 
             $return['success'] = false;
+            $return['connect'] = false;
             $return['msg'] = 'เกิดข้อผิดพลาดในการ ตรวจสอบ ID Game จึงไม่สามารถทำรายการ ตรวจสอบยอดเงินได้';
 
 

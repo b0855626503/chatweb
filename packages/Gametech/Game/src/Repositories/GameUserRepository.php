@@ -51,13 +51,15 @@ class GameUserRepository extends Repository
 
     public function getOneUser($id, $game, $update = true): array
     {
-
+        $return['connect'] = true;
         $return['success'] = false;
         $return['msg'] = 'พบปัญหาบางประการ โปลดลองใหม่อีกครั้ง';
 
         $result = $this->with(['game' => function ($query) {
             $query->active()->open()->select('code', 'id', 'filepic', 'game_type', 'name', 'link_ios', 'link_android', 'link_web');
         }])->where('enable', 'Y')->where('game_code', $game)->where('member_code', $id)->first();
+
+
 
         if (empty($result)) {
             return $return;
@@ -68,17 +70,28 @@ class GameUserRepository extends Repository
             $response = $this->checkBalance($result->game->id, $result->user_name);
 
             if ($response['success'] == true) {
-
+                $return['connect'] = $response['connect'];
+                $return['success'] = true;
+                $return['msg'] = 'อัพเดท Wallet แล้ว';
                 $result->balance = $response['score'];
                 $result->save();
 
+            }else{
+
+                $return['connect'] = $response['connect'];
+                $return['success'] = false;
+                $return['msg'] = $response['msg'];
             }
 
 
+        }else{
+            $return['connect'] = true;
+            $return['success'] = true;
+            $return['msg'] = 'ไม่ได้อัพเดท Wallet';
         }
 
-        $return['success'] = true;
-        $return['msg'] = 'Complete';
+
+
         $return['data'] = $result;
         return $return;
 

@@ -190,13 +190,20 @@ class KayaRepository extends Repository
                     $return['user_pass'] = $user_pass;
 
                 } else {
-                    $return['success'] = true;
+
+                    DB::table('users_918Kaya')
+                        ->where('user_name', $username)
+                        ->update(['use_account' => 'Y']);
+                    $return['success'] = false;
                     $return['msg'] = $response['errorMsg'];
                 }
 
 
             } else {
 
+                DB::table('users_918Kaya')
+                    ->where('user_name', $username)
+                    ->update(['use_account' => 'Y']);
                 $return['success'] = false;
                 $return['msg'] = $response['errorMsg'];
             }
@@ -268,17 +275,20 @@ class KayaRepository extends Repository
 
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $return['score'] = ($response['balance'] / 1000);
             } else {
 
                 $return['msg'] = $response['errorMsg'];
                 $return['success'] = false;
+                $return['connect'] = true;
 
             }
 
         } else {
             $return['msg'] = $response['errorMsg'];
             $return['success'] = false;
+            $return['connect'] = false;
         }
 
         if ($this->debug) {

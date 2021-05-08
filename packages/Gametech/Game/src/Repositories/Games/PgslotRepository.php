@@ -183,7 +183,7 @@ class PgslotRepository extends Repository
                 $return['msg'] = $response['status']['message'];
             }
 
-        }else{
+        } else {
 
             $return['success'] = false;
             $return['msg'] = $response['status']['message'];
@@ -218,12 +218,18 @@ class PgslotRepository extends Repository
                 $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
 
-            }else{
+            } else {
                 $return['success'] = false;
                 $return['msg'] = $response['status']['message'];
             }
+        } else {
+            $return['msg'] = $response['status']['message'];
+            $return['success'] = false;
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -237,23 +243,34 @@ class PgslotRepository extends Repository
             'agent' => $this->agent
         ];
 
-        $response = $this->GameCurl($param, 'partner/balance');
+        $responses = $this->GameCurl($param, 'partner/balance');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['status']['code'] === 0) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $return['score'] = doubleval($response['data']['balance']);
 
+            } else {
+
+                $return['msg'] = $response['status']['message'];
+                $return['connect'] = true;
+                $return['success'] = false;
+
             }
+        } else {
+            $return['msg'] = $response['status']['message'];
+            $return['connect'] = false;
+            $return['success'] = false;
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -265,8 +282,14 @@ class PgslotRepository extends Repository
 
         if ($score < 0) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
             $transID = "DP" . date('YmdHis');
             $param = [
@@ -275,23 +298,30 @@ class PgslotRepository extends Repository
                 'agent' => $this->agent
             ];
 
-            $response = $this->GameCurl($param, 'partner/deposit');
+            $responses = $this->GameCurl($param, 'partner/deposit');
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+            $response = $responses->json();
 
-            if ($response->successful()) {
-                $response = $response->json();
+            if ($responses->successful()) {
 
                 if ($response['status']['code'] === 0) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = doubleval($response['data']['balance']['after']);
                     $return['before'] = doubleval($response['data']['balance']['before']);
+                } else {
+                    $return['msg'] = $response['status']['message'];
+                    $return['success'] = false;
                 }
+            } else {
+                $return['msg'] = $response['status']['message'];
+                $return['success'] = false;
             }
 
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;
@@ -306,8 +336,14 @@ class PgslotRepository extends Repository
 
         if ($score < 1) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
 
             $transID = "WD" . date('YmdHis');
@@ -317,23 +353,30 @@ class PgslotRepository extends Repository
                 'agent' => $this->agent
             ];
 
-            $response = $this->GameCurl($param, 'partner/withdraw');
+            $responses = $this->GameCurl($param, 'partner/withdraw');
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
+            $response = $responses->json();
 
-            if ($response->successful()) {
-                $response = $response->json();
+            if ($responses->successful()) {
 
                 if ($response['status']['code'] === 0) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = doubleval($response['data']['balance']['after']);
                     $return['before'] = doubleval($response['data']['balance']['before']);
+                } else {
+                    $return['msg'] = $response['status']['message'];
+                    $return['success'] = false;
                 }
+            } else {
+                $return['msg'] = $response['status']['message'];
+                $return['success'] = false;
             }
 
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $return;

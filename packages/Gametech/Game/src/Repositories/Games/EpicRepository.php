@@ -143,12 +143,12 @@ class EpicRepository extends Repository
                 $return['user_name'] = $response['player_id'];
                 $return['user_pass'] = $response['player_password'];
             } else {
-                $return['success'] = true;
+                $return['success'] = false;
                 $return['msg'] = $response['error'];
             }
 
         } else {
-            $return['success'] = true;
+            $return['success'] = false;
             $return['msg'] = $response['error'];
         }
 
@@ -220,16 +220,19 @@ class EpicRepository extends Repository
             if ($response['success'] === true) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $return['score'] = doubleval($response['balance']);
 
             } else {
 
                 $return['success'] = false;
+                $return['connect'] = true;
                 $return['msg'] = $response['error'];
 
             }
         } else {
             $return['success'] = false;
+            $return['connect'] = false;
             $return['msg'] = $response['error'];
 
         }

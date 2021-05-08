@@ -235,15 +235,16 @@ class PlusRepository extends Repository
             if ($response['status'] === 'success') {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $return['score'] = $response['score'] * 10;
 
             } else {
-
+                $return['connect'] = true;
                 $return['success'] = false;
                 $return['msg'] = $response['message'];
             }
         } else {
-
+            $return['connect'] = false;
             $return['success'] = false;
             $return['msg'] = $response['message'];
         }

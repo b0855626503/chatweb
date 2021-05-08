@@ -1,6 +1,7 @@
 <template>
 
-    <div class="col-4 mb-4 col-md-3" @click="openQuickView({details: product, event: $event})" v-if="product.user_code">
+    <div class="col-4 mb-4 col-md-3" v-if="product.user_code">
+        <div @click="openQuickView({details: product, event: $event})" v-if="connect">
         <img
             loading="lazy"
             :alt="product.name"
@@ -13,7 +14,22 @@
 
 
         <p class="text-color-fixed text-center mb-0"> {{ product.balance }} ฿</p>
+        </div>
 
+        <div style="opacity: 0.1;" v-else>
+            <img
+                loading="lazy"
+                :alt="product.name"
+                :src="product.image"
+                :data-src="product.image"
+                class="d-block mx-auto rounded-circle transfer-slide-img h-90 w-90"
+                :onerror="`this.src='${this.$root.baseUrl}/storage/game_img/default.png'`"/>
+            <p class="text-main text-center mb-0 cut-text">{{ product.name }}</p>
+            <p class="mb-0"></p>
+
+
+            <p class="text-color-fixed text-center mb-0"> เกมไม่พร้อมบริการ</p>
+        </div>
     </div>
 
     <div class="col-4 mb-4 col-md-3" v-else>
@@ -45,7 +61,8 @@ export default {
             quickView: null,
             quickViewDetails: false,
             quickRegisDetails: false,
-            copycontent: ''
+            copycontent: '',
+            connect : true
 
         }
     },
@@ -64,7 +81,9 @@ export default {
         },
         async loadGameId(){
             const res = await axios.get(`${this.$root.baseUrl}/member/loadgame/${this.product.code}`);
+            console.log(res.data);
             this.product = res.data;
+            this.connect = res.connect;
             return this.product;
 
         },

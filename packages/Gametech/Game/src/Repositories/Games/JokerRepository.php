@@ -255,14 +255,17 @@ class JokerRepository extends Repository
             if ($response['Username'] === $username) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $return['score'] = $response['Credit'];
 
             } else {
                 $return['msg'] = $response['Message'];
+                $return['connect'] = true;
                 $return['success'] = false;
             }
         } else {
             $return['msg'] = $response['Message'];
+            $return['connect'] = false;
             $return['success'] = false;
         }
 

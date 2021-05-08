@@ -151,14 +151,16 @@ class LiveRepository extends Repository
                 $return['user_pass'] = $response['player_password'];
 
             } else {
-                $return['success'] = true;
+                $return['success'] = false;
                 $return['msg'] = $response['error'];
             }
 
         } else {
-            $return['success'] = true;
+            $return['success'] = false;
             $return['msg'] = $response['error'];
         }
+
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -228,15 +230,17 @@ class LiveRepository extends Repository
             if ($response['success'] === true) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $return['score'] = $response['balance'];
 
             } else {
-
+                $return['connect'] = true;
                 $return['success'] = false;
                 $return['msg'] = $response['error'];
 
             }
         } else {
+            $return['connect'] = false;
             $return['success'] = false;
             $return['msg'] = $response['error'];
 

@@ -273,15 +273,18 @@ class KissRepository extends Repository
             if ($response['success'] === true) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $score = $response['ScoreNum'] * 10;
                 $return['score'] = $score;
             } else {
                 $return['msg'] = $response['msg'];
                 $return['success'] = false;
+                $return['connect'] = true;
             }
         }else{
             $return['msg'] = $response['msg'];
             $return['success'] = false;
+            $return['connect'] = false;
         }
 
         if ($this->debug) {

@@ -262,17 +262,20 @@ class JokerNewRepository extends Repository
             if ($response['status'] === true) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $return['score'] = $response['payload']['balance'];
 
             } else {
 
                 $return['msg'] = $response['message'];
+                $return['connect'] = true;
                 $return['success'] = false;
 
             }
         } else {
 
             $return['success'] = false;
+            $return['connect'] = false;
             $return['msg'] = $response['message'];
         }
 

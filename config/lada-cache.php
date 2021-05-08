@@ -48,7 +48,7 @@ return [
     | not recommended to do so in production environment.
     |
     */
-    'consider-rows' => true,
+    'consider-rows' => false,
 
 
     /*
