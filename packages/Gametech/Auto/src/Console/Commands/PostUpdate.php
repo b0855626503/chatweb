@@ -42,7 +42,7 @@ class PostUpdate extends Command
     {
 
 
-        Artisan::call('lada-cache:disable');
+//        Artisan::call('lada-cache:disable');
 
         $exitCode = Artisan::call('migrate', [
             '--force' => true
@@ -54,7 +54,7 @@ class PostUpdate extends Command
 
         $this->info($exitCode);
 
-        Artisan::call('lada-cache:enable');
+//        Artisan::call('lada-cache:enable');
 
     }
 }

@@ -40,9 +40,9 @@ class AppServiceProvider extends ServiceProvider
         URL::forceScheme('https');
         JsonResource::withoutWrapping();
 
-        DB::listen(function ($query) {
-            Log::debug($query->sql, $query->bindings, $query->time);
-        });
+//        DB::listen(function ($query) {
+//            Log::debug($query->sql, $query->bindings, $query->time);
+//        });
 
 
 //        Queue::looping(function () {
