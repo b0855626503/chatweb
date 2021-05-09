@@ -7,14 +7,14 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 
 
-class PostUpdate extends Command
+class PreUpdate extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'postupdate:work';
+    protected $signature = 'preupdate:work';
 
     /**
      * The console command description.
@@ -40,8 +40,6 @@ class PostUpdate extends Command
      */
     public function handle()
     {
-        $result = shell_exec('composer update');
-
         Artisan::call('lada-cache:disable');
 
         $exitCode = Artisan::call('migrate', [

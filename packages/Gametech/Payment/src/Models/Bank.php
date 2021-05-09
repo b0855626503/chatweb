@@ -9,17 +9,22 @@ use Gametech\Payment\Contracts\Bank as BankContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Spiritix\LadaCache\Database\LadaCacheTrait;
+use Spiritix\LadaCache\Database\Pivot;
+use Spiritix\LadaCache\Database\QueryBuilder;
 
 class Bank extends Model implements BankContract
 {
-    use  LadaCacheTrait;
+//    use LaravelSubQueryTrait;
+    use LadaCacheTrait;
+
+
 
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
     }
 
-    protected $table = 'banks';
+    public $table = 'banks';
 
     const CREATED_AT = 'date_create';
     const UPDATED_AT = 'date_update';

@@ -72,7 +72,23 @@ return [
     |
     */
     'include-tables' => [
-
+        (new \Gametech\Core\Models\Config())->getTable(),
+        (new \Gametech\Core\Models\Spin())->getTable(),
+        (new \Gametech\Core\Models\BatchUser())->getTable(),
+        (new \Gametech\Core\Models\Faq())->getTable(),
+        (new \Gametech\Core\Models\Refer())->getTable(),
+        (new \Gametech\Admin\Models\Role())->getTable(),
+        (new \Gametech\Game\Models\Game())->getTable(),
+        (new \Gametech\Member\Models\MemberCashback())->getTable(),
+        (new \Gametech\Member\Models\MemberIc())->getTable(),
+        (new \Gametech\Member\Models\MemberRemark())->getTable(),
+        (new \Gametech\Payment\Models\Bank())->getTable(),
+        (new \Gametech\Payment\Models\BankRule())->getTable(),
+        (new \Gametech\Payment\Models\PaymentWaiting())->getTable(),
+        (new \Gametech\Promotion\Models\Promotion())->getTable(),
+        (new \Gametech\Promotion\Models\PromotionContent())->getTable(),
+        (new \Gametech\Promotion\Models\PromotionAmount())->getTable(),
+        (new \Gametech\Promotion\Models\PromotionTime())->getTable(),
     ],
 
     /*

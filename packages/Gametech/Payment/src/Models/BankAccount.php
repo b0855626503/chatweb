@@ -7,11 +7,12 @@ use DateTimeInterface;
 use Gametech\Payment\Contracts\BankAccount as BankAccountContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class BankAccount extends Model implements BankAccountContract
 {
 
-    use LaravelSubQueryTrait;
+    use LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

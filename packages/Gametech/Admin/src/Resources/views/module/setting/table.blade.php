@@ -18,7 +18,7 @@
 
         <b-container class="bv-example-row" v-if="show">
             <b-form @submit.stop.prevent="addEditSubmitNew" id="frmaddedit">
-
+                @if(auth()->guard('admin')->user()->superadmin == 'Y')
                 <b-form-row>
                     <b-col>
                         <b-card border-variant="danger"
@@ -100,6 +100,7 @@
                         </b-card>
                     </b-col>
                 </b-form-row>
+                @endif
 
                 <b-form-row>
                     <b-col>
@@ -278,6 +279,7 @@
                                 header-bg-variant="info"
                                 header-text-variant="white">
                             <b-card-text>
+                                @if(auth()->guard('admin')->user()->superadmin == 'Y')
                                 <b-form-group
                                     id="input-group-freecredit_open"
                                     label="เปิดใช้งาน Free Credit:"
@@ -310,6 +312,7 @@
                                     ></b-form-select>
 
                                 </b-form-group>
+                                @endif
                                 <b-form-group
                                     id="input-group-free_mintransfer"
                                     label="ขั้นต่ำโยก Credit เข้า Game :"
