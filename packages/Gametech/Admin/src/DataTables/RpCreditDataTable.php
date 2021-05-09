@@ -55,7 +55,7 @@ class RpCreditDataTable extends DataTable
 
         return $model
             ->with(['member', 'admin'])
-            ->active()->notauto()->where('members_freecredit.kind', 'SETCREDIT')
+            ->active()->notauto()->whereIn('members_freecredit.kind', ['SETCREDIT','ROLLBACK'])
             ->select(['members_freecredit.code', 'members_freecredit.member_code', 'members_freecredit.credit_type', 'members_freecredit.credit_amount', 'members_freecredit.credit_before', 'members_freecredit.credit_balance', 'members_freecredit.remark', 'members_freecredit.emp_code', 'members_freecredit.ip', 'members_freecredit.date_create', 'members_freecredit.kind', 'members_freecredit.user_create'])
             ->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
