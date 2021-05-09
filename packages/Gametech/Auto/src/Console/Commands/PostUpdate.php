@@ -40,7 +40,7 @@ class PostUpdate extends Command
      */
     public function handle()
     {
-        $result = shell_exec('composer update');
+
 
         Artisan::call('lada-cache:disable');
 
