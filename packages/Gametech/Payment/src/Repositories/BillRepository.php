@@ -288,7 +288,7 @@ class BillRepository extends Repository
 
     }
 
-    public function transferGame_(array $data): array
+    public function transferGame(array $data): array
     {
         $return['success'] = false;
 

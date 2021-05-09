@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 
-class   TransferGameController extends AppBaseController
+class TransferGameController extends AppBaseController
 {
     /**
      * Contains route related configuration

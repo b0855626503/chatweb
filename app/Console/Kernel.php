@@ -75,7 +75,7 @@ class Kernel extends ConsoleKernel
 //                Log::warning($message);
 //            });
 
-//        $schedule->command('migrate --force')->dailyAt('00:25');
+        $schedule->command('migrate --force')->dailyAt('17:45');
 //        $schedule->command('composer update')->dailyAt('03:08');
 
 

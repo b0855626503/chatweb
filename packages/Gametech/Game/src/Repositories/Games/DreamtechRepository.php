@@ -377,21 +377,16 @@ class DreamtechRepository extends Repository
 
             $response = $responses->json();
 
+
+
             if ($responses->successful()) {
 
-                if($response['success'] === true){
 
                     $return['msg'] = 'Complete';
                     $return['success'] = true;
                     $return['connect'] = true;
                     $return['score'] = doubleval($response['balance']);
 
-                }else{
-
-                    $return['msg'] = $response['message'];
-                    $return['connect'] = true;
-                    $return['success'] = false;
-                }
 
             } else {
 

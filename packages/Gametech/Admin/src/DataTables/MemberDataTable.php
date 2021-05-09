@@ -62,13 +62,16 @@ class MemberDataTable extends DataTable
             ->with(['member_remark' => function ($query) {
                 $query->orderBy('code', 'desc')->latest();
             }])
+
             ->confirm()
-            ->select(['members.code','members.date_regis','members.firstname','members.lastname','members.upline_code','members.acc_no','members.user_name','members.user_pass','members.lineid','members.tel','members.count_deposit','members.point_deposit','members.diamond','members.balance','members.remark','members.enable','members.status_pro','members.confirm','members.date_create'])
+            ->select('members.*')
             ->with(['bank', 'up'])->withCount(['downs' => function ($model) {
                 $model->active();
             }])->withCasts([
                 'date_regis' => 'date:Y-m-d'
-            ])->when($startdate, function ($query, $startdate) use ($enddate) {
+            ])
+//            ->select(['members.code','members.date_regis','members.firstname','members.lastname','members.upline_code','members.acc_no','members.user_name','members.user_pass','members.lineid','members.tel','members.count_deposit','members.point_deposit','members.diamond','members.balance','members.remark','members.enable','members.status_pro','members.confirm','members.date_create'])
+            ->when($startdate, function ($query, $startdate) use ($enddate) {
                 $query->whereBetween('members.date_create', array($startdate, $enddate));
             })->when($user, function ($query, $user) {
                 $query->where('members.user_name', $user);
