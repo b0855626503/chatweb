@@ -1,5 +1,5 @@
 {
-    "name": "gametech/core",
+    "name": "gametech/loguser",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -14,13 +14,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Gametech\\Core\\": "src/"
+            "Gametech\\LogUser\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Gametech\\Core\\Providers\\CoreServiceProvider"
+                "Gametech\\LogUser\\Providers\\LogUserServiceProvider"
             ],
             "aliases": { }
         }

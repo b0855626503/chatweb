@@ -212,6 +212,7 @@ return [
         PragmaRX\Google2FALaravel\ServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Codedge\Updater\UpdaterServiceProvider::class,
+        Konekt\Concord\ConcordServiceProvider::class,
 //        App\Providers\LaravelLoggerServiceProvider::class,
         /*
          * Application Service Providers...

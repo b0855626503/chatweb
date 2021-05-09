@@ -15,19 +15,20 @@ use Gametech\Game\Contracts\Game as GameContract;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 
 class Game extends Model implements GameContract
 {
-    use LaravelSubQueryTrait;
+//    use  LadaCacheTrait;
+
 
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
     }
 
-    protected $table = 'games';
+    public $table = 'games';
 
     const CREATED_AT = 'date_create';
     const UPDATED_AT = 'date_update';

@@ -1,5 +1,5 @@
 {
-    "name": "gametech/core",
+    "name": "gametech/member",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -14,13 +14,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Gametech\\Core\\": "src/"
+            "Gametech\\Member\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Gametech\\Core\\Providers\\CoreServiceProvider"
+                "Gametech\\Member\\Providers\\MemberServiceProvider"
             ],
             "aliases": { }
         }

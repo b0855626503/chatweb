@@ -78,7 +78,7 @@ return [
         (new \Gametech\Core\Models\Faq())->getTable(),
         (new \Gametech\Core\Models\Refer())->getTable(),
         (new \Gametech\Admin\Models\Role())->getTable(),
-        (new \Gametech\Game\Models\Game())->getTable(),
+        (new \Gametech\Game\Models\GameProxy())->getTable(),
         (new \Gametech\Member\Models\MemberCashback())->getTable(),
         (new \Gametech\Member\Models\MemberIc())->getTable(),
         (new \Gametech\Member\Models\MemberRemark())->getTable(),

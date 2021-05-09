@@ -16,7 +16,7 @@ class Config extends Model implements ConfigContract
         return $date->format('Y-m-d H:i:s');
     }
 
-    protected $table = 'configs';
+    public $table = 'configs';
 
     const CREATED_AT = 'date_create';
     const UPDATED_AT = 'date_update';
