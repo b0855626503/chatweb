@@ -163,7 +163,7 @@ class GameController extends AppBaseController
         }
 
 
-        return $this->sendResponseNew($response, 'complete');
+        return $this->sendResponseNew($response, 'Load Complete');
 
     }
 
@@ -226,7 +226,7 @@ class GameController extends AppBaseController
         }
 
 
-        return $this->sendResponseNew($response, 'complete');
+        return $this->sendResponseNew($response, 'Load Complete');
 
     }
 

@@ -35,6 +35,8 @@ class BillRepository extends Repository
 
     private $paymentWaitingRepository;
 
+    private $bankPaymentRepository;
+
     /**
      * BillRepository constructor.
      * @param GameUserRepository $gameUserRepo
@@ -55,6 +57,7 @@ class BillRepository extends Repository
         MemberCreditLogRepository $memberCreditLogRepo,
         MemberPromotionLogRepository $memberPromotionLogRepo,
         PaymentWaitingRepository $paymentWaitingRepo,
+        BankPaymentRepository $bankPaymentRepo,
         App $app
     )
     {
@@ -72,6 +75,8 @@ class BillRepository extends Repository
         $this->memberPromotionLogRepository = $memberPromotionLogRepo;
 
         $this->paymentWaitingRepository = $paymentWaitingRepo;
+
+        $this->bankPaymentRepository = $bankPaymentRepo;
 
         parent::__construct($app);
     }
@@ -306,32 +311,40 @@ class BillRepository extends Repository
 
         $member = $this->memberRepository->find($member_code);
 
+        $money_text = 'จำนวนเงิน '.$amount.' โบนัส '.$bonus.' รวมเป็น '.$total;
+
         if ((($member->balance - $amount) < 0) || $member->balance != $balance_before) {
-            ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, 'จำนวนเงิน '.$total.' พบปัญหายอดเงินในการทำรายการไม่ถูกต้อง');
+            ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, $money_text.' พบปัญหายอดเงินในการทำรายการไม่ถูกต้อง');
             $return['msg'] = 'ยอด Wallet คงเหลือไม่ถูกต้อง';
             return $return;
         }
 
-        ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, 'จำนวนเงิน '.$total.' เริ่มต้นทำรายการโยกเงิน');
+        ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, $money_text.' เริ่มต้นทำรายการโยกเงิน');
 
         $response = $this->gameUserRepository->UserDeposit($game_code, $user_name, $total, false);
         if ($response['success'] !== true) {
-            ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, 'จำนวนเงิน '.$total.' ไม่สามารถฝากเงินเข้าเกมได้');
+            ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, $money_text.' ไม่สามารถฝากเงินเข้าเกมได้');
             $return['msg'] = 'ไม่สามารถ ทำรายการโยกเงินเข้าเกมได้';
             return $return;
         }
 
-        ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, 'จำนวนเงิน '.$total.' ระบบทำการฝากเงินเข้าเกมแล้ว');
+        ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, $money_text.' ระบบทำการฝากเงินเข้าเกมแล้ว');
 
         $member->balance -= $amount;
+
+        if ($pro_code == 1) {
+            $member->status_pro = 1;
+        }
+        if ($pro_code > 0) {
+            $member->pro_status = 'Y';
+            $member->promotion = 'Y';
+        }
+
         $member->save();
 
         DB::beginTransaction();
 
         try {
-
-
-            $member = $this->memberRepository->find($member_code);
 
             $bill = $this->create([
                 'enable' => 'Y',
@@ -364,12 +377,8 @@ class BillRepository extends Repository
                 'withdraw_limit' => $withdraw_limit
             ], $user_code);
 
-            if ($pro_code == 1) {
-                $member->status_pro = 1;
-            }
+
             if ($pro_code > 0) {
-                $member->pro_status = 'Y';
-                $member->promotion = 'Y';
 
                 $this->memberPromotionLogRepository->create([
                     'date_start' => now()->toDateString(),
@@ -390,40 +399,38 @@ class BillRepository extends Repository
                     'user_create' => $member['name'],
                     'user_update' => $member['name']
                 ]);
+
             }
 
-            $member->save();
+//            $this->paymentLogRepository->create([
+//                'msg' => 'โยกเงินออกจาก Wallet เข้าเกม เรียบร้อย',
+//                'status' => 'COMPLETE',
+//                'showmsg' => 'Y',
+//                'confirm' => 'Y',
+//                'enable' => 'Y',
+//                'bill_code' => $bill->code,
+//                'member_code' => $member_code,
+//                'game_code' => $game_code,
+//                'token' => '',
+//                'transfer_type' => 1,
+//                'amount' => $amount,
+//                'ip' => $ip,
+//                'user_create' => $member['name'],
+//                'user_update' => $member['name']
+//            ]);
 
 
-            $this->paymentLogRepository->create([
-                'msg' => 'โยกเงินออกจาก Wallet เข้าเกม เรียบร้อย',
-                'status' => 'COMPLETE',
-                'showmsg' => 'Y',
-                'confirm' => 'Y',
-                'enable' => 'Y',
-                'bill_code' => $bill->code,
-                'member_code' => $member_code,
-                'game_code' => $game_code,
-                'token' => '',
-                'transfer_type' => 1,
-                'amount' => $amount,
-                'ip' => $ip,
-                'user_create' => $member['name'],
-                'user_update' => $member['name']
-            ]);
-
-
-            $this->memberLogRepository->create([
-                'member_code' => $member_code,
-                'mode' => 'TRANSFER_IN',
-                'menu' => 'transfergame',
-                'record' => $member_code,
-                'remark' => 'โยกเงินออกจาก Wallet เข้าเกม',
-                'item_before' => '',
-                'item' => serialize($data),
-                'ip' => $ip,
-                'user_create' => $member['name']
-            ]);
+//            $this->memberLogRepository->create([
+//                'member_code' => $member_code,
+//                'mode' => 'TRANSFER_IN',
+//                'menu' => 'transfergame',
+//                'record' => $member_code,
+//                'remark' => 'โยกเงินออกจาก Wallet เข้าเกม '.$money_text,
+//                'item_before' => '',
+//                'item' => serialize($data),
+//                'ip' => $ip,
+//                'user_create' => $member['name']
+//            ]);
 
             $this->memberCreditLogRepository->create([
                 'ip' => $ip,
@@ -452,7 +459,7 @@ class BillRepository extends Repository
                 'user_update' => $member['name']
             ]);
 
-            $member->bankPayments()->where('member_topup', $member_code)->where('pro_check', 'N')->update([
+            $this->bankPaymentRepository->where('member_topup', $member_code)->where('pro_check', 'N')->update([
                 'pro_check' => 'Y',
                 'user_update' => $member['name']
             ]);
@@ -461,15 +468,18 @@ class BillRepository extends Repository
 
 
         } catch (Throwable $e) {
-            ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, 'จำนวนเงิน '.$total.' พบปัญหาในการทำรายการ');
+            ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, $money_text.' พบปัญหาในการทำรายการ');
             DB::rollBack();
-            ActivityLoggerUser::activity('Transfer Wallet ToGame '.$game_name, 'จำนวนเงิน '.$total.' ดำเนินการ Rollback การทำรายการแล้ว');
+            ActivityLoggerUser::activity('Transfer Wallet ToGame '.$game_name, $money_text.' ดำเนินการ Rollback การทำรายการแล้ว');
 
             $response = $this->gameUserRepository->UserWithdraw($game_code, $user_name, $total);
             if ($response['success'] === true) {
-                ActivityLoggerUser::activity('Transfer Wallet ToGame '.$game_name, 'จำนวนเงิน '.$total.' ระบบทำการถอนเงินออกจากเกมแล้ว');
+                ActivityLoggerUser::activity('Transfer Wallet ToGame '.$game_name, $money_text.' ระบบทำการถอนเงินออกจากเกมแล้ว');
+                $member->balance += $amount;
+                $member->save();
+                ActivityLoggerUser::activity('Transfer Wallet ToGame '.$game_name, $money_text.' ระบบทำการคืนยอด Wallet แล้ว');
             } else {
-                ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, 'จำนวนเงิน '.$total.' ระบบไม่สามารถถอนเงินออกจากเกมได้');
+                ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, $money_text.' ระบบไม่สามารถถอนเงินออกจากเกมได้ จึงไม่คืน Wallet');
             }
 
 
@@ -478,7 +488,7 @@ class BillRepository extends Repository
             return $return;
         }
 
-        ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, 'จำนวนเงิน '.$total.' ทำรายการโยกเงินสำเร็จ');
+        ActivityLoggerUser::activity('Transfer Wallet To Game '.$game_name, $money_text.' ทำรายการโยกเงินสำเร็จ');
         $return['success'] = true;
         $return['data'] = $bill;
         return $return;

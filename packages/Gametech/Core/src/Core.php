@@ -5,6 +5,7 @@ namespace Gametech\Core;
 use Carbon\Carbon;
 use Exception;
 use Gametech\Core\Repositories\ConfigRepository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use NumberFormatter;
 
@@ -20,8 +21,13 @@ class Core
 
     public function getConfigData()
     {
-        return $this->configRepository->first();
+        return Cache::get('config', function () {
+            return $this->configRepository->first();
+        });
+
     }
+
+
 
     /**
      * Format and convert price with currency symbol

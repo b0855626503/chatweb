@@ -107,5 +107,20 @@ class ReferController extends AppBaseController
 
     }
 
+    public function destroy(Request $request)
+    {
+        $id = $request->input('id');
+
+        $chk = $this->repository->find($id);
+
+        if(!$chk){
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        }
+
+        $this->repository->delete($id);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+    }
+
 
 }

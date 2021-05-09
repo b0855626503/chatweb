@@ -8,9 +8,12 @@ use Gametech\Core\Models\RewardProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Gametech\Member\Contracts\MemberRewardLog as MemberRewardLogContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class MemberRewardLog extends Model implements MemberRewardLogContract
 {
+    use  LadaCacheTrait;
+
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');

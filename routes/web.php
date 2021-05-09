@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return redirect()->route('customer.session.index');
-});
+//Route::get('/', function () {
+//    return redirect()->route('customer.session.index');
+//});
 
 //Auth::routes();
 

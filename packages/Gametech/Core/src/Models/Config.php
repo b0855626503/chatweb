@@ -6,17 +6,18 @@ use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
 use Gametech\Core\Contracts\Config as ConfigContract;
 use Illuminate\Database\Eloquent\Model;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Config extends Model implements ConfigContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
     }
 
-    protected $table = 'configs';
+    public $table = 'configs';
 
     const CREATED_AT = 'date_create';
     const UPDATED_AT = 'date_update';

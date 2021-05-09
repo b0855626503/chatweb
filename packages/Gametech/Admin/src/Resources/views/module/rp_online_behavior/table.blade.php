@@ -27,12 +27,12 @@
                     format: 'DD/MM/YYYY HH:mm:ss'
                 },
                 ranges: {
-                    'Today': [moment().startOf('day'), moment().endOf('day')],
-                    'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-                    'Last 7 Days': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
-                    'Last 30 Days': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
-                    'This Month': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
-                    'Last Month': [moment().subtract(1, 'month').startOf('month').startOf('day'), moment().subtract(1, 'month').endOf('month').endOf('day')]
+                    'วันนี้': [moment().startOf('day'), moment().endOf('day')],
+                    'เมื่อวาน': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
+                    '7 วันที่ผ่านมา': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
+                    '30 วันที่ผ่านมา': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
+                    'เดือนนี้': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
+                    'เดือนที่ผ่านมา': [moment().subtract(1, 'month').startOf('month').startOf('day'), moment().subtract(1, 'month').endOf('month').endOf('day')]
                 }
             });
 
@@ -47,12 +47,12 @@
                     format: 'DD/MM/YYYY HH:mm:ss'
                 },
                 ranges: {
-                    'Today': [moment().startOf('day'), moment().endOf('day')],
-                    'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-                    'Last 7 Days': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
-                    'Last 30 Days': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
-                    'This Month': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
-                    'Last Month': [moment().subtract(1, 'month').startOf('month').startOf('day'), moment().subtract(1, 'month').endOf('month').endOf('day')]
+                    'วันนี้': [moment().startOf('day'), moment().endOf('day')],
+                    'เมื่อวาน': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
+                    '7 วันที่ผ่านมา': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
+                    '30 วันที่ผ่านมา': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
+                    'เดือนนี้': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
+                    'เดือนที่ผ่านมา': [moment().subtract(1, 'month').startOf('month').startOf('day'), moment().subtract(1, 'month').endOf('month').endOf('day')]
                 }
             });
 
@@ -90,31 +90,31 @@
     @include('admin::layouts.datatables_js')
     {!! $dataTable->scripts() !!}
 
-{{--    <script>--}}
-{{--        $(function() {--}}
+    {{--    <script>--}}
+    {{--        $(function() {--}}
 
 
-{{--            var table =  window.LaravelDataTables["dataTableBuilder"];--}}
-{{--            window.LaravelDataTables["dataTableBuilder"].on('draw', function () {--}}
-{{--                $("#customfooter tbody").html('');--}}
+    {{--            var table =  window.LaravelDataTables["dataTableBuilder"];--}}
+    {{--            window.LaravelDataTables["dataTableBuilder"].on('draw', function () {--}}
+    {{--                $("#customfooter tbody").html('');--}}
 
-{{--                let html = '<tr>';--}}
-{{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดโยกเข้าเกม (ทั้งหมด)</th><th style="text-align:right;color:blue;">'+table.ajax.json().in_all+'</th>';--}}
-{{--                html += '</tr>';--}}
-{{--                html += '<tr>';--}}
-{{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดโยกเข้าเกม (สำเร็จ)</th><th style="text-align:right;color:blue;">'+table.ajax.json().in_yes+'</th>';--}}
-{{--                html += '</tr>';--}}
-{{--                html += '<tr>';--}}
-{{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดโยกเข้าเกม (ไม่สำเร็จ)</th><th style="text-align:right;color:blue;">'+table.ajax.json().in_no+'</th>';--}}
-{{--                html += '</tr>';--}}
-
-
-{{--                $("#customfooter tbody").append(html);--}}
+    {{--                let html = '<tr>';--}}
+    {{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดโยกเข้าเกม (ทั้งหมด)</th><th style="text-align:right;color:blue;">'+table.ajax.json().in_all+'</th>';--}}
+    {{--                html += '</tr>';--}}
+    {{--                html += '<tr>';--}}
+    {{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดโยกเข้าเกม (สำเร็จ)</th><th style="text-align:right;color:blue;">'+table.ajax.json().in_yes+'</th>';--}}
+    {{--                html += '</tr>';--}}
+    {{--                html += '<tr>';--}}
+    {{--                html += '<th style="text-align:right;width:80%;color:blue">รวมยอดโยกเข้าเกม (ไม่สำเร็จ)</th><th style="text-align:right;color:blue;">'+table.ajax.json().in_no+'</th>';--}}
+    {{--                html += '</tr>';--}}
 
 
-{{--            });--}}
+    {{--                $("#customfooter tbody").append(html);--}}
 
 
-{{--        });--}}
-{{--    </script>--}}
+    {{--            });--}}
+
+
+    {{--        });--}}
+    {{--    </script>--}}
 @endpush

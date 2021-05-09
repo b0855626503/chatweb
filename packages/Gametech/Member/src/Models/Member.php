@@ -214,28 +214,28 @@ class Member extends Authenticatable implements MemberContract
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('members.code', '<>', 0);
+            $builder->where('members.code', '>', 0);
         });
     }
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('members.enable','Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('members.enable','N');
     }
 
     public function scopeConfirm($query)
     {
-        return $query->where('confirm','Y');
+        return $query->where('members.confirm','Y');
     }
 
     public function scopeWaiting($query)
     {
-        return $query->where('confirm','N');
+        return $query->where('members.confirm','N');
     }
 
     public function bank(): BelongsTo

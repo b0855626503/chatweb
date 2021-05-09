@@ -28,7 +28,12 @@
                             .then(value => {
                                 if (value) {
                                     this.$http.post("{{ route('admin.'.$menu->currentRoute.'.store') }}", {
-                                        id : id, member_code: mcode , upline_code : ucode , balance_total : balance , bonus : bonus , date_cashback : date
+                                        id: id,
+                                        member_code: mcode,
+                                        upline_code: ucode,
+                                        balance_total: balance,
+                                        bonus: bonus,
+                                        date_cashback: date
                                     })
                                         .then(response => {
                                             this.$bvModal.msgBoxOk(response.data.message, {

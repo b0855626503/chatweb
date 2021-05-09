@@ -70,6 +70,7 @@ class Handler extends AppExceptionHandler
 
     private function isAdminUri()
     {
+
         return strpos(Request::path(), 'admin') !== false ? true : false;
     }
 

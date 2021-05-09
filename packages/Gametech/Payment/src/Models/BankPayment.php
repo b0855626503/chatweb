@@ -155,61 +155,55 @@ class BankPayment extends Model implements BankPaymentContract
     ];
 
 
-    protected static function booted()
-    {
-        static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
-        });
-    }
 
     public function scopeIncome($query)
     {
-        return $query->where('value', '>', 0);
+        return $query->where('bank_payment.value', '>', 0);
     }
 
     public function scopeProfit($query)
     {
-        return $query->where('value', '<', 0);
+        return $query->where('bank_payment.value', '<', 0);
     }
 
     public function scopeActive($query)
     {
-        return $query->where('enable', 'Y');
+        return $query->where('bank_payment.enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable', 'N');
+        return $query->where('bank_payment.enable', 'N');
     }
 
     public function scopeWaiting($query)
     {
-        return $query->where('status', 0);
+        return $query->where('bank_payment.status', 0);
     }
 
     public function scopeComplete($query)
     {
-        return $query->where('status', 1);
+        return $query->where('bank_payment.status', 1);
     }
 
     public function scopeReject($query)
     {
-        return $query->where('status', 2);
+        return $query->where('bank_payment.status', 2);
     }
 
     public function scopeClearout($query)
     {
-        return $query->where('status', 3);
+        return $query->where('bank_payment.status', 3);
     }
 
     public function scopeCheck($query)
     {
-        return $query->where('pro_check', 'Y');
+        return $query->where('bank_payment.pro_check', 'Y');
     }
 
     public function scopeUncheck($query)
     {
-        return $query->where('pro_check', 'N');
+        return $query->where('bank_payment.pro_check', 'N');
     }
 
 

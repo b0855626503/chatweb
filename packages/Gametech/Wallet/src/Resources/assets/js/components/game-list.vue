@@ -1,6 +1,7 @@
 <template>
 
-    <div class="col-4 mb-4 col-md-3" @click="openQuickView({details: product, event: $event})" v-if="product.user_code">
+    <div class="col-4 mb-4 col-md-3" v-if="product.user_code">
+        <div @click="openQuickView({details: product, event: $event})" v-if="product.connect">
         <img
             loading="lazy"
             :alt="product.name"
@@ -13,7 +14,22 @@
 
 
         <p class="text-color-fixed text-center mb-0"> {{ product.balance }} ฿</p>
+        </div>
 
+        <div style="opacity: 0.1;" v-else>
+            <img
+                loading="lazy"
+                :alt="product.name"
+                :src="product.image"
+                :data-src="product.image"
+                class="d-block mx-auto rounded-circle transfer-slide-img h-90 w-90"
+                :onerror="`this.src='${this.$root.baseUrl}/storage/game_img/default.png'`"/>
+            <p class="text-main text-center mb-0 cut-text">{{ product.name }}</p>
+            <p class="mb-0"></p>
+
+
+            <p class="text-color-fixed text-center mb-0">ระบบเกมมีปัญหา</p>
+        </div>
     </div>
 
     <div class="col-4 mb-4 col-md-3" v-else>
@@ -35,6 +51,9 @@
 </template>
 
 <script type="text/javascript">
+
+import to from "../toPromise.js";
+
 export default {
     props: [
         'product',
@@ -55,7 +74,6 @@ export default {
         this.$nextTick(() => {
             this.loadGameId();
         })
-        // this.openQuickView({details: this.cardDetails[0]});
     },
 
     methods: {
@@ -63,7 +81,11 @@ export default {
             window.location.reload(true);
         },
         async loadGameId(){
-            const res = await axios.get(`${this.$root.baseUrl}/member/loadgame/${this.product.code}`);
+            let err, res;
+            [err, res] = await to(axios.get(`${this.$root.baseUrl}/member/loadgame/${this.product.code}`));
+            if (err) {
+                return this.product;
+            }
             this.product = res.data;
             return this.product;
 
@@ -221,26 +243,19 @@ export default {
                         .then(response => {
 
                             if(response.data.success){
-                                Swal.fire(
-                                    'สำเร็จ',
-                                    response.data.message,
-                                    'success'
-                                );
-                                // this.$emit('reload');
                                 this.reload();
                             }else{
                                 Swal.fire(
-                                    'ผิดพลาด',
+                                    'พบข้อผิดพลาด',
                                     response.data.message,
                                     'error'
                                 );
                             }
                         })
                         .catch(response => {
-                            console.log(response);
                             $('.modal').modal('hide');
                             Swal.fire(
-                                'เกิดปัญหาบางประการ',
+                                'การเชื่อมต่อระบบ มีปัญหา',
                                 response.data.message,
                                 'error'
                             );

@@ -10,6 +10,8 @@ use Gametech\Auto\Console\Commands\DailyStatMonth;
 use Gametech\Auto\Console\Commands\GetPayment;
 use Gametech\Auto\Console\Commands\GetPaymentAcc;
 use Gametech\Auto\Console\Commands\MemberIC;
+use Gametech\Auto\Console\Commands\OptimizeTable;
+use Gametech\Auto\Console\Commands\PostUpdate;
 use Gametech\Auto\Console\Commands\TopupPayment;
 use Gametech\Auto\Console\Commands\UpdateHash;
 use Illuminate\Console\Scheduling\Schedule;
@@ -34,6 +36,8 @@ class Kernel extends ConsoleKernel
         CheckFastStart::class,
         DailyStatMonth::class,
         UpdateHash::class,
+        PostUpdate::class,
+        OptimizeTable::class
     ];
 
 
@@ -52,7 +56,7 @@ class Kernel extends ConsoleKernel
                 Log::warning($message);
             });
 
-        $schedule->command('ic:list')->dailyAt('00:30')->runInBackground()
+        $schedule->command('ic:list')->dailyAt('00:40')->runInBackground()
             ->onFailure(function ($message) {
                 Log::warning($message);
             });
@@ -71,7 +75,7 @@ class Kernel extends ConsoleKernel
 //                Log::warning($message);
 //            });
 
-//        $schedule->command('migrate --force')->dailyAt('00:25');
+//        $schedule->command('migrate --force')->dailyAt('17:45');
 //        $schedule->command('composer update')->dailyAt('03:08');
 
 

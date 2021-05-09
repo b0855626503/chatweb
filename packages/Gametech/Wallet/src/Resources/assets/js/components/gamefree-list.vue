@@ -1,19 +1,36 @@
 <template>
 
-    <div class="col-4 mb-4 col-md-3" @click="openQuickView({details: product, event: $event})" v-if="product.user_code">
-        <img
-            loading="lazy"
-            :alt="product.name"
-            :src="product.image"
-            :data-src="product.image"
-            class="d-block mx-auto rounded-circle transfer-slide-img h-90 w-90"
-            :onerror="`this.src='${this.$root.baseUrl}/storage/game_img/default.png'`"/>
-        <p class="text-main text-center mb-0 cut-text">{{ product.name }}</p>
-        <p class="mb-0"></p>
+    <div class="col-4 mb-4 col-md-3" v-if="product.user_code">
+        <div @click="openQuickView({details: product, event: $event})" v-if="product.connect">
+
+            <img
+                loading="lazy"
+                :alt="product.name"
+                :src="product.image"
+                :data-src="product.image"
+                class="d-block mx-auto rounded-circle transfer-slide-img h-90 w-90"
+                :onerror="`this.src='${this.$root.baseUrl}/storage/game_img/default.png'`"/>
+            <p class="text-main text-center mb-0 cut-text">{{ product.name }}</p>
+            <p class="mb-0"></p>
 
 
-        <p class="text-color-fixed text-center mb-0"> {{ product.balance }} ฿</p>
+            <p class="text-color-fixed text-center mb-0"> {{ product.balance }} ฿</p>
+        </div>
 
+        <div style="opacity: 0.1;" v-else>
+            <img
+                loading="lazy"
+                :alt="product.name"
+                :src="product.image"
+                :data-src="product.image"
+                class="d-block mx-auto rounded-circle transfer-slide-img h-90 w-90"
+                :onerror="`this.src='${this.$root.baseUrl}/storage/game_img/default.png'`"/>
+            <p class="text-main text-center mb-0 cut-text">{{ product.name }}</p>
+            <p class="mb-0"></p>
+
+
+            <p class="text-color-fixed text-center mb-0">ระบบเกมมีปัญหา</p>
+        </div>
     </div>
 
     <div class="col-4 mb-4 col-md-3" v-else>
@@ -28,13 +45,16 @@
         <p class="mb-0"></p>
 
         <div class="text-center mb-0">
-            <button class="btn btn-link p-0 mx-auto" @click="openQuickRegis({details: product, event: $event})"><i class="fas fa-user-plus text-light"></i></button>
+            <button class="btn btn-link p-0 mx-auto" @click="openQuickRegis({details: product, event: $event})"><i
+                class="fas fa-user-plus text-light"></i></button>
         </div>
     </div>
 
 </template>
 
 <script type="text/javascript">
+import to from "../toPromise";
+
 export default {
     props: [
         'product',
@@ -57,7 +77,6 @@ export default {
             this.loadGameId();
         })
 
-        // this.openQuickView({details: this.cardDetails[0]});
     },
 
     methods: {
@@ -65,8 +84,12 @@ export default {
             window.location.reload(true);
 
         },
-        async loadGameId(){
-            const res = await axios.get(`${this.$root.baseUrl}/member/loadgamefree/${this.product.code}`);
+        async loadGameId() {
+            let err, res;
+            [err, res] = await to(axios.get(`${this.$root.baseUrl}/member/loadgamefree/${this.product.code}`));
+            if (err) {
+                return this.product;
+            }
             this.product = res.data;
             return this.product;
 
@@ -76,88 +99,88 @@ export default {
                 event.preventDefault();
                 event.stopPropagation();
             }
-            this.$http.post(`${this.$root.baseUrl}/member/profile/viewfree` , { id : details.code })
+            this.$http.post(`${this.$root.baseUrl}/member/profile/viewfree`, {id: details.code})
                 .then(response => {
-                $('.modal').modal('hide');
+                    $('.modal').modal('hide');
 
-                if (response.data.success) {
-                    Swal.fire({
-                        title: '<h5>ข้อมูลของเกม '+details.name+'</h5>',
-                        imageUrl: details.image,
-                        imageWidth: 90,
-                        imageHeight: 90,
-                        html:
-                            '<table class="table table-borderless text-sm">, ' +
-                            '<tbody> ' +
-                            '<tr> ' +
-                            '<td>Username</td>' +
-                            '<td id="user">'+ response.data.user_name +'</td>' +
-                            '<td style="text-align: center"><a class="user text-primary" href="javascript:void(0)">[คัดลอก]</a></td>' +
-                            '</tr> ' +
-                            '<tr> ' +
-                            '<td>Password</td>' +
-                            '<td id="pass">'+ response.data.user_pass +'</td>' +
-                            '<td style="text-align: center"><a class="pass text-primary" href="javascript:void(0)">[คัดลอก]</a></td>' +
-                            '</tr> ' +
-                            '</tbody> ',
-                        showConfirmButton: false,
-                        showCloseButton: true,
-                        showCancelButton: false,
-                        focusConfirm: false,
-                        scrollbarPadding: true,
-                        customClass: {
-                            container : 'text-sm',
-                            popup : 'text-sm'
-                        },
-                        willOpen: () => {
-                            const user = document.querySelector('.user')
-                            const pass = document.querySelector('.pass')
+                    if (response.data.success) {
+                        Swal.fire({
+                            title: '<h5>ข้อมูลของเกม ' + details.name + '</h5>',
+                            imageUrl: details.image,
+                            imageWidth: 90,
+                            imageHeight: 90,
+                            html:
+                                '<table class="table table-borderless text-sm">, ' +
+                                '<tbody> ' +
+                                '<tr> ' +
+                                '<td>Username</td>' +
+                                '<td id="user">' + response.data.user_name + '</td>' +
+                                '<td style="text-align: center"><a class="user text-primary" href="javascript:void(0)">[คัดลอก]</a></td>' +
+                                '</tr> ' +
+                                '<tr> ' +
+                                '<td>Password</td>' +
+                                '<td id="pass">' + response.data.user_pass + '</td>' +
+                                '<td style="text-align: center"><a class="pass text-primary" href="javascript:void(0)">[คัดลอก]</a></td>' +
+                                '</tr> ' +
+                                '</tbody> ',
+                            showConfirmButton: false,
+                            showCloseButton: true,
+                            showCancelButton: false,
+                            focusConfirm: false,
+                            scrollbarPadding: true,
+                            customClass: {
+                                container: 'text-sm',
+                                popup: 'text-sm'
+                            },
+                            willOpen: () => {
+                                const user = document.querySelector('.user')
+                                const pass = document.querySelector('.pass')
 
 
-                            user.addEventListener('click', () => {
-                                // console.log('this is copy');
-                                var copyText = document.getElementById('user');
-                                var input = document.createElement("textarea");
-                                input.value = copyText.textContent;
-                                this.copycontent = copyText.textContent;
-                                document.body.appendChild(input);
-                                input.select();
-                                input.setSelectionRange(0, 99999);
-                                document.execCommand("copy");
-                                input.remove();
+                                user.addEventListener('click', () => {
+                                    // console.log('this is copy');
+                                    var copyText = document.getElementById('user');
+                                    var input = document.createElement("textarea");
+                                    input.value = copyText.textContent;
+                                    this.copycontent = copyText.textContent;
+                                    document.body.appendChild(input);
+                                    input.select();
+                                    input.setSelectionRange(0, 99999);
+                                    document.execCommand("copy");
+                                    input.remove();
 
-                            })
+                                })
 
-                            pass.addEventListener('click', () => {
-                                // console.log('this is copy');
-                                var copyText = document.getElementById('pass');
-                                var input = document.createElement("textarea");
-                                input.value = copyText.textContent;
-                                this.copycontent = copyText.textContent;
-                                document.body.appendChild(input);
-                                input.select();
-                                input.setSelectionRange(0, 99999);
-                                document.execCommand("copy");
-                                input.remove();
+                                pass.addEventListener('click', () => {
+                                    // console.log('this is copy');
+                                    var copyText = document.getElementById('pass');
+                                    var input = document.createElement("textarea");
+                                    input.value = copyText.textContent;
+                                    this.copycontent = copyText.textContent;
+                                    document.body.appendChild(input);
+                                    input.select();
+                                    input.setSelectionRange(0, 99999);
+                                    document.execCommand("copy");
+                                    input.remove();
 
-                            })
+                                })
 
-                            $('.user , .pass').popover({
-                                container: 'body',
-                                delay: { "show": 100, "hide": 100 },
-                                content: 'คัดลอกข้อมูล '+this.copycontent+' สำเร็จแล้ว',
-                                placement: 'top'
-                            });
-                            $('.user , .pass').on('shown.bs.popover', function() {
-                                setTimeout(function() {
-                                    $('.user , .pass').popover('hide');
-                                }, 1000);
-                            });
+                                $('.user , .pass').popover({
+                                    container: 'body',
+                                    delay: {"show": 100, "hide": 100},
+                                    content: 'คัดลอกข้อมูล ' + this.copycontent + ' สำเร็จแล้ว',
+                                    placement: 'top'
+                                });
+                                $('.user , .pass').on('shown.bs.popover', function () {
+                                    setTimeout(function () {
+                                        $('.user , .pass').popover('hide');
+                                    }, 1000);
+                                });
 
-                        }
-                    });
+                            }
+                        });
 
-                }
+                    }
 
                 })
                 .catch(exception => {
@@ -168,8 +191,6 @@ export default {
                         'error'
                     );
                 });
-
-
 
 
             this.quickViewDetails = details;
@@ -183,7 +204,7 @@ export default {
 
             Swal.fire({
                 title: 'ยืนยันการทำรายการนี้ ?',
-                text: "คุณต้องการเปิดบัญชี เกม "+details.name+" หรือไม่",
+                text: "คุณต้องการเปิดบัญชี เกม " + details.name + " หรือไม่",
                 imageUrl: details.image,
                 imageWidth: 90,
                 imageHeight: 90,
@@ -193,36 +214,30 @@ export default {
                 confirmButtonText: 'ตกลง',
                 cancelButtonText: 'ยกเลิก',
                 customClass: {
-                    container : 'text-sm',
-                    popup : 'text-sm'
+                    container: 'text-sm',
+                    popup: 'text-sm'
                 },
             }).then((result) => {
                 if (result.isConfirmed) {
                     $('.modal').modal('hide');
-                    this.$http.post(`${this.$root.baseUrl}/member/createfree` , { id : details.code })
+                    this.$http.post(`${this.$root.baseUrl}/member/createfree`, {id: details.code})
                         .then(response => {
 
-                            if(response.data.success){
-                                Swal.fire(
-                                    'สำเร็จ',
-                                    response.data.message,
-                                    'success'
-                                );
-                                // this.$emit('reload');
+                            if (response.data.success) {
                                 this.reload();
-                            }else{
+                            } else {
                                 Swal.fire(
-                                    'ผิดพลาด',
+                                    'พบข้อผิดพลาด',
                                     response.data.message,
                                     'error'
                                 );
                             }
                         })
                         .catch(response => {
-                            console.log(response);
+
                             $('.modal').modal('hide');
                             Swal.fire(
-                                'เกิดปัญหาบางประการ',
+                                'การเชื่อมต่อระบบ มีปัญหา',
                                 response.data.message,
                                 'error'
                             );

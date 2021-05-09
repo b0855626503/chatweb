@@ -27,12 +27,12 @@
                     format: 'DD/MM/YYYY HH:mm:ss'
                 },
                 ranges: {
-                    'Today': [moment().startOf('day'), moment().endOf('day')],
-                    'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-                    'Last 7 Days': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
-                    'Last 30 Days': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
-                    'This Month': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
-                    'Last Month': [moment().subtract(1, 'month').startOf('month').startOf('day'), moment().subtract(1, 'month').endOf('month').endOf('day')]
+                    'วันนี้': [moment().startOf('day'), moment().endOf('day')],
+                    'เมื่อวาน': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
+                    '7 วันที่ผ่านมา': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
+                    '30 วันที่ผ่านมา': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
+                    'เดือนนี้': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
+                    'เดือนที่ผ่านมา': [moment().subtract(1, 'month').startOf('month').startOf('day'), moment().subtract(1, 'month').endOf('month').endOf('day')]
                 }
             }, function (start, end, label) {
                 // $('#startDate').val(start.format('YYYY-MM-DD HH:mm:ss'));
@@ -62,23 +62,23 @@
     {!! $dataTable->scripts() !!}
 
     <script>
-        $(function() {
+        $(function () {
 
             var promotion = @json($pros->toArray());
-            var table =  window.LaravelDataTables["dataTableBuilder"];
+            var table = window.LaravelDataTables["dataTableBuilder"];
             window.LaravelDataTables["dataTableBuilder"].on('draw', function () {
                 $("#customfooter tbody").html('');
 
                 let html = '';
 
-                $.each(promotion, function(index, value) {
+                $.each(promotion, function (index, value) {
                     let pro = table.ajax.json();
-                    console.log(pro['p'+index]);
+                    console.log(pro['p' + index]);
                     // let p = 'pro.p'+index;
-                html += '<tr>';
-                html += '<th style="text-align:right;width:80%;color:darkorange">รวม '+value+'</th><th style="text-align:right;color:darkorange;">'+pro['p'+index]+'</th>';
-                html += '</tr>';
-                html += '<tr>';
+                    html += '<tr>';
+                    html += '<th style="text-align:right;width:80%;color:darkorange">รวม ' + value + '</th><th style="text-align:right;color:darkorange;">' + pro['p' + index] + '</th>';
+                    html += '</tr>';
+                    html += '<tr>';
                 });
 
 

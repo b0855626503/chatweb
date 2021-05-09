@@ -9,9 +9,11 @@ use Gametech\Payment\Contracts\Bank as BankContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
+
 class Bank extends Model implements BankContract
 {
     use LaravelSubQueryTrait;
+
 
     protected function serializeDate(DateTimeInterface $date)
     {
@@ -46,7 +48,7 @@ class Bank extends Model implements BankContract
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
+            $builder->where('banks.code', '>', 0);
         });
     }
 

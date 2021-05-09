@@ -357,7 +357,8 @@
 
 <b-modal ref="remark" id="remark" centered size="md" title="หมายเหตุ" :no-stacking="true"
          :no-close-on-backdrop="true" :hide-footer="true">
-    <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRemark" :fields="fieldsRemark" :busy="isBusyRemark"
+    <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRemark" :fields="fieldsRemark"
+             :busy="isBusyRemark"
              ref="tbdataremark" v-if="showremark">
         <template #table-busy>
             <div class="text-center text-danger my-2">
@@ -784,7 +785,6 @@
                                 method: this.method
                             }
                         });
-
 
 
                         this.caption = response.data.name;

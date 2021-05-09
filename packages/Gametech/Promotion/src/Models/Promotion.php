@@ -9,10 +9,11 @@ use Gametech\Payment\Models\PaymentWaitingProxy;
 use Gametech\Promotion\Contracts\Promotion as PromotionContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Promotion extends Model implements PromotionContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

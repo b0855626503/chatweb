@@ -15,19 +15,20 @@ use Gametech\Game\Contracts\Game as GameContract;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 
 class Game extends Model implements GameContract
 {
-    use LaravelSubQueryTrait;
+    use LadaCacheTrait;
+
 
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
     }
 
-    protected $table = 'games';
+    public $table = 'games';
 
     const CREATED_AT = 'date_create';
     const UPDATED_AT = 'date_update';
@@ -60,33 +61,33 @@ class Game extends Model implements GameContract
     protected static function booted()
     {
         static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
+            $builder->where('games.code', '>', 0);
         });
     }
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('games.enable','Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('games.enable','N');
     }
 
     public function scopeOpen($query)
     {
-        return $query->where('status_open','Y');
+        return $query->where('games.status_open','Y');
     }
 
     public function scopeClose($query)
     {
-        return $query->where('status_open','N');
+        return $query->where('games.status_open','N');
     }
 
     public function scopeImage($query)
     {
-        return $query->where('filepic','<>','');
+        return $query->where('games.filepic','<>','');
     }
 
     public function paymentWaiting(): HasMany

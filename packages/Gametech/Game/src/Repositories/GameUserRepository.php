@@ -2,7 +2,6 @@
 
 namespace Gametech\Game\Repositories;
 
-use Exception;
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
 use Throwable;
@@ -51,7 +50,8 @@ class GameUserRepository extends Repository
 
     public function getOneUser($id, $game, $update = true): array
     {
-
+        $return['new'] = false;
+        $return['connect'] = true;
         $return['success'] = false;
         $return['msg'] = 'พบปัญหาบางประการ โปลดลองใหม่อีกครั้ง';
 
@@ -59,7 +59,11 @@ class GameUserRepository extends Repository
             $query->active()->open()->select('code', 'id', 'filepic', 'game_type', 'name', 'link_ios', 'link_android', 'link_web');
         }])->where('enable', 'Y')->where('game_code', $game)->where('member_code', $id)->first();
 
+
         if (empty($result)) {
+            $return['new'] = true;
+            $return['success'] = true;
+            $return['data'] = null;
             return $return;
         }
 
@@ -68,17 +72,28 @@ class GameUserRepository extends Repository
             $response = $this->checkBalance($result->game->id, $result->user_name);
 
             if ($response['success'] == true) {
-
+                $return['connect'] = $response['connect'];
+                $return['success'] = true;
+                $return['msg'] = 'อัพเดท Wallet แล้ว';
                 $result->balance = $response['score'];
                 $result->save();
 
+            } else {
+
+                $return['connect'] = $response['connect'];
+                $return['success'] = false;
+                $return['msg'] = $response['msg'];
             }
 
 
+        } else {
+
+            $return['connect'] = true;
+            $return['success'] = true;
+            $return['msg'] = 'ไม่ได้อัพเดท Wallet';
         }
 
-        $return['success'] = true;
-        $return['msg'] = 'Complete';
+
         $return['data'] = $result;
         return $return;
 
@@ -161,6 +176,7 @@ class GameUserRepository extends Repository
         if (is_file(base_path('packages/Gametech/Game/src/Repositories/Games/' . $game . 'Repository.php'))) {
             $result = app('Gametech\Game\Repositories\Games\\' . $game . 'Repository', ['method' => $this->gameMethod, 'debug' => $debug])->addGameAccount($data);
 
+
             if ($debug) {
                 return $result;
             }
@@ -189,6 +205,8 @@ class GameUserRepository extends Repository
                     report($e);
                 }
 
+            } else {
+                $return['msg'] = $result['msg'];
             }
         }
         return $return;
@@ -277,33 +295,6 @@ class GameUserRepository extends Repository
         }
 
         return $return;
-    }
-
-    public function viewBalance($game_code, $user_name, $update = true): int
-    {
-        $score = 0;
-
-        $games = $this->gameRepository->findOneByField('code', $game_code);
-        $game_id = preg_replace('/\d/', '', $games->id);
-        $game = ucfirst($game_id);
-        $user = $this->findOneWhere(['user_name' => $user_name, 'game_code' => $game_code]);
-        if (!is_null($games) && !is_null($user)) {
-            if (is_file(base_path('packages/Gametech/Game/src/Repositories/Games/' . $game . 'Repository.php'))) {
-                $score = app('Gametech\Game\Repositories\Games\\' . $game . 'Repository')->viewBalance($user->username);
-                if ($update) {
-                    try {
-
-                        $this->update(['balance' => $score], $user->code);
-
-                    } catch (Exception $e) {
-
-                        $score = 0;
-                    }
-                }
-
-            }
-        }
-        return $score;
     }
 
     public function checkBalance($game_id, $user_name, $debug = false): array

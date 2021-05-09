@@ -197,7 +197,6 @@ return [
         Illuminate\Queue\QueueServiceProvider::class,
         Illuminate\Redis\RedisServiceProvider::class,
         Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
-        Illuminate\Session\SessionServiceProvider::class,
         Rairlie\LockingSession\LockingSessionServiceProvider::class,
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
@@ -213,6 +212,7 @@ return [
         PragmaRX\Google2FALaravel\ServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Codedge\Updater\UpdaterServiceProvider::class,
+        Konekt\Concord\ConcordServiceProvider::class,
 //        App\Providers\LaravelLoggerServiceProvider::class,
         /*
          * Application Service Providers...
@@ -298,8 +298,8 @@ return [
         'Google2FA' => PragmaRX\Google2FALaravel\Facade::class,
         'FastExcel' => Rap2hpoutre\FastExcel\Facades\FastExcel::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
-        'Updater' => Codedge\Updater\UpdaterFacade::class,
-
+        'UpdaterFacade' => Codedge\Updater\UpdaterFacade::class,
+        'RedisManager' => Illuminate\Support\Facades\Redis::class,
     ],
 
 ];

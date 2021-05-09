@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 use Gametech\Core\Contracts\Faq as FaqContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Faq extends Model implements FaqContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

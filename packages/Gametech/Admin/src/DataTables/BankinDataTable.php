@@ -23,25 +23,26 @@ class BankinDataTable extends DataTable
     {
         $dataTable = new EloquentDataTable($query);
 
+
         return $dataTable->skipTotalRecords()
             ->with('in_all', function () use ($query) {
-                return core()->currency((clone $query)->whereNotIn('status', [2, 3])->sum('value'));
+                return core()->currency((clone $query)->whereNotIn('bank_payment.status', [2, 3])->sum('bank_payment.value'));
             })
             ->with('in_yes', function () use ($query) {
-                return core()->currency((clone $query)->where('status', 1)->where('member_topup', '>', 0)->where('autocheck', 'Y')->sum('value'));
+                return core()->currency((clone $query)->where('bank_payment.status', 1)->where('bank_payment.member_topup', '>', 0)->where('bank_payment.autocheck', 'Y')->sum('bank_payment.value'));
             })
             ->with('in_wait', function () use ($query) {
-                return core()->currency((clone $query)->where('status', 0)->where('member_topup', 0)->whereIn('autocheck', ['N', 'W'])->sum('value'));
+                return core()->currency((clone $query)->where('bank_payment.status', 0)->where('bank_payment.member_topup', 0)->whereIn('bank_payment.autocheck', ['N', 'W'])->sum('bank_payment.value'));
             })
             ->with('in_no', function () use ($query) {
-                return core()->currency((clone $query)->where('status', 0)->where('member_topup', 0)->where('autocheck', 'Y')->sum('value'));
+                return core()->currency((clone $query)->where('bank_payment.status', 0)->where('bank_payment.member_topup', 0)->where('bank_payment.autocheck', 'Y')->sum('bank_payment.value'));
             })
             ->filter(function ($query) {
 
                 if ($status = request()->input('status')) {
-                    $query->where('status', ($status == 2 ? 0 : $status));
+                    $query->where('bank_payment.status', ($status == 2 ? 0 : $status));
                 } else {
-                    $query->where('status', 0);
+                    $query->where('bank_payment.status', 0);
 
                 }
             })
@@ -67,8 +68,8 @@ class BankinDataTable extends DataTable
             $enddate = now()->toDateString() . ' 23:59:59';
         }
 
-        return $model->newQuery()
-            ->active()->income()->where('bankstatus', 1)
+        return $model
+            ->active()->income()
             ->with('member')
             ->with(['bank_account' => function ($model) {
                 $model->with('bank');
@@ -76,9 +77,9 @@ class BankinDataTable extends DataTable
                 'date_update' => 'datetime:Y-m-d H:00',
                 'bank_time' => 'datetime:Y-m-d H:00'
             ])
-            ->select('bank_payment.*')
+            ->select(['bank_payment.code', 'bank_payment.bank_time', 'bank_payment.date_create', 'bank_payment.value', 'bank_payment.bankstatus', 'bank_payment.enable', 'bank_payment.member_topup', 'bank_payment.autocheck', 'bank_payment.channel', 'bank_payment.remark_admin', 'bank_payment.detail', 'bank_payment.user_create', 'bank_payment.status', 'bank_payment.account_code'])
             ->when($startdate, function ($query, $startdate) use ($enddate) {
-                $query->whereBetween('date_create', array($startdate, $enddate));
+                $query->whereBetween('bank_payment.date_create', array($startdate, $enddate));
             });
 
 

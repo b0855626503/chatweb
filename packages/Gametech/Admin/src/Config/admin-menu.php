@@ -191,6 +191,24 @@ return [
         'badge-color' => 'badge-primary',
         'status' => 1
     ], [
+        'key' => 'credit.rp_log_cashback',
+        'name' => 'รายงาน เครดิตเงินคืน',
+        'route' => 'admin.rp_log_cashback.index',
+        'sort' => 5,
+        'icon-class' => 'fa-users',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'credit.rp_log_ic',
+        'name' => 'รายงาน หุ้นส่วน IC',
+        'route' => 'admin.rp_log_ic.index',
+        'sort' => 6,
+        'icon-class' => 'fa-users',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
         'key' => 'mop',
         'name' => 'รายงาน (กิจกรรม)',
         'route' => 'admin.rp_reward_point.index',

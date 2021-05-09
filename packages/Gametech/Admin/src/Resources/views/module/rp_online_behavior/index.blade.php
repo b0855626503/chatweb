@@ -32,7 +32,7 @@
                                 </div>
 
                                 <div class="form-group col-12 col-md-6">
-                                <label>ลงทะเบียนเมื่อ</label>
+                                    <label>ลงทะเบียนเมื่อ</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="far fa-clock"></i></span>
@@ -45,7 +45,6 @@
                                                name="end_regis_date">
                                     </div>
                                 </div>
-
 
 
                                 <div class="form-group col-12 col-md-6">
@@ -62,8 +61,6 @@
                                                name="end_lasttopup_date">
                                     </div>
                                 </div>
-
-
 
 
                                 <div class="form-group col-6">

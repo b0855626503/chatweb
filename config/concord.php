@@ -12,7 +12,6 @@ return [
         Gametech\Core\Providers\ModuleServiceProvider::class,
         Gametech\Game\Providers\ModuleServiceProvider::class,
         Gametech\Member\Providers\ModuleServiceProvider::class,
-        Gametech\Member\Providers\ModuleServiceProvider::class,
         Gametech\Payment\Providers\ModuleServiceProvider::class,
         Gametech\Promotion\Providers\ModuleServiceProvider::class,
         Gametech\LogAdmin\Providers\ModuleServiceProvider::class,

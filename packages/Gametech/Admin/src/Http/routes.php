@@ -10,24 +10,7 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
         Route::get('/', 'Controller@redirectToLogin')->name('admin');
 
-        Route::get('/update', function (\Codedge\Updater\UpdaterManager $updater) {
 
-            // Check if new version is available
-            $current = $updater->source()->getVersionInstalled();
-
-            if($updater->source()->isNewVersionAvailable($current)) {
-
-                $versionAvailable = $updater->source()->getVersionAvailable();
-
-                $release = $updater->source()->fetch($versionAvailable);
-
-                $updater->source()->update($release);
-
-            }
-
-            return redirect()->route('admin.session.index');
-
-        })->name('admin.update.index');
 
         // Login Routes
         Route::get('/login', 'LoginController@show')->defaults('_config', [
@@ -59,6 +42,10 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
 
         Route::group(['middleware' => ['admin', 'auth', '2fa']], function () {
+
+            Route::get('/update', 'CmdController@updatePatch')->name('admin.update.index');
+
+            Route::get('/checkupdate', 'CmdController@checkPatch')->name('admin.checkupdate.index');
 
 
             Route::get('/link', 'CmdController@storeLink');
@@ -93,6 +80,14 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
             Route::post('dashboard/loadsumall', 'DashboardController@loadSumAll')->name('admin.dashboard.loadsumall')->withoutMiddleware(['logadmin']);
             Route::post('dashboard/loadbank', 'DashboardController@loadBank')->name('admin.dashboard.loadbank')->withoutMiddleware(['logadmin']);
 
+
+            Route::get('rp_log_cashback', 'ReportController@rp_log_cashback')->defaults('_config', [
+                'view' => 'admin::module.rp_log_cashback.index',
+            ])->name('admin.rp_log_cashback.index');
+
+            Route::get('rp_log_ic', 'ReportController@rp_log_ic')->defaults('_config', [
+                'view' => 'admin::module.rp_log_ic.index',
+            ])->name('admin.rp_log_ic.index');
 
             Route::get('rp_wallet', 'ReportController@rp_wallet')->defaults('_config', [
                 'view' => 'admin::module.rp_wallet.index',

@@ -5,9 +5,12 @@ namespace Gametech\Admin\Models;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Model;
 use Gametech\Admin\Contracts\Role as RoleContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Role extends Model implements RoleContract
 {
+    use  LadaCacheTrait;
+
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');

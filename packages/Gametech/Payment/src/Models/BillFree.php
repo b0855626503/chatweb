@@ -83,27 +83,19 @@ class BillFree extends Model implements BillFreeContract
     ];
 
 
-    protected static function booted()
-    {
-        static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
-        });
-    }
-
-
     public function scopeActive($query)
     {
-        return $query->where('enable', 'Y');
+        return $query->where('bills_free.enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable', 'N');
+        return $query->where('bills_free.enable', 'N');
     }
 
     public function scopeGetpro($query)
     {
-        return $query->where('pro_code', '>', 0);
+        return $query->where('bills_free.pro_code', '>', 0);
     }
 
     public function member()

@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 use Gametech\Promotion\Contracts\PromotionAmount as PromotionAmountContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class PromotionAmount extends Model implements PromotionAmountContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date): string
     {

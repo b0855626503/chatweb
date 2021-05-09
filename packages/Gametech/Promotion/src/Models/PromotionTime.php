@@ -7,11 +7,12 @@ use DateTimeInterface;
 use Gametech\Promotion\Contracts\PromotionTime as PromotionTimeContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 
 class PromotionTime extends Model implements PromotionTimeContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

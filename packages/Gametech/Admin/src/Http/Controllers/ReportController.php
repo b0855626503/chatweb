@@ -10,6 +10,8 @@ use Gametech\Admin\DataTables\RpBillTurnDataTable;
 use Gametech\Admin\DataTables\RpCashbackDataTable;
 use Gametech\Admin\DataTables\RpCreditDataTable;
 use Gametech\Admin\DataTables\RpDepositDataTable;
+use Gametech\Admin\DataTables\RpLogCashbackDataTable;
+use Gametech\Admin\DataTables\RpLogIcDataTable;
 use Gametech\Admin\DataTables\RpMemberIcDataTable;
 use Gametech\Admin\DataTables\RpMemberOnlineDataTable;
 use Gametech\Admin\DataTables\RpSetDiamondDataTable;
@@ -57,6 +59,15 @@ class ReportController extends AppBaseController
         $this->bankRepository = $bankRepository;
     }
 
+    public function rp_log_cashback(RpLogCashbackDataTable $rpLogCashbackDataTable)
+    {
+        return $rpLogCashbackDataTable->render($this->_config['view']);
+    }
+
+    public function rp_log_ic(RpLogIcDataTable $rpLogIcDataTable)
+    {
+        return $rpLogIcDataTable->render($this->_config['view']);
+    }
 
     public function rp_wallet(RpWalletDataTable $rpWalletDataTable)
     {

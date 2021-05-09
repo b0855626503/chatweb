@@ -28,6 +28,7 @@
 <body class="hold-transition sidebar-mini text-sm">
 
 <div id="app">
+
     <div class="wrapper">
 
         @include('admin::layouts.header')
@@ -39,8 +40,9 @@
         @include('admin::layouts.footer')
 
     </div>
-</div>
 
+
+</div>
 
 <script type="text/javascript">
     window.flashMessages = [];
@@ -65,7 +67,6 @@
 <script baseUrl="{{ url()->to('/') }}" src="{{ asset('assets/admin/js/app.js') }}"></script>
 <script src="{{ asset('assets/ui/js/ui.js') }}"></script>
 <script src="{{ asset('vendor/toasty/dist/toasty.min.js') }}"></script>
-
 
 @yield('script')
 @stack('scripts')

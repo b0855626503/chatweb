@@ -62,15 +62,19 @@ class MemberDataTable extends DataTable
             ->with(['member_remark' => function ($query) {
                 $query->orderBy('code', 'desc')->latest();
             }])
+
             ->confirm()
-            ->select('members.*')->with(['bank', 'up'])->withCount(['downs' => function ($model) {
+            ->select('members.*')
+            ->with(['bank', 'up'])->withCount(['downs' => function ($model) {
                 $model->active();
             }])->withCasts([
                 'date_regis' => 'date:Y-m-d'
-            ])->when($startdate, function ($query, $startdate) use ($enddate) {
-                $query->whereBetween('date_create', array($startdate, $enddate));
+            ])
+//            ->select(['members.code','members.date_regis','members.firstname','members.lastname','members.upline_code','members.acc_no','members.user_name','members.user_pass','members.lineid','members.tel','members.count_deposit','members.point_deposit','members.diamond','members.balance','members.remark','members.enable','members.status_pro','members.confirm','members.date_create'])
+            ->when($startdate, function ($query, $startdate) use ($enddate) {
+                $query->whereBetween('members.date_create', array($startdate, $enddate));
             })->when($user, function ($query, $user) {
-                $query->where('user_name', $user);
+                $query->where('members.user_name', $user);
             });
 
 
@@ -165,7 +169,7 @@ class MemberDataTable extends DataTable
             ['data' => 'lineid', 'name' => 'members.lineid', 'title' => 'ไอดีไลน์', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
             ['data' => 'tel', 'name' => 'members.tel', 'title' => 'เบอร์โทร', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
             ['data' => 'deposit', 'name' => 'members.count_deposit', 'title' => 'ฝาก', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'point', 'name' => 'members.point_deposit', 'title' => 'Point', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'point', 'name' => 'members.point_deposit', 'title' => 'Point', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'diamond', 'name' => 'members.diamond', 'title' => 'Diamond', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'balance', 'name' => 'members.balance', 'title' => 'Wallet', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],

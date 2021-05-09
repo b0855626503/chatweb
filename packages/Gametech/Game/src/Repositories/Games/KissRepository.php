@@ -4,10 +4,13 @@ namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class KissRepository extends Repository
 {
+    protected $responses;
+
     protected $method;
 
     protected $debug;
@@ -48,35 +51,55 @@ class KissRepository extends Repository
 
         $this->secretkey = config($this->method . '.' . $game . '.secretkey');
 
+        $this->responses = [];
+
         parent::__construct($app);
     }
 
 
-    public function Debug($response)
+    public function Debug($response, $custom = false)
     {
 
-        $return['debug']['body'][] = $response->body();
-        $return['debug']['json'][] = $response->json();
-        $return['debug']['successful'][] = $response->successful();
-        $return['debug']['failed'][] = $response->failed();
-        $return['debug']['clientError'][] = $response->clientError();
-        $return['debug']['serverError'][] = $response->serverError();
+        if (!$custom) {
+            $return['body'] = $response->body();
+            $return['json'] = $response->json();
+            $return['successful'] = $response->successful();
+            $return['failed'] = $response->failed();
+            $return['clientError'] = $response->clientError();
+            $return['serverError'] = $response->serverError();
+        } else {
+            $return['body'] = json_encode($response);
+            $return['json'] = $response;
+            $return['successful'] = 1;
+            $return['failed'] = 1;
+            $return['clientError'] = 1;
+            $return['serverError'] = 1;
+        }
 
-        return $return;
+        $this->responses[] = $return;
+
+
     }
 
-    public function GameCurl($param, $action)
+    public function GameCurl($param, $action): Response
     {
 
         $url = $this->url . $action;
 
-        return Http::timeout(15)->asForm()->post($url, $param);
+        $response = Http::timeout(15)->asForm()->post($url, $param);
+
+        if ($this->debug) {
+            $this->Debug($response);
+        }
+
+        return $response;
 
     }
 
     public function addGameAccount($data): array
     {
         $result = $this->newUser();
+
         if ($result['success'] === true) {
             $account = $result['account'];
             $result = $this->addUser($account, $data);
@@ -101,20 +124,27 @@ class KissRepository extends Repository
             'sign' => $sign
         ];
 
-        $response = $this->GameCurl($param, 'ashx/account/account.ashx');
+        $responses = $this->GameCurl($param, 'ashx/account/account.ashx');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['success'] === true) {
                 $return['success'] = true;
                 $return['account'] = $response['account'];
 
+            } else {
+                $return['msg'] = $response['msg'];
+                $return['success'] = false;
             }
+        } else {
+            $return['msg'] = $response['msg'];
+            $return['success'] = false;
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
         }
 
         return $return;
@@ -143,24 +173,29 @@ class KissRepository extends Repository
             'sign' => $sign
         ];
 
-        $response = $this->GameCurl($param, 'ashx/account/account.ashx');
+        $responses = $this->GameCurl($param, 'ashx/account/account.ashx');
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
+        $response = $responses->json();
 
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['success'] === true) {
                 $return['success'] = true;
                 $return['user_name'] = $username;
                 $return['user_pass'] = $user_pass;
 
+            } else {
+                $return['msg'] = $response['msg'];
+                $return['success'] = false;
             }
+        } else {
+            $return['msg'] = $response['msg'];
+            $return['success'] = false;
         }
 
-
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -187,22 +222,29 @@ class KissRepository extends Repository
             'sign' => $sign
         ];
 
-        $response = $this->GameCurl($param, 'ashx/account/account.ashx');
+        $responses = $this->GameCurl($param, 'ashx/account/account.ashx');
+        $response = $responses->json();
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
 
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
+
 
             if ($response['success'] === true) {
+                $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
-
+            } else {
+                $return['success'] = false;
+                $return['msg'] = $response['msg'];
             }
+
+        } else {
+            $return['msg'] = $response['msg'];
+            $return['success'] = false;
         }
 
-
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -223,23 +265,31 @@ class KissRepository extends Repository
             'sign' => $sign
         ];
 
-        $response = $this->GameCurl($param, 'ashx/account/account.ashx');
+        $responses = $this->GameCurl($param, 'ashx/account/account.ashx');
+        $response = $responses->json();
 
-        if ($this->debug) {
-            $return = $this->Debug($response);
-        }
-
-        if ($response->successful()) {
-            $response = $response->json();
+        if ($responses->successful()) {
 
             if ($response['success'] === true) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
+                $return['connect'] = true;
                 $score = $response['ScoreNum'] * 10;
                 $return['score'] = $score;
+            } else {
+                $return['msg'] = $response['msg'];
+                $return['success'] = false;
+                $return['connect'] = true;
             }
+        }else{
+            $return['msg'] = $response['msg'];
+            $return['success'] = false;
+            $return['connect'] = false;
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -252,8 +302,14 @@ class KissRepository extends Repository
 
         if ($score < 1) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
             $time = round(microtime(true) * 1000);
             $sign = strtoupper(md5(strtolower($this->auth . $username . $time . $this->secretkey)));
@@ -269,25 +325,30 @@ class KissRepository extends Repository
                 'sign' => $sign
             ];
 
-            $response = $this->GameCurl($param, 'ashx/account/setScore.ashx');
+            $responses = $this->GameCurl($param, 'ashx/account/setScore.ashx');
+            $response = $responses->json();
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
-
-            if ($response->successful()) {
-                $response = $response->json();
+            if ($responses->successful()) {
 
                 if ($response['success'] === true) {
                     $return['success'] = true;
                     $return['ref_id'] = $response['acc'];
                     $return['after'] = ($response['money'] * 10);
                     $return['before'] = ($return['after'] - $amount);
+                } else {
+                    $return['msg'] = $response['msg'];
+                    $return['success'] = false;
                 }
+            }else{
+                $return['msg'] = $response['msg'];
+                $return['success'] = false;
             }
 
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 
@@ -300,8 +361,14 @@ class KissRepository extends Repository
 
         if ($score < 1) {
             $return['msg'] = "เกิดข้อผิดพลาด จำนวนยอดเงินไม่ถูกต้อง";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } elseif (empty($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
+            if ($this->debug) {
+                $this->Debug($return, true);
+            }
         } else {
             $score = $score * -1;
             $time = round(microtime(true) * 1000);
@@ -318,26 +385,29 @@ class KissRepository extends Repository
                 'sign' => $sign
             ];
 
-            $response = $this->GameCurl($param, 'ashx/account/setScore.ashx');
+            $responses = $this->GameCurl($param, 'ashx/account/setScore.ashx');
+            $response = $responses->json();
 
-            if ($this->debug) {
-                $return = $this->Debug($response);
-            }
-
-            if ($response->successful()) {
-                $response = $response->json();
+            if ($responses->successful()) {
 
                 if ($response['success'] === true) {
                     $return['success'] = true;
                     $return['ref_id'] = $response['acc'];
                     $return['after'] = ($response['money'] * 10);
                     $return['before'] = ($return['after'] + $amount);
+                } else {
+                    $return['msg'] = $response['msg'];
+                    $return['success'] = false;
                 }
+            }else{
+                $return['msg'] = $response['msg'];
+                $return['success'] = false;
             }
-
-
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
         return $return;
     }
 

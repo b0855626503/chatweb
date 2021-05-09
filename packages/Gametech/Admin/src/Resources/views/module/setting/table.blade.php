@@ -18,7 +18,7 @@
 
         <b-container class="bv-example-row" v-if="show">
             <b-form @submit.stop.prevent="addEditSubmitNew" id="frmaddedit">
-
+                @if(auth()->guard('admin')->user()->superadmin == 'Y')
                 <b-form-row>
                     <b-col>
                         <b-card border-variant="danger"
@@ -43,18 +43,72 @@
                                     ></b-form-select>
 
                                 </b-form-group>
+
+                                <b-form-group
+                                    id="input-group-verify_sms"
+                                    label="ใช้การยืนยัน ผ่าน SMS OTP:"
+                                    label-for="verify_sms"
+                                    description="">
+
+                                    <b-form-select
+                                        id="verify_sms"
+                                        name="verify_sms"
+                                        v-model="formaddedit.verify_sms"
+                                        :options="option.verify_sms"
+                                        size="sm"
+                                        required
+                                    ></b-form-select>
+                                </b-form-group>
+
+                                <b-form-group
+                                    id="input-group-sms_username"
+                                    label="SMS Username :"
+                                    label-for="sms_username"
+                                    description="">
+                                    <b-form-input
+                                        id="sms_username"
+                                        name="sms_username"
+                                        v-model="formaddedit.sms_username"
+                                        type="text"
+                                        size="sm"
+                                        placeholder=""
+                                        autocomplete="off"
+
+
+                                    ></b-form-input>
+                                </b-form-group>
+
+                                <b-form-group
+                                    id="input-group-sms_password"
+                                    label="SMS Password :"
+                                    label-for="sms_password"
+                                    description="">
+                                    <b-form-input
+                                        id="sms_password"
+                                        name="sms_password"
+                                        v-model="formaddedit.sms_password"
+                                        type="text"
+                                        size="sm"
+                                        placeholder=""
+                                        autocomplete="off"
+
+
+                                    ></b-form-input>
+                                </b-form-group>
+
                             </b-card-text>
                         </b-card>
                     </b-col>
                 </b-form-row>
+                @endif
 
                 <b-form-row>
                     <b-col>
 
-                            <b-card border-variant="success"
-                                    header="แก้ไขข้อมูลติดต่อ"
-                                    header-bg-variant="success"
-                                    header-text-variant="black">
+                        <b-card border-variant="success"
+                                header="แก้ไขข้อมูลติดต่อ"
+                                header-bg-variant="success"
+                                header-text-variant="black">
                             <b-card-text>
                                 <b-form-group
                                     id="input-group-lineid"
@@ -153,7 +207,7 @@
                                     id="input-group-mintransfer_pro"
                                     label="เมื่อรับโปร โยก Wallet เข้า Game ได้ เมื่อเงินในเกมน้อยกว่า:"
                                     label-for="mintransfer_pro"
-                                    description="">
+                                    description="0 = ไม่ทำงานโยกได้ตลอด โปรดใส่ค่ามากกว่า 0">
                                     <b-form-input
                                         id="mintransfer_pro"
                                         name="mintransfer_pro"
@@ -225,6 +279,7 @@
                                 header-bg-variant="info"
                                 header-text-variant="white">
                             <b-card-text>
+                                @if(auth()->guard('admin')->user()->superadmin == 'Y')
                                 <b-form-group
                                     id="input-group-freecredit_open"
                                     label="เปิดใช้งาน Free Credit:"
@@ -257,6 +312,7 @@
                                     ></b-form-select>
 
                                 </b-form-group>
+                                @endif
                                 <b-form-group
                                     id="input-group-free_mintransfer"
                                     label="ขั้นต่ำโยก Credit เข้า Game :"
@@ -420,10 +476,10 @@
                 <b-form-row>
                     <b-col>
 
-                            <b-card border-variant="secondary"
-                                    header="Point Setting"
-                                    header-bg-variant="secondary"
-                                    header-text-variant="white">
+                        <b-card border-variant="secondary"
+                                header="Point Setting"
+                                header-bg-variant="secondary"
+                                header-text-variant="white">
                             <b-card-text>
                                 <b-form-group
                                     id="input-group-point_open"
@@ -909,38 +965,38 @@
                     </b-col>
                 </b-form-row>
 
-{{--                <b-form-row>--}}
-{{--                    <b-col>--}}
-{{--                        <b-card--}}
-{{--                            border-variant="primary"--}}
-{{--                            header="ตั้งค่าลูกค้าเห็นธนาคาร"--}}
-{{--                            header-bg-variant="primary"--}}
-{{--                            header-text-variant="white">--}}
+                {{--                <b-form-row>--}}
+                {{--                    <b-col>--}}
+                {{--                        <b-card--}}
+                {{--                            border-variant="primary"--}}
+                {{--                            header="ตั้งค่าลูกค้าเห็นธนาคาร"--}}
+                {{--                            header-bg-variant="primary"--}}
+                {{--                            header-text-variant="white">--}}
 
-{{--                            <b-card-text>--}}
+                {{--                            <b-card-text>--}}
 
-{{--                                <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRule" :fields="fields" :busy="isBusy"--}}
-{{--                                         ref="tbrule" v-if="show">--}}
-{{--                                    <template #table-busy>--}}
-{{--                                        <div class="text-center text-danger my-2">--}}
-{{--                                            <b-spinner class="align-middle"></b-spinner>--}}
-{{--                                            <strong>Loading...</strong>--}}
-{{--                                        </div>--}}
-{{--                                    </template>--}}
-{{--                                    <template #cell(transfer)="data">--}}
-{{--                                        <span v-html="data.value"></span>--}}
-{{--                                    </template>--}}
-{{--                                    <template #cell(credit_type)="data">--}}
-{{--                                        <span v-html="data.value"></span>--}}
-{{--                                    </template>--}}
-{{--                                </b-table>--}}
+                {{--                                <b-table striped hover small outlined sticky-header show-empty v-bind:items="myRule" :fields="fields" :busy="isBusy"--}}
+                {{--                                         ref="tbrule" v-if="show">--}}
+                {{--                                    <template #table-busy>--}}
+                {{--                                        <div class="text-center text-danger my-2">--}}
+                {{--                                            <b-spinner class="align-middle"></b-spinner>--}}
+                {{--                                            <strong>Loading...</strong>--}}
+                {{--                                        </div>--}}
+                {{--                                    </template>--}}
+                {{--                                    <template #cell(transfer)="data">--}}
+                {{--                                        <span v-html="data.value"></span>--}}
+                {{--                                    </template>--}}
+                {{--                                    <template #cell(credit_type)="data">--}}
+                {{--                                        <span v-html="data.value"></span>--}}
+                {{--                                    </template>--}}
+                {{--                                </b-table>--}}
 
 
 
-{{--                            </b-card-text>--}}
-{{--                        </b-card>--}}
-{{--                    </b-col>--}}
-{{--                </b-form-row>--}}
+                {{--                            </b-card-text>--}}
+                {{--                        </b-card>--}}
+                {{--                    </b-col>--}}
+                {{--                </b-form-row>--}}
 
                 <b-button type="submit" variant="primary">บันทึก</b-button>
 
@@ -981,6 +1037,7 @@
                             diamond_per_bill: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             diamond_transfer_in: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             verify_open: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
+                            verify_sms: [{value: 'Y', text: 'เปิด'}, {value: 'N', text: 'ปิด'}],
                             admin_navbar_color: [
                                 {value: 'navbar-white navbar-light', text: 'สีขาว'},
                                 {value: 'navbar-gray-dark', text: 'สีเทาดำ'},
@@ -1067,24 +1124,24 @@
                 },
                 methods: {
                     {{--async myRule() {--}}
-                    {{--    const response = await axios.get("{{ url($menu->currentRoute.'/getrule') }}", {--}}
-                    {{--        params: {--}}
-                    {{--            id: this.code--}}
-                    {{--        }--}}
-                    {{--    });--}}
+                        {{--    const response = await axios.get("{{ url($menu->currentRoute.'/getrule') }}", {--}}
+                        {{--        params: {--}}
+                        {{--            id: this.code--}}
+                        {{--        }--}}
+                        {{--    });--}}
 
 
-                    {{--    this.fields = [--}}
-                    {{--        {key: 'bank', label: 'สมาชิก(ธนาคาร)'},--}}
-                    {{--        {key: 'method', label: 'สามารถ'},--}}
-                    {{--        {key: 'bank_number', label: 'ธนาคารดังต่อไปนี้'},--}}
-                    {{--        {key: 'action', label: '', class: 'text-center'}--}}
-                    {{--    ];--}}
+                        {{--    this.fields = [--}}
+                        {{--        {key: 'bank', label: 'สมาชิก(ธนาคาร)'},--}}
+                        {{--        {key: 'method', label: 'สามารถ'},--}}
+                        {{--        {key: 'bank_number', label: 'ธนาคารดังต่อไปนี้'},--}}
+                        {{--        {key: 'action', label: '', class: 'text-center'}--}}
+                        {{--    ];--}}
 
-                    {{--    this.items = response.data.list;--}}
-                    {{--    return this.items;--}}
+                        {{--    this.items = response.data.list;--}}
+                        {{--    return this.items;--}}
 
-                    {{--},--}}
+                        {{--},--}}
                     changeType(event) {
                         if (event == 'Y') {
                             $('#input-group-diamonds_topup').removeClass('hide');

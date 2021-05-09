@@ -77,7 +77,9 @@
                                                 </div>
                                             </div>
                                             <p class="text-center text-warning">โยกเงินเข้าเกมส์ขั้นต่ำ {{ core()->currency($config->mintransfer) }} บาท</p>
+                                            @if($config->mintransfer_pro != 0)
                                             <p class="text-center text-warning">สามารถโยกเข้าเกม ได้เมื่อเงินในเกมเหลือน้อยกว่า {{ core()->currency($config->mintransfer_pro) }} บาท (กรณีมีการรับโปรไปแล้ว)</p>
+                                            @endif
                                             @if($promotions)
                                                 <p class="text-center text-warning">ต้องกดรับโปรโมชั่นก่อนโยกเงินเข้าเกมนะคะ</p>
                                                 <div class="form-group">

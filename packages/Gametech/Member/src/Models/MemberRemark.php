@@ -6,9 +6,12 @@ use DateTimeInterface;
 use Gametech\Admin\Models\AdminProxy;
 use Illuminate\Database\Eloquent\Model;
 use Gametech\Member\Contracts\MemberRemark as MemberRemarkContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class MemberRemark extends Model implements MemberRemarkContract
 {
+    use  LadaCacheTrait;
+
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');

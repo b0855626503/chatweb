@@ -661,7 +661,7 @@
                             // this.trigger++;
                             this.formaddedit.filepic = response.data.data.filepic;
 
-                        }else{
+                        } else {
                             this.formaddedit.filepic = '';
                         }
                     },
