@@ -206,7 +206,7 @@ return [
          * Package Service Providers...
          */
         Yajra\DataTables\DataTablesServiceProvider::class,
-//        Barryvdh\Debugbar\ServiceProvider::class,
+        Barryvdh\Debugbar\ServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
         Rainwater\Active\ActiveServiceProvider::class,
         PragmaRX\Google2FALaravel\ServiceProvider::class,

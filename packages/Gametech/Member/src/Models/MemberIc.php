@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 
 use Gametech\Member\Contracts\MemberIc as MemberIcContract;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class MemberIc extends Model implements MemberIcContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

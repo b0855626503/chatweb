@@ -8,10 +8,11 @@ use Gametech\Core\Contracts\BatchUser as BatchUserContract;
 use Gametech\Game\Models\GameProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class BatchUser extends Model implements BatchUserContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

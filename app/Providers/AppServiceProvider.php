@@ -3,14 +3,13 @@
 namespace App\Providers;
 
 use Gametech\Core\Tree;
-
-
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app['request']->server->set('HTTPS', true);
+
 
         $this->registerConfig();
 
@@ -40,9 +40,10 @@ class AppServiceProvider extends ServiceProvider
         URL::forceScheme('https');
         JsonResource::withoutWrapping();
 
-        DB::listen(function($query) {
+        DB::listen(function ($query) {
             Log::debug($query->sql, $query->bindings, $query->time);
         });
+
 
 //        Queue::looping(function () {
 //            while (DB::transactionLevel() > 0) {

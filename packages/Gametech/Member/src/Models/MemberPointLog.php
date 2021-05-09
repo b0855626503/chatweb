@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 use Gametech\Member\Contracts\MemberPointLog as MemberPointLogContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class MemberPointLog extends Model implements MemberPointLogContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

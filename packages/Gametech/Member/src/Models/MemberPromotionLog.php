@@ -8,6 +8,8 @@ use Gametech\Member\Contracts\MemberPromotionLog as MemberPromotionLogContract;
 
 class MemberPromotionLog extends Model implements MemberPromotionLogContract
 {
+
+
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');

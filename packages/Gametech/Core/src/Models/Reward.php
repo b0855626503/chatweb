@@ -8,10 +8,11 @@ use Gametech\Member\Models\MemberRewardLogProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Gametech\Core\Contracts\Reward as RewardContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Reward extends Model implements RewardContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

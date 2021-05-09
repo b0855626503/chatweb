@@ -8,10 +8,11 @@ use Gametech\Member\Models\MemberProxy;
 use Gametech\Payment\Contracts\Bank as BankContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Bank extends Model implements BankContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

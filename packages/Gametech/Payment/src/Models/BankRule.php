@@ -5,9 +5,12 @@ namespace Gametech\Payment\Models;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Model;
 use Gametech\Payment\Contracts\BankRule as BankRuleContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class BankRule extends Model implements BankRuleContract
 {
+    use  LadaCacheTrait;
+
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');

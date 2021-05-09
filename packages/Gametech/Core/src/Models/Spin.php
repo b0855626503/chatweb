@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 use Gametech\Core\Contracts\Spin as SpinContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Spin extends Model implements SpinContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

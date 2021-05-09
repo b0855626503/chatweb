@@ -20,7 +20,7 @@ use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Game extends Model implements GameContract
 {
-//    use  LadaCacheTrait;
+    use LadaCacheTrait;
 
 
     protected function serializeDate(DateTimeInterface $date)

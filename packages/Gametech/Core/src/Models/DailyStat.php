@@ -5,9 +5,12 @@ namespace Gametech\Core\Models;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Model;
 use Gametech\Core\Contracts\DailyStat as DailyStatContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class DailyStat extends Model implements DailyStatContract
 {
+    use  LadaCacheTrait;
+
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');

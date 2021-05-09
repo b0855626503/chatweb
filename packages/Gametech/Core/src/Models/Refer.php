@@ -7,10 +7,11 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Gametech\Core\Contracts\Refer as ReferContract;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Refer extends Model implements ReferContract
 {
-    use LaravelSubQueryTrait;
+    use  LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {
