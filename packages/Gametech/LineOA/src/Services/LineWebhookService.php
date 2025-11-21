@@ -11,20 +11,9 @@ class LineWebhookService
 {
     protected ChatService $chat;
 
-    /** flow สมัครสมาชิกผ่าน LINE */
-    protected RegisterFlowService $registerFlow;
-
-    /** client สำหรับยิงข้อความกลับไปที่ LINE */
-    protected LineMessagingClient $messaging;
-
-    public function __construct(
-        ChatService $chat,
-        RegisterFlowService $registerFlow,
-        LineMessagingClient $messaging
-    ) {
+    public function __construct(ChatService $chat)
+    {
         $this->chat = $chat;
-        $this->registerFlow = $registerFlow;
-        $this->messaging = $messaging;
     }
 
     /**
@@ -80,8 +69,8 @@ class LineWebhookService
             } catch (\Throwable $e) {
                 Log::error('[LineWebhook] error on event', [
                     'account_id' => $account->id,
-                    'event' => $event,
-                    'error' => $e->getMessage(),
+                    'event'      => $event,
+                    'error'      => $e->getMessage(),
                 ]);
             }
         }
@@ -93,7 +82,7 @@ class LineWebhookService
     protected function handleMessageEvent(LineAccount $account, array $event, ?LineWebhookLog $log = null): void
     {
         $messageType = Arr::get($event, 'message.type');
-        $messageId = Arr::get($event, 'message.id');
+        $messageId   = Arr::get($event, 'message.id');
 
         // log ตาม type เดิม ๆ ไว้ก่อน (ไม่ตัด pattern เดิมทิ้ง)
         if ($messageType === 'text') {
@@ -113,75 +102,99 @@ class LineWebhookService
             ]);
         } else {
             Log::info('[LineWebhook] receive non-text event', [
-                'account_id' => $account->id,
-                'message_id' => $messageId,
+                'account_id'   => $account->id,
+                'message_id'   => $messageId,
                 'message_type' => $messageType,
             ]);
         }
 
         // ไม่ว่า type อะไร ให้เก็บลง DB ผ่าน ChatService.handleIncomingMessage เสมอ
         try {
-            $this->chat->handleIncomingMessage($account, $event, $log);
+            // 1) เก็บ message + contact + conversation ลง DB
+            /** @var \Gametech\LineOA\Models\LineMessage $message */
+            $message = $this->chat->handleIncomingMessage($account, $event, $log);
         } catch (\Throwable $e) {
             Log::error('[LineWebhook] handleMessageEvent exception', [
-                'account_id' => $account->id,
-                'message_id' => $messageId,
+                'account_id'   => $account->id,
+                'message_id'   => $messageId,
                 'message_type' => $messageType,
-                'error' => $e->getMessage(),
+                'error'        => $e->getMessage(),
             ]);
 
             // ถ้าต้องการให้ error เด้งต่อออกไปก็ throw ต่อได้
             throw $e;
         }
 
-        // ------------------------------------------------------------------
-        //  ต่อ RegisterFlowService: สมัครสมาชิกผ่านข้อความ
-        // ------------------------------------------------------------------
         if ($messageType === 'text') {
-            $text = Arr::get($event, 'message.text');
-            $replyToken = Arr::get($event, 'replyToken');
-            $lineUserId = Arr::get($event, 'source.userId');
+            $text = $message->text ?? '';
 
-            // กันเคสข้อมูลไม่ครบ
-            if (! $replyToken || ! $lineUserId || $text === null || $text === '') {
-                return;
-            }
-
+            // ------------------------------------------------------------------
+            //  เพิ่ม: ให้ RegisterFlowService ลองจัดการ flow "สมัครสมาชิก"
+            // ------------------------------------------------------------------
             try {
-                // ให้ RegisterFlowService ดูว่า message นี้เกี่ยวกับ flow สมัครไหม
-                // และจะตอบกลับว่าอย่างไร
-                $flowResult = $this->registerFlow->handleTextMessage(
-                    $account,
-                    $lineUserId,
-                    $text,
-                    $log
-                );
+                $contact      = $message->contact ?? null;
+                $conversation = $message->conversation ?? null;
 
-                // ถ้า flow สมัคร "รับผิดชอบ" แล้ว และมีข้อความตอบกลับ → ยิงกลับ LINE
-                if ($flowResult && $flowResult->handled && $flowResult->replyText) {
-                    try {
-                        $this->messaging->replyText($account, $replyToken, $flowResult->replyText);
-                    } catch (\Throwable $e) {
-                        Log::error('[LineWebhook] replyText failed (register flow)', [
-                            'account_id' => $account->id,
-                            'line_user_id' => $lineUserId,
-                            'error' => $e->getMessage(),
-                        ]);
+                if ($contact && $conversation) {
+                    /** @var \Gametech\LineOA\Services\RegisterFlowService $registerFlow */
+                    $registerFlow = app(\Gametech\LineOA\Services\RegisterFlowService::class);
+
+                    $flowResult = $registerFlow->handleTextMessage(
+                        $contact,
+                        $conversation,
+                        $text
+                    );
+
+                    if ($flowResult && $flowResult->handled && $flowResult->replyText) {
+                        $replyToken = Arr::get($event, 'replyToken');
+
+                        if ($replyToken) {
+                            /** @var \Gametech\LineOA\Services\LineMessagingClient $messaging */
+                            $messaging = app(\Gametech\LineOA\Services\LineMessagingClient::class);
+
+                            try {
+                                $messaging->replyText($account, $replyToken, $flowResult->replyText);
+                            } catch (\Throwable $e) {
+                                Log::error('[LineWebhook] replyText failed (register flow)', [
+                                    'account_id'      => $account->id,
+                                    'line_message_id' => $message->line_message_id ?? null,
+                                    'conversation_id' => $message->line_conversation_id ?? null,
+                                    'contact_id'      => $message->line_contact_id ?? null,
+                                    'error'           => $e->getMessage(),
+                                ]);
+                            }
+                        }
                     }
-
-                    // หมายเหตุ:
-                    // - ตรงนี้เรา "ยังไม่หยุด" logic อื่น เพราะตอนนี้ webhook ยังไม่มี bot ตัวอื่น
-                    // - ถ้าวันหลังมี auto-reply ตัวอื่น แล้วต้องการไม่ให้ชนกัน
-                    //   อาจใส่ flag ใน event ว่า handled แล้ว ก็ไม่ต้องไป process ต่อ
                 }
             } catch (\Throwable $e) {
                 Log::error('[LineWebhook] register flow error', [
                     'account_id' => $account->id,
-                    'line_user_id' => $lineUserId ?? null,
-                    'error' => $e->getMessage(),
+                    'event'      => $event,
+                    'error'      => $e->getMessage(),
                 ]);
             }
+
+            // ------------------------------------------------------------------
+            //  log เดิม: เก็บรอยข้อความไว้ (ของเก่าใช้งานอยู่แล้ว)
+            // ------------------------------------------------------------------
+            Log::info('[LineWebhook] message stored', [
+                'account_id'      => $account->id,
+                'line_message_id' => $message->line_message_id,
+                'conversation_id' => $message->line_conversation_id,
+                'contact_id'      => $message->line_contact_id,
+                'text'            => $text,
+            ]);
+
+            return;
         }
+
+        // สำหรับ message type อื่น เช่น image, sticker, file, location ฯลฯ
+        Log::info('[LineWebhook] message event (non-text)', [
+            'account_id' => $account->id,
+            'event'      => $event,
+        ]);
+
+        // ถ้าอยากเก็บ media ด้วยก็สามารถใช้ ChatService อีก method หนึ่งในอนาคต
     }
 
     /**
@@ -195,9 +208,9 @@ class LineWebhookService
         $contact = $this->chat->updateContactProfile($account, $userId);
 
         Log::info('[LineWebhook] follow event', [
-            'account_id' => $account->id,
+            'account_id'   => $account->id,
             'line_user_id' => $userId,
-            'contact_id' => $contact->id,
+            'contact_id'   => $contact->id,
         ]);
 
         // TODO: จะส่งข้อความต้อนรับก็เรียก LineMessagingClient::pushText / replyText ต่อจากตรงนี้ได้
@@ -211,7 +224,7 @@ class LineWebhookService
         $userId = Arr::get($event, 'source.userId');
 
         Log::info('[LineWebhook] unfollow event', [
-            'account_id' => $account->id,
+            'account_id'   => $account->id,
             'line_user_id' => $userId,
         ]);
 
@@ -225,14 +238,14 @@ class LineWebhookService
     protected function handlePostbackEvent(LineAccount $account, array $event, ?LineWebhookLog $log = null): void
     {
         $userId = Arr::get($event, 'source.userId');
-        $data = Arr::get($event, 'postback.data');
+        $data   = Arr::get($event, 'postback.data');
         $params = Arr::get($event, 'postback.params', []);
 
         Log::info('[LineWebhook] postback event', [
-            'account_id' => $account->id,
+            'account_id'   => $account->id,
             'line_user_id' => $userId,
-            'data' => $data,
-            'params' => $params,
+            'data'         => $data,
+            'params'       => $params,
         ]);
 
         // TODO:
@@ -247,7 +260,7 @@ class LineWebhookService
     {
         Log::info('[LineWebhook] generic event', [
             'account_id' => $account->id,
-            'event' => $event,
+            'event'      => $event,
         ]);
     }
 
@@ -258,12 +271,12 @@ class LineWebhookService
     {
         Log::warning('[LineWebhook] unknown event type', [
             'account_id' => $account->id,
-            'event' => $event,
+            'event'      => $event,
         ]);
     }
 
     /**
-     * ตัวอย่าง helper เช็ค keyword สมัคร (ไว้ใช้ตอนต่อ RegisterFlowService)
+     * ตัวอย่าง helper เช็ค keyword สมัคร (ยังเก็บไว้ เผื่อใช้กรอง trigger เพิ่มเติม)
      */
     protected function isRegisterKeyword(?string $text): bool
     {

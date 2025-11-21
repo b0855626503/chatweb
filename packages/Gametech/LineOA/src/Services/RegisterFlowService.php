@@ -6,22 +6,15 @@ use Gametech\LineOA\Contracts\LineMemberRegistrar;
 use Gametech\LineOA\Models\LineContact;
 use Gametech\LineOA\Models\LineConversation;
 use Gametech\LineOA\Models\LineRegisterSession;
+use Gametech\Marketing\Models\MarketingMember as Member;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 /**
  * จัดการ flow การสมัครสมาชิกผ่าน LINE แบบถาม–ตอบทีละ step
- *
- * แนวคิด:
- * - ใช้ LineRegisterSession เก็บ state ของการสมัคร 1 รอบต่อ line_contact
- * - ทุกข้อความจาก user ที่เกี่ยวกับสมัครจะวิ่งผ่าน service นี้
- * - ใช้ LineTemplateService ดึงข้อความตอบกลับ (แก้ได้จากหลังบ้าน)
- * - ใช้ LineMemberRegistrar ในการสร้างสมาชิกจริงในระบบหลัก
  */
 class RegisterFlowService
 {
-    // ชื่อ step ต่าง ๆ ใน flow สมัคร
     public const STEP_PHONE = 'phone';
 
     public const STEP_NAME = 'name';
@@ -32,31 +25,7 @@ class RegisterFlowService
 
     public const STEP_ACCOUNT = 'account';
 
-    public const STEP_DONE = 'done';
-
-    // สถานะ session
-    public const STATUS_IN_PROGRESS = 'in_progress';
-
-    public const STATUS_COMPLETED = 'completed';
-
-    public const STATUS_CANCELLED = 'cancelled';
-
-    public const STATUS_EXPIRED = 'expired';
-
-    public const STATUS_FAILED = 'failed';
-
-    /**
-     * คำที่ถือว่าเป็น trigger เริ่มสมัคร
-     * สามารถไปปรับให้โหลดจาก config/DB ได้ในอนาคต
-     *
-     * @var string[]
-     */
-    protected array $registerTriggers = [
-        'สมัคร',
-        'สมัครสมาชิก',
-        'regis',
-        'register',
-    ];
+    public const STEP_FINISHED = 'finished';
 
     protected LineTemplateService $templates;
 
@@ -71,11 +40,7 @@ class RegisterFlowService
     }
 
     /**
-     * handle ข้อความ text จาก LINE
-     *
-     * - ถ้ายังไม่มี session และข้อความเป็น trigger → เริ่ม flow ใหม่
-     * - ถ้ามี session in_progress → เดินต่อ step ที่ค้างอยู่
-     * - ถ้าไม่เกี่ยวกับสมัครเลย → return null
+     * ข้อความจากลูกค้าหนึ่งข้อความ ผ่านเข้ามาที่นี่
      */
     public function handleTextMessage(
         LineContact $contact,
@@ -84,144 +49,112 @@ class RegisterFlowService
     ): ?RegisterFlowResult {
         $text = trim($text);
 
-        // 1) หา session ที่กำลังสมัครอยู่ (in_progress)
-        $session = $this->findActiveSession($contact);
-
-        // 2) ถ้าไม่มี session และข้อความไม่ใช่ trigger → service นี้ไม่รับผิดชอบ
-        if (! $session && ! $this->isRegisterTrigger($text)) {
+        if ($text === '') {
             return null;
         }
 
-        // 3) ถ้าไม่มี session แต่เป็น trigger → เริ่ม flow ใหม่
+        // เริ่ม flow เมื่อพิมพ์ "สมัคร"
+        if ($this->isStartKeyword($text)) {
+            return $this->handleStart($contact, $conversation);
+        }
+
+        // หา session สมัครที่ in_progress อยู่
+        $session = $this->getInProgressSession($contact);
+
         if (! $session) {
-            $session = $this->startNewSession($contact, $conversation);
-
-            $reply = $this->templates->render('register.ask_phone', [
-                'contact_name' => $contact->display_name ?? '',
-            ]);
-
-            return RegisterFlowResult::make()
-                ->handled(true)
-                ->session($session)
-                ->replyText($reply);
+            return null;
         }
 
-        // 4) ถ้ามี session อยู่แล้ว ให้ดูว่าเป็นคำสั่งยกเลิกไหม
-        if ($this->isCancelCommand($text)) {
-            $session->status = self::STATUS_CANCELLED;
-            $session->current_step = self::STEP_DONE;
-            $session->save();
-
-            $reply = $this->templates->render('register.cancelled', [
-                'contact_name' => $contact->display_name ?? '',
-            ]);
-
-            return RegisterFlowResult::make()
-                ->handled(true)
-                ->session($session)
-                ->finished(true)
-                ->replyText($reply);
+        // ยกเลิก
+        if ($this->isCancelKeyword($text)) {
+            return $this->handleCancel($session);
         }
 
-        // 5) เดินตาม step ปัจจุบัน
+        // เลือก handler ตาม step ปัจจุบัน
         switch ($session->current_step) {
             case self::STEP_PHONE:
-                return $this->handlePhoneStep($session, $contact, $text);
+                return $this->handlePhoneStep($session, $text);
 
             case self::STEP_NAME:
-                return $this->handleNameStep($session, $contact, $text);
+                return $this->handleNameStep($session, $text);
 
             case self::STEP_SURNAME:
-                return $this->handleSurnameStep($session, $contact, $text);
+                return $this->handleSurnameStep($session, $text);
 
             case self::STEP_BANK:
-                return $this->handleBankStep($session, $contact, $text);
+                return $this->handleBankStep($session, $text);
 
             case self::STEP_ACCOUNT:
-                return $this->handleAccountStep($session, $contact, $text);
+                return $this->handleAccountStep($session, $text);
 
-            case self::STEP_DONE:
             default:
-                // ถ้า session จบแล้ว แต่ user ยังพิมพ์อะไรมาเกี่ยวกับ "สมัคร"
-                // สามารถตอบแนว "คุณสมัครเสร็จแล้ว" ได้
-                $reply = $this->templates->render('register.already_completed', [
-                    'contact_name' => $contact->display_name ?? '',
-                ]);
-
                 return RegisterFlowResult::make()
                     ->handled(true)
-                    ->session($session)
                     ->finished(true)
-                    ->replyText($reply);
+                    ->session($session)
+                    ->replyText(
+                        $this->templates->render('register.already_completed')
+                    );
         }
     }
 
     /**
-     * หา session สมัครที่ยัง active ของ contact นี้
+     * เริ่ม flow ใหม่เมื่อพิมพ์ "สมัคร"
      */
-    protected function findActiveSession(LineContact $contact): ?LineRegisterSession
-    {
-        return LineRegisterSession::query()
-            ->where('line_contact_id', $contact->id)
-            ->where('status', self::STATUS_IN_PROGRESS)
-            ->orderByDesc('id')
-            ->first();
-    }
-
-    /**
-     * เริ่ม session สมัครใหม่
-     */
-    protected function startNewSession(
+    protected function handleStart(
         LineContact $contact,
         LineConversation $conversation
-    ): LineRegisterSession {
-        return LineRegisterSession::create([
-            'line_contact_id' => $contact->id,
-            'line_conversation_id' => $conversation->id,
-            'status' => self::STATUS_IN_PROGRESS,
-            'current_step' => self::STEP_PHONE,
-            'data' => [],
-        ]);
-    }
+    ): RegisterFlowResult {
+        // เคยสมัครสำเร็จแล้ว
+        $existingCompleted = LineRegisterSession::query()
+            ->where('line_contact_id', $contact->id)
+            ->where('status', 'completed')
+            ->first();
 
-    /**
-     * ตรวจว่า text นี้เป็น trigger เริ่มสมัครไหม
-     */
-    protected function isRegisterTrigger(string $text): bool
-    {
-        $t = Str::lower($text);
-
-        foreach ($this->registerTriggers as $trigger) {
-            if (Str::contains($t, Str::lower($trigger))) {
-                return true;
-            }
+        if ($existingCompleted) {
+            return RegisterFlowResult::make()
+                ->handled(true)
+                ->finished(true)
+                ->replyText(
+                    $this->templates->render('register.already_completed')
+                );
         }
 
-        return false;
+        // session ค้างอยู่
+        $session = $this->getInProgressSession($contact);
+
+        if (! $session) {
+            $session = LineRegisterSession::create([
+                'line_contact_id' => $contact->id,
+                'line_conversation_id' => $conversation->id,
+                'status' => 'in_progress',    // 👈 ตรงกับ migration
+                'current_step' => self::STEP_PHONE,
+                'data' => [],
+            ]);
+        } else {
+            $session->current_step = self::STEP_PHONE;
+            $session->data = [];
+            $session->save();
+        }
+
+        $reply = $this->templates->render('register.ask_phone', [
+            'contact_name' => $contact->display_name ?? '',
+        ]);
+
+        return RegisterFlowResult::make()
+            ->handled(true)
+            ->session($session)
+            ->replyText($reply);
     }
 
     /**
-     * ตรวจว่าเป็นคำสั่งยกเลิกไหม
+     * STEP 1: เบอร์โทร
      */
-    protected function isCancelCommand(string $text): bool
+    protected function handlePhoneStep(LineRegisterSession $session, string $text): RegisterFlowResult
     {
-        $t = Str::lower(trim($text));
+        $plain = $this->normalizePhone($text);
 
-        return in_array($t, ['ยกเลิก', 'cancel', 'ยกเลิกสมัคร'], true);
-    }
-
-    /**
-     * STEP: ขอเบอร์โทร และ validate
-     */
-    protected function handlePhoneStep(
-        LineRegisterSession $session,
-        LineContact $contact,
-        string $text
-    ): RegisterFlowResult {
-        $plain = preg_replace('/\D+/', '', $text ?? '');
-
-        // Format ผิด
-        if (strlen($plain) !== 10) {
+        if (! $plain) {
             $reply = $this->templates->render('register.error_phone_invalid', [
                 'input' => $text,
             ]);
@@ -232,7 +165,7 @@ class RegisterFlowService
                 ->replyText($reply);
         }
 
-        // เช็กซ้ำเบอร์ในระบบสมาชิก
+        // ใช้ rule จริงแบบเว็บ: ห้ามซ้ำใน members.tel และ banks_account.acc_no
         if ($this->isPhoneAlreadyUsed($plain)) {
             $reply = $this->templates->render('register.error_phone_used', [
                 'phone' => $plain,
@@ -244,7 +177,6 @@ class RegisterFlowService
                 ->replyText($reply);
         }
 
-        // ผ่านทั้งคู่ → เก็บใน data แล้วไป step ถัดไป
         $data = $session->data ?? [];
         $data['phone'] = $plain;
 
@@ -252,9 +184,7 @@ class RegisterFlowService
         $session->current_step = self::STEP_NAME;
         $session->save();
 
-        $reply = $this->templates->render('register.ask_name', [
-            'phone' => $plain,
-        ]);
+        $reply = $this->templates->render('register.ask_name');
 
         return RegisterFlowResult::make()
             ->handled(true)
@@ -263,19 +193,14 @@ class RegisterFlowService
     }
 
     /**
-     * STEP: ชื่อจริง
+     * STEP 2: ชื่อจริง
      */
-    protected function handleNameStep(
-        LineRegisterSession $session,
-        LineContact $contact,
-        string $text
-    ): RegisterFlowResult {
+    protected function handleNameStep(LineRegisterSession $session, string $text): RegisterFlowResult
+    {
         $name = trim($text);
 
         if ($name === '' || mb_strlen($name) < 2) {
-            $reply = $this->templates->render('register.error_name_invalid', [
-                'input' => $text,
-            ]);
+            $reply = $this->templates->render('register.error_name_invalid');
 
             return RegisterFlowResult::make()
                 ->handled(true)
@@ -290,9 +215,7 @@ class RegisterFlowService
         $session->current_step = self::STEP_SURNAME;
         $session->save();
 
-        $reply = $this->templates->render('register.ask_surname', [
-            'name' => $name,
-        ]);
+        $reply = $this->templates->render('register.ask_surname');
 
         return RegisterFlowResult::make()
             ->handled(true)
@@ -301,19 +224,14 @@ class RegisterFlowService
     }
 
     /**
-     * STEP: นามสกุล
+     * STEP 3: นามสกุล
      */
-    protected function handleSurnameStep(
-        LineRegisterSession $session,
-        LineContact $contact,
-        string $text
-    ): RegisterFlowResult {
+    protected function handleSurnameStep(LineRegisterSession $session, string $text): RegisterFlowResult
+    {
         $surname = trim($text);
 
         if ($surname === '' || mb_strlen($surname) < 2) {
-            $reply = $this->templates->render('register.error_surname_invalid', [
-                'input' => $text,
-            ]);
+            $reply = $this->templates->render('register.error_surname_invalid');
 
             return RegisterFlowResult::make()
                 ->handled(true)
@@ -328,10 +246,7 @@ class RegisterFlowService
         $session->current_step = self::STEP_BANK;
         $session->save();
 
-        $reply = $this->templates->render('register.ask_bank', [
-            'name' => Arr::get($data, 'name'),
-            'surname' => $surname,
-        ]);
+        $reply = $this->templates->render('register.ask_bank');
 
         return RegisterFlowResult::make()
             ->handled(true)
@@ -340,16 +255,11 @@ class RegisterFlowService
     }
 
     /**
-     * STEP: ธนาคาร
-     *
-     * หมายเหตุ: ตอนจริงน่าจะใช้ quick reply / postback จะดีกว่าพิมพ์เอา
+     * STEP 4: ธนาคาร
      */
-    protected function handleBankStep(
-        LineRegisterSession $session,
-        LineContact $contact,
-        string $text
-    ): RegisterFlowResult {
-        $bankCode = $this->normalizeBankInput($text);
+    protected function handleBankStep(LineRegisterSession $session, string $text): RegisterFlowResult
+    {
+        $bankCode = $this->normalizeBankCode($text);
 
         if (! $bankCode) {
             $reply = $this->templates->render('register.error_bank_invalid', [
@@ -369,9 +279,7 @@ class RegisterFlowService
         $session->current_step = self::STEP_ACCOUNT;
         $session->save();
 
-        $reply = $this->templates->render('register.ask_account', [
-            'bank_code' => $bankCode,
-        ]);
+        $reply = $this->templates->render('register.ask_account');
 
         return RegisterFlowResult::make()
             ->handled(true)
@@ -380,16 +288,13 @@ class RegisterFlowService
     }
 
     /**
-     * STEP: เลขบัญชี
+     * STEP 5: เลขบัญชี
      */
-    protected function handleAccountStep(
-        LineRegisterSession $session,
-        LineContact $contact,
-        string $text
-    ): RegisterFlowResult {
-        $plain = preg_replace('/\D+/', '', $text ?? '');
+    protected function handleAccountStep(LineRegisterSession $session, string $text): RegisterFlowResult
+    {
+        $plain = $this->normalizeAccountNo($text);
 
-        if (strlen($plain) < 6) {
+        if (! $plain) {
             $reply = $this->templates->render('register.error_account_invalid', [
                 'input' => $text,
             ]);
@@ -400,9 +305,25 @@ class RegisterFlowService
                 ->replyText($reply);
         }
 
-        // เช็กซ้ำเลขบัญชีในระบบสมาชิก
-        $bankCode = Arr::get($session->data ?? [], 'bank_code');
+        $data = $session->data ?? [];
+        $bankCode = Arr::get($data, 'bank_code');
 
+        if (! $bankCode) {
+            // state แปลก → ย้อนไปถามธนาคารใหม่
+            $session->current_step = self::STEP_BANK;
+            $session->save();
+
+            $reply = $this->templates->render('register.ask_bank');
+
+            return RegisterFlowResult::make()
+                ->handled(true)
+                ->session($session)
+                ->replyText($reply);
+        }
+
+        // ห้ามซ้ำแบบเว็บ:
+        // - unique ใน members (bank_code + acc_no)
+        // - ห้ามชนกับ banks_account.acc_no
         if ($this->isBankAccountAlreadyUsed($bankCode, $plain)) {
             $reply = $this->templates->render('register.error_account_used', [
                 'account_no' => $plain,
@@ -417,152 +338,200 @@ class RegisterFlowService
         $data = $session->data ?? [];
         $data['account_no'] = $plain;
 
-        $session->data = $data;
+        // เริ่มสมัครจริง
+        try {
+            $result = $this->memberRegistrar->registerFromLineData($data);
+        } catch (\Throwable $e) {
+            report($e);
 
-        // ถึงจุดนี้ข้อมูลครบแล้ว → ลองสร้าง member จริง
-        return $this->finalizeRegistration($session, $contact);
-    }
-
-    /**
-     * ปิดจบ flow: เรียก service สมัครสมาชิกจริง แล้วส่งข้อความสมัครสำเร็จ
-     */
-    protected function finalizeRegistration(
-        LineRegisterSession $session,
-        LineContact $contact
-    ): RegisterFlowResult {
-        // กัน case เดินซ้ำ
-        if ($session->status === self::STATUS_COMPLETED) {
-            $reply = $this->templates->render('register.already_completed', [
-                'contact_name' => $contact->display_name ?? '',
+            $reply = $this->templates->render('register.error_system', [
+                'reason' => $e->getMessage(),
             ]);
 
-            return RegisterFlowResult::make()
-                ->handled(true)
-                ->session($session)
-                ->finished(true)
-                ->replyText($reply);
-        }
-
-        $data = $session->data ?? [];
-
-        // ทำใน transaction กัน credit/ข้อมูลเพี้ยน
-        return DB::transaction(function () use ($session, $contact, $data) {
-
-            $result = $this->memberRegistrar->registerFromLineData([
-                'phone' => Arr::get($data, 'phone'),
-                'name' => Arr::get($data, 'name'),
-                'surname' => Arr::get($data, 'surname'),
-                'bank_code' => Arr::get($data, 'bank_code'),
-                'account_no' => Arr::get($data, 'account_no'),
-                'line_contact_id' => $contact->id,
-            ]);
-
-            if (! $result->success) {
-                $session->status = self::STATUS_FAILED;
-                $session->error_message = $result->message ?? 'REGISTER_FAILED';
-                $session->save();
-
-                $reply = $this->templates->render('register.error_system', [
-                    'reason' => $result->message ?? '',
-                ]);
-
-                return RegisterFlowResult::make()
-                    ->handled(true)
-                    ->session($session)
-                    ->finished(true)
-                    ->replyText($reply);
-            }
-
-            // สมัครสำเร็จ
-            $session->status = self::STATUS_COMPLETED;
-            $session->member_id = $result->memberId;
-            $session->current_step = self::STEP_DONE;
+            $session->status = 'failed';
+            $session->error_message = $e->getMessage();
             $session->save();
 
-            // ผูก member กับ line_contact
-            $contact->member_id = $result->memberId;
-            $contact->save();
+            return RegisterFlowResult::make()
+                ->handled(true)
+                ->session($session)
+                ->finished(true)
+                ->replyText($reply);
+        }
 
-            $reply = $this->templates->render('register.complete_success', [
-                'contact_name' => $contact->display_name ?? '',
-                'username' => $result->username,
-                'password' => $result->password,
-                'login_url' => $result->loginUrl,
+        if (! $result->success) {
+            $session->status = 'failed';
+            $session->error_message = $result->message;
+            $session->save();
+
+            $reply = $this->templates->render('register.error_system', [
+                'reason' => $result->message,
             ]);
 
             return RegisterFlowResult::make()
                 ->handled(true)
                 ->session($session)
                 ->finished(true)
-                ->memberId($result->memberId)
                 ->replyText($reply);
-        });
-    }
-
-    /**
-     * แปลง input ธนาคารจากข้อความ → bank_code
-     *
-     * NOTE: ตรงนี้โบ๊ทต้องไปผูกกับ table/logic ของระบบจริงนะ
-     */
-    protected function normalizeBankInput(string $text): ?string
-    {
-        $t = Str::lower(preg_replace('/\s+/', '', $text));
-
-        $map = [
-            'kbank' => 'KBANK',
-            'กสิกร' => 'KBANK',
-            'ไทยพาณิชย์' => 'SCB',
-            'scb' => 'SCB',
-            'กรุงไทย' => 'KTB',
-            'ktb' => 'KTB',
-            'กรุงเทพ' => 'BBL',
-            'bbl' => 'BBL',
-            'กรุงศรี' => 'BAY',
-            'bay' => 'BAY',
-        ];
-
-        foreach ($map as $k => $code) {
-            if (Str::contains($t, $k)) {
-                return $code;
-            }
         }
 
-        return null;
+        // สมัครสำเร็จ
+        $session->status = 'completed';
+        $session->current_step = self::STEP_FINISHED;
+        $session->member_id = $result->memberId;
+        $session->save();
+
+        $reply = $this->templates->render('register.complete_success', [
+            'username' => $result->username,
+            'password' => $result->password,
+            'login_url' => $result->loginUrl,
+        ]);
+
+        return RegisterFlowResult::make()
+            ->handled(true)
+            ->session($session)
+            ->finished(true)
+            ->memberId($result->memberId)
+            ->replyText($reply);
+    }
+
+    protected function handleCancel(LineRegisterSession $session): RegisterFlowResult
+    {
+        $session->status = 'cancelled';
+        $session->current_step = self::STEP_FINISHED;
+        $session->error_message = null;
+        $session->save();
+
+        $reply = $this->templates->render('register.cancelled');
+
+        return RegisterFlowResult::make()
+            ->handled(true)
+            ->session($session)
+            ->finished(true)
+            ->replyText($reply);
     }
 
     /**
-     * เช็กว่าเบอร์นี้ถูกใช้แล้วในระบบสมาชิกหรือยัง
-     *
-     * NOTE: โบ๊ทต้อง implement จริงให้เรียก model/member table ของระบบ
+     * หา session ที่สถานะ in_progress ของ contact นี้
      */
+    protected function getInProgressSession(LineContact $contact): ?LineRegisterSession
+    {
+        return LineRegisterSession::query()
+            ->where('line_contact_id', $contact->id)
+            ->where('status', 'in_progress')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    protected function isStartKeyword(string $text): bool
+    {
+        $text = trim(mb_strtolower($text));
+
+        $keywords = [
+            'สมัคร',
+            'สมัครสมาชิก',
+            'reg',
+            'register',
+        ];
+
+        return in_array($text, $keywords, true);
+    }
+
+    protected function isCancelKeyword(string $text): bool
+    {
+        $text = trim(mb_strtolower($text));
+
+        $keywords = [
+            'ยกเลิก',
+            'ยกเลิกสมัคร',
+            'cancel',
+            'stop',
+        ];
+
+        return in_array($text, $keywords, true);
+    }
+
+    protected function normalizePhone(string $text): ?string
+    {
+        $digits = preg_replace('/\D+/', '', $text);
+
+        if (mb_strlen($digits) !== 10) {
+            return null;
+        }
+
+        if (! preg_match('/^0[0-9]{9}$/', $digits)) {
+            return null;
+        }
+
+        return $digits;
+    }
+
+    /**
+     * ปล่อยให้ bank_code ตรงกับค่าที่เว็บใช้
+     */
+    protected function normalizeBankCode(string $text): ?string
+    {
+        $t = trim($text);
+
+        if ($t === '') {
+            return null;
+        }
+
+        return $t;
+    }
+
+    protected function normalizeAccountNo(string $text): ?string
+    {
+        $digits = preg_replace('/\D+/', '', $text);
+
+        if (mb_strlen($digits) < 6 || mb_strlen($digits) > 16) {
+            return null;
+        }
+
+        return $digits;
+    }
+
     protected function isPhoneAlreadyUsed(string $phone): bool
     {
-        // TODO: แก้ให้เรียก members table จริง
-        // return Member::where('tel', $phone)->exists();
-        return false;
+        // 1) members.tel
+        if (Member::where('tel', $phone)->exists()) {
+            return true;
+        }
+
+        // 2) banks_account.acc_no
+        $existsInBankAccount = DB::table('banks_account')
+            ->where('acc_no', $phone)
+            ->exists();
+
+        return $existsInBankAccount;
     }
 
-    /**
-     * เช็กว่าเลขบัญชีนี้ถูกใช้แล้วหรือยัง (ภายใต้ bank เดียวกัน)
-     *
-     * NOTE: โบ๊ทต้องผูกกับ table บัญชีสมาชิกจริง
-     */
     protected function isBankAccountAlreadyUsed(?string $bankCode, string $accountNo): bool
     {
-        // TODO: แก้ให้เรียก bank accounts table จริง
-        // return MemberBank::where('bank_code', $bankCode)
-        //     ->where('account_no', $accountNo)
-        //     ->exists();
-        return false;
+        if (! $bankCode) {
+            return false;
+        }
+
+        // 1) members (bank_code + acc_no)
+        $dupMember = Member::where('bank_code', $bankCode)
+            ->where('acc_no', $accountNo)
+            ->exists();
+
+        if ($dupMember) {
+            return true;
+        }
+
+        // 2) banks_account.acc_no
+        $existsInBankAccount = DB::table('banks_account')
+            ->where('acc_no', $accountNo)
+            ->exists();
+
+        return $existsInBankAccount;
     }
 }
 
 /**
- * ผลลัพธ์จาก RegisterFlowService
- * - handled: ข้อความนี้ถูก flow สมัครจัดการหรือไม่
- * - finished: flow สมัครรอบนี้จบแล้วหรือยัง
- * - replyText: ข้อความหลักที่ควรส่งตอบกลับ (TEXT)
- *   (โบ๊ทจะขยายเป็น messages หลายประเภทในอนาคตได้)
+ * DTO สำหรับผลลัพธ์ของ RegisterFlowService
  */
 class RegisterFlowResult
 {
@@ -602,16 +571,16 @@ class RegisterFlowResult
         return $this;
     }
 
-    public function session(LineRegisterSession $session): self
+    public function replyText(?string $replyText): self
     {
-        $this->session = $session;
+        $this->replyText = $replyText;
 
         return $this;
     }
 
-    public function replyText(string $text): self
+    public function session(?LineRegisterSession $session): self
     {
-        $this->replyText = $text;
+        $this->session = $session;
 
         return $this;
     }
