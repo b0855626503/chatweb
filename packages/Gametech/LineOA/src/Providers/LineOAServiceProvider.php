@@ -4,6 +4,8 @@ namespace Gametech\LineOA\Providers;
 
 use Gametech\LineOA\Contracts\LineMemberRegistrar;
 use Gametech\LineOA\Services\DefaultLineMemberRegistrar;
+use Gametech\LineOA\Services\LineTemplateService;
+use Gametech\LineOA\Services\RegisterFlowService;
 use Illuminate\Support\ServiceProvider;
 
 class LineOAServiceProvider extends ServiceProvider
@@ -16,11 +18,20 @@ class LineOAServiceProvider extends ServiceProvider
         $this->registerConfig();
 
         $this->app->bind(LineMemberRegistrar::class, DefaultLineMemberRegistrar::class);
-        //        foreach (glob(dirname(__DIR__).'/Config/*.php') as $file) {
-        //            //            Log::debug($file);
-        //            $name = pathinfo($file, PATHINFO_FILENAME);
-        //            $this->mergeConfigFrom($file, $name);
-        //        }
+        // ถ้าอยากกำหนด cache lifetime ให้ Service
+
+        $this->app->singleton(LineTemplateService::class, function ($app) {
+            // cache 60 วินาทีพอ (หรือจะใช้ config ก็ได้)
+            return new LineTemplateService(60);
+        });
+
+        // RegisterFlowService ใช้ DI ปกติ (ไม่บังคับต้อง singleton แต่จะทำก็ได้)
+        $this->app->singleton(RegisterFlowService::class, function ($app) {
+            return new RegisterFlowService(
+                $app->make(LineTemplateService::class),
+                $app->make(LineMemberRegistrar::class)
+            );
+        });
     }
 
     /**
