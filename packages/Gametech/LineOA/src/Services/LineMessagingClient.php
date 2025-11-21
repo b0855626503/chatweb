@@ -3,6 +3,9 @@
 namespace Gametech\LineOA\Services;
 
 use Gametech\LineOA\Models\LineAccount;
+use Gametech\LineOA\Models\LineContact;
+use Gametech\LineOA\Models\LineConversation;
+use Gametech\LineOA\Models\LineMessage;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -281,4 +284,5 @@ class LineMessagingClient
             ];
         }
     }
+    
 }

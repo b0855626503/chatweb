@@ -69,8 +69,8 @@ class LineWebhookService
             } catch (\Throwable $e) {
                 Log::error('[LineWebhook] error on event', [
                     'account_id' => $account->id,
-                    'event'      => $event,
-                    'error'      => $e->getMessage(),
+                    'event' => $event,
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -82,7 +82,7 @@ class LineWebhookService
     protected function handleMessageEvent(LineAccount $account, array $event, ?LineWebhookLog $log = null): void
     {
         $messageType = Arr::get($event, 'message.type');
-        $messageId   = Arr::get($event, 'message.id');
+        $messageId = Arr::get($event, 'message.id');
 
         // log ตาม type เดิม ๆ ไว้ก่อน (ไม่ตัด pattern เดิมทิ้ง)
         if ($messageType === 'text') {
@@ -102,8 +102,8 @@ class LineWebhookService
             ]);
         } else {
             Log::info('[LineWebhook] receive non-text event', [
-                'account_id'   => $account->id,
-                'message_id'   => $messageId,
+                'account_id' => $account->id,
+                'message_id' => $messageId,
                 'message_type' => $messageType,
             ]);
         }
@@ -115,16 +115,17 @@ class LineWebhookService
             $message = $this->chat->handleIncomingMessage($account, $event, $log);
         } catch (\Throwable $e) {
             Log::error('[LineWebhook] handleMessageEvent exception', [
-                'account_id'   => $account->id,
-                'message_id'   => $messageId,
+                'account_id' => $account->id,
+                'message_id' => $messageId,
                 'message_type' => $messageType,
-                'error'        => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             // ถ้าต้องการให้ error เด้งต่อออกไปก็ throw ต่อได้
             throw $e;
         }
 
+        // เฉพาะ text ถึงโยนเข้า flow เพิ่ม
         if ($messageType === 'text') {
             $text = $message->text ?? '';
 
@@ -132,7 +133,7 @@ class LineWebhookService
             //  เพิ่ม: ให้ RegisterFlowService ลองจัดการ flow "สมัครสมาชิก"
             // ------------------------------------------------------------------
             try {
-                $contact      = $message->contact ?? null;
+                $contact = $message->contact ?? null;
                 $conversation = $message->conversation ?? null;
 
                 if ($contact && $conversation) {
@@ -146,6 +147,34 @@ class LineWebhookService
                     );
 
                     if ($flowResult && $flowResult->handled && $flowResult->replyText) {
+
+                        // เก็บข้อความที่ BOT ตอบกลับในการสมัครสมาชิกลง line_messages
+                        try {
+                            \Gametech\LineOA\Models\LineMessage::create([
+                                'line_conversation_id' => $message->line_conversation_id,
+                                'line_account_id' => $message->line_account_id,
+                                'line_contact_id' => $message->line_contact_id,
+                                'direction' => 'outbound',
+                                'source' => 'bot',
+                                'type' => 'text',
+                                'line_message_id' => null,
+                                'text' => $flowResult->replyText,
+                                'payload' => null,
+                                'meta' => null,
+                                'sender_employee_id' => null,
+                                'sender_bot_key' => 'register_flow',
+                                'sent_at' => now(),
+                            ]);
+                        } catch (\Throwable $e) {
+                            Log::error('[LineWebhook] store bot message failed (register flow)', [
+                                'account_id' => $account->id,
+                                'line_message_id' => $message->line_message_id ?? null,
+                                'conversation_id' => $message->line_conversation_id ?? null,
+                                'contact_id' => $message->line_contact_id ?? null,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+
                         $replyToken = Arr::get($event, 'replyToken');
 
                         if ($replyToken) {
@@ -156,11 +185,11 @@ class LineWebhookService
                                 $messaging->replyText($account, $replyToken, $flowResult->replyText);
                             } catch (\Throwable $e) {
                                 Log::error('[LineWebhook] replyText failed (register flow)', [
-                                    'account_id'      => $account->id,
+                                    'account_id' => $account->id,
                                     'line_message_id' => $message->line_message_id ?? null,
                                     'conversation_id' => $message->line_conversation_id ?? null,
-                                    'contact_id'      => $message->line_contact_id ?? null,
-                                    'error'           => $e->getMessage(),
+                                    'contact_id' => $message->line_contact_id ?? null,
+                                    'error' => $e->getMessage(),
                                 ]);
                             }
                         }
@@ -169,32 +198,17 @@ class LineWebhookService
             } catch (\Throwable $e) {
                 Log::error('[LineWebhook] register flow error', [
                     'account_id' => $account->id,
-                    'event'      => $event,
-                    'error'      => $e->getMessage(),
+                    'event' => $event,
+                    'error' => $e->getMessage(),
                 ]);
             }
 
             // ------------------------------------------------------------------
-            //  log เดิม: เก็บรอยข้อความไว้ (ของเก่าใช้งานอยู่แล้ว)
+            //  ตรงนี้ยังว่าง เผื่อในอนาคตมี flow อื่น ๆ ที่ใช้ text เดียวกัน
             // ------------------------------------------------------------------
-            Log::info('[LineWebhook] message stored', [
-                'account_id'      => $account->id,
-                'line_message_id' => $message->line_message_id,
-                'conversation_id' => $message->line_conversation_id,
-                'contact_id'      => $message->line_contact_id,
-                'text'            => $text,
-            ]);
-
-            return;
         }
 
-        // สำหรับ message type อื่น เช่น image, sticker, file, location ฯลฯ
-        Log::info('[LineWebhook] message event (non-text)', [
-            'account_id' => $account->id,
-            'event'      => $event,
-        ]);
-
-        // ถ้าอยากเก็บ media ด้วยก็สามารถใช้ ChatService อีก method หนึ่งในอนาคต
+        // ถ้าอยากเก็บ media ด้วย ก็สามารถใช้ ChatService อีก method หนึ่งในอนาคต
     }
 
     /**
@@ -208,9 +222,9 @@ class LineWebhookService
         $contact = $this->chat->updateContactProfile($account, $userId);
 
         Log::info('[LineWebhook] follow event', [
-            'account_id'   => $account->id,
+            'account_id' => $account->id,
             'line_user_id' => $userId,
-            'contact_id'   => $contact->id,
+            'contact_id' => $contact->id,
         ]);
 
         // TODO: จะส่งข้อความต้อนรับก็เรียก LineMessagingClient::pushText / replyText ต่อจากตรงนี้ได้
@@ -224,7 +238,7 @@ class LineWebhookService
         $userId = Arr::get($event, 'source.userId');
 
         Log::info('[LineWebhook] unfollow event', [
-            'account_id'   => $account->id,
+            'account_id' => $account->id,
             'line_user_id' => $userId,
         ]);
 
@@ -238,14 +252,14 @@ class LineWebhookService
     protected function handlePostbackEvent(LineAccount $account, array $event, ?LineWebhookLog $log = null): void
     {
         $userId = Arr::get($event, 'source.userId');
-        $data   = Arr::get($event, 'postback.data');
+        $data = Arr::get($event, 'postback.data');
         $params = Arr::get($event, 'postback.params', []);
 
         Log::info('[LineWebhook] postback event', [
-            'account_id'   => $account->id,
+            'account_id' => $account->id,
             'line_user_id' => $userId,
-            'data'         => $data,
-            'params'       => $params,
+            'data' => $data,
+            'params' => $params,
         ]);
 
         // TODO:
@@ -260,7 +274,7 @@ class LineWebhookService
     {
         Log::info('[LineWebhook] generic event', [
             'account_id' => $account->id,
-            'event'      => $event,
+            'event' => $event,
         ]);
     }
 
@@ -271,12 +285,12 @@ class LineWebhookService
     {
         Log::warning('[LineWebhook] unknown event type', [
             'account_id' => $account->id,
-            'event'      => $event,
+            'event' => $event,
         ]);
     }
 
     /**
-     * ตัวอย่าง helper เช็ค keyword สมัคร (ยังเก็บไว้ เผื่อใช้กรอง trigger เพิ่มเติม)
+     * ตัวอย่าง helper เช็ค keyword สมัคร (ไว้ใช้ตอนต่อ RegisterFlowService)
      */
     protected function isRegisterKeyword(?string $text): bool
     {
