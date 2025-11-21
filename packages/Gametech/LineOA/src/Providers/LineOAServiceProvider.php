@@ -2,6 +2,8 @@
 
 namespace Gametech\LineOA\Providers;
 
+use Gametech\LineOA\Contracts\LineMemberRegistrar;
+use Gametech\LineOA\Services\DefaultLineMemberRegistrar;
 use Illuminate\Support\ServiceProvider;
 
 class LineOAServiceProvider extends ServiceProvider
@@ -12,6 +14,8 @@ class LineOAServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerConfig();
+
+        $this->app->bind(LineMemberRegistrar::class, DefaultLineMemberRegistrar::class);
         //        foreach (glob(dirname(__DIR__).'/Config/*.php') as $file) {
         //            //            Log::debug($file);
         //            $name = pathinfo($file, PATHINFO_FILENAME);
