@@ -11,9 +11,20 @@ class LineWebhookService
 {
     protected ChatService $chat;
 
-    public function __construct(ChatService $chat)
-    {
+    /** flow สมัครสมาชิกผ่าน LINE */
+    protected RegisterFlowService $registerFlow;
+
+    /** client สำหรับยิงข้อความกลับไปที่ LINE */
+    protected LineMessagingClient $messaging;
+
+    public function __construct(
+        ChatService $chat,
+        RegisterFlowService $registerFlow,
+        LineMessagingClient $messaging
+    ) {
         $this->chat = $chat;
+        $this->registerFlow = $registerFlow;
+        $this->messaging = $messaging;
     }
 
     /**
@@ -121,6 +132,55 @@ class LineWebhookService
 
             // ถ้าต้องการให้ error เด้งต่อออกไปก็ throw ต่อได้
             throw $e;
+        }
+
+        // ------------------------------------------------------------------
+        //  ต่อ RegisterFlowService: สมัครสมาชิกผ่านข้อความ
+        // ------------------------------------------------------------------
+        if ($messageType === 'text') {
+            $text = Arr::get($event, 'message.text');
+            $replyToken = Arr::get($event, 'replyToken');
+            $lineUserId = Arr::get($event, 'source.userId');
+
+            // กันเคสข้อมูลไม่ครบ
+            if (! $replyToken || ! $lineUserId || $text === null || $text === '') {
+                return;
+            }
+
+            try {
+                // ให้ RegisterFlowService ดูว่า message นี้เกี่ยวกับ flow สมัครไหม
+                // และจะตอบกลับว่าอย่างไร
+                $flowResult = $this->registerFlow->handleTextMessage(
+                    $account,
+                    $lineUserId,
+                    $text,
+                    $log
+                );
+
+                // ถ้า flow สมัคร "รับผิดชอบ" แล้ว และมีข้อความตอบกลับ → ยิงกลับ LINE
+                if ($flowResult && $flowResult->handled && $flowResult->replyText) {
+                    try {
+                        $this->messaging->replyText($account, $replyToken, $flowResult->replyText);
+                    } catch (\Throwable $e) {
+                        Log::error('[LineWebhook] replyText failed (register flow)', [
+                            'account_id' => $account->id,
+                            'line_user_id' => $lineUserId,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+
+                    // หมายเหตุ:
+                    // - ตรงนี้เรา "ยังไม่หยุด" logic อื่น เพราะตอนนี้ webhook ยังไม่มี bot ตัวอื่น
+                    // - ถ้าวันหลังมี auto-reply ตัวอื่น แล้วต้องการไม่ให้ชนกัน
+                    //   อาจใส่ flag ใน event ว่า handled แล้ว ก็ไม่ต้องไป process ต่อ
+                }
+            } catch (\Throwable $e) {
+                Log::error('[LineWebhook] register flow error', [
+                    'account_id' => $account->id,
+                    'line_user_id' => $lineUserId ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
