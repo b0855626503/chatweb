@@ -9,6 +9,7 @@ use Gametech\LineOA\Models\LineRegisterSession;
 use Gametech\Marketing\Models\MarketingMember as Member;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * จัดการ flow การสมัครสมาชิกผ่าน LINE แบบถาม–ตอบทีละ step
@@ -246,20 +247,27 @@ class RegisterFlowService
         $session->current_step = self::STEP_BANK;
         $session->save();
 
-        $reply = $this->templates->render('register.ask_bank');
+        $reply = $this->templates->render('register.ask_bank', [
+            'name' => Arr::get($data, 'name'),
+            'surname' => $surname,
+        ]);
 
         return RegisterFlowResult::make()
             ->handled(true)
             ->session($session)
-            ->replyText($reply);
+            ->replyText($reply)
+            ->quickReply($this->getBankQuickReplyOptions());
     }
 
     /**
      * STEP 4: ธนาคาร
+     *
+     * รองรับทั้งพิมพ์ชื่อธนาคารเอง และกดจาก quick reply
      */
     protected function handleBankStep(LineRegisterSession $session, string $text): RegisterFlowResult
     {
-        $bankCode = $this->normalizeBankCode($text);
+        // map input → code กลาง เช่น KBANK / SCB / ...
+        $bankCode = $this->normalizeBankInput($text);
 
         if (! $bankCode) {
             $reply = $this->templates->render('register.error_bank_invalid', [
@@ -269,7 +277,8 @@ class RegisterFlowService
             return RegisterFlowResult::make()
                 ->handled(true)
                 ->session($session)
-                ->replyText($reply);
+                ->replyText($reply)
+                ->quickReply($this->getBankQuickReplyOptions());
         }
 
         $data = $session->data ?? [];
@@ -279,7 +288,9 @@ class RegisterFlowService
         $session->current_step = self::STEP_ACCOUNT;
         $session->save();
 
-        $reply = $this->templates->render('register.ask_account');
+        $reply = $this->templates->render('register.ask_account', [
+            'bank_code' => $bankCode,
+        ]);
 
         return RegisterFlowResult::make()
             ->handled(true)
@@ -313,17 +324,21 @@ class RegisterFlowService
             $session->current_step = self::STEP_BANK;
             $session->save();
 
-            $reply = $this->templates->render('register.ask_bank');
+            $reply = $this->templates->render('register.ask_bank', [
+                'name' => Arr::get($data, 'name'),
+                'surname' => Arr::get($data, 'surname'),
+            ]);
 
             return RegisterFlowResult::make()
                 ->handled(true)
                 ->session($session)
-                ->replyText($reply);
+                ->replyText($reply)
+                ->quickReply($this->getBankQuickReplyOptions());
         }
 
-        // ห้ามซ้ำแบบเว็บ:
-        // - unique ใน members (bank_code + acc_no)
-        // - ห้ามชนกับ banks_account.acc_no
+        // ห้ามซ้ำแบบเว็บ (แบบง่าย):
+        // - members.acc_no
+        // - banks_account.acc_no
         if ($this->isBankAccountAlreadyUsed($bankCode, $plain)) {
             $reply = $this->templates->render('register.error_account_used', [
                 'account_no' => $plain,
@@ -467,7 +482,7 @@ class RegisterFlowService
     }
 
     /**
-     * ปล่อยให้ bank_code ตรงกับค่าที่เว็บใช้
+     * ปล่อยให้ bank_code ตรงกับค่าที่เว็บใช้ (เผื่อรองรับเคสส่งตัวเลขตรง ๆ)
      */
     protected function normalizeBankCode(string $text): ?string
     {
@@ -478,6 +493,110 @@ class RegisterFlowService
         }
 
         return $t;
+    }
+
+    /**
+     * ตัวเลือกธนาคารที่จะแสดงเป็น Quick Reply ใน LINE
+     *
+     * โครงสร้าง domain เป็นกลาง ๆ:
+     * [
+     *   ['label' => 'กสิกรไทย',   'text' => 'กสิกรไทย'],
+     *   ['label' => 'ไทยพาณิชย์', 'text' => 'ไทยพาณิชย์'],
+     *   ...
+     * ]
+     */
+    protected function getBankQuickReplyOptions(): array
+    {
+        return [
+            [
+                'label' => 'กสิกรไทย',
+                'text' => 'กสิกรไทย',
+            ],
+            [
+                'label' => 'ไทยพาณิชย์',
+                'text' => 'ไทยพาณิชย์',
+            ],
+            [
+                'label' => 'กรุงไทย',
+                'text' => 'กรุงไทย',
+            ],
+            [
+                'label' => 'กรุงเทพ',
+                'text' => 'กรุงเทพ',
+            ],
+            [
+                'label' => 'กรุงศรี',
+                'text' => 'กรุงศรี',
+            ],
+            [
+                'label' => 'ออมสิน',
+                'text' => 'ออมสิน',
+            ],
+            [
+                'label' => 'TTB',
+                'text' => 'TTB',
+            ],
+        ];
+    }
+
+    /**
+     * แปลง input ธนาคารจากข้อความ → bank_code กลาง
+     *
+     * NOTE: ตอนนี้ใช้โค้ด KBANK/SCB/KTB/... เป็นกลาง ๆ
+     *       เวลาไปสมัครจริงใน DefaultLineMemberRegistrar
+     *       ค่อย map จาก code เหล่านี้ไปเป็น bank_code ของระบบ (ตัวเลข)
+     */
+    protected function normalizeBankInput(string $text): ?string
+    {
+        $t = Str::lower(preg_replace('/\s+/', '', $text));
+
+        $map = [
+            // กสิกรไทย
+            'กสิกรไทย' => 'KBANK',
+            'กสิกร' => 'KBANK',
+            'kbank' => 'KBANK',
+            'kasikorn' => 'KBANK',
+
+            // ไทยพาณิชย์
+            'ไทยพาณิชย์' => 'SCB',
+            'scb' => 'SCB',
+
+            // กรุงไทย
+            'กรุงไทย' => 'KTB',
+            'ktb' => 'KTB',
+
+            // กรุงเทพ
+            'กรุงเทพ' => 'BBL',
+            'bangkokbank' => 'BBL',
+            'bbl' => 'BBL',
+
+            // กรุงศรี
+            'กรุงศรี' => 'BAY',
+            'bay' => 'BAY',
+
+            // ทหารไทย / TMB / TTB
+            'ttb' => 'TTB',
+            'tmb' => 'TTB',
+            'ทหารไทย' => 'TTB',
+
+            // ออมสิน
+            'ออมสิน' => 'GSB',
+            'gsb' => 'GSB',
+        ];
+
+        // ตรงเป๊ะก่อน
+        if (isset($map[$t])) {
+            return $map[$t];
+        }
+
+        // เผื่อพิมพ์คำอื่นยาว ๆ ที่มีคำเหล่านี้อยู่
+        foreach ($map as $k => $code) {
+            if (Str::contains($t, $k)) {
+                return $code;
+            }
+        }
+
+        return null;
     }
 
     protected function normalizeAccountNo(string $text): ?string
@@ -508,20 +627,13 @@ class RegisterFlowService
 
     protected function isBankAccountAlreadyUsed(?string $bankCode, string $accountNo): bool
     {
-        if (! $bankCode) {
-            return false;
-        }
-
-        // 1) members (bank_code + acc_no)
-        $dupMember = Member::where('bank_code', $bankCode)
-            ->where('acc_no', $accountNo)
-            ->exists();
+        // ตอนนี้ bankCode เป็นโค้ด KBANK/SCB/... เลยเช็คจากเลขบัญชีเป็นหลัก
+        $dupMember = Member::where('acc_no', $accountNo)->exists();
 
         if ($dupMember) {
             return true;
         }
 
-        // 2) banks_account.acc_no
         $existsInBankAccount = DB::table('banks_account')
             ->where('acc_no', $accountNo)
             ->exists();
@@ -544,6 +656,9 @@ class RegisterFlowResult
     public ?string $replyText = null;
 
     public ?LineRegisterSession $session = null;
+
+    /** ตัวเลือก quick reply (เช่น เลือกธนาคาร) */
+    public ?array $quickReply = null;
 
     public static function make(): self
     {
@@ -581,6 +696,14 @@ class RegisterFlowResult
     public function session(?LineRegisterSession $session): self
     {
         $this->session = $session;
+
+        return $this;
+    }
+
+    /** เซ็ตตัวเลือก quick reply (เช่น ใช้ตอนถามธนาคาร) */
+    public function quickReply(?array $options): self
+    {
+        $this->quickReply = $options;
 
         return $this;
     }
