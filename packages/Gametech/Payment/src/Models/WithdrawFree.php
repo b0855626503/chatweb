@@ -38,6 +38,7 @@ class WithdrawFree extends Model implements WithdrawFreeContract
         'bankout',
         'bankm_code',
         'amount',
+        'balance',
         'date_record',
         'timedept',
         'ck_deposit',
@@ -63,7 +64,8 @@ class WithdrawFree extends Model implements WithdrawFreeContract
         'status',
         'ck_step2',
         'date_bank',
-        'time_bank'
+        'time_bank',
+        'status_withdraw',
     ];
 
     /**
@@ -103,7 +105,7 @@ class WithdrawFree extends Model implements WithdrawFreeContract
         'ck_step2' => 'integer',
         'date_bank' => 'date',
         'time_bank' => 'string',
-
+        'status_withdraw' => 'string',
     ];
 
     /**
@@ -141,7 +143,8 @@ class WithdrawFree extends Model implements WithdrawFreeContract
         'status' => 'nullable|boolean',
         'ck_step2' => 'required|integer',
         'date_bank' => 'nullable|datetime:Y-m-d',
-        'time_bank' => 'required|string|max:10'
+        'time_bank' => 'required|string|max:10',
+        'status_withdraw' => 'required|string',
     ];
 
     protected static function booted()
@@ -194,5 +197,10 @@ class WithdrawFree extends Model implements WithdrawFreeContract
     public function member_credit(): MorphMany
     {
         return $this->morphMany(MemberProxy::modelClass(), 'credit_transaction');
+    }
+
+    public function payment_last()
+    {
+        return $this->hasOne(BankPaymentProxy::modelClass(), 'member_topup', 'member_code')->latest();
     }
 }

@@ -1665,7 +1665,6 @@ body.swal2-toast-column .swal2-toast .swal2-validation-message {
 }
 
 
-
 .loading-bar-fixed > div .bar {
     position: fixed
 }
@@ -1685,13 +1684,13 @@ body.swal2-toast-column .swal2-toast .swal2-validation-message {
     display: block
 }
 
- > div {
+> div {
     pointer-events: none;
     transition: 350ms linear;
     color: #29d
 }
 
- > div .bar {
+> div .bar {
     transition: width 350ms;
     background: #29d;
     position: absolute;
@@ -1704,12 +1703,12 @@ body.swal2-toast-column .swal2-toast .swal2-validation-message {
     border-top-right-radius: 1px
 }
 
-[dir=rtl]  > div .bar {
+[dir=rtl] > div .bar {
     right: 0;
     left: unset
 }
 
- > div .peg {
+> div .peg {
     display: none;
     position: absolute;
     width: 70px;
@@ -1722,7 +1721,7 @@ body.swal2-toast-column .swal2-toast .swal2-validation-message {
     border-radius: 100%
 }
 
- > div#loading-bar-spinner {
+> div#loading-bar-spinner {
     display: block;
     position: absolute;
     z-index: 10002;
@@ -1730,7 +1729,7 @@ body.swal2-toast-column .swal2-toast .swal2-validation-message {
     left: 0
 }
 
- > div#loading-bar-spinner .spinner-icon {
+> div#loading-bar-spinner .spinner-icon {
     width: 14px;
     height: 14px;
     border: 2px solid transparent;

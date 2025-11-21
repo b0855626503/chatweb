@@ -4,89 +4,97 @@
 {{-- page title --}}
 @section('title','')
 
-@push('styles')
-    <style>
-        .bg-login {
-            color: #fff;
-            height: 100vh !important;
-            font-size: 14px;
-            overflow-y: hidden !important;
-            overflow-x: hidden !important;
-            background-size: contain;
-            background-repeat: no-repeat;
-        }
-    </style>
-@endpush
 
 @section('content')
-    <div class="container">
-        <div class="row">
-            <div class="col-12 offset-md-3 offset-lg-3 col-md-6 col-lg-6  col-sm-12">
-                <div class="my-login-page">
-                    <div class="card-wrapper">
-                        <div class="brand"></div>
-                        <div class="card fat">
-                            <div class="card-header"></div>
-                            <div class="card-body">
-                                <h4 class="card-title"></h4>
-                                <form method="POST" action="{{ route('customer.session.create') }}"
-                                      @submit.prevent="onSubmit">
-                                    @csrf
-                                    <div class="input-group form-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                        </div>
-                                        <input class="form-control text-lowercase" v-validate="'required'"
-                                               :class="[errors.has('user_name') ? 'is-invalid' : '']"
-                                               id="user_name" name="user_name" maxlength="10"
-                                               data-vv-as="&quot;Username&quot;"
-                                               value="{{ old('user_name') }}" placeholder="User Name">
-                                    </div>
-                                    <div class="input-group form-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-key"></i></span>
-                                        </div>
-                                        <input type="password" v-validate="'required|min:6'"
-                                               class="form-control"
-                                               :class="[errors.has('password') ? 'is-invalid' : '']"
-                                               id="password" name="password"
-                                               data-vv-as="&quot;Password&quot;"
-                                               placeholder="รหัสผ่าน">
 
-                                    </div>
-
-                                    <div class="row">
-
-                                        <!-- /.col -->
-                                        <div class="col-12">
-                                            <button class="btn btn-primary btn-block" style="border: none"><i
-                                                    class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
-                                            </button>
-                                        </div>
-                                        <!-- /.col -->
-                                    </div>
-                                </form>
-
-                            </div>
-                            <div class="card-footer d-flex">
-                                <div class="d-flex" style="flex-grow:1; ">
-                                    <a class="text-light btn-footer" href="{{ route('customer.session.store') }}">สมัครสมาชิก</a>
-                                </div>
-                                <div class="d-flex">
-                                    <a class="text-light btn-footer" target="_blank" href="{{ $config->linelink }}">ลืมรหัสผ่าน?</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    @if($config->notice)
-                        <div class="card card-trans">
-                            <div class="card-body">
-                                <p class="card-title text-warning text-center w-100">{{ $config->notice }} </p>
-                            </div>
-                        </div>
-                    @endif
-                </div>
+    <div class="headregislogin">
+        <div class="row m-0">
+            <div class="col-6 p-1 active">
+                <img class="gif" src="images/icon/login_{{ $lang }}.gif">
+{{--                <img class="png" src="images/icon/login.png">--}}
+                <img class="png" src="images/icon/login_{{ $lang }}.png">
+            </div>
+            <div class="col-6 p-1" onclick="location.href='{{ route('customer.session.store') }}'">
+                <img class="gif" src="images/icon/regis_{{ $lang }}.gif">
+{{--                <img class="png" src="images/icon/regis.png">--}}
+                <img class="png" src="images/icon/regis_{{ $lang }}.png">
             </div>
         </div>
+
+
     </div>
+
+    <div class="px-1">
+
+        <section class="sectionpage login">
+            <div class="bginputlogin">
+                <img class="ic-lg-01" src="images/icon/chip.png">
+                <img class="ic-lg-02" src="images/icon/card.png">
+                <div class="logologin">
+                    {!! core()->showImg($config->logo,'img','','','') !!}
+                </div>
+                <div class="inbgbeforelogin">
+
+                    <div class="insidectloginmb">
+                        <div class="headerlogin my-2"><h2>{{ __('app.login.login') }}</h2></div>
+                        <form method="POST" action="{{ route('customer.session.create') }}"
+                              @submit.prevent="onSubmit">
+                            @csrf
+
+                            <div>
+
+                                <div class=" form-group my-2">
+                                    <div>
+                                        <label> {{ __('app.login.username') }}</label>
+                                        <div class="el-input my-1">
+                                            <i class="fas fa-user"></i>
+                                            <input class="inputstyle text-lowercase" v-validate="'required'"
+                                                   :class="[errors.has('user_name') ? 'is-invalid' : '']"
+                                                   id="user_name" name="user_name" maxlength="10"
+                                                   data-vv-as="&quot;Username&quot;"
+                                                   value="{{ old('user_name') }}" placeholder="{{ __('app.login.login') }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group my-4">
+                                    <div>
+                                        <label>{{ __('app.login.password') }}</label>
+                                        <div class="el-input my-1">
+                                            <i class="fas fa-lock"></i>
+                                            <input type="password" class="inputstyle"
+                                                   v-validate="'required|min:6'"
+                                                   :class="[errors.has('password') ? 'is-invalid' : '']"
+                                                   id="password" name="password"
+                                                   data-vv-as="&quot;Password&quot;"
+                                                   placeholder="{{ __('app.login.password') }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                            <button class="loginbtn mt-3">
+              <span>
+              {{ __('app.login.login') }}
+              </span>
+                            </button>
+                        </form>
+                        <div class="wantregister">{{ __('app.login.no_username') }} <a class="loginbtn"
+                                                                    href="{{ route('customer.session.store') }}">{{ __('app.login.register_now') }}</a>
+                        </div>
+                        @if($config->notice)
+                            <div class="my-4">
+                        <p class="text-center">{{ $config->notice }}</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
 @endsection

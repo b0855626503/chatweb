@@ -4,7 +4,6 @@ namespace Gametech\Admin\DataTables;
 
 
 use Gametech\Admin\Transformers\MemberConfirmTransformer;
-use Gametech\Admin\Transformers\MemberfreeTransformer;
 use Gametech\Member\Contracts\Member;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
@@ -82,8 +81,8 @@ class MemberConfirmDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'

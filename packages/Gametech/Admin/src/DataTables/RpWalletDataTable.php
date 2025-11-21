@@ -15,7 +15,6 @@ class RpWalletDataTable extends DataTable
 {
 
 
-
     /**
      * Build DataTable class.
      *
@@ -27,7 +26,6 @@ class RpWalletDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-
             ->with('withdraw', function () use ($query) {
                 return core()->currency((clone $query)->where('credit_type', 'W')->sum('total'));
             })
@@ -61,7 +59,7 @@ class RpWalletDataTable extends DataTable
         return $model->newQuery()
             ->with('member', 'admin')
             ->active()
-            ->where('kind','SETWALLET')
+            ->where('kind', 'SETWALLET')
             ->select('members_credit_log.*')->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
             ])
@@ -69,7 +67,7 @@ class RpWalletDataTable extends DataTable
                 $query->whereBetween('date_create', array($startdate, $enddate));
             })
             ->when($type, function ($query, $type) {
-                $query->where('credit_type',$type);
+                $query->where('credit_type', $type);
             })
             ->when($ip, function ($query, $ip) {
                 $query->where('ip', 'like', "%" . $ip . "%");
@@ -110,8 +108,8 @@ class RpWalletDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'

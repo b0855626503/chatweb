@@ -13,6 +13,7 @@ class PaymentLogRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Payment\Contracts\PaymentLog';
+        return \Gametech\Payment\Models\PaymentLog::class;
+
     }
 }

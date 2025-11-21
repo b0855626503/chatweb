@@ -5,6 +5,7 @@ namespace Gametech\Admin\DataTables;
 use App\Exports\UsersExport;
 use Gametech\Admin\Transformers\MemberTransformer;
 use Gametech\Member\Contracts\Member;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder;
@@ -24,20 +25,19 @@ class MemberDataTable extends DataTable
      */
     public function dataTable($query)
     {
+        // ดึง config ครั้งเดียวเพื่อส่งเข้า Transformer
         $config = core()->getConfigData();
 
-        $prem = bouncer()->hasPermission('wallet.member.tel');
+        // คำนวณสิทธิ์เป็น boolean ชัดเจน
+        $canViewTel  = bouncer()->hasPermission('wallet.member.tel');
+        $canViewPass = bouncer()->hasPermission('wallet.member.password');
 
         $dataTable = new EloquentDataTable($query);
 
-        return $dataTable
-            ->setTransformer(new MemberTransformer($config, $prem));
-//        return $dataTable->setTransformer(new WithdrawTransformer);
-//        return $dataTables->addColumn('action', 'admins::withdraw.datatables_confirm');
-//        return $dataTable
-//            ->editColumn('member_acc', function($query) {
-//            return $query->bankCode->shortcode.'['.$query->memberCode->acc_no.']';
-//        });
+        // ส่ง boolean เข้าไปแทนการส่ง $prem ที่ไม่ชัดเจน
+        return $dataTable->setTransformer(
+            new MemberTransformer($config, $canViewTel, $canViewPass)
+        );
     }
 
 
@@ -59,15 +59,15 @@ class MemberDataTable extends DataTable
         }
 
         return $model->newQuery()
-            ->with(['member_remark' => function ($query) {
-                $query->orderBy('code', 'desc')->latest();
-            }])
-
+//            ->with(['member_remark' => function ($query) {
+//                $query->orderBy('code', 'desc')->latest();
+//            }])
             ->confirm()
             ->select('members.*')
-            ->with(['bank', 'up'])->withCount(['downs' => function ($model) {
+            ->with(['up'])->withCount(['downs' => function ($model) {
                 $model->active();
-            }])->withCasts([
+            }])
+            ->withCasts([
                 'date_regis' => 'date:Y-m-d'
             ])
 //            ->select(['members.code','members.date_regis','members.firstname','members.lastname','members.upline_code','members.acc_no','members.user_name','members.user_pass','members.lineid','members.tel','members.count_deposit','members.point_deposit','members.diamond','members.balance','members.remark','members.enable','members.status_pro','members.confirm','members.date_create'])
@@ -128,22 +128,23 @@ class MemberDataTable extends DataTable
                 'serverSide' => true,
                 'responsive' => true,
                 'stateSave' => false,
-                'scrollX' => false,
                 'paging' => true,
                 'searching' => true,
                 'deferRender' => true,
-                'retrieve' => true,
+                'retrieve' => false,
                 'ordering' => true,
-
+                'scrollX' => false,
+              //  'scrollY' => '400px',       // ความสูงตาราง (เช่น 400px)
+//                'scrollCollapse' => true,
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200 , 500],
-                    ['50 rows', '100 rows', '200 rows', '500 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => $btn,
                 'columnDefs' => [
-                    ['targets' => '_all', 'className' => 'text-center text-nowrap']
+                    ['targets' => '_all', 'className' => 'text-nowrap']
                 ]
             ]);
     }
@@ -155,39 +156,92 @@ class MemberDataTable extends DataTable
      */
     protected function getColumns()
     {
-        return [
-            ['data' => 'code', 'name' => 'members.code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
-            ['data' => 'date_regis', 'name' => 'members.date_regis', 'title' => 'วันที่สม้คร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'firstname', 'name' => 'members.firstname', 'title' => 'ชื่อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
-            ['data' => 'lastname', 'name' => 'members.lastname', 'title' => 'นามสกุล', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
-            ['data' => 'up', 'name' => 'members.upline_code', 'title' => 'Upline', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'down', 'name' => 'members.upline_code', 'title' => 'Downline', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'bank', 'name' => 'bank.shortcode', 'title' => 'ธนาคาร', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'acc_no', 'name' => 'members.acc_no', 'title' => 'เลขที่บัญชี', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
-            ['data' => 'user_name', 'name' => 'members.user_name', 'title' => 'Username', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
-            ['data' => 'pass', 'name' => 'members.user_pass', 'title' => 'รหัสผ่าน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'lineid', 'name' => 'members.lineid', 'title' => 'ไอดีไลน์', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
-            ['data' => 'tel', 'name' => 'members.tel', 'title' => 'เบอร์โทร', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
-            ['data' => 'deposit', 'name' => 'members.count_deposit', 'title' => 'ฝาก', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-                ['data' => 'point', 'name' => 'members.point_deposit', 'title' => 'Point', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'diamond', 'name' => 'members.diamond', 'title' => 'Diamond', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'balance', 'name' => 'members.balance', 'title' => 'Wallet', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'pro', 'name' => 'members.promotion', 'title' => 'รับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-//            ['data' => 'pro', 'name' => 'members.promotion', 'title' => 'รับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'enable', 'name' => 'members.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-        ];
-    }
+        $config = core()->getConfigData();
+        if ($config->seamless == 'Y') {
 
-    /**
-     * Get filename for export.
-     *
-     * @return string
-     */
-    protected function filename()
-    {
-        return 'member_datatable_' . time();
+            return [
+                ['data' => 'code', 'name' => 'members.code', 'title' => '#', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'date_regis', 'name' => 'members.date_regis', 'title' => 'วันที่สม้คร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'firstname', 'name' => 'members.firstname', 'title' => 'ชื่อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+                ['data' => 'lastname', 'name' => 'members.lastname', 'title' => 'นามสกุล', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+                ['data' => 'up', 'name' => 'members.upline_code', 'title' => 'Upline', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'down', 'name' => 'members.upline_code', 'title' => 'Downline', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'bank', 'name' => 'bank.shortcode', 'title' => 'ธนาคาร', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'acc_no', 'name' => 'members.acc_no', 'title' => 'เลขที่บัญชี', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'user_name', 'name' => 'members.user_name', 'title' => 'UserName', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'pass', 'name' => 'members.user_pass', 'title' => 'รหัสผ่าน', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'lineid', 'name' => 'members.lineid', 'title' => 'ไอดีไลน์', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+                ['data' => 'tel', 'name' => 'members.tel', 'title' => 'เบอร์โทร', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+//                ['data' => 'wallet', 'name' => 'members.wallet_id', 'title' => 'Wallet ID', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'deposit', 'name' => 'members.count_deposit', 'title' => 'ฝาก(ครั้ง)', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'credit', 'name' => 'members.credit', 'title' => 'เครดิตสะสม', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'point', 'name' => 'members.point_deposit', 'title' => 'Point', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'diamond', 'name' => 'members.diamond', 'title' => 'Diamond', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'balance', 'name' => 'members.balance', 'title' => 'เครดิต', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//                ['data' => 'pro', 'name' => 'members.promotion', 'title' => 'รับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'newuser', 'name' => 'members.promotion', 'title' => 'โปรสมาชิกใหม่', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'enable', 'name' => 'members.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ];
+
+        } else if ($config->multigame_open == 'Y') {
+            return [
+                ['data' => 'code', 'name' => 'members.code', 'title' => '#', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'date_regis', 'name' => 'members.date_regis', 'title' => 'วันที่สม้คร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'firstname', 'name' => 'members.firstname', 'title' => 'ชื่อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+                ['data' => 'lastname', 'name' => 'members.lastname', 'title' => 'นามสกุล', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+                ['data' => 'up', 'name' => 'members.upline_code', 'title' => 'Upline', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'down', 'name' => 'members.upline_code', 'title' => 'Downline', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'bank', 'name' => 'bank.shortcode', 'title' => 'ธนาคาร', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'acc_no', 'name' => 'members.acc_no', 'title' => 'เลขที่บัญชี', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'user_name', 'name' => 'members.user_name', 'title' => 'Username', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'pass', 'name' => 'members.user_pass', 'title' => 'รหัสผ่าน', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'lineid', 'name' => 'members.lineid', 'title' => 'ไอดีไลน์', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+                ['data' => 'tel', 'name' => 'members.tel', 'title' => 'เบอร์โทร', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'wallet', 'name' => 'members.wallet_id', 'title' => 'Wallet ID', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+
+                ['data' => 'deposit', 'name' => 'members.count_deposit', 'title' => 'ฝาก', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'point', 'name' => 'members.point_deposit', 'title' => 'Point', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'diamond', 'name' => 'members.diamond', 'title' => 'Diamond', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'balance', 'name' => 'members.balance', 'title' => 'Wallet', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//              ['data' => 'pro', 'name' => 'members.promotion', 'title' => 'รับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'newuser', 'name' => 'members.promotion', 'title' => 'โปรสมาชิกใหม่', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'enable', 'name' => 'members.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ];
+        } else {
+            return [
+                ['data' => 'code', 'name' => 'members.code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'date_regis', 'name' => 'members.date_regis', 'title' => 'วันที่สม้คร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'name', 'name' => 'members.name', 'title' => 'ชื่อ - นามสกุล', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+//                ['data' => 'firstname', 'name' => 'members.firstname', 'title' => 'ชื่อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+//                ['data' => 'lastname', 'name' => 'members.lastname', 'title' => 'นามสกุล', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+                ['data' => 'up', 'name' => 'members.upline_code', 'title' => 'Upline', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'down', 'name' => 'members.upline_code', 'title' => 'Downline', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'bank', 'name' => 'bank.shortcode', 'title' => 'ธนาคาร', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'acc_no', 'name' => 'members.acc_no', 'title' => 'เลขที่บัญชี', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'user_name', 'name' => 'members.user_name', 'title' => 'Username', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'pass', 'name' => 'members.user_pass', 'title' => 'รหัสผ่าน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'game_user', 'name' => 'members.game_user', 'title' => 'ID GAME', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+                ['data' => 'tel', 'name' => 'members.tel', 'title' => 'เบอร์โทร', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+//                ['data' => 'wallet', 'name' => 'members.wallet_id', 'title' => 'Wallet ID', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+                ['data' => 'count_deposit', 'name' => 'members.count_deposit', 'title' => 'ฝาก (ครั้ง)', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'sum_deposit', 'name' => 'members.count_deposit', 'title' => 'ยอดฝาก (รวม)', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'sum_withdraw', 'name' => 'members.count_deposit', 'title' => 'ยอดถอน (รวม)', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//                ['data' => 'credit', 'name' => 'members.credit', 'title' => 'แต้ม', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//                ['data' => 'diamond', 'name' => 'members.diamond', 'title' => 'Diamond', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//                ['data' => 'balance', 'name' => 'members.balance', 'title' => 'ยอดคงเหลือ', 'orderable' => true, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//                ['data' => 'refer', 'name' => 'members.refer', 'title' => 'รู้จักเราจาก', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+//                ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//                ['data' => 'pro', 'name' => 'members.promotion', 'title' => 'รับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'newuser', 'name' => 'members.promotion', 'title' => 'โปรสมาชิกใหม่', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'enable', 'name' => 'members.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ];
+        }
+
     }
 
     public function fastExcelCallback()
@@ -215,5 +269,15 @@ class MemberDataTable extends DataTable
             }
 
         };
+    }
+
+    /**
+     * Get filename for export.
+     *
+     * @return string
+     */
+    protected function filename()
+    {
+        return 'member_datatable_' . time();
     }
 }

@@ -59,15 +59,18 @@
                         <hr>
                         <div class="row ng-star-inserted">
                             <div class="col-6">
-                                <a href="{{ url()->previous() }}" class="btn btn-theme btn-lg btn-block shadow-box" type="button">
+                                <a href="{{ url()->previous() }}" class="btn btn-theme btn-lg btn-block shadow-box"
+                                   type="button">
                                     <i class="fas fa-times"></i> ยกเลิก
                                 </a>
                             </div>
                             <div class="col-6">
-                                <form method="POST" action="{{ route('customer.transfer.wallet.confirm') }}" @submit.prevent="onSubmit">
+                                <form method="POST" action="{{ route('customer.transfer.wallet.confirm') }}"
+                                      @submit.prevent="onSubmit">
                                     @csrf
                                     <input type="hidden" name="gametoken" value="{{ session('gametoken') }}">
-                                    <button class="btn btn-primary btn-success btn-lg btn-block shadow-box" type="submit">
+                                    <button class="btn btn-primary btn-success btn-lg btn-block shadow-box"
+                                            type="submit">
                                         <i class="fas fa-check"></i> ยืนยัน
                                     </button>
                                 </form>

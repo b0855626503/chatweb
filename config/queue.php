@@ -1,5 +1,9 @@
 <?php
 
+use Illuminate\Support\Str;
+
+$app = Str::slug(env('APP_NAME','app'),'_');
+
 return [
 
     /*
@@ -13,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('QUEUE_CONNECTION', 'database'),
+    'default' => env('QUEUE_CONNECTION', 'redis'),
 
     /*
     |--------------------------------------------------------------------------
@@ -37,8 +41,9 @@ return [
         'database' => [
             'driver' => 'database',
             'table' => 'jobs',
-            'queue' => 'default',
-            'retry_after' => 90,
+            'queue' => 'default,cashback,ic',
+            'retry_after' => 120,
+            'after_commit' => true,
         ],
 
         'beanstalkd' => [
@@ -47,6 +52,7 @@ return [
             'queue' => 'default',
             'retry_after' => 90,
             'block_for' => 0,
+            'after_commit' => false,
         ],
 
         'sqs' => [
@@ -54,16 +60,27 @@ return [
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'prefix' => env('SQS_PREFIX', 'https://sqs.us-east-1.amazonaws.com/your-account-id'),
-            'queue' => env('SQS_QUEUE', 'your-queue-name'),
+            'queue' => env('SQS_QUEUE', 'default'),
+            'suffix' => env('SQS_SUFFIX'),
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+            'after_commit' => false,
         ],
 
         'redis' => [
             'driver' => 'redis',
-            'connection' => 'default',
-            'queue' => env('REDIS_QUEUE', 'default'),
+            'connection' => 'queue',
+            'queue' => 'broadcasts',
+            'retry_after' => 120,
+            'block_for' => null,
+            'after_commit' => true,
+        ],
+
+        'fanout' => [
+            'driver'      => 'redis',
+            'connection'  => 'fanout',  // ชี้ไป redis.fanout
+            'queue'      => 'broadcasts:'.$app,
             'retry_after' => 90,
-            'block_for' => 5,
+            'block_for'   => null,
         ],
 
     ],
@@ -80,7 +97,7 @@ return [
     */
 
     'failed' => [
-        'driver' => env('QUEUE_FAILED_DRIVER', 'database'),
+        'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
         'database' => env('DB_CONNECTION', 'mysql'),
         'table' => 'failed_jobs',
     ],

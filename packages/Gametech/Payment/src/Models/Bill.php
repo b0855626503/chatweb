@@ -12,6 +12,7 @@ use Gametech\Payment\Contracts\Bill as BillContract;
 use Gametech\Promotion\Models\PromotionProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Bill extends Model implements BillContract
 {
@@ -39,6 +40,7 @@ class Bill extends Model implements BillContract
         'member_code',
         'game_code',
         'pro_code',
+        'pro_name',
         'transfer_type',
         'amount',
         'amount_request',
@@ -52,8 +54,12 @@ class Bill extends Model implements BillContract
         'credit_balance',
         'ip',
         'auto',
+        'method',
         'remark',
+        'refer_code',
+        'refer_table',
         'enable',
+        'complete',
         'emp_code',
         'user_create',
         'user_update',
@@ -107,12 +113,22 @@ class Bill extends Model implements BillContract
         return $query->where('bills.pro_code', '>', 0);
     }
 
+    public function scopeTopup($query)
+    {
+        return $query->where('bills.method', 'TOPUP');
+    }
+
     public function member()
     {
         return $this->belongsTo(MemberProxy::modelClass(), 'member_code');
     }
 
     public function promotion()
+    {
+        return $this->belongsTo(PromotionProxy::modelClass(), 'pro_code');
+    }
+
+    public function promotions()
     {
         return $this->belongsTo(PromotionProxy::modelClass(), 'pro_code');
     }

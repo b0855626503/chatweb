@@ -42,6 +42,7 @@ class RpSumGameDataTable extends DataTable
 
         $startdate = request()->input('startDate');
         $enddate = request()->input('endDate');
+        $type = request()->input('type');
 
         if (empty($startdate)) {
             $startdate = now()->toDateString() . ' 00:00:00';
@@ -50,48 +51,54 @@ class RpSumGameDataTable extends DataTable
             $enddate = now()->toDateString() . ' 23:59:59';
         }
 
+        if($type == 'NORMAL'){
+            $bills = 'bills';
+        }else{
+            $bills = 'bills_free';
+        }
 
-        return $model->newQuery()->active()
+
+        return $model->active()
             ->select('games.*')
-            ->withCount(['bills as member_in' => function (Builder $query) use ($startdate, $enddate) {
+            ->withCount([$bills.' as member_in' => function (Builder $query) use ($startdate, $enddate) {
                 $query->select(DB::raw('count(distinct(member_code))'))
                     ->where('transfer_type', 1)
                     ->where('enable', 'Y')
                     ->whereBetween('date_create', array($startdate, $enddate));
             }])
-            ->withCount(['bills as member_out' => function (Builder $query) use ($startdate, $enddate) {
+            ->withCount([$bills.' as member_out' => function (Builder $query) use ($startdate, $enddate) {
                 $query->select(DB::raw('count(distinct(member_code))'))
                     ->where('transfer_type', 2)
                     ->where('enable', 'Y')
                     ->whereBetween('date_create', array($startdate, $enddate));
             }])
-            ->withCount(['bills as member_in_cnt' => function (Builder $query) use ($startdate, $enddate) {
+            ->withCount([$bills.' as member_in_cnt' => function (Builder $query) use ($startdate, $enddate) {
                 $query->select(DB::raw('count(member_code)'))
                     ->where('transfer_type', 1)
                     ->where('enable', 'Y')
                     ->whereBetween('date_create', array($startdate, $enddate));
             }])
-            ->withCount(['bills as member_out_cnt' => function (Builder $query) use ($startdate, $enddate) {
+            ->withCount([$bills.' as member_out_cnt' => function (Builder $query) use ($startdate, $enddate) {
                 $query->select(DB::raw('count(member_code)'))
                     ->where('transfer_type', 2)
                     ->where('enable', 'Y')
                     ->whereBetween('date_create', array($startdate, $enddate));
             }])
-            ->withSum(['bills:credit_bonus as bonus' => function (Builder $query) use ($startdate, $enddate) {
+            ->withSum([$bills.':credit_bonus as bonus' => function (Builder $query) use ($startdate, $enddate) {
 
                 $query->where('transfer_type', 1)
                     ->where('enable', 'Y')
                     ->whereBetween('date_create', array($startdate, $enddate));
 
             }])
-            ->withSum(['bills:amount as in' => function (Builder $query) use ($startdate, $enddate) {
+            ->withSum([$bills.':amount as in' => function (Builder $query) use ($startdate, $enddate) {
 
                 $query->where('transfer_type', 1)
                     ->where('enable', 'Y')
                     ->whereBetween('date_create', array($startdate, $enddate));
 
             }])
-            ->withSum(['bills:amount as out' => function (Builder $query) use ($startdate, $enddate) {
+            ->withSum([$bills.':amount as out' => function (Builder $query) use ($startdate, $enddate) {
 
                 $query->where('transfer_type', 2)
                     ->where('enable', 'Y')
@@ -130,8 +137,8 @@ class RpSumGameDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
 

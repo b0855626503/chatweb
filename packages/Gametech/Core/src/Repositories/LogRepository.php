@@ -13,6 +13,6 @@ class LogRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Core\Contracts\Log';
+        return \Gametech\Core\Models\Log::class;
     }
 }

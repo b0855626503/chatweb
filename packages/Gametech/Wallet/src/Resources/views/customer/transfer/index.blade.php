@@ -3,11 +3,6 @@
 {{-- page title --}}
 @section('title','')
 
-@section('back')
-
-    <a class="nav-link p-2 text-light mx-auto hand-point" href="{{ route('customer.home.index') }}">
-        <i class="fas fa-chevron-left"></i> กลับ</a>
-@endsection
 
 @section('content')
     <div class="container">
@@ -95,15 +90,17 @@
                                             <p class="text-center text-warning">
                                                 โยกเงินเข้าเกมส์ขั้นต่ำ {{ intval($config->mintransfer) }} บาท</p>
                                             @if($promotions)
-                                                <p class="text-center text-warning">ต้องกดรับโปรโมชั่นก่อนโยกเงินเข้าเกมนะคะ</p>
+                                                <p class="text-center text-warning">
+                                                    ต้องกดรับโปรโมชั่นก่อนโยกเงินเข้าเกมนะคะ</p>
                                                 <div class="form-group">
                                                     <div class="input-group mb-3">
                                                         <select class="form-control" v-validate="'required'"
-                                                            :class="[errors.has('promotion') ? 'is-invalid' : '']"
-                                                            id="promotion" name="promotion">
+                                                                :class="[errors.has('promotion') ? 'is-invalid' : '']"
+                                                                id="promotion" name="promotion">
                                                             <option value="">== เลือกโปรโมชั่น ==</option>
                                                             @foreach($promotions as $promotion)
-                                                                <option value="{{ $promotion->code }}">{{ $promotion->name_th }}</option>
+                                                                <option
+                                                                    value="{{ $promotion->code }}">{{ $promotion->name_th }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>

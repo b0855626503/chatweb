@@ -5,8 +5,11 @@ namespace Gametech\Payment\Models;
 use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
 use Gametech\Admin\Models\AdminProxy;
+use Gametech\Game\Models\GameUserProxy;
 use Gametech\Member\Models\MemberProxy;
+use Gametech\Member\Models\MemberRemarkProxy;
 use Gametech\Payment\Contracts\Withdraw as WithdrawContract;
+use Gametech\Promotion\Models\PromotionProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,6 +41,7 @@ class Withdraw extends Model implements WithdrawContract
         'bankout',
         'bankm_code',
         'amount',
+        'balance',
         'date_record',
         'timedept',
         'ck_deposit',
@@ -63,7 +67,16 @@ class Withdraw extends Model implements WithdrawContract
         'status',
         'ck_step2',
         'date_bank',
-        'time_bank'
+        'time_bank',
+        'status_withdraw',
+        'api',
+        'txid',
+        'amount_balance',
+        'amount_limit',
+        'amount_limit_rate',
+        'pro_code',
+        'pro_name',
+
     ];
 
     /**
@@ -95,7 +108,6 @@ class Withdraw extends Model implements WithdrawContract
         'ip_admin' => 'string',
         'remark_admin' => 'string',
         'emp_approve' => 'integer',
-
         'user_create' => 'string',
         'user_update' => 'string',
         'enable' => 'string',
@@ -103,6 +115,9 @@ class Withdraw extends Model implements WithdrawContract
         'ck_step2' => 'integer',
         'date_bank' => 'date',
         'time_bank' => 'string',
+        'status_withdraw' => 'string',
+        'api' => 'string',
+
 
     ];
 
@@ -138,6 +153,8 @@ class Withdraw extends Model implements WithdrawContract
         'user_create' => 'required|string|max:100',
         'user_update' => 'required|string|max:100',
         'enable' => 'required|string',
+        'status_withdraw' => 'required|string',
+        'api' => 'nullable|string',
         'status' => 'nullable|boolean',
         'ck_step2' => 'required|integer',
         'date_bank' => 'nullable|datetime:Y-m-d',
@@ -186,6 +203,11 @@ class Withdraw extends Model implements WithdrawContract
         return $this->belongsTo(AdminProxy::modelClass(), 'emp_approve');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(GameUserProxy::modelClass(), 'member_code','member_code');
+    }
+
     public function bills(): HasMany
     {
         return $this->hasMany(BillProxy::modelClass(), 'member_code', 'member_code');
@@ -195,6 +217,40 @@ class Withdraw extends Model implements WithdrawContract
     {
         return $this->morphMany(MemberProxy::modelClass(), 'wallet_transaction');
     }
+
+    public function payment_last()
+    {
+        return $this->hasOne(BankPaymentProxy::modelClass(), 'member_topup', 'member_code')->latest();
+    }
+
+    public function member_remark()
+    {
+        return $this->hasMany(MemberRemarkProxy::modelClass(),'member_code','member_code');
+    }
+
+    public function bank_tran(): BelongsTo
+    {
+        return $this->belongsTo(BankAccountProxy::modelClass(), 'account_code');
+    }
+
+    public function latestBill()
+    {
+        return $this->hasOne(BillProxy::modelClass(), 'member_code', 'code')->latestOfMany('date_create');
+    }
+
+    public function promotion(){
+        return $this->belongsTo(PromotionProxy::modelClass(), 'pro_code');
+    }
+
+
+//    public function payment_last()
+//    {
+//        return $this->hasOne(MemberCreditLogProxy::modelClass(), 'member_code', 'member_code')->ofMany([
+//            'code' => 'max',
+//        ], function ($query) {
+//            $query->whereIn('kind', ['TOPUP','SETWALLET']);
+//        });;
+//    }
 
 
 }

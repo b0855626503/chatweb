@@ -15,13 +15,17 @@ trait ActivityLoggerUser
      *
      * @param null $description
      * @param null $details
+     * @param null $user
      *
      * @return void
      */
-    public static function activity($description = null, $details = null)
+    public static function activity($description = null, $details = null, $user = null)
     {
         $userType = trans('LaravelLoggerUser::laravel-logger.userTypes.guest');
-        $userId = null;
+        if($user){
+            $userType = trans('LaravelLoggerUser::laravel-logger.userTypes.registered');
+        }
+        $userId = $user;
 
         if (Auth::guard('customer')->check()) {
             $userType = trans('LaravelLoggerUser::laravel-logger.userTypes.registered');

@@ -1,6 +1,6 @@
 <?php
 
-use Gametech\LineOa\Http\Controllers\LineWebhookController;
+use Gametech\LineOA\Http\Controllers\LineWebhookController;
 use Illuminate\Support\Facades\Route;
 
 $apiRoute = config('gametech.api_url') ?? 'api';

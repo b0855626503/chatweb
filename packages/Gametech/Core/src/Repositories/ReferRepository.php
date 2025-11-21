@@ -13,6 +13,7 @@ class ReferRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Core\Contracts\Refer';
+        return \Gametech\Core\Models\Refer::class;
+
     }
 }

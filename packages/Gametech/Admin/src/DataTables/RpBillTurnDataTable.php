@@ -56,13 +56,9 @@ class RpBillTurnDataTable extends DataTable
         $user = request()->input('user_name');
 
 
-
-
-
         return $model->newQuery()
-            ->with(['membernew', 'game', 'promotion','billcode'])
+            ->with(['membernew', 'game', 'promotion', 'billcode'])
             ->select('games_user.*')
-
             ->when($game, function ($query, $game) {
                 $query->where('games_user.game_code', $game);
             })
@@ -103,8 +99,8 @@ class RpBillTurnDataTable extends DataTable
 
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'
@@ -127,12 +123,14 @@ class RpBillTurnDataTable extends DataTable
             ['data' => 'member_name', 'name' => 'bills.member_name', 'title' => 'สมาชิก', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
             ['data' => 'user_name', 'name' => 'membernew.user_name', 'title' => 'User ID', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
             ['data' => 'game', 'name' => 'bills.user_name', 'title' => 'เกมส์', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'pro_name', 'name' => 'bills.user_name', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'amount', 'name' => 'bills.credit', 'title' => 'จำนวน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'bonus', 'name' => 'bills.pro_name', 'title' => 'โบนัส', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'pro_name', 'name' => 'bills.user_name', 'title' => 'โปรโมชั่นล่าสุด', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+//            ['data' => 'bonus', 'name' => 'bills.credit', 'title' => 'ได้รับโบนัส', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'amount', 'name' => 'bills.credit', 'title' => 'จำนวนเงิน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'bonus', 'name' => 'bills.pro_name', 'title' => 'โบนัสที่ได้', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'total', 'name' => 'bills.credit_balance', 'title' => 'รวมได้รับ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'turn', 'name' => 'bills.credit_balance', 'title' => 'ยอดเทริน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'min', 'name' => 'bills.credit_balance', 'title' => 'ขั้นต่ำโอนออก', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'turn', 'name' => 'bills.credit_balance', 'title' => 'ยอดเทินรวม', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'min', 'name' => 'bills.credit_balance', 'title' => 'อัตราอั้นถอน (เท่า)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//            ['data' => 'limit', 'name' => 'bills.credit_balance', 'title' => 'จำกัดยอดถอนได้', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'date_create', 'name' => 'bills.date_create', 'title' => 'วันที่ทำรายการ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
         ];
     }

@@ -156,8 +156,8 @@ class RpBillFreeDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'

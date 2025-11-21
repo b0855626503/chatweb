@@ -14,6 +14,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -177,6 +178,13 @@ class CreditTransferWalletController extends AppBaseController
             return redirect()->route('customer.credit.transfer.wallet.index');
         }
 
+//        $lock = Cache::lock('transfer_credit_in', 5);
+//
+//        if ($lock->get()){
+//            $lock->release();
+//            session()->flash('error', 'รออีก 5 วินาที ค่อยทำการโยกใหม่นะ');
+//            return redirect()->route('customer.credit.transfer.wallet.index');
+//        }
 
         $encrypted = $request->input('gametoken');
 
@@ -220,8 +228,15 @@ class CreditTransferWalletController extends AppBaseController
         $item = $this->checkPro($game,$this->id(),$promotion_id,$amount,$balance);
 
 
+        if (Cache::has('transfer_'.$user_id)) {
+            session()->flash('error', 'รออีก 10 วินาที ค่อยทำการโยกใหม่นะ');
+            return redirect()->route('customer.credit.transfer.wallet.index');
+        }
+
+        Cache::put('transfer_'.$user_id, 'lock', now()->addSeconds(10));
+
         $response = $this->billFreeRepository->transferWallet($item);
-        if($response['success'] == false){
+        if($response['success'] === false){
             session()->flash('error', $response['msg']);
             return redirect()->route('customer.credit.transfer.wallet.index');
         }
@@ -248,6 +263,8 @@ class CreditTransferWalletController extends AppBaseController
 
 //        dd($bills);
 
+
+
         session()->flash('bills', $bills);
         return redirect()->route('customer.credit.transfer.wallet.complete');
     }
@@ -266,8 +283,9 @@ class CreditTransferWalletController extends AppBaseController
     {
         $pro = false;
         $config = core()->getConfigData();
-        $sumbill_all = $this->memberRepository->sumBillFree($member->code)->bills_free_amount_sum;
-        $sumbill = (is_null($sumbill_all) ? 0 : $sumbill_all);
+//        $sumbill_all = $this->memberRepository->sumBillFree($member->code)->bills_free_amount_sum;
+//        $sumbill = (is_null($sumbill_all) ? 0 : $sumbill_all);
+        $sumbill = 0;
 
         if ($config['pro_onoff'] == 'N') {
             session()->flash('error', 'ขณะนี้ การรับโปรโมชั่น ยังไม่เปิดให้บริการ ขออภัยในความไม่สะดวก');

@@ -3,13 +3,14 @@
 namespace App\Exports;
 
 
+use App\DataTables\Concerns\ExportableLargeData;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Yajra\DataTables\Exports\DataTablesCollectionExport;
 
 class UsersExport extends DataTablesCollectionExport implements WithMapping
 {
 
-
+//   use ExportableLargeData;
     public function headings(): array
     {
         return [
@@ -19,6 +20,7 @@ class UsersExport extends DataTablesCollectionExport implements WithMapping
             'UserName',
             'Line ID',
             'Mobile',
+            'count_deposit',
         ];
     }
 
@@ -36,6 +38,7 @@ class UsersExport extends DataTablesCollectionExport implements WithMapping
             $row['user_name'],
             $row['lineid'],
             $row['tel'],
+            $row['count_deposit'] ?? $row['deposit'],
         ];
     }
 }

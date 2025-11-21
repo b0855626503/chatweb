@@ -85,9 +85,7 @@
 @push('scripts')
 
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
-    <script type="text/javascript">
-        (() => {
-
+    <script type="module">
 
             window.app = new Vue({
                 el: '#app',
@@ -195,6 +193,7 @@
                     },
                     addEditSubmit(event) {
                         event.preventDefault();
+                        this.toggleButtonDisable(true);
 
                         if (this.formmethod === 'add') {
                             var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
@@ -264,7 +263,7 @@
 
                 },
             });
-        })()
+
     </script>
 @endpush
 

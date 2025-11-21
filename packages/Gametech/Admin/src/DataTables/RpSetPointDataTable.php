@@ -4,10 +4,8 @@ namespace Gametech\Admin\DataTables;
 
 
 use Gametech\Admin\Transformers\RpSetPointTransformer;
-use Gametech\Admin\Transformers\RpWalletTransformer;
 use Gametech\Member\Contracts\MemberCreditLog;
 use Gametech\Member\Contracts\MemberPointLog;
-use Gametech\Member\Repositories\MemberPointLogRepository;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder;
@@ -16,7 +14,6 @@ use Yajra\DataTables\Services\DataTable;
 
 class RpSetPointDataTable extends DataTable
 {
-
 
 
     /**
@@ -30,7 +27,6 @@ class RpSetPointDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-
             ->with('withdraw', function () use ($query) {
                 return core()->currency((clone $query)->where('point_type', 'W')->sum('point_amount'));
             })
@@ -64,7 +60,6 @@ class RpSetPointDataTable extends DataTable
         return $model->newQuery()
             ->with('member', 'admin')
             ->active()
-
             ->select('members_pointlog.*')->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
             ])
@@ -72,7 +67,7 @@ class RpSetPointDataTable extends DataTable
                 $query->whereBetween('date_create', array($startdate, $enddate));
             })
             ->when($type, function ($query, $type) {
-                $query->where('point_type',$type);
+                $query->where('point_type', $type);
             })
             ->when($ip, function ($query, $ip) {
                 $query->where('ip', 'like', "%" . $ip . "%");
@@ -113,8 +108,8 @@ class RpSetPointDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'

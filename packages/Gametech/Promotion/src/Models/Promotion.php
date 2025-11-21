@@ -2,8 +2,8 @@
 
 namespace Gametech\Promotion\Models;
 
-use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
+use Gametech\Member\Models\MemberCreditLogProxy;
 use Gametech\Payment\Models\BillProxy;
 use Gametech\Payment\Models\PaymentWaitingProxy;
 use Gametech\Promotion\Contracts\Promotion as PromotionContract;
@@ -35,6 +35,7 @@ class Promotion extends Model implements PromotionContract
         'sort',
         'turnpro',
         'length_type',
+        'amount_min',
         'bonus_min',
         'bonus_max',
         'bonus_price',
@@ -47,8 +48,24 @@ class Promotion extends Model implements PromotionContract
         'active',
         'enable',
         'withdraw_limit',
+        'withdraw_limit_rate',
         'user_create',
-        'user_update'
+        'user_update',
+        'slot',
+        'casino',
+        'sport',
+        'huay',
+        'lotto',
+        'keno',
+        'card',
+        'cock',
+        'poker',
+        'fish',
+        'cal_type',
+        'cal_time',
+        'cal_del',
+        'cal_pro',
+        'last_calculated_at'
     ];
 
     protected $casts = [
@@ -56,6 +73,7 @@ class Promotion extends Model implements PromotionContract
         'id' => 'string',
         'name_th' => 'string',
         'sort' => 'integer',
+        'withdraw_limit_rate' => 'decimal:2',
         'turnpro' => 'decimal:2',
         'withdraw_limit' => 'decimal:2',
         'length_type' => 'string',
@@ -79,6 +97,7 @@ class Promotion extends Model implements PromotionContract
     protected static $rules = [
         'name_th' => 'required|string|max:100',
         'sort' => 'required|integer',
+        'withdraw_limit_rate' => 'required|numeric',
         'turnpro' => 'required|numeric',
         'length_type' => 'required|string|max:10',
         'bonus_min' => 'required|numeric',
@@ -118,7 +137,22 @@ class Promotion extends Model implements PromotionContract
 
     public function bills()
     {
-        return $this->hasMany(BillProxy::modelClass(), 'pro_code');
+        return $this->hasMany(BillProxy::modelClass(), 'pro_code','code');
+    }
+
+    public function billss()
+    {
+        return $this->hasMany(BillProxy::modelClass(), 'pro_code','code');
+    }
+
+    public function bill()
+    {
+        return $this->hasOne(BillProxy::modelClass(), 'pro_code');
+    }
+
+    public function pro()
+    {
+        return $this->hasOne(MemberCreditLogProxy::modelClass(), 'pro_code','code');
     }
 
     public function payments_waiting()

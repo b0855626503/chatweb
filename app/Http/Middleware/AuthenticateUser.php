@@ -15,7 +15,11 @@ class AuthenticateUser extends Middleware
      */
     protected function redirectTo($request)
     {
-        return redirect()->route('customer.session.index');
+        if ($request->expectsJson()) {
+            return null;
+        }
+        return route('customer.session.index');
+
     }
 
     protected function authenticate($request,  $guards)

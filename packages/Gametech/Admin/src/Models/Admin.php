@@ -9,13 +9,15 @@ use Gametech\Admin\Contracts\Admin as AdminContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+//use HighIdeas\UsersOnline\Traits\UsersOnlineTrait;
 
 class Admin extends Authenticatable implements AdminContract
 {
     use Notifiable;
 
     use LaravelSubQueryTrait;
+
+//    use UsersOnlineTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {
@@ -125,6 +127,7 @@ class Admin extends Authenticatable implements AdminContract
         'login_session' => 'string',
         'password' => 'string',
         'role_id' => 'integer',
+        'google2fa_enable' => 'integer',
         'lastlogin' => 'datetime:Y-m-d H:i:s'
     ];
 
@@ -172,10 +175,13 @@ class Admin extends Authenticatable implements AdminContract
      */
     public function hasPermission($permission)
     {
+//        if($permission == 'auth.broadcast')
         if ($this->role->permission_type == 'custom' && ! $this->role->permissions) {
             return false;
         }
 
         return in_array($permission, $this->role->permissions);
     }
+
+    public function receivesBroadcastNotificationsOn() { return env('APP_NAME').'_events'; }
 }

@@ -4,12 +4,10 @@ namespace Gametech\Admin\Transformers;
 
 
 use Gametech\Promotion\Contracts\Promotion;
-use Illuminate\Support\Facades\Storage;
 use League\Fractal\TransformerAbstract;
 
 class PromotionTransformer extends TransformerAbstract
 {
-
 
 
     public function transform(Promotion $model)
@@ -28,19 +26,19 @@ class PromotionTransformer extends TransformerAbstract
         ];
 
         return [
-            'code' => (int) $model->code,
+            'code' => (int)$model->code,
 
             'name' => $model->name_th,
-            'type' =>$type[$model->length_type],
+            'type' => $type[$model->length_type],
             'id' => $model->id,
             'sort' => $model->sort,
             'auto' => core()->checkDisplay($model->use_auto),
             'wallet' => core()->checkDisplay($model->use_wallet),
             'active' => core()->checkDisplay($model->active),
             'enable' => core()->checkDisplay($model->enable),
-            'pic' => core()->showImg($model->filepic,'promotion_img','50px','50px'),
+            'pic' => core()->showImg($model->filepic, 'promotion_img', '50px', '50px'),
             'action' => view('admin::module.promotion.datatables_actions', ['code' => $model->code])->render(),
-           ];
+        ];
     }
 
 

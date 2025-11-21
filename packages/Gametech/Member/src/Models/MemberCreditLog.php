@@ -58,7 +58,10 @@ class MemberCreditLog extends Model implements MemberCreditLogContract
         'enable',
         'emp_code',
         'user_create',
-        'user_update'
+        'user_update',
+        'amount_balance',
+        'withdraw_limit',
+        'withdraw_limit_amount'
     ];
 
     /**

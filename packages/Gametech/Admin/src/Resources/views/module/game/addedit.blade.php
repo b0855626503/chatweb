@@ -197,14 +197,14 @@
                     </b-form-group>
                 </b-col>
                 <b-col>
+                    <b-form-checkbox
+                        id="status_open"
+                        v-model="formaddedit.status_open"
+                        value="Y"
+                        unchecked-value="N">
+                        สถานะแสดงผล
+                    </b-form-checkbox>
                     @if(auth()->guard('admin')->user()->superadmin == 'Y')
-                        <b-form-checkbox
-                            id="status_open"
-                            v-model="formaddedit.status_open"
-                            value="Y"
-                            unchecked-value="N">
-                            สถานะแสดงผล
-                        </b-form-checkbox>
 
                         <b-form-checkbox
                             id="enable"
@@ -374,252 +374,254 @@
         function debug_free(id, method) {
             window.app.debug_free(id, method);
         }
+    </script>
+    <script type="module">
 
-        (() => {
-            window.app = new Vue({
-                el: '#app',
-                data() {
-                    return {
-                        show: false,
-                        trigger: 0,
-                        formmethod: 'edit',
-                        fileupload: '',
-                        formaddedit: {
-                            name: '',
-                            game_type: '',
-                            user_demo: '',
-                            user_demofree: '',
-                            sort: 0,
-                            link_ios: '',
-                            link_android: '',
-                            link_web: '',
-                            batch_game: 'N',
-                            auto_open: 'N',
-                            filepic: '',
-                            status_open: 'Y',
-                            enable: 'Y'
-                        },
-                        option: {
-                            batch_game: [{text: 'Yes', value: 'Y'}, {text: 'No', value: 'N'}],
-                            auto_open: [{text: 'Yes', value: 'Y'}, {text: 'No', value: 'N'}],
-                            game_type: [{text: '== เลือก ==', value: ''}, {
-                                text: 'Slot',
-                                value: 'SLOT'
-                            }, {text: 'Casino', value: 'CASINO'}, {text: 'Sport', value: 'SPORT'}],
-                        },
-                        imgpath: '/storage/game_img/'
-                    };
+        window.app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    show: false,
+                    trigger: 0,
+                    formmethod: 'edit',
+                    fileupload: '',
+                    formaddedit: {
+                        name: '',
+                        game_type: '',
+                        user_demo: '',
+                        user_demofree: '',
+                        sort: 0,
+                        link_ios: '',
+                        link_android: '',
+                        link_web: '',
+                        batch_game: 'N',
+                        auto_open: 'N',
+                        filepic: '',
+                        status_open: 'Y',
+                        enable: 'Y'
+                    },
+                    option: {
+                        batch_game: [{text: 'Yes', value: 'Y'}, {text: 'No', value: 'N'}],
+                        auto_open: [{text: 'Yes', value: 'Y'}, {text: 'No', value: 'N'}],
+                        game_type: [{text: '== เลือก ==', value: ''}, {
+                            text: 'Slot',
+                            value: 'SLOT'
+                        }, {text: 'Casino', value: 'CASINO'}, {text: 'Sport', value: 'SPORT'}],
+                    },
+                    imgpath: '/storage/game_img/'
+                };
+            },
+            created() {
+                this.audio = document.getElementById('alertsound');
+                this.autoCnt(false);
+            },
+            methods: {
+                debug(id, method) {
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.loadDebug(id, method);
+                        this.$refs.debug.show();
+                    })
                 },
-                created() {
-                    this.audio = document.getElementById('alertsound');
-                    this.autoCnt(false);
+                debug_free(id, method) {
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.loadDebugFree(id, method);
+                        this.$refs.debug_free.show();
+                    })
                 },
-                methods: {
-                    debug(id, method) {
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.loadDebug(id, method);
-                            this.$refs.debug.show();
-                        })
-                    },
-                    debug_free(id, method) {
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.loadDebugFree(id, method);
-                            this.$refs.debug_free.show();
-                        })
-                    },
-                    clearImage() {
-                        this.trigger++;
-                        this.formaddedit.filepic = '';
+                clearImage() {
+                    this.trigger++;
+                    this.formaddedit.filepic = '';
 
-                    },
-                    handleUpload(value) {
-                        this.fileupload = value;
-                    },
-                    editModal(code) {
-                        this.code = null;
-                        this.formaddedit = {
-                            name: '',
-                            game_type: '',
-                            user_demo: '',
-                            user_demofree: '',
-                            sort: 0,
-                            link_ios: '',
-                            link_android: '',
-                            link_web: '',
-                            batch_game: 'N',
-                            auto_open: 'N',
-                            status_open: 'Y',
-                            enable: 'Y'
-
-                        }
-                        this.formmethod = 'edit';
-                        this.fileupload = '';
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.code = code;
-                            this.loadData();
-                            this.$refs.addedit.show();
-
-                        })
-                    },
-                    addModal() {
-                        this.code = null;
-                        this.formaddedit = {
-                            name: '',
-                            game_type: '',
-                            user_demo: '',
-                            user_demofree: '',
-                            sort: 0,
-                            link_ios: '',
-                            link_android: '',
-                            link_web: '',
-                            batch_game: 'N',
-                            auto_open: 'N',
-                            filepic: '',
-                            status_open: 'Y',
-                            enable: 'Y'
-                        }
-                        this.formmethod = 'add';
-                        this.fileupload = '';
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.$refs.addedit.show();
-
-                        })
-                    },
-                    async loadDebug(id, method) {
-
-                        try {
-
-                            const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddebug') }}", {
-                                id: id,
-                                method: method
-                            });
-
-                            const response = await responses;
-
-                            $.each(response.data.debug, function (k, v) {
-                                document.getElementById('body').textContent += JSON.stringify(JSON.parse(v.body), null, 2);
-                                document.getElementById('json').textContent += JSON.stringify(v.json, null, 2);
-                                document.getElementById('successful').textContent += v.successful.toString();
-                                document.getElementById('failed').textContent += v.failed.toString();
-                                document.getElementById('clientError').textContent += v.clientError.toString();
-                                document.getElementById('serverError').textContent += v.serverError.toString();
-                            });
-
-                        } catch (error) {
-                            console.error(error.message)
-                        }
-
-                    },
-                    async loadDebugFree(id, method) {
-
-                        try {
-
-                            const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddebugfree') }}", {
-                                id: id,
-                                method: method
-                            });
-
-                            const response = await responses;
-
-                            $.each(response.data.debug, function (k, v) {
-                                document.getElementById('body_free').textContent = JSON.stringify(JSON.parse(v.body), null, 2);
-                                document.getElementById('json_free').textContent = JSON.stringify(v.json, null, 2);
-                                document.getElementById('successful_free').textContent = v.successful.toString();
-                                document.getElementById('failed_free').textContent = v.failed.toString();
-                                document.getElementById('clientError_free').textContent = v.clientError.toString();
-                                document.getElementById('serverError_free').textContent = v.serverError.toString();
-                            });
-
-                        } catch (error) {
-                            console.error(error.message)
-                        }
-
-                    },
-                    async loadData() {
-
-                        try {
-                            const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
-
-                            const response = await responses;
-
-                            this.formaddedit = {
-                                name: response.data.data.name,
-                                game_type: response.data.data.game_type,
-                                user_demo: response.data.data.user_demo,
-                                user_demofree: response.data.data.user_demofree,
-                                sort: response.data.data.sort,
-                                link_ios: response.data.data.link_ios,
-                                link_android: response.data.data.link_android,
-                                link_web: response.data.data.link_web,
-                                batch_game: response.data.data.batch_game,
-                                auto_open: response.data.data.auto_open,
-                                status_open: response.data.data.status_open,
-                                enable: response.data.data.enable,
-
-                            };
-                            if (response.data.data.filepic) {
-                                this.trigger++;
-                                this.formaddedit.filepic = response.data.data.filepic;
-                            }
-
-                        } catch (error) {
-                            console.log(error)
-                        }
-                    },
-                    addEditSubmitNew(event) {
-                        event.preventDefault();
-                        var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
-
-
-                        let formData = new FormData();
-                        const json = JSON.stringify({
-                            name: this.formaddedit.name,
-                            game_type: this.formaddedit.game_type,
-                            user_demo: this.formaddedit.user_demo,
-                            user_demofree: this.formaddedit.user_demofree,
-                            sort: this.formaddedit.sort,
-                            link_ios: this.formaddedit.link_ios,
-                            link_android: this.formaddedit.link_android,
-                            link_web: this.formaddedit.link_web,
-                            batch_game: this.formaddedit.batch_game,
-                            auto_open: this.formaddedit.auto_open,
-                            status_open: this.formaddedit.status_open,
-                            enable: this.formaddedit.enable,
-                        });
-
-                        formData.append('data', json);
-                        formData.append('fileupload', this.fileupload);
-
-
-                        const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
-
-                        axios.post(url, formData, config)
-                            .then(response => {
-                                this.$bvModal.msgBoxOk(response.data.message, {
-                                    title: 'ผลการดำเนินการ',
-                                    size: 'sm',
-                                    buttonSize: 'sm',
-                                    okVariant: 'success',
-                                    headerClass: 'p-2 border-bottom-0',
-                                    footerClass: 'p-2 border-top-0',
-                                    centered: true
-                                });
-                                window.LaravelDataTables["dataTableBuilder"].draw(false);
-                            })
-                            .catch(errors => console.log(errors));
+                },
+                handleUpload(value) {
+                    this.fileupload = value;
+                },
+                editModal(code) {
+                    this.code = null;
+                    this.formaddedit = {
+                        name: '',
+                        game_type: '',
+                        user_demo: '',
+                        user_demofree: '',
+                        sort: 0,
+                        link_ios: '',
+                        link_android: '',
+                        link_web: '',
+                        batch_game: 'N',
+                        auto_open: 'N',
+                        status_open: 'Y',
+                        enable: 'Y'
 
                     }
+                    this.formmethod = 'edit';
+                    this.fileupload = '';
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.code = code;
+                        this.loadData();
+                        this.$refs.addedit.show();
+
+                    })
                 },
-            });
-        })()
+                addModal() {
+                    this.code = null;
+                    this.formaddedit = {
+                        name: '',
+                        game_type: '',
+                        user_demo: '',
+                        user_demofree: '',
+                        sort: 0,
+                        link_ios: '',
+                        link_android: '',
+                        link_web: '',
+                        batch_game: 'N',
+                        auto_open: 'N',
+                        filepic: '',
+                        status_open: 'Y',
+                        enable: 'Y'
+                    }
+                    this.formmethod = 'add';
+                    this.fileupload = '';
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.$refs.addedit.show();
+
+                    })
+                },
+                async loadDebug(id, method) {
+
+                    try {
+
+                        const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddebug') }}", {
+                            id: id,
+                            method: method
+                        });
+
+                        const response = await responses;
+
+                        $.each(response.data.debug, function (k, v) {
+                            document.getElementById('body').textContent += JSON.stringify(JSON.parse(v.body), null, 2);
+                            document.getElementById('json').textContent += JSON.stringify(v.json, null, 2);
+                            document.getElementById('successful').textContent += v.successful.toString();
+                            document.getElementById('failed').textContent += v.failed.toString();
+                            document.getElementById('clientError').textContent += v.clientError.toString();
+                            document.getElementById('serverError').textContent += v.serverError.toString();
+                        });
+
+                    } catch (error) {
+                        console.error(error.message)
+                    }
+
+                },
+                async loadDebugFree(id, method) {
+
+                    try {
+
+                        const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddebugfree') }}", {
+                            id: id,
+                            method: method
+                        });
+
+                        const response = await responses;
+
+                        $.each(response.data.debug, function (k, v) {
+                            document.getElementById('body_free').textContent = JSON.stringify(JSON.parse(v.body), null, 2);
+                            document.getElementById('json_free').textContent = JSON.stringify(v.json, null, 2);
+                            document.getElementById('successful_free').textContent = v.successful.toString();
+                            document.getElementById('failed_free').textContent = v.failed.toString();
+                            document.getElementById('clientError_free').textContent = v.clientError.toString();
+                            document.getElementById('serverError_free').textContent = v.serverError.toString();
+                        });
+
+                    } catch (error) {
+                        console.error(error.message)
+                    }
+
+                },
+                async loadData() {
+
+                    try {
+                        const responses = axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
+
+                        const response = await responses;
+
+                        this.formaddedit = {
+                            name: response.data.data.name,
+                            game_type: response.data.data.game_type,
+                            user_demo: response.data.data.user_demo,
+                            user_demofree: response.data.data.user_demofree,
+                            sort: response.data.data.sort,
+                            link_ios: response.data.data.link_ios,
+                            link_android: response.data.data.link_android,
+                            link_web: response.data.data.link_web,
+                            batch_game: response.data.data.batch_game,
+                            auto_open: response.data.data.auto_open,
+                            status_open: response.data.data.status_open,
+                            enable: response.data.data.enable,
+
+                        };
+                        if (response.data.data.filepic) {
+                            this.trigger++;
+                            this.formaddedit.filepic = response.data.data.filepic;
+                        }
+
+                    } catch (error) {
+                        console.log(error)
+                    }
+                },
+                addEditSubmitNew(event) {
+                    event.preventDefault();
+                    this.toggleButtonDisable(true);
+                    var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
+
+
+                    let formData = new FormData();
+                    const json = JSON.stringify({
+                        name: this.formaddedit.name,
+                        game_type: this.formaddedit.game_type,
+                        user_demo: this.formaddedit.user_demo,
+                        user_demofree: this.formaddedit.user_demofree,
+                        sort: this.formaddedit.sort,
+                        link_ios: this.formaddedit.link_ios,
+                        link_android: this.formaddedit.link_android,
+                        link_web: this.formaddedit.link_web,
+                        batch_game: this.formaddedit.batch_game,
+                        auto_open: this.formaddedit.auto_open,
+                        status_open: this.formaddedit.status_open,
+                        enable: this.formaddedit.enable,
+                    });
+
+                    formData.append('data', json);
+                    formData.append('fileupload', this.fileupload);
+
+
+                    const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
+
+                    axios.post(url, formData, config)
+                        .then(response => {
+                            this.$bvModal.msgBoxOk(response.data.message, {
+                                title: 'ผลการดำเนินการ',
+                                size: 'sm',
+                                buttonSize: 'sm',
+                                okVariant: 'success',
+                                headerClass: 'p-2 border-bottom-0',
+                                footerClass: 'p-2 border-top-0',
+                                centered: true
+                            });
+                            window.LaravelDataTables["dataTableBuilder"].draw(false);
+                        })
+                        .catch(errors => console.log(errors));
+
+                }
+            },
+        });
+
     </script>
 @endpush
 

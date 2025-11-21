@@ -31,8 +31,12 @@
                                 </div>
 
                                 <div class="form-group col-6">
-                                    {!! Form::select('kind',  ['' => '== ประเภท ==' , 'TRANSFER' => 'โยกเงิน' , 'TOPUP' => 'ฝากเงิน' , 'WITHDRAW' => 'ถอนเงิน' , 'SETWALLET' => 'Set Wallet' , 'FASTSTART' => 'แนะนำเพื่อน' , 'ROLLBACK' => 'คืนยอด'], '',['id' => 'kind', 'class' => 'form-control form-control-sm']) !!}
+                                    @if($config->seamless == 'Y')
+                                        {!! Form::select('kind',  ['' => '== ประเภท ==' , 'PROMOTION' => 'รับโปร' , 'TOPUP' => 'ฝากเงิน' , 'WITHDRAW' => 'แจ้งถอนเงิน' , 'SETWALLET' => 'เพิ่มยอดโดยทีมงาน' , 'FASTSTART' => 'แนะนำเพื่อน (มอบโดยระบบ)', 'FASTSTARTS' => 'แนะนำเพื่อน (แจ้งเตือน)' , 'ROLLBACK' => 'คืนยอด', 'FREE' => 'รับเครดิตฟรี'], '',['id' => 'kind', 'class' => 'form-control form-control-sm']) !!}
+                                    @else
+                                        {!! Form::select('kind',  ['' => '== ประเภท ==' , 'TRANSFER' => 'โยกเงิน' , 'TOPUP' => 'ฝากเงิน' , 'WITHDRAW' => 'แจ้งถอนเงิน' , 'SETWALLET' => 'เพิ่มยอดโดยทีมงาน' , 'FASTSTART' => 'แนะนำเพื่อน (มอบโดยระบบ)', 'FASTSTARTS' => 'แนะนำเพื่อน (แจ้งเตือน)' , 'ROLLBACK' => 'คืนยอด', 'FREE' => 'รับเครดิตฟรี'], '',['id' => 'kind', 'class' => 'form-control form-control-sm']) !!}
 
+                                    @endif
                                 </div>
 
                                 <div class="form-group col-6">
@@ -44,6 +48,14 @@
                                     <input type="text" class="form-control form-control-sm" id="user_name"
                                            placeholder="Username"
                                            name="user_name">
+                                </div>
+                                <div class="form-group col-6">
+                                    <input type="text" class="form-control form-control-sm" id="member_code"
+                                           placeholder="Code สมาชิก"
+                                           name="member_code">
+                                </div>
+                                <div class="form-group col-6">
+
                                 </div>
 
                                 <div class="form-group col-auto">

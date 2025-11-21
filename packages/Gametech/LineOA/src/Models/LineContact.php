@@ -45,4 +45,15 @@ class LineContact extends Model implements LineContactContract
     {
         return $this->hasMany(LineMessage::class, 'line_contact_id');
     }
+
+    // Gametech\LineOA\Models\LineContact.php
+
+    public function member()
+    {
+        // สมมติ member_id อ้างไปยัง members.code
+        return $this->belongsTo(\Gametech\Member\Models\Member::class, 'member_id', 'code');
+    }
+
+
+
 }

@@ -14,7 +14,7 @@ class HomeController extends Controller
     public function __construct()
     {
         $this->_config = request('_config');
-        parent::__construct();
+//        parent::__construct();
     }
 
     public function index(Request $request)

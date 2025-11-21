@@ -60,20 +60,47 @@ class SlotxRepository extends Repository
     public function GameCurl($param, $action)
     {
 
+        $response =  rescue(function () use ($param, $action) {
+            $postString = Arr::query($param);
 
-        $postString = Arr::query($param);
+            $signature = base64_encode(hash_hmac("sha1", $postString, $this->secretkey, true));
+            $signature = urlencode($signature);
+            $url = $this->url . "?AppID=" . $this->login . "&Signature=$signature";
 
-        $signature = base64_encode(hash_hmac("sha1", $postString, $this->secretkey, true));
-        $signature = urlencode($signature);
-        $url = $this->url . "?AppID=" . $this->login . "&Signature=$signature";
 
-        $response = Http::timeout(15)->asForm()->post($url, $param);
+            return Http::timeout(15)->asForm()->post($url, $param);
+
+
+
+        }, function ($e) {
+
+            return $e->response;
+
+        }, true);
 
         if ($this->debug) {
             $this->Debug($response);
         }
 
-        return $response;
+//        if($response === false){
+////            $result['main'] = false;
+//            $result['success'] = false;
+//            $result['msg'] = 'เชื่อมต่อไม่ได้';
+//            return $result;
+//        }
+
+        $result = $response->json();
+        $result['msg'] = ($result['Message'] ?? 'พบปัญหาบางประการ');
+
+
+        if ($response->successful()) {
+            $result['success'] = true;
+        }else{
+            $result['success'] = false;
+        }
+
+        return $result;
+
 
     }
 
@@ -109,6 +136,10 @@ class SlotxRepository extends Repository
             $result = $this->addUser($account, $data);
         }
 
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
+        }
+
         return $result;
     }
 
@@ -137,9 +168,9 @@ class SlotxRepository extends Repository
             $return['msg'] = 'ไม่สามารถลงทะเบียนรหัสเกมได้ เนื่องจาก ID เกมหมด โปรดแจ้ง Staff';
         }
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
-        }
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+//        }
 
         return $return;
     }
@@ -155,12 +186,10 @@ class SlotxRepository extends Repository
             'Username' => $username
         ];
 
-        $responses = $this->GameCurl($param, '');
-        $response = $responses->json();
-
-        if ($responses->successful()) {
+        $response = $this->GameCurl($param, '');
 
 
+        if ($response['success'] === true) {
             if ($response['Status'] === 'Created') {
                 $this->changePass([
                     'user_name' => $username,
@@ -182,21 +211,19 @@ class SlotxRepository extends Repository
                     ->where('user_name', $username)
                     ->update(['use_account' => 'Y']);
 
-                $return['msg'] = $response['Message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
 
             }
-
         } else {
-
-            $return['msg'] = $response['Message'];
+            $return['msg'] = $response['msg'];
             $return['success'] = false;
-
         }
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true];
-        }
+
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true];
+//        }
         return $return;
     }
 
@@ -211,21 +238,18 @@ class SlotxRepository extends Repository
             'Username' => $data['user_name']
         ];
 
-        $responses = $this->GameCurl($param, '');
+        $response = $this->GameCurl($param, '');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
+        if ($response['success'] === true) {
             if ($response['Status'] === 'OK') {
                 $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
             } else {
-                $return['msg'] = $response['Message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
             }
         } else {
-            $return['msg'] = $response['Message'];
+            $return['msg'] = $response['msg'];
             $return['success'] = false;
         }
 
@@ -248,11 +272,9 @@ class SlotxRepository extends Repository
             'Username' => $username
         ];
 
-        $responses = $this->GameCurl($param, '');
-        $response = $responses->json();
+        $response = $this->GameCurl($param, '');
 
-        if ($responses->successful()) {
-
+        if ($response['success'] === true) {
             if ($response['Username'] === $username) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
@@ -260,14 +282,14 @@ class SlotxRepository extends Repository
                 $return['score'] = $response['Credit'];
 
             } else {
-                $return['msg'] = $response['Message'];
-                $return['success'] = false;
+                $return['msg'] = $response['msg'];
                 $return['connect'] = true;
+                $return['success'] = false;
             }
         } else {
-            $return['msg'] = $response['Message'];
-            $return['success'] = false;
+            $return['msg'] = $response['msg'];
             $return['connect'] = false;
+            $return['success'] = false;
         }
 
 
@@ -303,24 +325,23 @@ class SlotxRepository extends Repository
                 'Username' => $username
             ];
 
-            $responses = $this->GameCurl($param, '');
-            $response = $responses->json();
+            $response = $this->GameCurl($param, '');
 
-            if ($responses->successful()) {
-
+            if ($response['success'] === true) {
                 if ($response['Username'] === $username) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = $response['Credit'];
                     $return['before'] = $response['BeforeCredit'];
                 } else {
-                    $return['msg'] = $response['Message'];
+                    $return['msg'] = $response['msg'];
                     $return['success'] = false;
                 }
             } else {
-                $return['msg'] = $response['Message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
             }
+
 
         }
 
@@ -359,25 +380,24 @@ class SlotxRepository extends Repository
                 'Username' => $username
             ];
 
-            $responses = $this->GameCurl($param, '');
+            $response = $this->GameCurl($param, '');
 
-            $response = $responses->json();
 
-            if ($responses->successful()) {
-
+            if ($response['success'] === true) {
                 if ($response['Username'] === $username) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = $response['Credit'];
                     $return['before'] = $response['BeforeCredit'];
                 } else {
-                    $return['msg'] = $response['Message'];
+                    $return['msg'] = $response['msg'];
                     $return['success'] = false;
                 }
             } else {
-                $return['msg'] = $response['Message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
             }
+
 
         }
 

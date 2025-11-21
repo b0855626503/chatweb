@@ -2,9 +2,10 @@
 
 namespace App\Exceptions;
 
-use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -16,7 +17,7 @@ class Handler extends ExceptionHandler
      * @var array
      */
     protected $dontReport = [
-        //
+        ConnectionException::class
     ];
 
     /**
@@ -32,27 +33,39 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param Throwable $exception
+     * @param Throwable $e
      * @return void
      *
-     * @throws Exception
+     * @throws Throwable
      */
-    public function report(Throwable $exception)
+    public function report(Throwable $e)
     {
-        parent::report($exception);
+
+        parent::report($e);
     }
 
     /**
      * Render an exception into an HTTP response.
      *
      * @param  Request  $request
-     * @param Throwable $exception
+     * @param Throwable $e
      * @return Response
      *
      * @throws Throwable
      */
-    public function render($request, Throwable $exception)
+    public function render($request, Throwable $e)
     {
-        return parent::render($request, $exception);
+        if ($e instanceof TokenMismatchException) {
+            return redirect()->route('customer.session.index')
+                ->with('error', 'Session expired. Please try again.');
+        }
+        return parent::render($request, $e);
+    }
+
+    public function register()
+    {
+        $this->reportable(function (Throwable $e) {
+            //
+        });
     }
 }

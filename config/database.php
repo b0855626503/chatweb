@@ -57,10 +57,9 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => false,
-            'engine' => 'InnoDB ROW_FORMAT=DYNAMIC',
+            'engine' => 'InnoDB',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-                PDO::ATTR_EMULATE_PREPARES => true,
             ]) : [],
         ],
 
@@ -92,6 +91,37 @@ return [
             'prefix_indexes' => true,
         ],
 
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'dsn' => env('MONGODB_DSN'),
+            'database' => env('MONGODB_DATABASE', 'app'),
+            'options' => [
+                // TLS (Atlas บังคับ TLS อยู่แล้ว ใส่ได้เพื่อความชัด)
+                'tls' => true,
+                'tlsCAFile' => env('MONGODB_TLS_CA', '/etc/ssl/certs/ca-certificates.crt'),
+
+                // ความเสถียรตอนเลือกเซิร์ฟเวอร์
+                'serverSelectionTryOnce' => false,
+                'serverSelectionTimeoutMS' => (int)env('MONGODB_SSM', 10000),
+
+                // เครือข่าย
+                'connectTimeoutMS' => (int)env('MONGODB_CONNECT_MS', 3000),
+                'socketTimeoutMS' => (int)env('MONGODB_SOCKET_MS', 15000),
+
+                // พูล (ถ้าใช้ Octane/FrankenPHP มีประโยชน์)
+                'maxPoolSize' => (int)env('MONGODB_MAX_POOL', 50),
+                'maxIdleTimeMS' => (int)env('MONGODB_MAX_IDLE_MS', 300000),
+
+                // write concern / appName ใส่ฝั่ง options ให้ชัด
+                'w' => 'majority',
+                'wTimeoutMS' => (int)env('MONGODB_W_TIMEOUT_MS', 5000),
+                'appName' => env('APP_NAME', 'demo'),
+
+                // ถ้าอยากใช้ retryReads/ retryWrites อยู่ฝั่ง DSN แล้วก็ไม่ต้องซ้ำที่นี่
+                'retryReads' => true,
+                'retryWrites' => true,
+            ],
+        ],
     ],
 
     /*
@@ -118,41 +148,60 @@ return [
     |
     */
 
-
     'redis' => [
-
         'client' => env('REDIS_CLIENT', 'phpredis'),
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
         ],
 
         'default' => [
-            'url' => env('REDIS_URL'),
+            'scheme' => 'tcp',
             'host' => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', 'gametech2020'),
+            'password' => env('REDIS_PASSWORD', ''),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
-
         ],
 
-        'cache' => [
-            'url' => env('REDIS_URL'),
+        'session' => [
+            'scheme' => 'tcp',
             'host' => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', 'gametech2020'),
+            'password' => env('REDIS_PASSWORD', ''),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
         ],
 
-        'clusters' => [
-            'default' => [
-                [
-                    'host' => env('REDIS_HOST', '127.0.0.1'),
-                    'password' => env('REDIS_PASSWORD', 'gametech2020'),
-                    'port' => env('REDIS_PORT', '6379'),
-                    'database' => 0,
-                ],
+        'queue' => [
+            'scheme' => 'tcp',
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'password' => env('REDIS_PASSWORD', ''),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_CACHE_DB', '2'),
+        ],
+
+        'game' => [
+            'scheme' => 'tcp',
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'password' => env('REDIS_PASSWORD', ''),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_CACHE_DB', '3'),
+        ],
+
+        'gamelog' => [
+            'host' => env('REDIS_GAMELOG_HOST', '127.0.0.1'),
+            'password' => env('REDIS_GAMELOG_PASSWORD', null),
+            'port' => env('REDIS_GAMELOG_PORT', null),
+            'database' => env('REDIS_GAMELOG_DB', '0'),
+        ],
+
+        'fanout' => [
+            'host' => env('REDIS_HOST', '139.59.96.78'),
+            'password' => env('REDIS_PASSWORD', 'gametech2020'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_CACHE_DB', '5'),
+            'options' => [
+                'prefix' => env('FANOUT_PREFIX', 'fanout_'), // ควรเหมือนกันทุกเว็บ
             ],
         ],
     ],

@@ -13,6 +13,7 @@ class PaymentLogFreeRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Payment\Contracts\PaymentLogFree';
+        return \Gametech\Payment\Models\PaymentLogFree::class;
+
     }
 }

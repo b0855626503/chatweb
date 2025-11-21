@@ -2,7 +2,6 @@
 
 namespace Gametech\Admin\Http\Controllers;
 
-
 use Gametech\Core\Repositories\ConfigRepository;
 use Gametech\Payment\Repositories\BankRuleRepository;
 use Illuminate\Http\Request;

@@ -13,8 +13,8 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -54,12 +54,12 @@ class TransferWalletController extends AppBaseController
      */
     public function __construct
     (
-        MemberRepository $memberRepo,
-        ConfigRepository $configRepo,
-        GameUserRepository $gameUserRepo,
+        MemberRepository    $memberRepo,
+        ConfigRepository    $configRepo,
+        GameUserRepository  $gameUserRepo,
         PromotionRepository $promotionRepo,
-        GameRepository $gameRepo,
-        BillRepository $billRepo
+        GameRepository      $gameRepo,
+        BillRepository      $billRepo
     )
     {
         $this->middleware('customer');
@@ -122,7 +122,7 @@ class TransferWalletController extends AppBaseController
 
     public function loadGame(): Collection
     {
-        return collect($this->gameRepository->getGameUserById($this->id(),false)->toArray())->whereNotNull('game_user');
+        return collect($this->gameRepository->getGameUserById($this->id(), false)->toArray())->whereNotNull('game_user');
     }
 
 
@@ -160,8 +160,8 @@ class TransferWalletController extends AppBaseController
 
         $param = ['game' => $item['game_code'], 'id' => $this->id(), 'promotion' => $item['pro_code'], 'amount' => $amount, 'datetime' => now()];
 
-
-        session()->flash('gametoken', Crypt::encryptString(json_encode($param)));
+        $request->session()->put('gametoken', Crypt::encryptString(json_encode($param)));
+//        session()->flash('gametoken', Crypt::encryptString(json_encode($param)));
 
         return view($this->_config['view'])->with('item', $item);
 
@@ -170,13 +170,25 @@ class TransferWalletController extends AppBaseController
     public function confirm(Request $request): RedirectResponse
     {
 
-        if (!$request->has('gametoken')) {
+        if (!$request->session()->has('gametoken')) {
             session()->flash('error', 'พบข้อผิดพลาดบางประการ โปรดทำรายการใหม่อีกครั้ง');
             return redirect()->route('customer.transfer.wallet.index');
         }
 
+//        $lock = Cache::lock('transfer_in');
+//
+//        try {
+//            $lock->block(5);
+//
+//        } catch (LockTimeoutException $e) {
+//            session()->flash('error', 'รออีก 5 วินาที ค่อยทำการโยกใหม่นะ');
+//            return redirect()->route('customer.transfer.wallet.index');
+//        } finally {
+//            optional($lock)->release();
+//        }
 
-        $encrypted = $request->input('gametoken');
+
+        $encrypted = $request->session()->get('gametoken');
 
         try {
             $gamedata = Crypt::decryptString($encrypted);
@@ -217,8 +229,15 @@ class TransferWalletController extends AppBaseController
         $item = $this->checkPro($game, $this->id(), $promotion_id, $amount, $balance);
 
 
+        if (Cache::has('transfer_' . $user_id)) {
+            session()->flash('error', 'รออีก 30 วินาที ค่อยทำการโยกใหม่นะ');
+            return redirect()->route('customer.transfer.wallet.index');
+        }
+
+        Cache::put('transfer_' . $user_id, 'lock', now()->addSeconds(30));
+
         $response = $this->billRepository->transferWallet($item);
-        if ($response['success'] == false) {
+        if ($response['success'] === false) {
             session()->flash('error', $response['msg']);
             return redirect()->route('customer.transfer.wallet.index');
         }
@@ -244,6 +263,7 @@ class TransferWalletController extends AppBaseController
         ]);
 
 //        dd($bills);
+
 
         session()->flash('bills', $bills);
         return redirect()->route('customer.transfer.wallet.complete');
@@ -391,6 +411,46 @@ class TransferWalletController extends AppBaseController
             'total' => $promotion['total'],
             'wallet' => Storage::url('game_img/wallet.png'),
         ];
+
+    }
+
+    public function bonus(Request $request)
+    {
+        $id = $request->input('id');
+        $member = $this->user();
+        $data['member_code'] = $member->code;
+//        dd('here');
+
+        $config = core()->getConfigData();
+
+        if ($config->freecredit_open == 'Y') {
+
+            if ($member->balance_free > $config->pro_reset) {
+                return $this->sendError('ไม่สามารถทำรายการได้ โยกเข้าได้เมื่อยอดเครดิต น้อยกว่าหรือเท่ากับ ' . $config->pro_reset, 200);
+
+            }
+
+            $response = app('Gametech\Member\Repositories\MemberCreditFreeLogRepository')->tranBonus($data, $id);
+            if ($response) {
+                return $this->sendSuccess('ดำเนินการโยก เข้ากระเป๋าสำเร็จแล้ว');
+            } else {
+                return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่ในภายหลัง', 200);
+            }
+        } else {
+
+            if ($member->balance > $config->pro_reset) {
+                return $this->sendError('ไม่สามารถทำรายการได้ โยกเข้าได้เมื่อยอดเครดิต น้อยกว่าหรือเท่ากับ ' . $config->pro_reset, 200);
+
+            }
+
+            $response = app('Gametech\Member\Repositories\MemberCreditLogRepository')->tranBonus($data, $id);
+            if ($response) {
+                return $this->sendSuccess('ดำเนินการโยก เข้ากระเป๋าสำเร็จแล้ว');
+            } else {
+                return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่ในภายหลัง', 200);
+            }
+        }
+
 
     }
 

@@ -4,7 +4,6 @@ namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -82,33 +81,66 @@ class DreamtechRepository extends Repository
     }
 
 
-    public function GameCurl($param, $action): Response
+    public function GameCurl($param, $action)
     {
-
         ksort($param);
-        $postString = "";
-        foreach ($param as $keyR => $value) {
-            $postString .= $keyR . '=' . $value . '&';
-        }
-        $postString = substr($postString, 0, -1);
 
-        $url = $this->url . $action;
+        $response = rescue(function () use ($param, $action) {
 
-        $response = Http::timeout(15)->withHeaders([
-            'Pass-Key' => $this->passkey,
-            'Session-Id' => request()->getSession()->getId(),
-            'Hash' => md5($postString),
-        ])->asJson()->post($url, $param);
+            $postString = "";
+            foreach ($param as $keyR => $value) {
+                $postString .= $keyR . '=' . $value . '&';
+            }
+            $postString = substr($postString, 0, -1);
+
+            $url = $this->url . $action;
+
+            return Http::timeout(15)->withHeaders([
+                'Pass-Key' => $this->passkey,
+                'Session-Id' => request()->getSession()->getId(),
+                'Hash' => md5($postString),
+            ])->asJson()->post($url, $param);
+
+
+        }, function ($e) {
+
+            return false;
+
+        }, true);
 
         if ($this->debug) {
             $this->Debug($response);
         }
-        return $response;
+
+        if($response === false){
+            $result['success'] = false;
+            $result['msg'] = 'เชื่อมต่อไม่ได้';
+            return $result;
+        }
+
+        $result = $response->json();
+        $result['msg'] = ($result['message'] ?? 'พบข้อผิดพลาดในการเชื่อมต่อ');
+
+        if($response->failed() || $response->clientError() || $response->serverError()){
+            $result['success'] = false;
+            return $result;
+        }
+
+
+        if ($response->successful()) {
+            $result['success'] = true;
+        }else{
+            $result['success'] = false;
+        }
+
+        return $result;
+
     }
 
-    public function GameCurlAuth($username): array
+
+    public function GameCurlAuth($username)
     {
-        $return['success'] = false;
+
 
         $param = [
             'accountType' => 1,
@@ -116,67 +148,116 @@ class DreamtechRepository extends Repository
         ];
 
         ksort($param);
-        $postString = "";
-        foreach ($param as $keyR => $value) {
-            $postString .= $keyR . '=' . $value . '&';
-        }
-        $postString = substr($postString, 0, -1);
 
-        $url = $this->url . $username . '/authenticate';
+        $responses = rescue(function () use ($param, $username) {
+            $postString = "";
+            foreach ($param as $keyR => $value) {
+                $postString .= $keyR . '=' . $value . '&';
+            }
+            $postString = substr($postString, 0, -1);
 
-        $response = Http::withHeaders([
-            'Pass-Key' => $this->passkey,
-            'Session-Id' => request()->getSession()->getId(),
-            'Hash' => md5($postString),
-        ])->asJson()->post($url, $param);
+            $url = $this->url . $username . '/authenticate';
+
+            return Http::timeout(15)->withHeaders([
+                'Pass-Key' => $this->passkey,
+                'Session-Id' => request()->getSession()->getId(),
+                'Hash' => md5($postString),
+            ])->asJson()->post($url, $param);
+
+
+        }, function ($e) {
+
+            return $e->responses;
+
+        }, true);
 
         if ($this->debug) {
-            $this->Debug($response);
+            $this->Debug($responses);
         }
 
-        if ($response->successful()) {
-            $response = $response->json();
-            if (!empty($response['Auth-Key'])) {
-                $return['success'] = true;
-                $return['key'] = $response['Auth-Key'];
+        if($responses->failed() || $responses->clientError() || $responses->serverError()){
+            $result['success'] = false;
+            return $result;
+        }
+
+
+        if ($responses->successful()) {
+            $result = $responses->json();
+            if (!empty($result['Auth-Key'])) {
+                $result['success'] = true;
+                $result['key'] = $result['Auth-Key'];
+            } else {
+                $result['success'] = false;
             }
 
-        }
+        }else{
+            $result['success'] = false;
 
-        return $return;
+        }
+        return $result;
+
+
     }
 
-    public function GameCurlKey($param, $action, $key): Response
+
+    public function GameCurlKey($param, $action, $key)
     {
         ksort($param);
-        $postString = "";
-        foreach ($param as $keyR => $value) {
-            $postString .= $keyR . '=' . $value . '&';
-        }
-        $postString = substr($postString, 0, -1);
 
-        $url = $this->url . $action;
+        $responses = rescue(function () use ($param, $action, $key) {
 
-        $response = Http::withHeaders([
+            $postString = "";
+            foreach ($param as $keyR => $value) {
+                $postString .= $keyR . '=' . $value . '&';
+            }
+            $postString = substr($postString, 0, -1);
 
-            'Pass-Key' => $this->passkey,
-            'Session-Id' => request()->getSession()->getId(),
-            'Hash' => md5($postString),
-            'Auth-Key' => $key
-        ])->asJson()->post($url, $param);
+            $url = $this->url . $action;
+
+            return Http::timeout(15)->withHeaders([
+
+                'Pass-Key' => $this->passkey,
+                'Session-Id' => request()->getSession()->getId(),
+                'Hash' => md5($postString),
+                'Auth-Key' => $key
+            ])->asJson()->post($url, $param);
+
+
+        }, function ($e) {
+
+            return $e->responses;
+
+        }, true);
 
         if ($this->debug) {
-            $this->Debug($response);
+            $this->Debug($responses);
         }
 
-        return $response;
+        if($responses->failed() || $responses->clientError() || $responses->serverError()){
+            $result['success'] = false;
+            return $result;
+        }
+
+
+        if ($responses->successful()) {
+            $result = $responses->json();
+            $result['success'] = true;
+        }else{
+            $result = $responses->json();
+            $result['success'] = false;
+        }
+        $result['msg'] = ($result['message'] ?? '');
+        return $result;
+
 
     }
 
+    /**
+     */
     public function addGameAccount($data): array
     {
         $result = $this->newUser();
-        if ($result['success'] === true) {
+        if ($result['success'] == true) {
             $account = $result['account'];
             $result = $this->addUser($account, $data);
         }
@@ -210,12 +291,14 @@ class DreamtechRepository extends Repository
             $return['msg'] = 'ไม่สามารถลงทะเบียนรหัสเกมได้ เนื่องจาก ID เกมหมด โปรดแจ้ง Staff';
         }
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
-        }
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+//        }
         return $return;
     }
 
+    /**
+     */
     public function addUser($username, $data): array
     {
         $return['success'] = false;
@@ -226,11 +309,9 @@ class DreamtechRepository extends Repository
         ];
 
 
-        $responses = $this->GameCurl($param, $username . '/authenticate');
-        $response = $responses->json();
+        $response = $this->GameCurl($param, $username . '/authenticate');
 
-        if ($responses->successful()) {
-
+        if ($response['success'] === true) {
             if ($response['code'] == 'UNKNOWN_ERROR') {
 
                 $user_pass = "Aa" . rand(100000, 999999);
@@ -251,51 +332,41 @@ class DreamtechRepository extends Repository
                 ];
 
 
-                $responses = $this->GameCurl($param, 'create-check-account');
+                $response = $this->GameCurl($param, 'create-check-account');
 
-                $response = $responses->json();
 
-                if ($responses->successful()) {
+                if (!empty($response['platformLoginId'])) {
+                    $return['msg'] = 'Complete';
+                    $return['success'] = true;
+                    $return['user_name'] = $username;
+                    $return['user_pass'] = $user_pass;
 
-                    if (!empty($response['platformLoginId'])) {
-                        $return['msg'] = 'Complete';
-                        $return['success'] = true;
-                        $return['user_name'] = $username;
-                        $return['user_pass'] = $user_pass;
+                    $return['debug']['json'][]['user_name'] = $username;
+                    $return['debug']['json'][]['user_pass'] = $user_pass;
 
-                        $return['debug']['json'][]['user_name'] = $username;
-                        $return['debug']['json'][]['user_pass'] = $user_pass;
-
-                        DB::table('users_dreamtech')
-                            ->where('user_name', $username)
-                            ->update(['date_join' => now()->toDateString(), 'ip' => request()->ip(), 'use_account' => 'Y', 'user_update' => 'SYSTEM']);
-
-                    } else {
-
-                        DB::table('users_dreamtech')
-                            ->where('user_name', $username)
-                            ->update(['use_account' => 'Y']);
-
-                        $return['msg'] = $response['message'];
-                        $return['success'] = false;
-                    }
+                    DB::table('users_dreamtech')
+                        ->where('user_name', $username)
+                        ->update(['date_join' => now()->toDateString(), 'ip' => request()->ip(), 'use_account' => 'Y', 'user_update' => 'SYSTEM']);
 
                 } else {
 
-                    $return['msg'] = $response['message'];
+                    DB::table('users_dreamtech')
+                        ->where('user_name', $username)
+                        ->update(['use_account' => 'Y']);
+
+                    $return['msg'] = $response['msg'];
                     $return['success'] = false;
                 }
 
+
             } else {
-                $return['msg'] = $response['message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
             }
 
         } else {
-
-            $return['msg'] = $response['message'];
+            $return['msg'] = $response['msg'];
             $return['success'] = false;
-
         }
 
 
@@ -305,6 +376,8 @@ class DreamtechRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function changePass($data): array
     {
         $return['success'] = false;
@@ -329,24 +402,19 @@ class DreamtechRepository extends Repository
             ];
 
 
-            $responses = $this->GameCurlKey($param, $data['user_name'] . '/update-account', $key);
-
-            $response = $responses->json();
-
-            if ($responses->successful()) {
+            $response = $this->GameCurlKey($param, $data['user_name'] . '/update-account', $key);
+            if ($response['success'] === true) {
                 $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
             } else {
-
-                $return['msg'] = $response['message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
             }
-        } else {
 
+
+        } else {
             $return['success'] = false;
             $return['msg'] = 'เกิดข้อผิดพลาดในการ ตรวจสอบ ID Game จึงไม่สามารถทำรายการ เปลี่ยนรหัสได้';
-
-
         }
 
         if ($this->debug) {
@@ -355,6 +423,8 @@ class DreamtechRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function viewBalance($username): array
     {
 
@@ -373,34 +443,27 @@ class DreamtechRepository extends Repository
                 'timeStamp' => date('Y-m-d') . 'T' . date('H:i:s')
             ];
 
-            $responses = $this->GameCurlKey($param, $username . '/balance', $key);
+            $response = $this->GameCurlKey($param, $username . '/balance', $key);
 
-            $response = $responses->json();
+            if ($response['success'] === true) {
 
-
-
-            if ($responses->successful()) {
-
-
-                    $return['msg'] = 'Complete';
-                    $return['success'] = true;
-                    $return['connect'] = true;
-                    $return['score'] = doubleval($response['balance']);
-
+                $return['msg'] = 'Complete';
+                $return['success'] = true;
+                $return['connect'] = true;
+                $return['score'] = doubleval($response['balance']);
 
             } else {
-
-                $return['msg'] = $response['message'];
-                $return['connect'] = false;
                 $return['success'] = false;
-
+                $return['connect'] = true;
+                $return['msg'] = $response['msg'];
             }
+
 
         } else {
 
             $return['success'] = false;
             $return['connect'] = false;
-            $return['msg'] = 'เกิดข้อผิดพลาดในการ ตรวจสอบ ID Game จึงไม่สามารถทำรายการ ตรวจสอบยอดเงินได้';
+            $return['msg'] = 'ไม่ได้ key ยืนยัน';
 
 
         }
@@ -411,6 +474,8 @@ class DreamtechRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function deposit($username, $amount): array
     {
         $return['success'] = false;
@@ -431,7 +496,7 @@ class DreamtechRepository extends Repository
 
             $return = $this->GameCurlAuth($username);
 
-            if ($return['success'] === true) {
+            if ($return['success'] == true) {
                 $key = $return['key'];
 
                 $param = [
@@ -444,12 +509,9 @@ class DreamtechRepository extends Repository
                     'txnType' => 'DEPOSIT'
                 ];
 
-                $responses = $this->GameCurlKey($param, 'transaction', $key);
+                $response = $this->GameCurlKey($param, 'transaction', $key);
 
-                $response = $responses->json();
-
-                if ($responses->successful()) {
-
+                if ($response['success'] === true) {
                     if (!empty($response['transactionReferenceNo'])) {
                         $return['success'] = true;
                         $return['ref_id'] = $response['transactionReferenceNo'];
@@ -458,10 +520,13 @@ class DreamtechRepository extends Repository
 
                     } else {
                         $return['success'] = false;
-                        $return['msg'] = $response['message'];
+                        $return['msg'] = $response['msg'];
                     }
-
+                } else {
+                    $return['success'] = false;
+                    $return['msg'] = $response['msg'];
                 }
+
 
             } else {
 
@@ -478,6 +543,8 @@ class DreamtechRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function withdraw($username, $amount): array
     {
         $return['success'] = false;
@@ -498,7 +565,7 @@ class DreamtechRepository extends Repository
 
             $return = $this->GameCurlAuth($username);
 
-            if ($return['success'] === true) {
+            if ($return['success'] == true) {
                 $key = $return['key'];
 
                 $param = [
@@ -511,12 +578,9 @@ class DreamtechRepository extends Repository
                     'txnType' => 'WITHDRAW'
                 ];
 
-                $responses = $this->GameCurlKey($param, 'transaction', $key);
+                $response = $this->GameCurlKey($param, 'transaction', $key);
 
-                $response = $responses->json();
-
-                if ($responses->successful()) {
-
+                if ($response['success'] === true) {
                     if (!empty($response['transactionReferenceNo'])) {
                         $return['success'] = true;
                         $return['ref_id'] = $response['transactionReferenceNo'];
@@ -525,12 +589,14 @@ class DreamtechRepository extends Repository
 
                     } else {
                         $return['success'] = false;
-                        $return['msg'] = $response['message'];
+                        $return['msg'] = $response['msg'];
                     }
                 } else {
                     $return['success'] = false;
-                    $return['msg'] = $response['message'];
+                    $return['msg'] = $response['msg'];
                 }
+
+
             } else {
 
                 $return['success'] = false;

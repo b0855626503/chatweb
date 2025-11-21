@@ -1,15 +1,12 @@
 <?php
 
-use BeyondCode\LaravelWebSockets\Statistics\Models\WebSocketsStatisticsEntry;
-use BeyondCode\LaravelWebSockets\WebSockets\Channels\ChannelManagers\ArrayChannelManager;
-
 return [
 
     /*
      * Set a custom dashboard configuration
      */
     'dashboard' => [
-        'port' => env('LARAVEL_WEBSOCKETS_PORT', 8443),
+        'port' => env('LARAVEL_WEBSOCKETS_PORT', 6001),
     ],
 
     /*
@@ -28,10 +25,10 @@ return [
             'name' => env('APP_NAME'),
             'key' => env('PUSHER_APP_KEY'),
             'secret' => env('PUSHER_APP_SECRET'),
-            'path' => env('PUSHER_APP_PATH'),
+//            'path' => env('PUSHER_APP_PATH'),
             'capacity' => null,
-            'enable_client_messages' => true,
-            'enable_statistics' => false
+            'enable_client_messages' => false,
+            'enable_statistics' => true,
         ],
     ],
 
@@ -60,7 +57,7 @@ return [
     /*
      * This path will be used to register the necessary routes for the package.
      */
-    'path' => 'admin/websockets',
+    'path' => 'laravel-websockets',
 
     /*
      * Dashboard Routes Middleware
@@ -71,8 +68,8 @@ return [
      */
     'middleware' => [
         'web',
-        'admin',
-
+        'customer',
+//        Authorize::class,
     ],
 
     'statistics' => [
@@ -81,7 +78,7 @@ return [
          * The only requirement is that the model should extend
          * `WebSocketsStatisticsEntry` provided by this package.
          */
-        'model' => WebSocketsStatisticsEntry::class,
+        'model' => \BeyondCode\LaravelWebSockets\Statistics\Models\WebSocketsStatisticsEntry::class,
 
         /**
          * The Statistics Logger will, by default, handle the incoming statistics, store them
@@ -104,7 +101,7 @@ return [
          * Use an DNS resolver to make the requests to the statistics logger
          * default is to resolve everything to 127.0.0.1.
          */
-        'perform_dns_lookup' => true,
+        'perform_dns_lookup' => false,
     ],
 
     /*
@@ -131,7 +128,9 @@ return [
          */
         'passphrase' => env('LARAVEL_WEBSOCKETS_SSL_PASSPHRASE', null),
 
-        'verify_peer' => false
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true,
     ],
 
     /*
@@ -141,5 +140,5 @@ return [
      * The only requirement is that the class should implement
      * `ChannelManager` interface provided by this package.
      */
-    'channel_manager' => ArrayChannelManager::class,
+    'channel_manager' => \BeyondCode\LaravelWebSockets\WebSockets\Channels\ChannelManagers\ArrayChannelManager::class,
 ];

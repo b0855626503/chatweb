@@ -12,7 +12,6 @@ use Gametech\Promotion\Models\PromotionProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-//use Awobaz\Compoships\Database\Eloquent\Model;
 
 class GameUser extends Model implements GameUserContract
 {
@@ -43,6 +42,8 @@ class GameUser extends Model implements GameUserContract
         'turnpro',
         'amount_balance',
         'withdraw_limit',
+        'withdraw_limit_rate',
+        'withdraw_limit_amount',
         'member_code',
         'user_name',
         'user_pass',
@@ -58,6 +59,7 @@ class GameUser extends Model implements GameUserContract
         'member_code' => 'integer',
         'bill_code' => 'integer',
         'pro_code' => 'integer',
+        'withdraw_limit_rate' => 'integer',
         'user_name' => 'string',
         'user_pass' => 'string',
         'balance' => 'decimal:2',
@@ -66,6 +68,7 @@ class GameUser extends Model implements GameUserContract
         'amount_balance' => 'decimal:2',
         'turnpro' => 'decimal:2',
         'withdraw_limit' => 'decimal:2',
+        'withdraw_limit_amount' => 'decimal:2',
         'enable' => 'string',
         'user_create' => 'string',
         'user_update' => 'string',

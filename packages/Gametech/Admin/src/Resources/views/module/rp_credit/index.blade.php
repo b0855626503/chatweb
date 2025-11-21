@@ -29,7 +29,10 @@
                                                name="endDate">
                                     </div>
                                 </div>
+                                <div class="form-group col-6">
+                                    {!! Form::select('kind', ['' => '== ทั้งหมด ==' , 'SETCREDIT' => 'เพิ่ม-ลด Credit', 'ROLLBACK' => 'คืนยอด (Rollback)', 'CASHBACK' => 'CASHBACK', 'IC' => 'IC'], '',['id' => 'kind', 'class' => 'form-control form-control-sm']) !!}
 
+                                </div>
 
                                 <div class="form-group col-6">
                                     {!! Form::select('credit_type', ['' => '== ประเภท ==' , 'D' => 'เพิ่ม Credit', 'W' => 'ลด Credit'], '',['id' => 'credit_type', 'class' => 'form-control form-control-sm']) !!}
@@ -46,6 +49,9 @@
                                     <input type="text" class="form-control form-control-sm" id="ip" name="ip"
                                            placeholder="IP">
                                 </div>
+
+                                <div class="form-group col-auto"></div>
+
 
                                 <div class="form-group col-auto">
                                     <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>

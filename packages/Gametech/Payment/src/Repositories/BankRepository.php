@@ -14,14 +14,15 @@ class BankRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Payment\Contracts\Bank';
+        return \Gametech\Payment\Models\Bank::class;
+
     }
 
     public function getBankInAccount()
     {
-        return $this->with(['bank_account' => function ($query) {
+        return $this->with(['banks_account' => function ($query) {
             $query->in()->active()->topup()->show();
-        }])->whereHas('bank_account', function ($query) {
+        }])->whereHas('banks_account', function ($query) {
             $query->in()->active()->topup()->show();
         })->findWhere(['enable' => 'Y', ['code', '<>', 0]]);
     }
@@ -29,16 +30,16 @@ class BankRepository extends Repository
     public function getBankOutAccount()
     {
         return $this->with(['bank_account' => function ($query) {
-            $query->out()->active()->topup()->show();
+            $query->out()->active();
         }])->whereHas('bank_account', function ($query) {
-            $query->out()->active()->topup()->show();
+            $query->out()->active();
         })->findWhere(['enable' => 'Y', ['code', '<>', 0]]);
     }
 
     public function getBankInAccountAll()
     {
         return $this->with(['banks_account' => function ($query) {
-            $query->in()->active()->show();
+            $query->orderBy('sort','asc')->in()->active()->show();
         }])->whereHas('banks_account', function ($query) {
             $query->in()->active()->show();
         })->findWhere(['enable' => 'Y', ['code', '<>', 0]]);
@@ -51,6 +52,19 @@ class BankRepository extends Repository
             $query->out()->active();
         })->findWhere(['enable' => 'Y', ['code', '<>', 0]]);
 
+    }
+
+    public function createnew(array $data)
+    {
+        $reward = $this->create($data);
+
+        $order = $this->find($reward->code);
+
+
+        $this->uploadImages($data, $order);
+
+
+        return $order;
     }
 
     public function updatenew(array $data, $id, $attribute = "id")
@@ -71,8 +85,10 @@ class BankRepository extends Repository
 
         $request = request();
 
-        if ($request->fileupload !== 'undefined') {
-            $file = $order->filepic;
+        $hasfile = is_null($request->fileupload);
+
+        if(!$hasfile){
+            $file = strtolower($order->shortcode).'.'.$request->fileupload->getClientOriginalExtension();
             $dir = 'bank_img';
 
             Storage::putFileAs($dir, $request->fileupload, $file);
@@ -80,5 +96,15 @@ class BankRepository extends Repository
             $order->save();
 
         }
+
+//        if ($request->fileupload !== 'undefined') {
+//            $file = $order->filepic;
+//            $dir = 'bank_img';
+//
+//            Storage::putFileAs($dir, $request->fileupload, $file);
+//            $order->{$type} = $file;
+//            $order->save();
+//
+//        }
     }
 }

@@ -39,7 +39,7 @@ class PromotionDataTable extends DataTable
 
         return $model->newQuery()
             ->when($admin, function ($query) {
-                $query->where('enable','Y');
+                $query->where('enable', 'Y');
             })
             ->select('promotions.*');
 
@@ -57,7 +57,7 @@ class PromotionDataTable extends DataTable
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->parameters([
-                'dom'       => 'Bfrtip',
+                'dom' => 'Bfrtip',
 
                 'processing' => true,
                 'serverSide' => true,
@@ -68,14 +68,14 @@ class PromotionDataTable extends DataTable
                 'searching' => false,
                 'deferRender' => true,
                 'retrieve' => true,
-'ordering' => true,
+                'ordering' => true,
 
-                'order'     => [[0, 'asc']],
-                'buttons'   => [
+                'order' => [[0, 'asc']],
+                'buttons' => [
                     'pageLength'
                 ],
                 'columnDefs' => [
-                    [ 'targets' => '_all' , 'className' => 'text-nowrap']
+                    ['targets' => '_all', 'className' => 'text-nowrap']
                 ]
             ]);
     }
@@ -88,17 +88,17 @@ class PromotionDataTable extends DataTable
     protected function getColumns()
     {
         return [
-            ['data' => 'code' , 'name' => 'code' , 'title' => '#' , 'orderable' => true , 'searchable' => true , 'className' => 'text-center text-nowrap'],
-            ['data' => 'name' , 'name' => 'name_th' , 'title' => 'โปรโมชั่น' , 'orderable' => false , 'searchable' => false , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'id' , 'name' => 'id' , 'title' => 'รหัส' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'sort' , 'name' => 'sort' , 'title' => 'ลำดับ' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'type' , 'name' => 'length_type' , 'title' => 'ประเภท' , 'orderable' => false , 'searchable' => false, 'className' => 'text-left text-nowrap' ],
-            ['data' => 'pic' , 'name' => 'filepic' , 'title' => 'รูปภาพ' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'auto' , 'name' => 'use_auto' , 'title' => 'Auto' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
-            ['data' => 'wallet' , 'name' => 'use_wallet' , 'title' => 'Wallet' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%'],
+            ['data' => 'code', 'name' => 'code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'name', 'name' => 'name_th', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+            ['data' => 'id', 'name' => 'id', 'title' => 'รหัส', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'sort', 'name' => 'sort', 'title' => 'ลำดับ', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'type', 'name' => 'length_type', 'title' => 'ประเภท', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+            ['data' => 'pic', 'name' => 'filepic', 'title' => 'รูปภาพ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'auto', 'name' => 'use_auto', 'title' => 'Auto', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
+            ['data' => 'wallet', 'name' => 'use_wallet', 'title' => 'Wallet', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
 //            ['data' => 'active' , 'name' => 'active' , 'title' => 'Display' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%'],
 //            ['data' => 'enable' , 'name' => 'enable' , 'title' => 'Active' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%'],
-            ['data' => 'action' , 'name' => 'action' , 'title' => 'Action' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
+            ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];
     }
 

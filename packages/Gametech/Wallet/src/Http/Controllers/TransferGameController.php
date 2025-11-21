@@ -14,6 +14,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -126,6 +127,46 @@ class TransferGameController extends AppBaseController
         return view($this->_config['view'], compact('profile', 'promotions'))->with('games', $games);
     }
 
+    public function indextest()
+    {
+        $pro = false;
+        $promotions = [];
+        $config = core()->getConfigData();
+        if (($config->pro_onoff == 'Y')) {
+            if ($config->pro_wallet == 'Y') {
+                $pro = true;
+            } elseif ($this->user()->promotion == 'Y') {
+                $pro = true;
+
+            }
+        }
+
+        if ($pro) {
+            $pro_limit = $this->memberRepository->getPro($this->id());
+            if ($pro_limit > 0) {
+                $promotions = $this->promotionRepository->loadPromotiontest($this->id());
+            }
+        }
+
+
+        $games = $this->loadGame();
+        $games = $games->map(function ($items) {
+            $item = (object)$items;
+            return [
+                'code' => $item->code,
+                'name' => $item->name,
+                'image' => Storage::url('game_img/' . $item->filepic),
+                'balance' => $item->game_user['balance']
+            ];
+
+        });
+
+
+        $profile = $this->user()->load('bank');
+
+        return view($this->_config['view'], compact('profile', 'promotions'))->with('games', $games);
+    }
+
     public function loadGame(): Collection
     {
         return collect($this->gameRepository->getGameUserById($this->id(), false)->toArray())->whereNotNull('game_user');
@@ -180,13 +221,14 @@ class TransferGameController extends AppBaseController
     public function confirm(Request $request): RedirectResponse
     {
 
-        if (!$request->has('gametoken')) {
+
+
+        if (!$request->session()->has('gametoken')) {
             session()->flash('error', 'พบข้อผิดพลาดบางประการ โปรดทำรายการใหม่อีกครั้ง');
             return redirect()->route('customer.transfer.game.index');
         }
 
-
-        $encrypted = $request->input('gametoken');
+        $encrypted = $request->session()->get('gametoken');
 
         try {
             $gamedata = Crypt::decryptString($encrypted);
@@ -194,7 +236,6 @@ class TransferGameController extends AppBaseController
             session()->flash('error', 'พบข้อผิดพลาดบางประการ โปรดทำรายการใหม่อีกครั้ง');
             return redirect()->route('customer.transfer.game.index');
         }
-
 
         $gamedata = json_decode($gamedata, true);
 
@@ -213,7 +254,7 @@ class TransferGameController extends AppBaseController
 
 
         $getdata = $this->gameUserRepository->getOneUser($this->id(), $game_id);
-        if ($getdata['success'] === false) {
+        if ($getdata['success'] != true) {
             session()->flash('error', $getdata['msg']);
             return redirect()->route('customer.transfer.game.index');
         }
@@ -226,36 +267,48 @@ class TransferGameController extends AppBaseController
 
         $item = $this->checkPro($game, $this->id(), $promotion_id, $amount, $balance);
 
-
-        $response = $this->billRepository->transferGame($item);
-        if ($response['success'] == false) {
-            session()->flash('error', $response['msg']);
+        if (Cache::has('transfer_'.$user_id)) {
+            session()->flash('error', 'รออีก 30 วินาที ค่อยทำการโยกใหม่นะ');
             return redirect()->route('customer.transfer.game.index');
         }
 
-        $bills = $response['data'];
+        Cache::put('transfer_'.$user_id, 'lock', now()->addSeconds(30));
 
-        $bills = collect($bills)->only('code', 'date_create', 'credit_before', 'credit_after', 'balance_after', 'balance_before');
-        $bills = $bills->merge([
-            'invoice' => '#BL' . Str::of($bills['code'])->padLeft(8, 0),
-            'game_name' => $item['game_name'],
-            'game_pic' => $item['game_pic'],
-            'pro_code' => $item['pro_code'],
-            'pro_name' => $item['pro_name'],
-            'amount' => $item['amount'],
-            'bonus' => $item['bonus'],
-            'total' => $item['total'],
-            'game_before' => $bills['credit_before'],
-            'game_after' => $bills['credit_after'],
-            'wallet_before' => $bills['balance_before'],
-            'wallet_after' => $bills['balance_after'],
-            'wallet' => $item['wallet'],
-            'date_create' => core()->formatDate($bills['date_create'], 'd/m/Y H:i:s')
-        ]);
+//        Cache::store('file')->lock('transfer_'.$game_id.'_'.$user_id,5)->get(function () use ($item) {
+
+            $response = $this->billRepository->transferGame($item);
+            if ($response['success'] === false) {
+                session()->flash('error', $response['msg']);
+                return redirect()->route('customer.transfer.game.index');
+            }
+
+            $bills = $response['data'];
+
+            $bills = collect($bills)->only('code', 'date_create', 'credit_before', 'credit_after', 'balance_after', 'balance_before');
+            $bills = $bills->merge([
+                'invoice' => '#BL' . Str::of($bills['code'])->padLeft(8, 0),
+                'game_name' => $item['game_name'],
+                'game_pic' => $item['game_pic'],
+                'pro_code' => $item['pro_code'],
+                'pro_name' => $item['pro_name'],
+                'amount' => $item['amount'],
+                'bonus' => $item['bonus'],
+                'total' => $item['total'],
+                'game_before' => $bills['credit_before'],
+                'game_after' => $bills['credit_after'],
+                'wallet_before' => $bills['balance_before'],
+                'wallet_after' => $bills['balance_after'],
+                'wallet' => $item['wallet'],
+                'date_create' => core()->formatDate($bills['date_create'], 'd/m/Y H:i:s')
+            ]);
 
 
-        session()->flash('bills', $bills);
-        return redirect()->route('customer.transfer.game.complete');
+            session()->flash('bills', $bills);
+            return redirect()->route('customer.transfer.game.complete');
+//        });
+//
+//        session()->flash('error', 'รออีก 5 วินาที ค่อยทำการโยกใหม่นะ');
+//        return redirect()->route('customer.transfer.game.index');
     }
 
     public function complete()
@@ -305,11 +358,11 @@ class TransferGameController extends AppBaseController
                 if (!$rechk) {
                     $promotion_id = (is_null($promotion_id) ? 0 : $promotion_id);
 
-                    $item = $this->checkPro($game_user->game_code, $member->code, $promotion_id, $amount, $member->balance);
+                    $item = $this->checkPro($game_user, $member->code, $promotion_id, $amount, $member->balance);
 
                     $response = $this->billRepository->requestTransferGame($item);
 
-                    if ($response['success'] == false) {
+                    if ($response['success'] === false) {
                         session()->flash('error', $response['msg']);
                     } else {
                         session()->flash('success', 'บันทึกรายการแจ้งโยกแล้ว โปรดรออนุมัติ การโยก Wallet เข้าเกมจากทีมงาน');
@@ -342,6 +395,7 @@ class TransferGameController extends AppBaseController
     {
         $promotion = [
             'pro_code' => 0,
+            'pro_id' => '',
             'pro_name' => '',
             'turnpro' => 0,
             'withdraw_limit' => 0,
@@ -358,46 +412,46 @@ class TransferGameController extends AppBaseController
 
             if ($pro_limit >= $amount) {
 
-//                $pro_id = $this->promotionRepository->checkSelectPro($promotion_id);
+                $promotion = $this->promotionRepository->checkSelectPro($promotion_id,$id,$amount, $datenow);
 
-                switch ($promotion_id) {
-                    case 1:
-
-                        if ($this->user()->status_pro == 0) {
-                            $promotion = $this->promotionRepository->checkPromotion($promotion_id, $amount, $datenow);
-                        }
-
-                        break;
-
-                    case 2:
-                        if ($this->promotionRepository->checkProFirstDay($this->id()) == 0) {
-                            $promotion = $this->promotionRepository->checkPromotion($promotion_id, $amount, $datenow);
-                        }
-                        break;
-
-                    case 4:
-                    case 7:
-                        $promotion = $this->promotionRepository->checkPromotion($promotion_id, $amount, $datenow);
-                        break;
-
-                    case 5:
-                        if ($this->promotionRepository->checkHotTime($today, '00:00', '00:01', $datenow)) {
-                            $promotion = $this->promotionRepository->checkPromotion($promotion_id, $amount, $datenow);
-                        }
-                        break;
-
-                    default:
-                        $promotion = [
-                            'pro_code' => 0,
-                            'pro_name' => '',
-                            'turnpro' => 0,
-                            'withdraw_limit' => 0,
-                            'bonus' => 0,
-                            'total' => $amount,
-                        ];
-                        break;
-
-                }
+//                switch ($promotion_id) {
+//                    case 1:
+//
+//                        if ($this->user()->status_pro == 0) {
+//                            $promotion = $this->promotionRepository->checkPromotion($promotion_id, $amount, $datenow);
+//                        }
+//
+//                        break;
+//
+//                    case 2:
+//                        if ($this->promotionRepository->checkProFirstDay($this->id()) == 0) {
+//                            $promotion = $this->promotionRepository->checkPromotion($promotion_id, $amount, $datenow);
+//                        }
+//                        break;
+//
+//                    case 4:
+//                    case 7:
+//                        $promotion = $this->promotionRepository->checkPromotion($promotion_id, $amount, $datenow);
+//                        break;
+//
+//                    case 5:
+//                        if ($this->promotionRepository->checkHotTime($today, '00:00', '00:01', $datenow)) {
+//                            $promotion = $this->promotionRepository->checkPromotion($promotion_id, $amount, $datenow);
+//                        }
+//                        break;
+//
+//                    default:
+//                        $promotion = [
+//                            'pro_code' => 0,
+//                            'pro_name' => '',
+//                            'turnpro' => 0,
+//                            'withdraw_limit' => 0,
+//                            'bonus' => 0,
+//                            'total' => $amount,
+//                        ];
+//                        break;
+//
+//                }
             }
         }
 
@@ -410,6 +464,7 @@ class TransferGameController extends AppBaseController
             'user_code' => $game->code,
             'user_name' => $game->user_name,
             'pro_code' => $promotion['pro_code'],
+            'pro_id' => $promotion['pro_id'],
             'pro_name' => $promotion['pro_name'],
             'game_balance' => $game->balance,
             'amount' => $amount,
@@ -419,6 +474,132 @@ class TransferGameController extends AppBaseController
             'total' => $promotion['total'],
             'wallet' => Storage::url('game_img/wallet.png'),
         ];
+
+    }
+
+    public function loadPromotion(){
+        $pro = false;
+        $promotions = [];
+        $config = core()->getConfigData();
+        if (($config->pro_onoff == 'Y')) {
+            if ($config->pro_wallet == 'Y') {
+                $pro = true;
+            } elseif ($this->user()->promotion == 'Y') {
+                $pro = true;
+
+            }
+        }
+
+        if ($pro) {
+            $pro_limit = $this->memberRepository->getPro($this->id());
+            if ($pro_limit > 0) {
+
+                $banks = [
+                    'value' => '',
+                    'text' => '== ไม่เลือกโปรโมชั่น =='
+                ];
+
+
+                $responses = $this->promotionRepository->loadPromotion($this->id())->toArray();
+
+
+                $promotions = collect($responses)->map(function ($items) {
+                    $item = (object)$items;
+
+                    return [
+                        'value' => $item->code,
+                        'text' => $item->name_th
+                    ];
+
+                })->prepend($banks);
+
+            }
+        }
+
+
+
+
+        $result['promotions'] = $promotions;
+
+        return $this->sendResponseNew($result, 'complete');
+    }
+
+    public function checkTransfer(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric',
+            'game' => 'required|integer'
+        ]);
+
+
+        $game_id = $request->input('game');
+        $promotion_id = $request->input('promotion');
+
+        if ($promotion_id == '') {
+            $promotion_id = null;
+        }
+        $amount = $request->input('amount');
+        $balance = $this->user()->balance;
+
+
+        $getdata = $this->gameUserRepository->getOneUser($this->id(), $game_id);
+
+
+        if ($getdata['success'] === false) {
+            return $this->sendError('ไม่พบข้อมูลไอดีเกม',200);
+        }
+
+        $game = $getdata['data'];
+
+
+        if (!$this->checkCondition($amount, $balance, $game, $this->user(), $promotion_id, true)) {
+            return $this->sendError('ไม่ผ่านเงื่อนไข บางประการ ในการรับโปร',200);
+        }
+
+
+        $item = $this->checkPro($game, $this->id(), $promotion_id, $amount, $balance);
+
+        if (Cache::has('transfer_'.$this->id())) {
+            return $this->sendError('รออีก 30 วินาที ค่อยทำการโยกใหม่นะ',200);
+        }
+
+        Cache::put('transfer_'.$this->id(), 'lock', now()->addSeconds(30));
+
+//        Cache::store('file')->lock('transfer_'.$game_id.'_'.$user_id,5)->get(function () use ($item) {
+
+        $response = $this->billRepository->transferGame($item);
+        if ($response['success'] === false) {
+            return $this->sendError($response['msg'],200);
+
+        }
+
+        $bills = $response['data'];
+
+        $bills = collect($bills)->only('code', 'date_create', 'credit_before', 'credit_after', 'balance_after', 'balance_before');
+        $bills = $bills->merge([
+            'invoice' => '#BL' . Str::of($bills['code'])->padLeft(8, 0),
+            'game_name' => $item['game_name'],
+            'game_pic' => $item['game_pic'],
+            'pro_code' => $item['pro_code'],
+            'pro_name' => $item['pro_name'],
+            'amount' => $item['amount'],
+            'bonus' => $item['bonus'],
+            'total' => $item['total'],
+            'game_before' => $bills['credit_before'],
+            'game_after' => $bills['credit_after'],
+            'wallet_before' => $bills['balance_before'],
+            'wallet_after' => $bills['balance_after'],
+            'wallet' => $item['wallet'],
+            'date_create' => core()->formatDate($bills['date_create'], 'd/m/Y H:i:s')
+        ]);
+
+
+
+
+        $result['bill'] = $bills;
+
+        return $this->sendResponseNew($result,'complete');
+
 
     }
 

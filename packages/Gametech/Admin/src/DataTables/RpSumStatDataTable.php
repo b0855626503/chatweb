@@ -40,8 +40,8 @@ class RpSumStatDataTable extends DataTable
         $today = now()->toDateString();
         $yesterday = now()->subDays(1)->toDateString();
 
-        app('Gametech\Core\Repositories\DailyStatRepository')->sumData($today);
-        app('Gametech\Core\Repositories\DailyStatRepository')->sumData($yesterday);
+//        app('Gametech\Core\Repositories\DailyStatRepository')->sumData($today);
+//        app('Gametech\Core\Repositories\DailyStatRepository')->sumData($yesterday);
 
 
         $startdate = request()->input('startDate');
@@ -90,8 +90,8 @@ class RpSumStatDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'
@@ -148,9 +148,11 @@ class RpSumStatDataTable extends DataTable
             ['data' => 'withdraw_count', 'name' => 'withdraw_count', 'title' => 'จำนวนรายการถอน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'withdraw_sum', 'name' => 'withdraw_sum', 'title' => 'รวมยอดถอน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'total', 'name' => 'total', 'title' => 'ฝาก-ถอน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'bonus_sum', 'name' => 'bonus_sum', 'title' => 'รวมยอดรับโปร', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'setwallet_d_sum', 'name' => 'withdraw_sum', 'title' => 'ทีมงานเพิ่ม Wallet', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'setwallet_w_sum', 'name' => 'withdraw_sum', 'title' => 'ทีมงานลด Wallet', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-         ];
+            ['data' => 'updated_at', 'name' => 'updated_at', 'title' => 'อัพเดทล่าสุดเมื่อ', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+        ];
     }
 
     /**

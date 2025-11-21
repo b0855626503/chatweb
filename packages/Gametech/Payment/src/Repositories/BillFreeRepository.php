@@ -58,7 +58,8 @@ class BillFreeRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Payment\Contracts\BillFree';
+        return \Gametech\Payment\Models\BillFree::class;
+
     }
 
     public function transferWallet(array $data): array
@@ -75,11 +76,23 @@ class BillFreeRepository extends Repository
         $amount = $data['amount'];
         $bonus = $data['bonus'];
         $total = $amount;
-        $balance_before = $data['member_balance'];
-        $balance_after = ($balance_before + $amount);
         $game_balance = $data['game_balance'];
 
+        $gameuser = $this->gameUserFreeRepository->getOneUserNew($user_code,$game_code);
+        if($gameuser['success'] == false){
+            ActivityLoggerUser::activity('Transfer Game To Cashback', 'อัพเดทยอดเงินไม่ได้');
+            $return['msg'] = 'อัพเดทยอดเงินในเกมไม่ได้';
+            return $return;
+        }
+
+//        $user = $gameuser['data'];
+
         $user = $this->gameUserFreeRepository->find($user_code);
+        if(!$user){
+            $return['msg'] = 'ไม่พบข้อมูล ID เกมนี้';
+            return $return;
+        }
+
         if (($user->balance - $amount) < 0 || $user->balance != $game_balance) {
             ActivityLoggerUser::activity('Transfer Game To Cashback', 'พบปัญหายอดเงินในการทำรายการไม่ถูกต้อง');
             $return['msg'] = 'ยอดเงินที่ทำรายการ ไม่ถูกต้อง โปรดทำรายการใหม่ อีกครั้งในภายหลัง';
@@ -102,7 +115,8 @@ class BillFreeRepository extends Repository
         try {
 
             $member = $this->memberRepository->find($member_code);
-
+            $balance_before = $member->balance_free;
+            $balance_after = ($balance_before + $amount);
 
             $bill = $this->create([
                 'enable' => 'Y',

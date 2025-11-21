@@ -3,9 +3,12 @@
 namespace Gametech\Auto\Console\Commands;
 
 use Gametech\Auto\Jobs\PaymentBay;
+use Gametech\Auto\Jobs\PaymentGsb;
 use Gametech\Auto\Jobs\PaymentKbank;
 use Gametech\Auto\Jobs\PaymentKtb;
+use Gametech\Auto\Jobs\PaymentScb;
 use Gametech\Auto\Jobs\PaymentTrue;
+use Gametech\Auto\Jobs\PaymentWing;
 use Illuminate\Console\Command;
 
 class GetPaymentAcc extends Command
@@ -32,12 +35,7 @@ class GetPaymentAcc extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->bankPaymentRepository = app('Gametech\Payment\Repositories\BankPaymentRepository');
-        $this->memberRepository = app('Gametech\Member\Repositories\MemberRepository');
-        $this->allLogRepository = app('Gametech\Core\Repositories\AllLogRepository');
-        $this->paymentPromotionRepository = app('Gametech\Payment\Repositories\PaymentPromotionRepository');
-        $this->bankAccountRepository = app('Gametech\Payment\Repositories\BankAccountRepository');
-    }
+  }
 
     /**
      * Execute the console command.
@@ -52,23 +50,32 @@ class GetPaymentAcc extends Command
         $this->info('Start get Transaction by : ' . $id . ' , Account No : ' . $account);
         switch ($id) {
             case 'tw':
-                PaymentTrue::dispatch($account)->onQueue('payment');
+                PaymentTrue::dispatch($account)->onQueue($id);
                 break;
             case 'kbank':
-                $topup = new PaymentKbank($account);
-                PaymentKbank::dispatch($topup)->onQueue('payment');
+                PaymentKbank::dispatch($account)->onQueue($id);
                 break;
             case 'bay':
-                $topup = new PaymentBay($account);
-                PaymentBay::dispatch($topup)->onQueue('payment');
+                PaymentBay::dispatch($account)->onQueue($id);
                 break;
             case 'ktb':
-                $topup = new PaymentKtb($account);
-                PaymentKtb::dispatch($topup)->onQueue('payment');
+                PaymentKtb::dispatch($account)->onQueue('kbank');
+                break;
+            case 'scb':
+                PaymentScb::dispatch($account)->onQueue($id);
+                break;
+            case 'gsb':
+                PaymentGsb::dispatch($account)->onQueue('kbank');
+                break;
+            case 'wing':
+                PaymentWing::dispatch($account)->onQueue('scb');
                 break;
         }
 
-        return true;
+//        $this->call("payment:check $id 50");
+        return 0;
 
     }
+
+
 }

@@ -4,6 +4,7 @@ namespace Gametech\Admin\Http\Controllers;
 
 
 use Gametech\Admin\DataTables\BankAccountOutDataTable;
+use Gametech\Payment\Models\BankAccount;
 use Gametech\Payment\Repositories\BankAccountRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -76,14 +77,15 @@ class BankAccountOutController extends AppBaseController
         $user = $this->user()->name.' '.$this->user()->surname;
         $data = json_decode($request['data'],true);
 
-
+        $banks = $data['banks'];
+        $acc_no = $data['acc_no'];
 
         $validator = Validator::make($data, [
             'acc_no' => [
                 'required',
-                'digits_between:1,14',
-                Rule::unique('banks_account', 'acc_no')->where(function ($query) {
-                    return $query->where('bank_type', 2);
+                'digits_between:1,20',
+                Rule::unique('banks_account')->where(function ($query) use ($banks,$acc_no) {
+                    return $query->where('banks', $banks)->where('acc_no', $acc_no)->where('bank_type', 2);
                 })
             ]
         ]);
@@ -114,15 +116,18 @@ class BankAccountOutController extends AppBaseController
 
         $data = json_decode($request['data'],true);
 
+        $banks = $data['banks'];
+        $acc_no = $data['acc_no'];
+
         $validator = Validator::make($data, [
             'acc_no' => [
                 'required',
-                'digits_between:1,14',
-                Rule::unique('banks_account', 'acc_no')->ignore($id,'code')->where(function ($query) {
-                    return $query->where('bank_type', 2);
-                })
-            ]
+                'digits_between:1,20',
+                Rule::unique('banks_account')->where(function ($query) use ($banks,$acc_no) {
+                    return $query->where('banks', $banks)->where('acc_no', $acc_no)->where('bank_type', 2);
+                })->ignore($id,'code')
 
+            ]
         ]);
         if ($validator->fails()) {
             $errors = $validator->errors();
@@ -133,6 +138,10 @@ class BankAccountOutController extends AppBaseController
         $chk = $this->repository->find($id);
         if(!$chk){
             return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        }
+
+        if($data['auto_transfer'] == 'Y') {
+            BankAccount::where('bank_type',2)->whereNotIn('code', [$id])->update(['auto_transfer' => 'N']);
         }
 
         $data['user_update'] = $user;

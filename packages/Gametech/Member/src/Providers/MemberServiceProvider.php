@@ -2,6 +2,8 @@
 
 namespace Gametech\Member\Providers;
 
+use Gametech\Member\Models\MemberProxy;
+use Gametech\Member\Observers\MemberObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 
@@ -14,7 +16,7 @@ class MemberServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
+        MemberProxy::observe(MemberObserver::class);
     }
 
     /**

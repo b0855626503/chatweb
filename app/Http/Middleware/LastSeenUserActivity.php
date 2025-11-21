@@ -22,7 +22,7 @@ class LastSeenUserActivity
     public function handle(Request $request, Closure $next, $guard = 'customer')
     {
         if (Auth::guard($guard)->check()) {
-            $expireTime = now()->addMinute(5); // keep online for 1 min
+            $expireTime = now()->addMinute(10); // keep online for 1 min
             Cache::put('is_online'.Auth::guard($guard)->user()->code, true, $expireTime);
 
             //Last Seen

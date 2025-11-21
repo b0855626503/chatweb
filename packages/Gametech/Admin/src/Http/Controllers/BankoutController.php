@@ -6,6 +6,7 @@ namespace Gametech\Admin\Http\Controllers;
 use Gametech\Admin\DataTables\BankoutDataTable;
 use Gametech\Member\Repositories\MemberRepository;
 use Gametech\Payment\Repositories\BankPaymentRepository;
+use Gametech\Payment\Repositories\WithdrawRepository;
 use Illuminate\Http\Request;
 
 
@@ -20,6 +21,7 @@ class BankoutController extends AppBaseController
     public function __construct
     (
         BankPaymentRepository $repository,
+        WithdrawRepository $withdrawRepository,
 
         MemberRepository $memberRepository
     )
@@ -31,6 +33,8 @@ class BankoutController extends AppBaseController
         $this->repository = $repository;
 
         $this->memberRepository = $memberRepository;
+
+        $this->withdrawRepository = $withdrawRepository;
     }
 
 
@@ -68,7 +72,7 @@ class BankoutController extends AppBaseController
         $user = $this->user()->name.' '.$this->user()->surname;
         $id = $request->input('id');
 
-        $chk = $this->repository->find($id);
+        $chk = $this->withdrawRepository->find($id);
 
         if(!$chk){
             return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
@@ -77,7 +81,7 @@ class BankoutController extends AppBaseController
 
         $data['enable'] = 'N';
         $data['user_update'] = $user;
-        $this->repository->update($data, $id);
+        $this->withdrawRepository->update($data, $id);
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
     }

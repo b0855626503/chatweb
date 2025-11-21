@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-class ChatController extends Controller
+class ChatController_last extends Controller
 {
     protected ChatService $chat;
 

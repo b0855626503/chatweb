@@ -3,491 +3,352 @@
 namespace Gametech\Auto\Jobs;
 
 use App\Libraries\Kbank;
-use Gametech\Core\Repositories\AllLogRepository;
-use Gametech\Core\Repositories\ConfigRepository;
-use Gametech\Member\Repositories\MemberRepository;
-use Gametech\Payment\Repositories\BankAccountRepository;
-use Gametech\Payment\Repositories\BankPaymentRepository;
-use Gametech\Payment\Repositories\PaymentPromotionRepository;
+use App\Libraries\KbankBiz;
+use App\Libraries\KbankBizNew;
+use App\Libraries\KbankOut;
+use App\Libraries\simple_html_dom;
+use Gametech\Member\Models\Member;
+use Gametech\Payment\Models\BankPayment;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
-use Sunra\PhpSimple\HtmlDomParser;
+use Throwable;
 
-
-class PaymentKbank
+class PaymentKbank implements ShouldQueue, ShouldBeUnique
 {
-    use Dispatchable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $failOnTimeout = true;
+    public $uniqueFor = 60;
 
-    protected $bankPaymentRepository;
+    public $timeout = 40;
 
-    protected $memberRepository;
+    public $tries = 0;
 
-    protected $configRepository;
+    public $maxExceptions = 3;
 
-    protected $paymentPromotionRepository;
+    public $retryAfter = 0;
 
-    protected $allLogRepository;
+    protected $id;
 
-    protected $bankAccountRepository;
-
-    protected $account;
-
-
-    public function __construct
-    (
-        $account,
-        BankPaymentRepository $bankPayment,
-        MemberRepository $memberRepo,
-        ConfigRepository $configRepo,
-        PaymentPromotionRepository $paymentPromotionRepo,
-        BankAccountRepository $bankAccountRepo,
-        AllLogRepository $allLogRepo
-    )
+    public function __construct($id)
     {
-        $this->bankPaymentRepository = $bankPayment;
-
-        $this->memberRepository = $memberRepo;
-
-        $this->configRepository = $configRepo;
-
-        $this->paymentPromotionRepository = $paymentPromotionRepo;
-
-        $this->allLogRepository = $allLogRepo;
-
-        $this->bankAccountRepository = $bankAccountRepo;
-
-        $this->account = $account;
+        $this->id = $id;
     }
 
+    public function tags()
+    {
+        return ['render', 'kbank:' . $this->id];
+    }
+
+    public function uniqueId()
+    {
+        return $this->id;
+    }
 
     public function handle()
     {
         $datenow = now()->toDateTimeString();
-        $account = $this->account;
+        $header = [];
+        $response = [];
+        $mobile_number = $this->id;
 
-        $bank = $this->bankAccountRepository->getAccountOne('kbank', $account);
-
-        $username = $bank->user_name;
-        $password = $bank->user_pass;
-        $account_name = Str::substr($account, 0, 3) . '-' . Str::substr($account, 3, 1);
-        $accname = Str::of($account)->replace('-', '');
-        $cookie = storage_path('auto/kbank/' . $accname);
-        $path = storage_path('auto');
-
-        if (!is_writable($cookie)) {
-            echo 'Cookie file missing or not writable.';
-            exit;
+        $bank = app('Gametech\Payment\Repositories\BankAccountRepository')->getAccountOne('kbank', $mobile_number);
+        if (!$bank) {
+            return 1;
         }
 
-        $config = new Kbank();
+        $hour = now()->format('H.i'); // ได้รูปแบบเช่น 23.15, 00.45
+        $asFloat = (float) $hour;
 
+        // ช่วงเวลาต้องห้าม 23.00 - 01.30
+        $inBlock = ($asFloat >= 22.58) || ($asFloat <= 1.32);
+//        if ($inBlock) {
+//            $bank->api_refresh = 'ช่วงเวลาอันตราย 23.00 - 01.30 ระบบจะทำงานหลัง 01.30';
+//            $bank->checktime = $datenow;
+//            $bank->save();
+//            return 1;
+//        }
 
-        $option = [
-            'connect_timeout' => 30,
-            'timeout' => 120,
-            'cookies' => $cookie,
-            'cert' => $path . '/cacert.pem',
-            'headers' => [
-                'User-Agent' => 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Googlebot/2.1; +http://www.google.com/bot.html) Chrome/W.X.Y.Z‡ Safari/537.36")'
-            ]
-        ];
+        $USERNAME = $bank->user_name;
+        $PASSWORD = $bank->user_pass;
 
-        $response = Http::withOptions($option)->get('https://online.kasikornbankgroup.com/K-Online/indexHome.jsp');
+        $accname = str_replace("-", "", (string)$bank->acc_no);
 
-        if ($response->successful()) {
+        $em = new KbankBiz();
+        $em->setLogin($USERNAME, $PASSWORD);
+        $em->setAccountNumber($accname);
 
-            $html = HtmlDomParser::str_get_html($response->body());
-            $hasspan = $html->find('span#7', 0)->innertext;
-
-            if ($hasspan != "ออกจากระบบ") {
-
-                $form_field = array();
-                $form_field['isConfirm	'] = 'T';
-                $post_string = '';
-                foreach ($form_field as $key => $value) {
-                    $post_string .= $key . '=' . urlencode($value) . '&';
-                }
-                $post_string = substr($post_string, 0, -1);
-
-                $response = Http::withOptions($option)->asForm()->post('https://online.kasikornbankgroup.com/K-Online/indexHome.jsp', $post_string);
-                if ($response->successful()) {
-                    $response = Http::withOptions($option)->get('https://online.kasikornbankgroup.com/K-Online/login.do');
-                    if ($response->successful()) {
-                        $html = HtmlDomParser::str_get_html($response->body());
-                        $form_field = array();
-                        foreach ($html->find('form input') as $element) {
-                            $form_field[$element->name] = $element->value;
-                        }
-                        $form_field['userName'] = $username;
-                        $form_field['password'] = $password;
-                        $post_string = '';
-                        foreach ($form_field as $key => $value) {
-                            $post_string .= $key . '=' . urlencode($value) . '&';
-                        }
-                        $post_string = substr($post_string, 0, -1);
-
-
-                        $options = collect($option)->merge(['headers' => ['Referer' => 'https://online.kasikornbankgroup.com/K-Online/login.do']])->all();
-                        $response = Http::withOptions($options)->asForm()->post('https://online.kasikornbankgroup.com/K-Online/login.do', $post_string);
-                        if ($response->successful()) {
-
-                            $response = Http::withOptions($option)->get('https://online.kasikornbankgroup.com/K-Online/indexHome.jsp');
-                            if ($response->successful()) {
-
-                                $options = collect($option)->merge(['headers' => ['Referer' => 'https://online.kasikornbankgroup.com/K-Online/indexHome.jsp']])->all();
-                                $response = Http::withOptions($options)->asForm()->post('https://online.kasikornbankgroup.com/K-Online/checkSession.jsp');
-                                if ($response->successful()) {
-
-                                    $options = collect($option)->merge(['headers' => ['Referer' => 'https://online.kasikornbankgroup.com/K-Online/indexHome.jsp']])->all();
-                                    $response = Http::withOptions($options)->asForm()->post('https://online.kasikornbankgroup.com/K-Online/clearSession.jsp');
-                                    if ($response->successful()) {
-
-                                        $response = Http::withOptions($option)->get('https://online.kasikornbankgroup.com/K-Online/ib/redirectToIB.jsp?r=7027');
-                                        if ($response->successful()) {
-                                            $html = HtmlDomParser::str_get_html($response->body());
-                                            $form_field = array();
-                                            foreach ($html->find('form input') as $element) {
-                                                $form_field[$element->name] = $element->value;
-                                            }
-                                            $post_string = '';
-                                            foreach ($form_field as $key => $value) {
-                                                $post_string .= $key . '=' . urlencode($value) . '&';
-                                            }
-                                            $post_string = substr($post_string, 0, -1);
-
-                                            $response = Http::withOptions($option)->asForm()->post('https://ebank.kasikornbankgroup.com/retail/security/Welcome.do', $post_string);
-                                            if ($response->successful()) {
-                                                if (Str::of($response->body())->match('/.*?Unsuccessful Login.*?/')) {
-                                                    $bank->job_process = 'error';
-                                                    $bank->job_detail = 'ไม่สามารถ Login ได้';
-                                                    $bank->job_date = $datenow;
-                                                    $bank->save();
-                                                    exit;
-                                                }
-                                            }
-                                            $bank->job_process = 'error';
-                                            $bank->job_detail = 'เชื่อมต่อ Welcome ผิดพลาด';
-                                            $bank->job_date = $datenow;
-                                            $bank->save();
-                                        }
-                                        $bank->job_process = 'error';
-                                        $bank->job_detail = 'เชื่อมต่อ redirectToIB ผิดพลาด';
-                                        $bank->job_date = $datenow;
-                                        $bank->save();
-                                    }
-                                    $bank->job_process = 'error';
-                                    $bank->job_detail = 'เชื่อมต่อ clearSession ผิดพลาด';
-                                    $bank->job_date = $datenow;
-                                    $bank->save();
-                                }
-                                $bank->job_process = 'error';
-                                $bank->job_detail = 'เชื่อมต่อ checkSession ผิดพลาด';
-                                $bank->job_date = $datenow;
-                                $bank->save();
-                            }
-                            $bank->job_process = 'error';
-                            $bank->job_detail = 'เชื่อมต่อ indexHome ผิดพลาด';
-                            $bank->job_date = $datenow;
-                            $bank->save();
-                        }
-                        $bank->job_process = 'error';
-                        $bank->job_detail = 'เชื่อมต่อ login ผิดพลาด';
-                        $bank->job_date = $datenow;
-                        $bank->save();
-                    }
-                }
-                $bank->job_process = 'error';
-                $bank->job_detail = 'เชื่อมต่อ indexHome ผิดพลาด';
-                $bank->job_date = $datenow;
+        try {
+            if (!$em->login()) {
+                // ★ changed: กันเคสล็อกอินล้มเหลว
+                $bank->api_refresh = 'login_failed';
+                $bank->checktime   = $datenow;
                 $bank->save();
+                return 1;
             }
 
-            $response = Http::withOptions($option)->get('https://ebank.kasikornbankgroup.com/retail/RetailWelcome.do');
-            if ($response->successful()) {
-                $html = HtmlDomParser::str_get_html($response->body());
-                $s = "เลขที่บัญชี";
-                $table = $html->find('table[rules="rows"]', 1);
-                foreach ($table->find('tr') as $tr) {
-                    $td1 = $config->clean($tr->find('td', 0)->plaintext);
-                    $pos = strpos($td1, $s);
-                    if ($pos !== false) {
-                        continue;
-                    }
-                    //echo $accname."==".$td1;
-                    if ($td1 == $account_name) {
-                        $balance = floatval(preg_replace('/[^0-9\.\+\-]/', '', str_replace(",", "", $tr->find('td', 3)->plaintext)));
-                        break;
-                    }
+            // ดึงยอดคงเหลือ
+            try {
+                $balance = $em->getBalance();
+            } catch (Throwable $e) {
+                $balance = -1;
+            }
+
+            if ($balance >= 0) {
+                $bank->balance  = (float)$balance; // ★ changed: cast ชัดเจน
+                $bank->checktime = $datenow;
+                $bank->save();
+            } else {
+                $bank->api_refresh = 'เชคยอดเงินไม่ได้';
+                $bank->checktime   = $datenow;
+                $bank->save();
+                return 1;
+            }
+
+            // ดึงรายการเดินบัญชี
+            try {
+                $lists = $em->getTransaction();
+            } catch (Throwable $e) {
+                $lists = [];
+            }
+
+            $path = storage_path('logs/kbank/gettransaction_' . $accname . '_' . now()->format('Y_m_d') . '.log');
+
+            // ★ changed: เขียนแบบ append + lock และมี newline
+            @file_put_contents($path, "============ " . now()->toDateTimeString() . " ============\n", FILE_APPEND | LOCK_EX);
+            @file_put_contents($path, print_r($lists, true) . "\n", FILE_APPEND | LOCK_EX);
+
+            if (empty($lists)) {
+                $bank->api_refresh = 'ดึงรายการเดินบัญชีไม่ได้ หรือไม่มีรายการ';
+                $bank->checktime   = $datenow;
+                $bank->save();
+                return 1;
+            }
+
+            // === Optimize: pre-filter items and bulk dedup by tx_hash ===
+            // หมายเหตุ: core()->DateDiff($list['date']) > 1 = ตัดทิ้งถ้าเก่ากว่า threshold ภายในฟังก์ชัน core() เดิม (คง logic เดิมไว้)
+            $prepared = [];
+            foreach ($lists as $list) {
+                $txDate = $list['date'] ?? null;
+                if (!$txDate) {
+                    continue;
+                }
+                if (core()->DateDiff($txDate) > 1) { // คงเงื่อนไขเดิม
+                    continue;
                 }
 
-                if ($balance >= 0) {
+                // ★ changed: ทำ amount ให้เป็น float/ตัวเลขเสมอ
+                $inRaw = (string)($list['in'] ?? $list['amount'] ?? '0');
+                $normAmount = (float)str_replace([",", " "], "", $inRaw);
 
-                    $bank->balance = $balance;
-                    $bank->checktime = $datenow;
-                    $bank->save();
+                // ★ changed: tx_hash รวม report_id ลดโอกาสชน
+                $reportIdRaw = $list['report_id'] ?? '';
+                $report_id   = rtrim((string)$reportIdRaw, 'A');
 
+                $tx_hash = md5($accname . '|' . $txDate . '|' . $normAmount);
+
+                // map รหัสธนาคารต้นทาง
+                $from_bank = $this->Banks($report_id);
+
+                $prepared[] = [
+                    'raw'        => $list,
+                    'tx_hash'    => $tx_hash,
+                    'report_id'  => $report_id,
+                    'from_bank'  => $from_bank,                              // ★ keep
+                    'from_acc'   => (string)($list['fromaccno'] ?? ''),      // ระวัง: อาจเป็น 4 ตัวช่วงกลางตามฟอร์แมตระบบคุณ
+                    'from_name'  => preg_replace('/\++$/', '', (string)($list['title'] ?? '')),
+                    'amount'     => $normAmount,
+                    'date'       => $txDate,
+                    'channel'    => (string)($list['channel'] ?? ''),
+                    'info'       => (string)($list['info'] ?? ''),
+                ];
+            }
+
+            if (empty($prepared)) {
+                // ไม่มีอะไรเข้าเงื่อนไขเวลา
+                return 0;
+            }
+
+            // 2) Fetch existing tx_hash in ONE query to skip already-inserted
+            $hashes = array_values(array_unique(array_map(fn($it) => $it['tx_hash'], $prepared)));
+            $existing = BankPayment::query()
+                ->where('account_code', $bank->code)
+                ->whereIn('tx_hash', $hashes)
+                ->pluck('tx_hash')
+                ->all();
+            $exists = array_flip($existing);
+
+            $memberCache = [];
+
+            foreach ($prepared as $it) {
+                if (isset($exists[$it['tx_hash']])) {
+                    continue; // skip duplicates already in DB
+                }
+
+                $found = false;
+                $concat = 'ไม่พบหมายเลขบัญชี';
+                $member_code = 0;
+
+                // ★ changed: ใช้ key cache ให้ตรง type เพื่อเร่ง match
+                $cacheKey = $it['from_bank'] . '|' . $it['from_acc'] . '|' . $it['from_name'];
+                if (array_key_exists($cacheKey, $memberCache)) {
+                    [$concat, $member_code, $found] = $memberCache[$cacheKey];
                 } else {
+                    // ★ changed: ใช้จาก 'from_bank' แทน 'bank_code' (แก้บั๊ก)
+                    $query = Member::query()->where('bank_code', (int)$it['from_bank']);
 
-                    $bank->checktime = $datenow;
-                    $bank->save();
+                    // ธุรกิจเดิม: KBANK (2) ใช้ชื่อ + SUBSTRING(acc_no, 6, 4) = from_acc
+                    if ((int)$it['from_bank'] === 2) {
+                        $title = trim((string)$it['from_name']);
+                        $fromAcc = (string)$it['from_acc'];
 
+                        // ใช้ binding กันชื่อมี quote/percent และชัดเจนเรื่อง length = 10
+                        $query->where('firstname', 'like', $title . '%')
+                            ->whereRaw('CHAR_LENGTH(acc_no) = 10')
+                            ->whereRaw('SUBSTRING(acc_no, 6, 4) = ?', [$fromAcc]);
+                    }
+                    // GSB (14): เทียบเลขบัญชีตรง
+                    elseif ((int)$it['from_bank'] === 14) {
+                        $query->where('acc_no', (string)$it['from_acc']);
+                    }
+                    // ธนาคารอื่น: เทียบเลขบัญชีตรง (คง logic เดิม)
+                    else {
+                        $query->where('acc_no', (string)$it['from_acc']);
+                    }
+
+                    $users = $query->pluck('code', 'user_name');
+
+                    if ($users->count() > 1) {
+                        $found = false;
+                        $concat = 'พบหมายเลขบัญชี ' . $users->count() . ' บัญชี ' . $users->map(fn($c, $n) => "$n")->implode(', ');
+                    } elseif ($users->count() === 1) {
+                        $found = true;
+                        $name = $users->keys()->first();
+                        $code = $users->first();
+                        $concat = 'พบหมายเลขบัญชี ' . $name . ' รอระบบเติมอัตโนมัติ';
+                        $member_code = $code;
+                    }
+
+                    $memberCache[$cacheKey] = [$concat, $member_code, $found];
                 }
 
-                $response = Http::withOptions($option)->get('https://ebank.kasikornbankgroup.com/retail/cashmanagement/TodayAccountStatementInquiry.do');
-                if ($response->successful()) {
-                    $response = $response->body();
-                    $response = iconv("windows-874", "utf-8", $response);
-                    $html = HtmlDomParser::str_get_html($response);
-                    $form_field = array();
-                    foreach ($html->find('form[name="TodayStatementForm"] input') as $element) {
-                        $form_field[$element->name] = $element->value;
-                    }
-                    $s = $account_name;
-                    foreach ($html->find('select[name="acctId"] option') as $element) {
-                        $text = $config->clean($element->plaintext);
-                        $pos = strpos($text, $s);
-                        if ($pos !== false) {
-                            $form_field['acctId'] = $element->value;
-                        }
-                    }
-                    $post_string = '';
-                    foreach ($form_field as $key => $value) {
-                        $post_string .= $key . '=' . urlencode($value) . '&';
-                    }
-                    $post_string = substr($post_string, 0, -1);
-                    $response = Http::withOptions($option)->asForm()->post('https://ebank.kasikornbankgroup.com/retail/cashmanagement/TodayAccountStatementInquiry.do', $post_string);
-                    if ($response->successful()) {
-                        $total = array();
-                        $s = 'วันที่';
-                        $html = HtmlDomParser::str_get_html($response->body());
-                        $table = $html->find('table[rules="rows"]', 0);
-                        if (!(empty($table))) {
-                            $dup = 0;
-                            foreach ($table->find('tr') as $tr) {
-                                $td1 = $config->clean($tr->find('td', 0)->plaintext);
-                                $pos = strpos($td1, $s);
-                                if ($pos !== false) {
-                                    continue;
-                                }
+                $row = $it['raw'];
 
-                                $list = array();
+                $newpayment = BankPayment::firstOrNew([
+                    'tx_hash'      => $it['tx_hash'],
+                    'account_code' => $bank->code
+                ]);
 
-                                preg_match_all('/<td class=inner_table_.*?>\s?(.*?)<\/td>/', $tr, $temp2);
-                                foreach ($temp2[1] as $key => $val) {
-                                    switch ($key) {
-                                        case 0:
-                                            $val = str_replace('<br>', '', $val);
-                                            $n = preg_split('/\s+/', substr($val, 0, -3));
-                                            $ndate = explode("/", $n[0]);
-                                            $list['time'] = strtotime('20' . $ndate[2] . '-' . $ndate[1] . '-' . $ndate[0] . ' ' . $n[1]);
-                                            $list['date'] = '20' . $ndate[2] . '-' . $ndate[1] . '-' . $ndate[0] . ' ' . $n[1];
-                                            break;
-                                        case 1:
-                                            $list['channel'] = $val;
-                                            break;
-                                        case 2:
-                                            $list['detail'] = $val;
-                                            break;
-                                        case 3:
-                                            if ($val != '') {
-                                                $list['value'] = "-" . floatval(preg_replace('/[^0-9\.\+\-]/', '', $val));
-                                            }
-                                            break;
-                                        case 4:
-                                            if ($val != '') {
-                                                $list['value'] = floatval(preg_replace('/[^0-9\.\+\-]/', '', $val));
-                                            }
-                                            break;
-                                        case 5:
-                                            $list['fee'] = floatval(preg_replace('/[^0-9\.\+\-]/', '', $val));
-                                            break;
-                                        case 6:
-                                            $list['acc_num'] = str_replace(array('x', '-'), array('*', ''), $val);
-                                            break;
-                                        case 7:
-                                            $list['detail'] .= ' (' . $val . ')';
-                                            break;
-                                    }
-
-                                }
-                                $list['value'] = str_replace(",", "", $list['value']);
-                                $list['tx_hash'] = md5($accname . $list['time'] . $list['value']);
-                                if ($list['value'] == "") {
-                                    continue;
-                                }
-
-                                $bank->tx_hash = $list['tx_hash'];
-                                $bank->bank = 'kbank_' . $accname;
-                                $bank->detail = $list['detail'];
-                                $bank->save();
-
-                                $newbank = $this->bankPaymentRepository->findWhere([
-                                    'tx_hash' => $list['tx_hash'],
-                                    'bank' => 'kbank_' . $accname,
-                                    'detail' => $list['detail']
-                                ]);
-
-                                if ($newbank->doesntExist()) {
-                                    $this->bankPaymentRepository->create([
-                                        'bank' => 'kbank_' . $accname,
-                                        'account_code' => $bank['code'],
-                                        'bankstatus' => 1,
-                                        'bankname' => 'KBANK',
-                                        'detail' => $list['detail'],
-                                        'status' => 0,
-                                        'value' => $list['value'],
-                                        'bank_time' => $list['date'],
-                                        'channel' => $list['channel'],
-                                        'tx_hash' => $list['tx_hash'],
-                                        'atranferer' => $list['acc_num'],
-                                        'create_by' => 'AUTO'
-                                    ]);
-                                    $total[] = $list['tx_hash'];
-                                }
-
-                            }
-
-                            $next = $html->find("a[href*='action=detail']");
-                            $totalPage = count($next);
-                            if (!(empty($next))) {
-                                $currentPage = 1;
-                                foreach ($next as $a) {
-                                    $dup++;
-                                    $currentPage++;
-                                    if ($currentPage < ($totalPage - 1)) {
-                                        continue;
-                                    }
-                                    $total_next = array();
-
-                                    $_query = strstr($a->href, '?');
-
-                                    $response = Http::withOptions($option)->get('https://ebank.kasikornbankgroup.com/retail/cashmanagement/TodayAccountStatementInquiry.do' . $_query);
-                                    if ($response->successful()) {
-                                        $html = HtmlDomParser::str_get_html($response->body());
-                                        $table = $html->find('table[rules="rows"]', 0);
-                                        if (!(empty($table))) {
-                                            foreach ($table->find('tr') as $tr) {
-                                                $td1 = $config->clean($tr->find('td', 0)->plaintext);
-                                                $pos = strpos($td1, $s);
-                                                if ($pos !== false) {
-                                                    continue;
-                                                }
-
-                                                $list = array();
-                                                preg_match_all('/<td class=inner_table_.*?>\s?(.*?)<\/td>/', $tr, $temp2);
-                                                foreach ($temp2[1] as $key => $val) {
-                                                    switch ($key) {
-                                                        case 0:
-                                                            $val = str_replace('<br>', '', $val);
-                                                            $n = preg_split('/\s+/', substr($val, 0, -3));
-                                                            $ndate = explode("/", $n[0]);
-                                                            $list['time'] = strtotime('20' . $ndate[2] . '-' . $ndate[1] . '-' . $ndate[0] . ' ' . $n[1]);
-                                                            $list['date'] = '20' . $ndate[2] . '-' . $ndate[1] . '-' . $ndate[0] . ' ' . $n[1];
-                                                            break;
-                                                        case 1:
-                                                            $list['channel'] = $val;
-                                                            break;
-                                                        case 2:
-                                                            $list['detail'] = $val;
-                                                            break;
-                                                        case 3:
-                                                            if ($val != '') {
-                                                                $list['value'] = "-" . floatval(preg_replace('/[^0-9\.\+\-]/', '', $val));
-                                                            }
-                                                            break;
-                                                        case 4:
-                                                            if ($val != '') {
-                                                                $list['value'] = floatval(preg_replace('/[^0-9\.\+\-]/', '', $val));
-                                                            }
-                                                            break;
-                                                        case 5:
-                                                            $list['fee'] = floatval(preg_replace('/[^0-9\.\+\-]/', '', $val));
-                                                            break;
-                                                        case 6:
-                                                            $list['acc_num'] = str_replace(array('x', '-'), array('*', ''), $val);
-                                                            break;
-                                                        case 7:
-                                                            $list['detail'] .= ' (' . $val . ')';
-                                                            break;
-                                                    }
-                                                }
-                                                $list['value'] = str_replace(",", "", $list['value']);
-                                                $list['tx_hash'] = md5($accname . $list['time'] . $list['value']);
-                                                if ($list['value'] == "") {
-                                                    continue;
-                                                }
-
-
-                                                $newbank = $this->bankPaymentRepository->findWhere([
-                                                    'tx_hash' => $list['tx_hash'],
-                                                    'bank' => 'kbank_' . $accname,
-                                                    'detail' => $list['detail']
-                                                ]);
-
-                                                if ($newbank->doesntExist()) {
-                                                    $this->bankPaymentRepository->create([
-                                                        'bank' => 'kbank_' . $accname,
-                                                        'account_code' => $bank['code'],
-                                                        'bankstatus' => 1,
-                                                        'bankname' => 'KBANK',
-                                                        'detail' => $list['detail'],
-                                                        'status' => 0,
-                                                        'value' => $list['value'],
-                                                        'bank_time' => $list['date'],
-                                                        'channel' => $list['channel'],
-                                                        'tx_hash' => $list['tx_hash'],
-                                                        'atranferer' => $list['acc_num'],
-                                                        'create_by' => 'AUTO'
-                                                    ]);
-                                                    $total[] = $list['tx_hash'];
-                                                } else {
-                                                    $row = $newbank->count();
-                                                    $total[] = $list['tx_hash'];
-                                                    $dp = array_count_values($total);
-                                                    for ($d = $row; $d < $dp[$list['tx_hash']]; $d++) {
-                                                        $this->bankPaymentRepository->create([
-                                                            'bank' => 'kbank_' . $accname,
-                                                            'account_code' => $bank['code'],
-                                                            'bankstatus' => 1,
-                                                            'bankname' => 'KBANK',
-                                                            'detail' => $list['detail'],
-                                                            'status' => 0,
-                                                            'value' => $list['value'],
-                                                            'bank_time' => $list['date'],
-                                                            'channel' => $list['channel'],
-                                                            'tx_hash' => $list['tx_hash'],
-                                                            'atranferer' => $list['acc_num'],
-                                                            'create_by' => 'AUTO'
-                                                        ]);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        $bank->job_process = 'success';
-                                        $bank->job_detail = 'บันทึกข้อมูลแล้ว';
-                                        $bank->job_date = $datenow;
-                                        $bank->save();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    $bank->job_process = 'error';
-                    $bank->job_detail = 'เชื่อมต่อ TodayAccountStatementInquiry ผิดพลาด';
-                    $bank->job_date = $datenow;
-                    $bank->save();
-                }
-                $bank->job_process = 'error';
-                $bank->job_detail = 'เชื่อมต่อ TodayAccountStatementInquiry ผิดพลาด';
-                $bank->job_date = $datenow;
-                $bank->save();
+                $newpayment->autocheck     = $found ? 'W' : 'Y';
+                $newpayment->remark_admin  = $concat;
+                $newpayment->member_topup  = $member_code;
+                $newpayment->account_code  = $bank->code;
+                $newpayment->bank          = 'kbank_' . $accname;
+                $newpayment->bankstatus    = 1;
+                $newpayment->bankname      = 'KBANK';
+                $newpayment->bank_time     = (string)($row['date'] ?? $it['date']);         // ★ changed: กัน key หาย
+                $newpayment->report_id     = (string)$it['report_id'];
+                $newpayment->atranferer    = (string)$it['from_acc'];
+                $newpayment->channel       = (string)$it['channel'];                         // ★ changed: ใช้ค่าที่ normalize แล้ว
+                $newpayment->value         = (float)$it['amount'];                           // ★ changed: เป็น float แน่นอน
+                $newpayment->tx_hash       = (string)$it['tx_hash'];                         // ซ้ำกับคีย์ แต่คงไว้
+                $newpayment->detail        = (string)$it['info'];                            // ★ changed: กัน key หาย
+                $newpayment->title         = (string)$it['from_name'];
+                $newpayment->time          = (string)($row['date'] ?? $it['date']);
+                $newpayment->create_by     = 'SYSAUTO';
+                $newpayment->ip_topup      = '';
+                $newpayment->save();
             }
-            $bank->job_process = 'error';
-            $bank->job_detail = 'เชื่อมต่อ RetailWelcome ผิดพลาด';
-            $bank->job_date = $datenow;
+
+            $bank->api_refresh = 'สำเร็จ';
+            $bank->checktime   = $datenow;
             $bank->save();
+
+            // ถ้า lib มี logout() และไม่กระทบ flow เดิม สามารถเรียกได้:
+            // try { $em->logout(); } catch (Throwable $e) {}
+
+        } catch (Throwable $exception) {
+            // ★ changed: รายงานและ mark สถานะธนาคาร
+            report($exception);
+            $bank->api_refresh = 'exception: ' . substr($exception->getMessage(), 0, 120);
+            $bank->checktime   = $datenow;
+            $bank->save();
+            return 1;
         }
+
+        return 0;
+    }
+
+    public function Banks($bankcode)
+    {
+        switch ($bankcode) {
+            case 'BBL':
+                $result = 1;
+                break;
+            case 'KBANK':
+                $result = 2;
+                break;
+            case 'KTB':
+                $result = 3;
+                break;
+            case 'SCB':
+                $result = 4;
+                break;
+            case 'GHBANK':
+                $result = 5;
+                break;
+            case 'KKP':
+            case 'KKB':
+                $result = 6;
+                break;
+            case 'CIMB':
+                $result = 7;
+                break;
+            case 'IBANK':
+                $result = 8;
+                break;
+            case 'TISCO':
+                $result = 9;
+                break;
+            case 'BAY':
+                $result = 11;
+                break;
+            case 'UOB':
+            case 'UOBT':
+                $result = 12;
+                break;
+            case 'LHBANK':
+                $result = 13;
+                break;
+            case 'GSB':
+                $result = 14;
+                break;
+            case 'TBANK':
+                $result = 15;
+                break;
+            case 'BAAC':
+                $result = 17;
+                break;
+            case 'TTB':
+            case 'TMB':
+                $result = 19;
+                break;
+            default:
+                $result = 2;
+                break;
+        }
+
+        return $result;
+    }
+
+    public function failed(Throwable $exception)
+    {
+        report($exception);
     }
 }

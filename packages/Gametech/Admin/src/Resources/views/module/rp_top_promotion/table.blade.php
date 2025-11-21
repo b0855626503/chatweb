@@ -70,16 +70,23 @@
                 $("#customfooter tbody").html('');
 
                 let html = '';
+                html += '<tr>';
+                html += '<th style="text-align:right;width:80%;color:darkorange">รวม</th><th style="text-align:right;color:darkorange;">' + table.ajax.json().count + '</th>';
+                html += '</tr>';
+                html += '<tr>';
+                html += '<th style="text-align:right;width:80%;color:darkorange">ยอดเงินรวม</th><th style="text-align:right;color:darkorange;">' + table.ajax.json().sum + '</th>';
+                html += '</tr>';
+                // html += '<tr>';
 
-                $.each(promotion, function (index, value) {
-                    let pro = table.ajax.json();
-                    console.log(pro['p' + index]);
-                    // let p = 'pro.p'+index;
-                    html += '<tr>';
-                    html += '<th style="text-align:right;width:80%;color:darkorange">รวม ' + value + '</th><th style="text-align:right;color:darkorange;">' + pro['p' + index] + '</th>';
-                    html += '</tr>';
-                    html += '<tr>';
-                });
+                // $.each(promotion, function (index, value) {
+                //     let pro = table.ajax.json();
+                //     console.log(pro['p' + index]);
+                //     // let p = 'pro.p'+index;
+                //     html += '<tr>';
+                //     html += '<th style="text-align:right;width:80%;color:darkorange">รวม ' + value + '</th><th style="text-align:right;color:darkorange;">' + pro['p' + index] + '</th>';
+                //     html += '</tr>';
+                //     html += '<tr>';
+                // });
 
 
                 $("#customfooter tbody").append(html);

@@ -1,6 +1,6 @@
 <?php
 
-namespace Gametech\Payment\Http\Controllers;
+namespace Gametech\LineOA\Http\Controllers\Admin;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;

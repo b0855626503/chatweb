@@ -2,12 +2,9 @@
 
 namespace Gametech\Core\Models;
 
-use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-
 use Gametech\Core\Contracts\Faq as FaqContract;
+use Illuminate\Database\Eloquent\Model;
 use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Faq extends Model implements FaqContract
@@ -58,12 +55,6 @@ class Faq extends Model implements FaqContract
         'date_update' => 'required'
     ];
 
-    protected static function booted()
-    {
-        static::addGlobalScope('code', function (Builder $builder) {
-            $builder->where('code', '<>', 0);
-        });
-    }
 
     public function scopeActive($query)
     {

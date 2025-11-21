@@ -51,7 +51,7 @@
 
                 <b-col cols="12" md="6">
                     <div class="form-group {!! $errors->has('filepic.*') ? 'has-error' : '' !!}">
-                        <label>รูปภาพ</label>
+                        <label>รูปภาพ (300 x 250)</label>
                         <image-wrapper
                             @clear="clearImage"
                             @upload="handleUpload($event)"
@@ -119,161 +119,161 @@
         function delSub(id, table) {
             window.app.delSub(id, table);
         }
+    </script>
+    <script type="module">
+        window.app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    show: false,
+                    trigger: 0,
+                    fileupload: '',
+                    formmethod: 'edit',
 
-        (() => {
-            window.app = new Vue({
-                el: '#app',
-                data() {
-                    return {
-                        show: false,
-                        trigger: 0,
-                        fileupload: '',
-                        formmethod: 'edit',
+                    formaddedit: {
+                        name_th: '',
+                        content: '',
+                        sort: 0,
+                        enable: 'Y'
+                    },
+                    option: {
+                        length_type: [
+                            {text: '== เลือก ==', value: ''},
+                            {text: 'จ่ายเป็น บาท', value: 'PRICE'},
+                            {text: 'จ่ายเป็น %', value: 'PERCENT'},
+                            {text: 'ช่วงเวลา จ่ายเป็น บาท', value: 'TIME'},
+                            {text: 'ช่วงเวลา จ่ายเป็น %', value: 'TIMEPC'},
+                            {text: 'ช่วงราคาตรงกัน จ่ายเป็น %', value: 'AMOUNT'},
+                            {text: 'ช่วงราคาตรงกัน จ่ายเป็น %', value: 'AMOUNTPC'},
+                            {text: 'ช่วงระหว่างราคา จ่ายเป็น บาท', value: 'BETWEEN'},
+                            {text: 'ช่วงระหว่างราคา จ่ายเป็น %', value: 'BETWEENPC'},
+                        ],
+                    },
+                    imgpath: '/storage/procontent_img/'
+                };
+            },
+            created() {
+                this.audio = document.getElementById('alertsound');
+                this.autoCnt(false);
+            },
+            methods: {
 
-                        formaddedit: {
-                            name_th: '',
-                            content: '',
-                            sort: 0,
-                            enable: 'Y'
-                        },
-                        option: {
-                            length_type: [
-                                {text: '== เลือก ==', value: ''},
-                                {text: 'จ่ายเป็น บาท', value: 'PRICE'},
-                                {text: 'จ่ายเป็น %', value: 'PERCENT'},
-                                {text: 'ช่วงเวลา จ่ายเป็น บาท', value: 'TIME'},
-                                {text: 'ช่วงเวลา จ่ายเป็น %', value: 'TIMEPC'},
-                                {text: 'ช่วงราคาตรงกัน จ่ายเป็น %', value: 'AMOUNT'},
-                                {text: 'ช่วงราคาตรงกัน จ่ายเป็น %', value: 'AMOUNTPC'},
-                                {text: 'ช่วงระหว่างราคา จ่ายเป็น บาท', value: 'BETWEEN'},
-                                {text: 'ช่วงระหว่างราคา จ่ายเป็น %', value: 'BETWEENPC'},
-                            ],
-                        },
-                        imgpath: '/storage/procontent_img/'
-                    };
+                editModal(code) {
+                    this.code = null;
+                    this.formaddedit = {
+
+                        name_th: '',
+                        content: '',
+                        sort: 0,
+                        enable: 'Y'
+                    }
+
+                    this.formmethod = 'edit';
+                    this.fileupload = '';
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.code = code;
+                        this.loadData();
+                        this.$refs.addedit.show();
+
+                    })
                 },
-                created() {
-                    this.audio = document.getElementById('alertsound');
-                    this.autoCnt(false);
+                addModal() {
+
+                    this.formaddedit = {
+
+                        name_th: '',
+                        content: '',
+                        sort: 0,
+                        enable: 'Y',
+                        filepic: ''
+                    }
+                    this.formmethod = 'add';
+                    this.fileupload = '';
+
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.$refs.addedit.show();
+
+                    })
                 },
-                methods: {
 
-                    editModal(code) {
-                        this.code = null;
-                        this.formaddedit = {
-
-                            name_th: '',
-                            content: '',
-                            sort: 0,
-                            enable: 'Y'
-                        }
-
-                        this.formmethod = 'edit';
-                        this.fileupload = '';
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.code = code;
-                            this.loadData();
-                            this.$refs.addedit.show();
-
-                        })
-                    },
-                    addModal() {
-
-                        this.formaddedit = {
-
-                            name_th: '',
-                            content: '',
-                            sort: 0,
-                            enable: 'Y',
-                            filepic: ''
-                        }
-                        this.formmethod = 'add';
-                        this.fileupload = '';
-
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.$refs.addedit.show();
-
-                        })
-                    },
-
-                    async loadData() {
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
-                        this.formaddedit = {
-                            name_th: response.data.data.name_th,
-                            content: response.data.data.content,
-                            sort: response.data.data.sort,
-                            enable: response.data.data.enable
-                        }
+                async loadData() {
+                    const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
+                    this.formaddedit = {
+                        name_th: response.data.data.name_th,
+                        content: response.data.data.content,
+                        sort: response.data.data.sort,
+                        enable: response.data.data.enable
+                    }
 
 
-                        if (response.data.data.filepic) {
-                            // this.trigger++;
-                            this.formaddedit.filepic = response.data.data.filepic;
-
-                        }
-                    },
-                    setImage(value) {
+                    if (response.data.data.filepic) {
                         // this.trigger++;
-                        this.formaddedit.filepic = value;
-                        console.log('Set :' + this.formaddedit.filepic);
-                    },
-                    clearImage() {
-                        this.trigger++;
-                        this.formaddedit.filepic = '';
-                        console.log('Clear :' + this.formaddedit.filepic);
-                    },
-                    handleUpload(value) {
-                        this.fileupload = value;
-                    },
-                    addEditSubmitNew(event) {
-                        event.preventDefault();
+                        this.formaddedit.filepic = response.data.data.filepic;
 
-                        if (this.formmethod === 'add') {
-                            var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
-                        } else if (this.formmethod === 'edit') {
-                            var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
-                        }
+                    }
+                },
+                setImage(value) {
+                    // this.trigger++;
+                    this.formaddedit.filepic = value;
+                    console.log('Set :' + this.formaddedit.filepic);
+                },
+                clearImage() {
+                    this.trigger++;
+                    this.formaddedit.filepic = '';
+                    console.log('Clear :' + this.formaddedit.filepic);
+                },
+                handleUpload(value) {
+                    this.fileupload = value;
+                },
+                addEditSubmitNew(event) {
+                    event.preventDefault();
+                    this.toggleButtonDisable(true);
 
-                        let formData = new FormData();
-                        const json = JSON.stringify({
-                            name_th: this.formaddedit.name_th,
-                            content: this.formaddedit.content,
-                            sort: this.formaddedit.sort,
-                            enable: this.formaddedit.enable
-                        });
+                    if (this.formmethod === 'add') {
+                        var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
+                    } else if (this.formmethod === 'edit') {
+                        var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
+                    }
 
-                        formData.append('data', json);
-                        // formData.append('filepic', $('input[type="file"]')[0].files[0]);
-                        formData.append('fileupload', this.fileupload);
+                    let formData = new FormData();
+                    const json = JSON.stringify({
+                        name_th: this.formaddedit.name_th,
+                        content: this.formaddedit.content,
+                        sort: this.formaddedit.sort,
+                        enable: this.formaddedit.enable
+                    });
+
+                    formData.append('data', json);
+                    // formData.append('filepic', $('input[type="file"]')[0].files[0]);
+                    formData.append('fileupload', this.fileupload);
 
 
-                        const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
+                    const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
 
-                        axios.post(url, formData, config)
-                            .then(response => {
-                                this.$bvModal.hide('addedit');
-                                this.$bvModal.msgBoxOk(response.data.message, {
-                                    title: 'ผลการดำเนินการ',
-                                    size: 'sm',
-                                    buttonSize: 'sm',
-                                    okVariant: 'success',
-                                    headerClass: 'p-2 border-bottom-0',
-                                    footerClass: 'p-2 border-top-0',
-                                    centered: true
-                                });
-                                window.LaravelDataTables["dataTableBuilder"].draw(false);
-                            })
-                            .catch(errors => console.log(errors));
-
-                    },
+                    axios.post(url, formData, config)
+                        .then(response => {
+                            this.$bvModal.hide('addedit');
+                            this.$bvModal.msgBoxOk(response.data.message, {
+                                title: 'ผลการดำเนินการ',
+                                size: 'sm',
+                                buttonSize: 'sm',
+                                okVariant: 'success',
+                                headerClass: 'p-2 border-bottom-0',
+                                footerClass: 'p-2 border-top-0',
+                                centered: true
+                            });
+                            window.LaravelDataTables["dataTableBuilder"].draw(false);
+                        })
+                        .catch(errors => console.log(errors));
 
                 },
-            });
-        })()
+
+            },
+        });
     </script>
 @endpush
 

@@ -4,7 +4,6 @@ namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -85,7 +84,7 @@ class JokerNewRepository extends Repository
     public function addGameAccount($data): array
     {
         $result = $this->newUser();
-        if ($result['success'] === true) {
+        if ($result['success'] == true) {
             $account = $result['account'];
             $result = $this->addUser($account, $data);
         }
@@ -96,7 +95,7 @@ class JokerNewRepository extends Repository
     public function newUser(): array
     {
         $return['success'] = false;
-        if ($this->method === 'game') {
+        if ($this->method == 'game') {
             $free = 'N';
         } else {
             $free = 'Y';
@@ -120,9 +119,9 @@ class JokerNewRepository extends Repository
             $return['msg'] = 'ไม่สามารถลงทะเบียนรหัสเกมได้ เนื่องจาก ID เกมหมด โปรดแจ้ง Staff';
         }
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
-        }
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+//        }
         return $return;
     }
 
@@ -144,13 +143,10 @@ class JokerNewRepository extends Repository
                 'authCode' => $this->auth
             ];
 
-            $responses = $this->GameCurl($param, 'register');
+            $response = $this->GameCurl($param, 'register');
 
-            $response = $responses->json();
-
-            if ($responses->successful()) {
-
-                if ($response['status'] === true) {
+            if ($response['success'] === true) {
+                if ($response['status'] == true) {
                     DB::table('users_joker')
                         ->where('user_name', $username)
                         ->update(['date_join' => now()->toDateString(), 'ip' => request()->ip(), 'use_account' => 'Y', 'user_update' => 'SYSTEM']);
@@ -161,16 +157,20 @@ class JokerNewRepository extends Repository
                     $return['user_pass'] = $user_pass;
 
                 } else {
-                    $return['msg'] = $response['message'];
+                    DB::table('users_joker')
+                        ->where('user_name', $username)
+                        ->update(['use_account' => 'Y']);
+
+                    $return['msg'] = $response['msg'];
                     $return['success'] = false;
 
                 }
             } else {
-
-                $return['msg'] = $response['message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
-
             }
+
+
         }
 
         if ($this->debug) {
@@ -204,26 +204,22 @@ class JokerNewRepository extends Repository
             ];
 
 
-            $responses = $this->GameCurl($param, 'updatePassword');
+            $response = $this->GameCurl($param, 'updatePassword');
 
-            $response = $responses->json();
-
-            if ($responses->successful()) {
-
-
+            if ($response['success'] === true) {
                 if ($response['status'] == true) {
                     $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                     $return['success'] = true;
                 } else {
-                    $return['msg'] = $response['message'];
+                    $return['msg'] = $response['msg'];
                     $return['success'] = false;
                 }
             } else {
-
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
-                $return['msg'] = $response['message'];
-
             }
+
+
         }
 
         if ($this->debug) {
@@ -253,13 +249,10 @@ class JokerNewRepository extends Repository
             'authCode' => $this->auth
         ];
 
-        $responses = $this->GameCurl($param, 'balance');
+        $response = $this->GameCurl($param, 'balance');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
-            if ($response['status'] === true) {
+        if ($response['success'] === true) {
+            if ($response['status'] == true) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['connect'] = true;
@@ -267,17 +260,17 @@ class JokerNewRepository extends Repository
 
             } else {
 
-                $return['msg'] = $response['message'];
+                $return['msg'] = $response['msg'];
                 $return['connect'] = true;
                 $return['success'] = false;
 
             }
         } else {
-
-            $return['success'] = false;
+            $return['msg'] = $response['msg'];
             $return['connect'] = false;
-            $return['msg'] = $response['message'];
+            $return['success'] = false;
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -321,26 +314,24 @@ class JokerNewRepository extends Repository
                     'authCode' => $this->auth
                 ];
 
-                $responses = $this->GameCurl($param, 'deposit');
-                $response = $responses->json();
+                $response = $this->GameCurl($param, 'deposit');
 
-                if ($responses->successful()) {
-
-                    if ($response['status'] === true) {
+                if ($response['success'] === true) {
+                    if ($response['status'] == true) {
                         $return['success'] = true;
                         $return['ref_id'] = $transID;
                         $return['after'] = $response['payload']['balance'];
                         $return['before'] = $before['score'];
                     } else {
                         $return['success'] = false;
-                        $return['msg'] = $response['message'];
+                        $return['msg'] = $response['msg'];
                     }
                 } else {
-
                     $return['success'] = false;
-                    $return['msg'] = $response['message'];
-
+                    $return['msg'] = $response['msg'];
                 }
+
+
             }
         } else {
 
@@ -392,12 +383,10 @@ class JokerNewRepository extends Repository
                     'authCode' => $this->auth
                 ];
 
-                $responses = $this->GameCurl($param, 'withdraw');
+                $response = $this->GameCurl($param, 'withdraw');
 
-                $response = $responses->json();
 
-                if ($responses->successful()) {
-
+                if ($response['success'] === true) {
                     if ($response['status'] == true) {
                         $return['success'] = true;
                         $return['ref_id'] = $transID;
@@ -405,12 +394,14 @@ class JokerNewRepository extends Repository
                         $return['before'] = $before['score'];
                     } else {
                         $return['success'] = false;
-                        $return['msg'] = $response['message'];
+                        $return['msg'] = $response['msg'];
                     }
                 } else {
                     $return['success'] = false;
-                    $return['msg'] = $response['message'];
+                    $return['msg'] = $response['msg'];
                 }
+
+
             }
         } else {
 
@@ -426,20 +417,50 @@ class JokerNewRepository extends Repository
         return $return;
     }
 
-    public function GameCurl($param, $action): Response
+    public function GameCurl($param, $action)
     {
-        $url = $this->url . $this->agent . '/' . $action;
+        $response = rescue(function () use ($param, $action) {
 
-        $sign = hash('sha256', $this->agent . $this->auth . time() . $this->secretkey);
-        $param['sign'] = $sign;
+            $url = $this->url . $this->agent . '/' . $action;
 
-        $response = Http::timeout(15)->asForm()->post($url, $param);
+            $sign = hash('sha256', $this->agent . $this->auth . time() . $this->secretkey);
+            $param['sign'] = $sign;
+
+            return Http::timeout(15)->asForm()->post($url, $param);
+
+
+        }, function ($e) {
+
+            return false;
+
+        }, true);
 
         if ($this->debug) {
             $this->Debug($response);
         }
 
-        return $response;
+        if($response === false){
+            $result['success'] = false;
+            $result['msg'] = 'เชื่อมต่อไม่ได้';
+            return $result;
+        }
+
+        $result = $response->json();
+        $result['msg'] = ($result['error'] ?? 'พบข้อผิดพลาดในการเชื่อมต่อ');
+
+        if($response->failed() || $response->clientError() || $response->serverError()){
+            $result['success'] = false;
+            return $result;
+        }
+
+
+        if ($response->successful()) {
+            $result['success'] = true;
+        }else{
+            $result['success'] = false;
+        }
+
+        return $result;
 
     }
 
@@ -455,16 +476,19 @@ class JokerNewRepository extends Repository
             'authCode' => $this->auth
         ];
 
-        $responses = $this->GameCurl($param, 'encryptPassword');
-        $response = $responses->json();
+        $response = $this->GameCurl($param, 'encryptPassword');
 
-        if ($responses->successful()) {
+        if ($response['success'] === true) {
             if ($response['status'] == true) {
                 $return['success'] = true;
                 $return['password'] = $response['payload']['text'];
                 $return['msg'] = 'ทำการ Encrypt รหัสผ่านแล้ว';
             }
+        } else {
+            $return['success'] = false;
+            $return['msg'] = $response['msg'];
         }
+
 
         return $return;
     }

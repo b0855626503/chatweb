@@ -24,9 +24,11 @@
                                             <span class="wallet-balance text-color-fixed" v-text="wallet_amount"></span>
                                             <div class="text-right">
                                             <span class="point"><i class="fas fa-coins"></i> แต้มสะสม
-                                                <span class="text-color-fixed" v-text="point_amount"></span> แต้ม </span>
+                                                <span class="text-color-fixed"
+                                                      v-text="point_amount"></span> แต้ม </span>
                                                 <span class="diamond"><i class="fas fa-gem"></i> เพชรสะสม
-                                                <span class="text-color-fixed" v-text="diamond_amount"></span> เพชร </span>
+                                                <span class="text-color-fixed"
+                                                      v-text="diamond_amount"></span> เพชร </span>
                                             </div>
                                         </div>
                                     </div>
@@ -172,7 +174,10 @@
                                             @if($item['user_code'])
                                                 <p class="text-color-fixed text-center mb-0"> {!! $item['balance'] !!} </p>
                                             @else
-                                                <div class="text-center mb-0"><button class="btn btn-link p-0 mx-auto"><i class="fas fa-user-plus text-light"></i></button></div>
+                                                <div class="text-center mb-0">
+                                                    <button class="btn btn-link p-0 mx-auto"><i
+                                                            class="fas fa-user-plus text-light"></i></button>
+                                                </div>
                                             @endif
                                         </div>
                                     @endforeach

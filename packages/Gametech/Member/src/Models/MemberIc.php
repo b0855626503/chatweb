@@ -42,10 +42,16 @@ class MemberIc extends Model implements MemberIcContract
         'emp_code',
         'ip_admin',
         'date_approve',
+        'turnpro',
+        'winlose',
         'enable',
+        'startdate',
+        'enddate',
+        'game_user',
         'user_create',
         'user_update'
     ];
+
 
 
 
@@ -62,6 +68,11 @@ class MemberIc extends Model implements MemberIcContract
     public function down(): BelongsTo
     {
         return $this->belongsTo(MemberProxy::modelClass(), 'downline_code');
+    }
+
+    public function me(): BelongsTo
+    {
+        return $this->belongsTo(MemberProxy::modelClass(), 'member_code');
     }
 
 

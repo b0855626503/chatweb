@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="{{ asset('vendor/daterangepicker/daterangepicker.css') }}">
 @endpush
 
-{!! $dataTable->table(['width' => '100%', 'class' => 'table table-striped table-sm']) !!}
+{!! $dataTable->table(['id' => 'withdrawtable','width' => '100%', 'class' => 'table table-striped table-sm']) !!}
 
 <hr>
 <table width="100%" class="table table-bordered" id="customfooter" style="font-size: medium">
@@ -51,7 +51,7 @@
 
 
             $("#frmsearch").submit(function () {
-                window.LaravelDataTables["dataTableBuilder"].draw(true);
+                window.LaravelDataTables["withdrawtable"].draw(true);
             });
 
 
@@ -63,9 +63,9 @@
 
     <script>
         $(function () {
-            var table = window.LaravelDataTables["dataTableBuilder"];
+            var table = window.LaravelDataTables["withdrawtable"];
 
-            window.LaravelDataTables["dataTableBuilder"].on('draw', function () {
+            window.LaravelDataTables["withdrawtable"].on('draw', function () {
                 $("#customfooter tbody").html('');
 
                 let html = '<tr>';

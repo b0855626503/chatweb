@@ -66,6 +66,26 @@ class BankController extends AppBaseController
 
     }
 
+    public function create(Request $request)
+    {
+        $user = $this->user()->name.' '.$this->user()->surname;
+
+
+        $data = json_decode($request['data'], true);
+
+        $data['user_create'] = $user;
+        $data['user_update'] = $user;
+
+//        $data['user_update'] = $user;
+//
+//        dd($data);
+
+        $this->repository->createnew($data);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
     public function update($id,Request $request)
     {
         $user = $this->user()->name.' '.$this->user()->surname;

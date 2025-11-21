@@ -15,11 +15,14 @@ class DailyStatRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Core\Contracts\DailyStat';
+        return \Gametech\Core\Models\DailyStat::class;
     }
 
     public function sumData($date)
     {
+        $config = core()->getConfigData();
+
+
         $yesterday = Carbon::parse($date)->subDay()->toDateString();
 
 //        $chkbefore = $this->whereDate('date',$yesterday);
@@ -45,8 +48,19 @@ class DailyStatRepository extends Repository
         $deposit_count = (clone $payments)->count();
         $deposit_sum = (clone $payments)->sum('value');
 
-        $withdraws1 =app('Gametech\Payment\Repositories\WithdrawRepository')->active()->complete()
-            ->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$date]);
+
+        if($config['seamless'] == 'Y'){
+
+            $withdraws1 =app('Gametech\Payment\Repositories\WithdrawSeamlessRepository')->active()->complete()
+                ->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$date]);
+
+        }else{
+
+            $withdraws1 =app('Gametech\Payment\Repositories\WithdrawRepository')->active()->complete()
+                ->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$date]);
+
+        }
+
 
 //        $withdraws2 =app('Gametech\Payment\Repositories\WithdrawFreeRepository')->active()->complete()
 //            ->whereRaw(DB::raw("DATE_FORMAT(date_approve,'%Y-%m-%d') = ?"), [$date]);
@@ -57,6 +71,10 @@ class DailyStatRepository extends Repository
         $withdraw_sum1 = (clone $withdraws1)->sum('amount');
 //        $withdraw_sum2 = (clone $withdraws2)->sum('amount');
         $withdraw_sum = ($withdraw_sum1);
+
+        $data1 = app('Gametech\Payment\Repositories\PaymentPromotionRepository')->active()->aff()->whereDate('date_create',$date)->sum('credit_bonus');
+        $data2 = app('Gametech\Payment\Repositories\BillRepository')->active()->getpro()->where('transfer_type', 1)->whereDate('date_create',$date)->sum('credit_bonus');
+        $bonus_sum = ($data1 + $data2);
 
         $setwallet_d_sum = app('Gametech\Member\Repositories\MemberCreditLogRepository')
             ->where('kind','SETWALLET')->where('credit_type','D')->where('enable','Y')
@@ -79,6 +97,7 @@ class DailyStatRepository extends Repository
                 'deposit_sum' => $deposit_sum,
                 'withdraw_count' => $withdraw_count,
                 'withdraw_sum' => $withdraw_sum,
+                'bonus_sum' => $bonus_sum,
                 'setwallet_d_sum' => $setwallet_d_sum,
                 'setwallet_w_sum' => $setwallet_w_sum,
 

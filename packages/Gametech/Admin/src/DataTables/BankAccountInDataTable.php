@@ -23,8 +23,10 @@ class BankAccountInDataTable extends DataTable
     {
         $dataTable = new EloquentDataTable($query);
 
+        $prem = bouncer()->hasPermission('ats.bank_account_in.tel');
+
         return $dataTable
-            ->setTransformer(new BankAccountInTransformer);
+            ->setTransformer(new BankAccountInTransformer($prem));
 
     }
 
@@ -35,7 +37,13 @@ class BankAccountInDataTable extends DataTable
      */
     public function query(BankAccount $model)
     {
+
+        $enable = request()->input('enable');
+
         return $model->newQuery()->in()
+            ->when($enable, function ($query, $enable) {
+                $query->where('enable', $enable);
+            })
             ->select('banks_account.*')->with('bank');
 
 
@@ -50,7 +58,7 @@ class BankAccountInDataTable extends DataTable
     {
         return $this->builder()
             ->columns($this->getColumns())
-            ->minifiedAjax()
+            ->ajaxWithForm('', '#frmsearch')
             ->parameters([
                 'dom' => 'Bfrtip',
 
@@ -92,9 +100,11 @@ class BankAccountInDataTable extends DataTable
             ['data' => 'password', 'name' => 'banks_account.user_pass', 'title' => 'Password', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
             ['data' => 'balance', 'name' => 'banks_account.balance', 'title' => 'ยอดเงิน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
 //            ['data' => 'sort' , 'name' => 'banks_account.sort' , 'title' => 'ลำดับ' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
+            ['data' => 'user_update', 'name' => 'banks_account.user_update', 'title' => 'แก้ไขโดย', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
             ['data' => 'auto', 'name' => 'banks_account.status_auto', 'title' => 'ดึงยอด', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
             ['data' => 'topup', 'name' => 'banks_account.status_topup', 'title' => 'เติมอัตโนมัติ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
             ['data' => 'display', 'name' => 'banks_account.display_wallet', 'title' => 'แสดงหน้าเวบ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
+            ['data' => 'slip', 'name' => 'banks_account.slip', 'title' => 'ตรวจสลิป', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
             ['data' => 'enable', 'name' => 'enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
             ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
 

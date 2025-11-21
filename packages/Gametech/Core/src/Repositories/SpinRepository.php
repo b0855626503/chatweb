@@ -15,7 +15,8 @@ class SpinRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Core\Contracts\Spin';
+        return \Gametech\Core\Models\Spin::class;
+
     }
 
     public function updatenew(array $data, $id, $attribute = "id")

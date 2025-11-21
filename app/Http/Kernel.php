@@ -2,17 +2,22 @@
 
 namespace App\Http;
 
-
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\AuthenticateUser;
 use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\EncryptCookies;
-use App\Http\Middleware\LastSeenUserActivity;
+use App\Http\Middleware\EnsureUserInCurrentGame;
+use App\Http\Middleware\FilterIps;
+use App\Http\Middleware\LanguageMiddleware;
+use App\Http\Middleware\LogFailedRequests;
 use App\Http\Middleware\LoginSecurityMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\ThrottleRootPath;
 use App\Http\Middleware\TrimStrings;
+use App\Http\Middleware\TrustHosts;
 use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\XraySlowRequest;
 use Fruitcake\Cors\HandleCors;
 use Gametech\Admin\Http\Middleware\Bouncer;
 use Gametech\LogAdmin\Http\Middleware\LogActivity;
@@ -44,18 +49,13 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        StartSession::class,
-        ShareErrorsFromSession::class,
+        TrustHosts::class,
         TrustProxies::class,
         HandleCors::class,
         CheckForMaintenanceMode::class,
         ValidatePostSize::class,
         TrimStrings::class,
         ConvertEmptyStringsToNull::class,
-        EncryptCookies::class,
-        AddQueuedCookiesToResponse::class,
-
-
     ];
 
     /**
@@ -65,18 +65,32 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
             AuthenticateSession::class,
+            ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,
-            LastSeenUserActivity::class,
-        ],
+            LanguageMiddleware::class
 
+        ],
+        'online' => [
+            \Klevze\OnlineUsers\Middleware\TrackUserActivity::class,
+        ],
+        'whitelist' => [
+            FilterIps::class,
+        ],
 
         'api' => [
-            'throttle:60,1',
             SubstituteBindings::class,
+            XraySlowRequest::class,
+//            LogFailedRequests::class,
         ],
 
+        'ensure.in.game' => [
+            EnsureUserInCurrentGame::class,
+        ],
 
     ];
 
@@ -91,6 +105,7 @@ class Kernel extends HttpKernel
         'auth' => Authenticate::class,
         'authuser' => AuthenticateUser::class,
         'auth.basic' => AuthenticateWithBasicAuth::class,
+        'auth.session' => AuthenticateSession::class,
         'bindings' => SubstituteBindings::class,
         'cache.headers' => SetCacheHeaders::class,
         'can' => Authorize::class,
@@ -99,11 +114,23 @@ class Kernel extends HttpKernel
         'signed' => ValidateSignature::class,
         'throttle' => ThrottleRequests::class,
         'verified' => EnsureEmailIsVerified::class,
-//        '2fa' => \PragmaRX\Google2FALaravel\Middleware::class,
         '2fa' => LoginSecurityMiddleware::class,
         'admin' => Bouncer::class,
         'logadmin' => LogActivity::class,
         'loguser' => LogActivityUser::class,
         'customer' => RedirectIfNotCustomer::class,
+        'filter' => FilterIps::class,
+    ];
+
+    protected $middlewarePriority = [
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+        \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
+        \Illuminate\Session\Middleware\AuthenticateSession::class,
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        \Illuminate\Auth\Middleware\Authorize::class,
     ];
 }

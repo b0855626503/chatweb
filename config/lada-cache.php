@@ -11,7 +11,7 @@ return [
     | This may be useful for debugging purposes.
     |
     */
-    'active' => env('LADA_CACHE_ACTIVE', false),
+    'active' => env('LADA_CACHE_ACTIVE', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -34,7 +34,7 @@ return [
     | be a good idea to set this value to something like 604800 (7 days).
     |
     */
-    'expiration-time' => null,
+    'expiration-time' => 600,
 
     /*
     |--------------------------------------------------------------------------
@@ -48,7 +48,7 @@ return [
     | not recommended to do so in production environment.
     |
     */
-    'consider-rows' => false,
+    'consider-rows' => true,
 
 
     /*
@@ -77,18 +77,34 @@ return [
         (new \Gametech\Core\Models\BatchUser())->getTable(),
         (new \Gametech\Core\Models\Faq())->getTable(),
         (new \Gametech\Core\Models\Refer())->getTable(),
+        (new \Gametech\Core\Models\Coupon())->getTable(),
+        (new \Gametech\Core\Models\CouponList())->getTable(),
         (new \Gametech\Admin\Models\Role())->getTable(),
         (new \Gametech\Game\Models\Game())->getTable(),
+        (new \Gametech\Game\Models\GameSeamless())->getTable(),
+        (new \Gametech\Game\Models\GameType())->getTable(),
+        (new \Gametech\Game\Models\GameUserEvent())->getTable(),
         (new \Gametech\Member\Models\MemberCashback())->getTable(),
         (new \Gametech\Member\Models\MemberIc())->getTable(),
         (new \Gametech\Member\Models\MemberRemark())->getTable(),
+        (new \Gametech\Member\Models\MemberCreditLog())->getTable(),
+        (new \Gametech\Member\Models\MemberCreditFreeLog())->getTable(),
         (new \Gametech\Payment\Models\Bank())->getTable(),
+        (new \Gametech\Payment\Models\BankAccount())->getTable(),
+        (new \Gametech\Payment\Models\BankPayment())->getTable(),
         (new \Gametech\Payment\Models\BankRule())->getTable(),
         (new \Gametech\Payment\Models\PaymentWaiting())->getTable(),
+        (new \Gametech\Payment\Models\Withdraw())->getTable(),
+//        (new \Gametech\Payment\Models\WithdrawFree())->getTable(),
+//        (new \Gametech\Payment\Models\WithdrawSeamless())->getTable(),
+//        (new \Gametech\Payment\Models\WithdrawSeamlessFree())->getTable(),
         (new \Gametech\Promotion\Models\Promotion())->getTable(),
         (new \Gametech\Promotion\Models\PromotionContent())->getTable(),
         (new \Gametech\Promotion\Models\PromotionAmount())->getTable(),
         (new \Gametech\Promotion\Models\PromotionTime())->getTable(),
+        (new \Gametech\Payment\Models\Bill())->getTable(),
+        (new \Gametech\Payment\Models\Bonus())->getTable()
+
     ],
 
     /*
@@ -101,6 +117,10 @@ return [
     | will not be cached.
     |
     */
-    'exclude-tables' => [],
+    'exclude-tables' => [
+        (new \Gametech\Game\Models\GameUser())->getTable(),
+        (new \Gametech\Game\Models\GameUserFree())->getTable(),
+        (new \Gametech\Member\Models\Member())->getTable(),
+    ],
 
 ];

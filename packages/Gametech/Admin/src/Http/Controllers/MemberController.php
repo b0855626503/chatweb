@@ -3,11 +3,12 @@
 namespace Gametech\Admin\Http\Controllers;
 
 
+use App\Exports\MembersExport;
 use App\Exports\UsersExport;
 use Gametech\Admin\DataTables\MemberDataTable;
+use Gametech\Auto\Jobs\NotifyUserOfCompletedExport;
 use Gametech\Game\Repositories\GameRepository;
 use Gametech\Game\Repositories\GameUserRepository;
-use Gametech\Member\Models\Member;
 use Gametech\Member\Repositories\MemberCreditLogRepository;
 use Gametech\Member\Repositories\MemberDiamondLogRepository;
 use Gametech\Member\Repositories\MemberPointLogRepository;
@@ -15,11 +16,14 @@ use Gametech\Member\Repositories\MemberRemarkRepository;
 use Gametech\Member\Repositories\MemberRepository;
 use Gametech\Payment\Repositories\BankPaymentRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
+use PragmaRX\Google2FA\Google2FA;
 
 
 class MemberController extends AppBaseController
@@ -54,20 +58,23 @@ class MemberController extends AppBaseController
      */
     public function __construct
     (
-        GameUserRepository $gameUserRepo,
-        GameRepository $gameRepo,
-        MemberRepository $memberRepo,
-        MemberCreditLogRepository $memberCreditLogRepo,
-        MemberPointLogRepository $memberPointLogRepo,
+        GameUserRepository         $gameUserRepo,
+        GameRepository             $gameRepo,
+        MemberRepository           $memberRepo,
+        MemberCreditLogRepository  $memberCreditLogRepo,
+        MemberPointLogRepository   $memberPointLogRepo,
         MemberDiamondLogRepository $memberDiamondLogRepo,
-        BankPaymentRepository $bankPaymentRepo,
-        MemberRemarkRepository $memberRemarkRepo
+        BankPaymentRepository      $bankPaymentRepo,
+        MemberRemarkRepository     $memberRemarkRepo
     )
 
     {
+
+
         $this->_config = request('_config');
 
-        $this->middleware('admin');
+//        $this->middleware('admin');
+        $this->middleware(['auth', 'admin']);
 
         $this->gameUserRepository = $gameUserRepo;
 
@@ -89,8 +96,14 @@ class MemberController extends AppBaseController
 
     public function index(MemberDataTable $memberDataTable)
     {
+//        request()->session()->invalidate();
+//
+//        request()->session()->regenerateToken();
+
+
         return $memberDataTable->render($this->_config['view']);
     }
+
 
     public function edit(Request $request)
     {
@@ -101,8 +114,8 @@ class MemberController extends AppBaseController
         $data[$method] = $status;
 
         $member = $this->memberRepository->find($id);
-        if(!$member){
-            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        if (!$member) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
 
         $member = $this->memberRepository->update($data, $id);
@@ -120,8 +133,8 @@ class MemberController extends AppBaseController
         $data[$method] = $status;
 
         $member = $this->gameUserRepository->find($id);
-        if(!$member){
-            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        if (!$member) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
 
         $member = $this->gameUserRepository->update($data, $id);
@@ -136,8 +149,8 @@ class MemberController extends AppBaseController
 
         $chk = $this->memberRepository->find($id);
 
-        if(!$chk){
-            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        if (!$chk) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
 
         $this->memberRepository->delete($id);
@@ -147,23 +160,51 @@ class MemberController extends AppBaseController
 
     public function refill(Request $request)
     {
+        $user = Auth::guard('admin')->user();
+        $google2fa = new Google2FA();
+
         $return['success'] = false;
 
         $datenow = now()->toDateTimeString();
-        $user = $this->user()->name.' '.$this->user()->surname;
+        $date = now()->toDateString();
+        $fulluser = $user->name . ' ' . $user->surname;
         $ip = $request->ip();
+
+        $config = core()->getConfigData();
 
         $request->validate([
             'id' => 'required',
             'amount' => 'required|numeric',
             'account_code' => 'required|integer',
-            'remark_admin' => 'required|string'
+            'remark_admin' => 'string'
         ]);
 
         $id = $request->input('id');
         $amount = $request->input('amount');
-        $remark = $request->input('remark_admin');
+
         $account = $request->input('account_code');
+        if($request->has('remark_admin')){
+            $remark = $request->input('remark_admin');
+        }else{
+            $remark = '';
+        }
+//        $secret = $request->input('one_time_password');
+//
+//        if($user->superadmin == 'N') {
+//
+//            $valid = $google2fa->verifyKey($user->google2fa_secret, $secret);
+//            if (!$valid) {
+//                return $this->sendError('รหัสยืนยันไม่ถูกต้อง', 200);
+//            }
+//        }
+
+//        return '';
+//
+//        if (Cache::has('refill_' . $user->code)) {
+//            return $this->sendError('โปรดเว้นระยะในการทำรายการ', 200);
+//        }
+//
+//        Cache::put('refill_' . $user->code, 'lock', now()->addSeconds(5));
 
 
         $member = $this->memberRepository->find($id);
@@ -173,15 +214,18 @@ class MemberController extends AppBaseController
         $bank = app('Gametech\Payment\Repositories\BankRepository')->find($bank_account->banks);
 
         if ($amount < 1) {
-            return $this->sendError('ยอดเงินไม่ถูกต้อง',200);
+            return $this->sendError('ยอดเงินไม่ถูกต้อง', 200);
+        } elseif ($amount > $config['maxsetcredit']) {
+            return $this->sendError('ไม่สามารถทำรายการเกินครั้งละ ' . core()->currency($config['maxsetcredit']), 200);
         }
 
-        $detail = 'เพิ่มรายการฝากเงินโดย Staff : '.$user;
+        $detail = 'เพิ่มรายการฝากเงินโดย Staff : ' . $fulluser;
+
 
         $hash = md5($account . $datenow . $amount . $detail);
 
         $data = [
-            'bank' => strtolower($bank->shortcode.'_'.$bank_account->acc_no),
+            'bank' => strtolower($bank->shortcode . '_' . $bank_account->acc_no),
             'detail' => $detail,
             'account_code' => $account,
             'autocheck' => 'W',
@@ -196,15 +240,15 @@ class MemberController extends AppBaseController
             'member_topup' => $id,
             'remark_admin' => $remark,
             'emp_topup' => $this->id(),
-            'user_create' => 'รอระบบเติมอัตโนมัติ ทำรายการฝากเงินโดย Staff : '.$user,
-            'create_by' => $user
+            'user_create' => 'รอระบบเติมอัตโนมัติ ทำรายการฝากเงินโดย Staff : ' . $fulluser,
+            'create_by' => 'SYSAUTO'
         ];
 
         $response = $this->bankPaymentRepository->create($data);
-        if($response->code){
+        if ($response->code) {
             return $this->sendSuccess('ดำเนินการ ทำรายการฝากเงิน เรียบร้อยแล้ว');
-        }else{
-            return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้ง',200);
+        } else {
+            return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้ง', 200);
         }
 
 
@@ -212,6 +256,9 @@ class MemberController extends AppBaseController
 
     public function setWallet(Request $request)
     {
+        $user = Auth::guard('admin')->user();
+        $google2fa = new Google2FA();
+
         $return['success'] = false;
 
         $request->validate([
@@ -225,19 +272,28 @@ class MemberController extends AppBaseController
         $amount = $request->input('amount');
         $remark = $request->input('remark');
         $method = $request->input('type');
+//        $secret = $request->input('one_time_password');
+//
+//        if($user->superadmin == 'N' && $user->google2fa_enable) {
+//
+//            $valid = $google2fa->verifyKey($user->google2fa_secret, $secret);
+//            if (!$valid) {
+//                return $this->sendError('รหัสยืนยันไม่ถูกต้อง', 200);
+//            }
+//        }
 
-        $types = ['D' => 'เพิ่ม Wallet' , 'W' => 'ลด Wallet'];
+        $types = ['D' => 'เพิ่ม ยอดเงินคงเหลือ', 'W' => 'ลด ยอดเงินคงเหลือ'];
 
         $config = core()->getConfigData();
 
         $member = $this->memberRepository->find($id);
 
-        if ($amount < 1) {
-            return $this->sendError('ยอดเงินไม่ถูกต้อง',200);
+        if ($amount < 0) {
+            return $this->sendError('ยอดเงินไม่ถูกต้อง', 200);
         } elseif ($amount > $config['maxsetcredit']) {
-            return $this->sendError('ไม่สามารถทำรายการเกินครั้งละ '.core()->currency($config['maxsetcredit']),200);
+            return $this->sendError('ไม่สามารถทำรายการเกินครั้งละ ' . core()->currency($config['maxsetcredit']), 200);
         } elseif ($method == 'W' && ($member->balance - $amount) < 0) {
-            return $this->sendError('ยอดเงินหลังทำรายการ ไม่สามารถติดลบได้',200);
+            return $this->sendError('ยอดเงินหลังทำรายการ ไม่สามารถติดลบได้', 200);
         }
 
         $data = [
@@ -249,14 +305,26 @@ class MemberController extends AppBaseController
             'method' => $method,
             'member_code' => $id,
             'emp_code' => $this->id(),
-            'emp_name' => $this->user()->name.' '.$this->user()->surname
+            'emp_name' => $this->user()->name . ' ' . $this->user()->surname
         ];
 
-        $response = $this->memberCreditLogRepository->setWallet($data);
-        if($response){
-            return $this->sendSuccess('ดำเนินการ '.$types[$method].' เรียบร้อยแล้ว');
-        }else{
-            return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้ง',200);
+        if ($config->seamless == 'Y') {
+
+            $response = $this->memberCreditLogRepository->setWalletSeamless($data);
+
+        } else {
+
+            if ($config->multigame_open == 'Y') {
+                $response = $this->memberCreditLogRepository->setWallet($data);
+            } else {
+                $response = $this->memberCreditLogRepository->setWalletSingle($data);
+            }
+
+        }
+        if ($response) {
+            return $this->sendSuccess('ดำเนินการ ' . $types[$method] . ' เรียบร้อยแล้ว');
+        } else {
+            return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้ง', 200);
         }
 
 
@@ -278,16 +346,16 @@ class MemberController extends AppBaseController
         $remark = $request->input('remark');
         $method = $request->input('type');
 
-        $types = ['D' => 'เพิ่ม Point' , 'W' => 'ลด Point'];
+        $types = ['D' => 'เพิ่ม Point', 'W' => 'ลด Point'];
 
         $config = core()->getConfigData();
 
         $member = $this->memberRepository->find($id);
 
         if ($amount < 1) {
-            return $this->sendError('ยอดเงินไม่ถูกต้อง',200);
+            return $this->sendError('ยอดเงินไม่ถูกต้อง', 200);
         } elseif ($method == 'W' && ($member->point_deposit - $amount) < 0) {
-            return $this->sendError('ยอดเงินหลังทำรายการ ไม่สามารถติดลบได้',200);
+            return $this->sendError('ยอดเงินหลังทำรายการ ไม่สามารถติดลบได้', 200);
         }
 
         $data = [
@@ -296,14 +364,14 @@ class MemberController extends AppBaseController
             'method' => $method,
             'member_code' => $id,
             'emp_code' => $this->id(),
-            'emp_name' => $this->user()->name.' '.$this->user()->surname
+            'emp_name' => $this->user()->name . ' ' . $this->user()->surname
         ];
 
         $response = $this->memberPointLogRepository->setPoint($data);
-        if($response){
-            return $this->sendSuccess('ดำเนินการ '.$types[$method].' เรียบร้อยแล้ว');
-        }else{
-            return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้ง',200);
+        if ($response) {
+            return $this->sendSuccess('ดำเนินการ ' . $types[$method] . ' เรียบร้อยแล้ว');
+        } else {
+            return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้ง', 200);
         }
 
 
@@ -325,16 +393,16 @@ class MemberController extends AppBaseController
         $remark = $request->input('remark');
         $method = $request->input('type');
 
-        $types = ['D' => 'เพิ่ม Diamond' , 'W' => 'ลด Diamond'];
+        $types = ['D' => 'เพิ่ม Diamond', 'W' => 'ลด Diamond'];
 
         $config = core()->getConfigData();
 
         $member = $this->memberRepository->find($id);
 
         if ($amount < 1) {
-            return $this->sendError('ยอด Diamond ไม่ถูกต้อง',200);
+            return $this->sendError('ยอด Diamond ไม่ถูกต้อง', 200);
         } elseif ($method == 'W' && ($member->diamond - $amount) < 0) {
-            return $this->sendError('ยอด Diamond หลังทำรายการ ไม่สามารถติดลบได้',200);
+            return $this->sendError('ยอด Diamond หลังทำรายการ ไม่สามารถติดลบได้', 200);
         }
 
         $data = [
@@ -343,14 +411,14 @@ class MemberController extends AppBaseController
             'method' => $method,
             'member_code' => $id,
             'emp_code' => $this->id(),
-            'emp_name' => $this->user()->name.' '.$this->user()->surname
+            'emp_name' => $this->user()->name . ' ' . $this->user()->surname
         ];
 
         $response = $this->memberDiamondLogRepository->setDiamond($data);
-        if($response){
-            return $this->sendSuccess('ดำเนินการ '.$types[$method].' เรียบร้อยแล้ว');
-        }else{
-            return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้ง',200);
+        if ($response) {
+            return $this->sendSuccess('ดำเนินการ ' . $types[$method] . ' เรียบร้อยแล้ว');
+        } else {
+            return $this->sendError('ไม่สามารถทำรายการได้ โปรดลองใหม่อีกครั้ง', 200);
         }
 
 
@@ -365,7 +433,7 @@ class MemberController extends AppBaseController
         $member = $this->memberRepository->find($id);
         $responses = [];
 
-        switch ($method){
+        switch ($method) {
             case 'gameuser':
                 $header = 'ข้อมูลบัญชีเกม';
                 $responses = $this->gameuser($id);
@@ -403,29 +471,34 @@ class MemberController extends AppBaseController
         }
 
 
-        $result['name'] = $member->firstname.' '.$member->lastname .'('.$header.')';
+        $result['name'] = $member->firstname . ' ' . $member->lastname . '(' . $header . ')';
         $result['list'] = $responses;
 
-        return $this->sendResponseNew($result,'complete');
+        return $this->sendResponseNew($result, 'complete');
     }
 
     public function gameuser($id)
     {
 
-        $games = collect($this->gameRepository->getGameUserById($id)->toArray())->whereNotNull('game_user');
+        $games = collect($this->gameRepository->getGameUserById($id, false)->toArray())->whereNotNull('game_user');
 
-        $games = $games->map(function ($items){
+        $games = $games->map(function ($items) {
             $item = (object)$items;
             return [
+                'status' => '<span class="text-danger">db</span>',
+                'game_code' => $item->code,
                 'game' => $item->name,
+                'member_code' => $item->game_user['member_code'],
                 'user_name' => $item->game_user['user_name'],
+                'user_pass' => $item->game_user['user_pass'],
                 'balance' => $item->game_user['balance'],
                 'promotion' => (!is_null($item->game_user['promotion']) ? $item->game_user['promotion']['name_th'] : '-'),
                 'turn' => ($item->game_user['pro_code'] > 0 ? $item->game_user['turnpro'] : '-'),
                 'amount_balance' => ($item->game_user['pro_code'] > 0 ? $item->game_user['amount_balance'] : '-'),
                 'withdraw_limit' => ($item->game_user['pro_code'] > 0 ? ($item->game_user['withdraw_limit'] > 0 ? $item->game_user['withdraw_limit'] : '-') : '-'),
                 'action' => '<button class="btn btn-xs icon-only ' . ($item->game_user['enable'] == 'Y' ? 'btn-warning' : 'btn-danger') . '" onclick="editdatasub(' . $item->game_user['code'] . "," . "'" . core()->flip($item->game_user['enable']) . "'" . "," . "'enable'" . ')">' . ($item->game_user['enable'] == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-trash"></i>') . '</button>',
-        ];
+                'changepass' => '<button class="btn btn-xs icon-only btn-info" onclick="changegamepass(' . $item->game_user['code'] . ')"><i class="fa fa-edit"></i></button>',
+            ];
 
 
         });
@@ -436,12 +509,12 @@ class MemberController extends AppBaseController
     public function gamesetwallet($id)
     {
 
-        $responses = collect($this->memberCreditLogRepository->orderBy('date_create','desc')->findWhere(['member_code' => $id , 'kind' => 'SETWALLET' , 'enable' => 'Y'])->toArray());
+        $responses = collect($this->memberCreditLogRepository->orderBy('date_create', 'desc')->findWhere(['member_code' => $id, 'kind' => 'SETWALLET', 'enable' => 'Y'])->toArray());
 
-        $responses = $responses->map(function ($items){
+        $responses = $responses->map(function ($items) {
             $item = (object)$items;
             return [
-                'date_create' =>  core()->formatDate($item->date_create,'d/m/y H:i'),
+                'date_create' => core()->formatDate($item->date_create, 'd/m/y H:i'),
                 'credit_amount' => $item->total,
                 'credit_before' => $item->balance_before,
                 'credit_balance' => $item->balance_after,
@@ -458,12 +531,12 @@ class MemberController extends AppBaseController
     public function gamesetpoint($id)
     {
 
-        $responses = collect(app('Gametech\Member\Repositories\MemberPointLogRepository')->orderBy('date_create','desc')->findWhere(['member_code' => $id  , 'enable' => 'Y'])->toArray());
+        $responses = collect(app('Gametech\Member\Repositories\MemberPointLogRepository')->orderBy('date_create', 'desc')->findWhere(['member_code' => $id, 'enable' => 'Y'])->toArray());
 
-        $responses = $responses->map(function ($items){
+        $responses = $responses->map(function ($items) {
             $item = (object)$items;
             return [
-                'date_create' =>  core()->formatDate($item->date_create,'d/m/y H:i'),
+                'date_create' => core()->formatDate($item->date_create, 'd/m/y H:i'),
                 'credit_amount' => $item->point_amount,
                 'credit_before' => $item->point_before,
                 'credit_balance' => $item->point_balance,
@@ -480,12 +553,12 @@ class MemberController extends AppBaseController
     public function gamesetdiamond($id)
     {
 
-        $responses = collect(app('Gametech\Member\Repositories\MemberDiamondLogRepository')->orderBy('date_create','desc')->findWhere(['member_code' => $id  , 'enable' => 'Y'])->toArray());
+        $responses = collect(app('Gametech\Member\Repositories\MemberDiamondLogRepository')->orderBy('date_create', 'desc')->findWhere(['member_code' => $id, 'enable' => 'Y'])->toArray());
 
-        $responses = $responses->map(function ($items){
+        $responses = $responses->map(function ($items) {
             $item = (object)$items;
             return [
-                'date_create' =>  core()->formatDate($item->date_create,'d/m/y H:i'),
+                'date_create' => core()->formatDate($item->date_create, 'd/m/y H:i'),
                 'credit_amount' => $item->diamond_amount,
                 'credit_before' => $item->diamond_before,
                 'credit_balance' => $item->diamond_balance,
@@ -502,16 +575,17 @@ class MemberController extends AppBaseController
     public function gametransfer($id)
     {
 
-        $responses = collect($this->memberRepository->loadBill($id,'','')->toArray());
+        $responses = collect($this->memberRepository->loadBill($id, '', '')->toArray());
 
-        $responses = $responses->map(function ($items){
+        $responses = $responses->map(function ($items) {
             $item = (object)$items;
             return [
-                'id' => '#BL'.Str::of($item->code)->padLeft(8,0),
-                'date_create' =>  core()->formatDate($item->date_create,'d/m/y H:i'),
+                'id' => '#BL' . Str::of($item->code)->padLeft(8, 0),
+                'date_create' => core()->formatDate($item->date_create, 'd/m/y H:i'),
                 'amount' => $item->amount,
                 'game_name' => $item->game['name'],
                 'transfer' => $item->transfer_type == 1 ? '<span class="text-success">โยกเข้าเกม</span>' : '<span class="text-danger">โยกออกเกม</span>',
+                'status' => $item->enable == 'Y' ? '<span class="text-danger">สำเร็จ</span>' : '<span class="text-warning">ไม่สำเร็จ</span>'
             ];
 
         });
@@ -522,14 +596,14 @@ class MemberController extends AppBaseController
     public function gamedeposit($id)
     {
 
-        $responses = collect($this->memberRepository->loadDeposit($id,'','')->toArray());
-
-        $responses = $responses->map(function ($items){
+        $responses = collect($this->memberRepository->loadDeposit($id, '', '')->toArray());
+        if(!$responses)return [];
+        $responses = $responses->map(function ($items) {
             $item = (object)$items;
 
             return [
-                'id' => '#DP'.Str::of($item->code)->padLeft(8,0),
-                'date_create' =>  core()->formatDate($item->date_create,'d/m/y H:i'),
+                'id' => '#DP' . Str::of($item->code)->padLeft(8, 0),
+                'date_create' => core()->formatDate($item->date_create, 'd/m/y H:i'),
                 'amount' => $item->value,
                 'credit_bonus' => $item->pro_amount,
                 'credit_before' => $item->before_credit,
@@ -543,17 +617,24 @@ class MemberController extends AppBaseController
 
     public function gamewithdraw($id)
     {
+        $config = core()->getConfigData();
+        if ($config->seamless == 'Y') {
+            $responses = collect($this->memberRepository->loadWithdrawSeamless($id, '', '')->toArray());
 
-        $responses = collect($this->memberRepository->loadWithdraw($id,'','')->toArray());
+        } else {
+            $responses = collect($this->memberRepository->loadWithdraw($id, '', '')->toArray());
 
-        $responses = $responses->map(function ($items){
+        }
+//        $responses = collect($this->memberRepository->loadWithdraw($id, '', '')->toArray());
+
+        $responses = $responses->map(function ($items) {
             $item = (object)$items;
-            $status = [ '0' => 'รอโอนเงิน' , '1' => 'โอนเงินสำเร็จ' , '2' => 'ยกเลิก'];
+            $status = ['0' => 'รอโอนเงิน', '1' => 'โอนเงินสำเร็จ', '2' => 'ยกเลิก'];
 
 
             return [
-                'id' => '#WD'.Str::of($item->code)->padLeft(8,0),
-                'date_create' => core()->formatDate($item->date_create,'d/m/Y H:i'),
+                'id' => '#WD' . Str::of($item->code)->padLeft(8, 0),
+                'date_create' => core()->formatDate($item->date_create, 'd/m/Y H:i'),
                 'amount' => $item->amount,
                 'credit_before' => $item->oldcredit,
                 'credit_after' => $item->aftercredit,
@@ -574,7 +655,7 @@ class MemberController extends AppBaseController
 
         $responses = collect(app('Gametech\Payment\Repositories\BankRepository')->all()->toArray());
 
-        $responses = $responses->map(function ($items){
+        $responses = $responses->map(function ($items) {
             $item = (object)$items;
             return [
                 'value' => $item->code,
@@ -584,10 +665,49 @@ class MemberController extends AppBaseController
         })->prepend($banks);
 
 
-
         $result['banks'] = $responses;
-        return $this->sendResponseNew($result,'complete');
+        return $this->sendResponseNew($result, 'complete');
     }
+
+    public function loadRefer()
+    {
+        $banks = [
+            'value' => '0',
+            'text' => 'โปรดเลือก'
+        ];
+
+        $responses = collect(app('Gametech\Core\Repositories\ReferRepository')->where('enable', 'Y')->get()->toArray());
+
+        $responses = $responses->map(function ($items) {
+            $item = (object)$items;
+            return [
+                'value' => $item->code,
+                'text' => $item->name
+            ];
+
+        })->prepend($banks);
+
+
+        $result['refers'] = $responses;
+        return $this->sendResponseNew($result, 'complete');
+    }
+
+    public function loadAf(Request $request)
+    {
+        $code = $request->input('af');
+//        dd($af);
+        $member = app('Gametech\Member\Repositories\MemberRepository')->where('user_name', $code)->where('enable', 'Y')->first();
+        if(!$member){
+            $data['name'] = '';
+            $data['code'] = 0;
+            return $this->sendError('ไม่พบข้อมูล ผู้แนะนำ',200);
+        }
+
+        $data['name'] = $member['name'];
+        $data['code'] = $member['code'];
+        return $this->sendResponse($data,'complete');
+    }
+
 
     public function loadBankAccount()
     {
@@ -596,70 +716,231 @@ class MemberController extends AppBaseController
             'text' => 'เลือกช่องทางที่ฝาก'
         ];
 
-        $responses = collect(app('Gametech\Payment\Repositories\BankRepository')->getBankInAccount()->toArray());
+//        $responses = app('Gametech\Payment\Repositories\BankRepository')->getBankInAccountAll()->toArray();
+        $responses = app('Gametech\Payment\Repositories\BankAccountRepository')->getAccountInAllNew()->toArray();
 
-        $responses = $responses->map(function ($items){
+//        dd($responses);
+
+        $responses = collect($responses)->map(function ($items) {
             $item = (object)$items;
+//            dd($item);
             return [
-                'value' => $item->bank_account['code'],
-                'text' => $item->name_th.' ['.$item->bank_account['acc_no'].']'
+                'value' => $item->code,
+                'text' => $item->bank['name_th'] . ' [' . $item->acc_no . ']'
             ];
 
         })->prepend($banks);
 
-
+//dd($responses);
 
         $result['banks'] = $responses;
-        return $this->sendResponseNew($result,'complete');
+        return $this->sendResponseNew($result, 'complete');
     }
 
-    public function update($id,Request $request)
+    public function create(Request $request)
     {
-        $user = $this->user()->name.' '.$this->user()->surname;
-
-        $data = json_decode($request['data'],true);
-
-
-        $acc_no = Str::of($data['acc_no'])->replaceMatches('/[^0-9]++/', '')->trim()->__toString();
-        $data['acc_no'] = $acc_no;
-        $bank_code = $data['bank_code'];
-        if ($bank_code == 4) {
-            $acc_check  = substr($acc_no, -4);
-        } else {
-            $acc_check  = substr($acc_no, -6);
+        $user = $this->user()->name . ' ' . $this->user()->surname;
+        $data = json_decode($request['data'], true);
+        $chk = $this->memberRepository->findOneWhere(['user_name' => $data['user_name']]);
+        if ($chk) {
+            return $this->sendError('ข้อมูลมีในระบบแล้ว', 200);
         }
-        $acc_bay = substr($acc_no, -7);
+
+        $agent = $data['agent'];
+        unset($data['agent']);
+
+        $bank_code = $data['bank_code'];
+        if ($bank_code != 18) {
+            $acc_no = Str::of($data['acc_no'])->replaceMatches('/[^0-9]++/', '')->trim()->__toString();
+            $data['acc_no'] = $acc_no;
+        }
+
+
+        if ($bank_code == 18) {
+            $acc_check = '';
+        } else if ($bank_code == 4) {
+            $acc_check = substr($acc_no, -4);
+        } else {
+            $acc_check = substr($acc_no, -6);
+        }
+
+        if ($bank_code == 18) {
+            $acc_bay = '';
+        } else {
+            $acc_bay = substr($acc_no, -7);
+        }
+
+
+        $data['confirm'] = 'Y';
+        $data['date_regis'] = now()->toDateString();
+        $data['acc_check'] = $acc_check;
+        $data['acc_bay'] = $acc_bay;
+
+        if (isset($data['wallet_id'])) {
+            $data['wallet_id'] = $data['tel'];
+        }
+
+        $data['name'] = $data['firstname'] . ' ' . $data['lastname'];
+        $data['password'] = Hash::make($data['user_pass']);
+
+        $data['user_create'] = $user;
+        $data['user_update'] = $user;
+
+
+        $wallet_id = trim($data['wallet_id']);
+
+        $validator = Validator::make($data, [
+            'acc_no' => [
+                'required',
+                'digits_between:1,14',
+                Rule::unique('members', 'acc_no')->where(function ($query) use ($bank_code) {
+                    return $query->where('bank_code', $bank_code);
+                })
+            ],
+            'wallet_id' => [
+                'required',
+                Rule::unique('members', 'wallet_id')->where(function ($query) use ($wallet_id) {
+                    return $query->where('wallet_id', $wallet_id);
+                })
+            ],
+            'firstname' => 'required|string',
+            'lastname' => 'required|string',
+            'tel' => 'required|numeric|unique:members,tel',
+            'user_name' => 'required|string|different:tel|unique:members,user_name|max:20|regex:/^[a-z][a-z0-9]*$/',
+            'bank_code' => 'required|numeric'
+        ]);
+
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+
+            $message = implode(', ', $errors->all());
+            return $this->sendError($message, 200);
+
+        }
+
+        $response = $this->memberRepository->create($data);
+        if (!$response->code) {
+            return $this->sendError('ไม่สามารถบันทุึกข้อมูลได้', 200);
+        }
+
+        if ($agent == 'Y') {
+            $member = $this->memberRepository->find($response->code);
+            $res = $this->gameUserRepository->addGameUser(1, $member->code, $member, false);
+            if ($res['success'] !== true) {
+                $this->memberRepository->delete($response->code);
+                return $this->sendError('ไม่สามารถเพิ่มข้อมูลที่ Agent ได้', 200);
+            }
+
+
+        }
+
+        $datasub['member_code'] = $response->code;
+        $datasub['game_code'] = 1;
+        $datasub['user_name'] = $data['user_name'];
+        $datasub['user_pass'] = $data['user_pass'];
+
+        $this->gameUserRepository->create($datasub);
+
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function update_($id, Request $request)
+    {
+
+        $google2fa = new Google2FA();
+
+        $acc_no = '';
+        $user = $this->user()->name . ' ' . $this->user()->surname;
+
+        $data = json_decode($request['data'], true);
+
+//        $secret = $data['one_time_password'];
+
+        if ($this->user()->superadmin == 'N') {
+
+//            $valid = $google2fa->verifyKey($this->user()->google2fa_secret, $secret);
+//            if (!$valid) {
+//                return $this->sendError('รหัสยืนยันไม่ถูกต้อง', 200);
+//            }
+        }
+
+//        unset($data['one_time_password']);
+
+
+        $bank_code = $data['bank_code'];
+        if ($bank_code != 18) {
+            $acc_no = Str::of($data['acc_no'])->replaceMatches('/[^0-9]++/', '')->trim()->__toString();
+            $data['acc_no'] = $acc_no;
+        }
+
+
+        if ($bank_code == 18) {
+            $acc_check = '';
+        } else if ($bank_code == 4) {
+            $acc_check = substr($acc_no, -4);
+        } else {
+            $acc_check = substr($acc_no, -6);
+        }
+
+        if ($bank_code == 18) {
+            $acc_bay = '';
+        } else {
+            $acc_bay = substr($acc_no, -7);
+        }
+
 
         $data['acc_check'] = $acc_check;
         $data['acc_bay'] = $acc_bay;
 
-//        $validator = Validator::make($data, [
-//            'acc_no' => [
-//                'required',
-//                'digits_between:1,15',
-//                Rule::unique('members', 'acc_no')->ignore($id,'code')->where(function ($query) use ($bank_code) {
-//                    return $query->where('bank_code', $bank_code);
-//                })
-//            ]
-//
-//        ]);
-//        if ($validator->fails()) {
-//            $errors = $validator->errors();
-//            return $this->sendError($errors->messages(),200);
-//        }
+        $validator = Validator::make($data, [
+            'acc_no' => [
+                'required',
+                'digits_between:1,15',
+                Rule::unique('members', 'acc_no')->ignore($id,'code')->where(function ($query) use ($bank_code) {
+                    return $query->where('bank_code', $bank_code);
+                })
+            ],
+            'tel' => [
+                'required',
+                'digits:10',
+                Rule::unique('members', 'tel')->ignore($id,'code')
+            ],
+            'user_name' => [
+                'required',
+                'digits:10',
+                Rule::unique('members', 'user_name')->ignore($id,'code')
+            ]
+
+        ]);
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+            return $this->sendError($errors->messages(),200);
+        }
 
 
         $chk = $this->memberRepository->find($id);
-        if(!$chk){
-            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        if (!$chk) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
 
-        if($data['user_pass']){
+        if ($data['wallet_id'] == '') {
+            $data['wallet_id'] = $chk->tel;
+        }
+
+        if ($data['user_pass']) {
             $data['password'] = Hash::make($data['user_pass']);
-        }else{
+        } else {
             unset($data['user_pass']);
         }
-        $data['name'] = $data['firstname'].' '.$data['lastname'];
+        $data['firstname'] = strip_tags($data['firstname']);
+        $data['lastname'] = strip_tags($data['lastname']);
+        $data['tel'] = strip_tags($data['tel']);
+        $data['wallet_id'] = strip_tags($data['wallet_id']);
+
+        $data['name'] = $data['firstname'] . ' ' . $data['lastname'];
         $data['user_update'] = $user;
         $this->memberRepository->update($data, $id);
 
@@ -667,32 +948,154 @@ class MemberController extends AppBaseController
 
     }
 
+    public function update($id, Request $request)
+    {
+        $google2fa = new Google2FA();
+
+        $acc_no = '';
+        $user   = $this->user()->name . ' ' . $this->user()->surname;
+
+        // ปลอดภัยไว้ก่อน กรณี data ไม่มีหรือไม่ใช่ JSON
+        $data = json_decode($request['data'] ?? '{}', true) ?: [];
+
+        // ===== 2FA (เปิดใช้เมื่อพร้อม) =====
+        // if ($this->user()->superadmin == 'N') {
+        //     $secret = $data['one_time_password'] ?? null;
+        //     $valid  = $google2fa->verifyKey($this->user()->google2fa_secret, $secret);
+        //     if (!$valid) {
+        //         return $this->sendError('รหัสยืนยันไม่ถูกต้อง', 200);
+        //     }
+        // }
+        // unset($data['one_time_password']);
+
+        // ---- Normalize เบื้องต้นให้ชัดก่อน validate ----
+        $bank_code = (int) ($data['bank_code'] ?? 0);
+
+        // acc_no: เหลือเลขล้วน ถ้าไม่ใช่ bank_code 18
+        if ($bank_code !== 18) {
+            $acc_no = \Illuminate\Support\Str::of($data['acc_no'] ?? '')
+                ->replaceMatches('/[^0-9]++/', '')
+                ->trim()
+                ->__toString();
+            $data['acc_no'] = $acc_no;
+        } else {
+            $acc_no = (string) ($data['acc_no'] ?? '');
+        }
+
+        // tel & user_name: บังคับเป็นเลข 10 หลัก (กันเคสมีขีด/เว้นวรรค/ตัวอักษรพิเศษ)
+        $data['tel'] = \Illuminate\Support\Str::of($data['tel'] ?? '')
+            ->replaceMatches('/[^0-9]++/', '')
+            ->trim()
+            ->__toString();
+
+        $data['user_name'] = \Illuminate\Support\Str::of($data['user_name'] ?? '')
+            ->replaceMatches('/[^0-9]++/', '')
+            ->trim()
+            ->__toString();
+
+        // acc_check / acc_bay ตามกติกาเดิม
+        if ($bank_code === 18) {
+            $acc_check = '';
+        } elseif ($bank_code === 4) {
+            $acc_check = substr($acc_no, -4);
+        } else {
+            $acc_check = substr($acc_no, -6);
+        }
+        $acc_bay = ($bank_code === 18) ? '' : substr($acc_no, -7);
+
+        $data['acc_check'] = $acc_check ?: '';
+        $data['acc_bay']   = $acc_bay   ?: '';
+
+        // ===== Rules (ไม่ยุ่งกับ deleted_at เพราะไม่มีคอลัมน์นี้) =====
+        $accNoRules = ['required', 'digits_between:1,15'];
+        $accNoRules[] = Rule::unique('members', 'acc_no')
+            ->ignore($id, 'code')
+            ->where(function ($q) use ($bank_code) {
+                return $q->where('bank_code', $bank_code);
+            });
+
+        $telRules = [
+            'required',
+            'digits:10',
+            Rule::unique('members', 'tel')
+                ->ignore($id, 'code'),
+        ];
+
+        $userNameRules = [
+            'required',
+            'digits:10',
+            Rule::unique('members', 'user_name')
+                ->ignore($id, 'code'),
+        ];
+
+        $validator = Validator::make($data, [
+            'acc_no'    => $accNoRules,
+            'tel'       => $telRules,
+            'user_name' => $userNameRules,
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors()->messages(), 200);
+        }
+
+        // ===== หา record ปัจจุบันด้วย code =====
+        $chk = $this->memberRepository->find($id); // โมเดลควร $primaryKey = 'code'
+        if (!$chk) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
+        }
+
+        // ===== ค่าเริ่มต้น & sanitize =====
+        $data['firstname'] = strip_tags($data['firstname'] ?? '');
+        $data['lastname']  = strip_tags($data['lastname']  ?? '');
+        $data['tel']       = trim(strip_tags($data['tel']   ?? ''));
+        $data['wallet_id'] = trim(strip_tags($data['wallet_id'] ?? ''));
+
+        if ($data['wallet_id'] === '') {
+            $data['wallet_id'] = $chk->tel; // fallback
+        }
+
+        if (!empty($data['user_pass'])) {
+            $data['password'] = \Illuminate\Support\Facades\Hash::make($data['user_pass']);
+        } else {
+            unset($data['user_pass']);
+        }
+
+        $data['name']        = trim(($data['firstname'] ?? '') . ' ' . ($data['lastname'] ?? ''));
+        $data['user_update'] = $user;
+
+        // ===== อัปเดต =====
+        $this->memberRepository->update($data, $id);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+    }
+
+
     public function loadData(Request $request)
     {
         $id = $request->input('id');
 
         $data = $this->memberRepository->find($id);
-        if(!$data){
-            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        if (!$data) {
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
 
-        return $this->sendResponse($data,'ดำเนินการเสร็จสิ้น');
+        return $this->sendResponse($data, 'ดำเนินการเสร็จสิ้น');
 
     }
 
     public function remark(Request $request)
     {
-        $id =   $id = $request->input('id');
+        $id = $id = $request->input('id');
         $responses = collect($this->memberRemarkRepository->loadRemark($id));
 
-        $responses = $responses->map(function ($items){
+        $responses = $responses->map(function ($items) {
             $item = (object)$items;
 
             return [
-                'date_create' =>  core()->formatDate($item->date_create,'d/m/y H:i:s'),
+                'date_create' => core()->formatDate($item->date_create, 'd/m/y H:i:s'),
                 'remark' => $item->remark,
                 'emp_code' => (is_null($item->emp) ? '' : $item->emp->user_name),
-                'action' => '<button type="button" class="btn btn-warning btn-xs icon-only" onclick="delSub('.$item->code.')"><i class="fa fa-times"></i></button>'
+                'action' => '<button type="button" class="btn btn-warning btn-xs icon-only" onclick="delSub(' . $item->code . ')"><i class="fa fa-times"></i></button>'
 
             ];
 
@@ -718,7 +1121,6 @@ class MemberController extends AppBaseController
         $this->memberRemarkRepository->create($data);
 
 
-
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
 
     }
@@ -741,10 +1143,127 @@ class MemberController extends AppBaseController
     }
 
 
-
-    public function export(UsersExport $export)
+    public function balance(Request $request)
     {
-        return Excel::download($export, 'member_'.date('Y-m-d').'.xlsx');
+        $id = $request->input('game_code');
+        $member_code = $request->input('member_code');
+
+        $item_list = $this->gameUserRepository->getOneUser($member_code, $id, true);
+        if ($item_list['success'] != true) {
+
+        }
+
+        $item_list = $item_list['data'];
+        $item = $item_list;
+
+
+        $game = [
+            'status' => '<span class="text-success">game</span>',
+            'game_id' => $item['game']['id'],
+            'game' => $item['game']['name'],
+            'member_code' => $item['member_code'],
+            'user_name' => $item['user_name'],
+            'user_pass' => $item['user_pass'],
+            'balance' => $item['balance'],
+            'promotion' => (!is_null($item['promotion']) ? $item['promotion']['name_th'] : '-'),
+            'turn' => ($item['pro_code'] > 0 ? $item['turnpro'] : '-'),
+            'amount_balance' => ($item['pro_code'] > 0 ? $item['amount_balance'] : '-'),
+            'withdraw_limit' => ($item['pro_code'] > 0 ? ($item['withdraw_limit'] > 0 ? $item['withdraw_limit'] : '-') : '-'),
+            'action' => '<button class="btn btn-xs icon-only ' . ($item['enable'] == 'Y' ? 'btn-warning' : 'btn-danger') . '" onclick="editdatasub(' . $item['code'] . "," . "'" . core()->flip($item['enable']) . "'" . "," . "'enable'" . ')">' . ($item['enable'] == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-trash"></i>') . '</button>',
+            'changepass' => '<button class="btn btn-xs icon-only btn-info" onclick="changegamepass(' . $item['code'] . ')"><i class="fa fa-edit"></i></button>',
+
+        ];
+
+
+        $result['list'] = $game;
+        return $this->sendResponseNew($result, 'ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function changegamepass(Request $request)
+    {
+        $id = $request->input('id');
+        $password = $request->input('password');
+        $game_user = $this->gameUserRepository->find($id);
+        if (!$game_user) {
+            $result['success'] = false;
+            $result['reload'] = false;
+            $result['msg'] = 'ไม่พบข้อมูลรหัสเกมของ สมาชิก';
+
+            return $this->sendResponseNew($result, 'ไม่พบข้อมูลรหัสเกมของ สมาชิก');
+
+        }
+
+        $game = $this->gameRepository->find($game_user->game_code);
+        if (!$game) {
+            $result['success'] = false;
+            $result['reload'] = false;
+            $result['msg'] = 'ไม่พบข้อมูลเกม';
+
+            return $this->sendResponseNew($result, 'ไม่พบข้อมูลเกม');
+
+        }
+
+        $member = $this->memberRepository->find($game_user->member_code);
+        if (!$member) {
+            $result['success'] = false;
+            $result['reload'] = false;
+            $result['msg'] = 'ไม่พบข้อมูลสมาชิก';
+
+            return $this->sendResponseNew($result, 'ไม่พบข้อมูลสมาชิก');
+
+        }
+
+        $user = collect($member)->toArray();
+        $user_pass = $password;
+
+        $result = $this->gameUserRepository->changeGamePass($game->code, $game_user['code'], [
+            'user_pass' => $user_pass,
+            'user_name' => $game_user['user_name'],
+            'name' => $user['name'],
+            'firstname' => $user['firstname'],
+            'lastname' => $user['lastname'],
+            'gender' => $user['gender'],
+            'birth_day' => $user['birth_day'],
+            'date_regis' => $user['date_regis'],
+        ]);
+
+        if ($result['success'] == true) {
+
+            $result['reload'] = true;
+
+        } else {
+            $result['reload'] = false;
+        }
+
+
+        return $this->sendResponseNew($result, $result['msg']);
+
+    }
+
+
+    public function export(Request $request)
+    {
+        $user = Auth::guard('admin')->user();
+        (new MembersExport)->queue('sheet','public')->chain([
+            new NotifyUserOfCompletedExport($user,'membersss.xlsx'),
+        ]);;
+
+        return back()->withSuccess('Export started!');
+//        $filename = str::random(20).".xlsx";
+//        (new MembersExport)->queue($filename, 'local')->chain([
+//            new NotifyUserOfCompletedExport($this->user(),$filename ),
+//        ]);
+//
+//        return json_encode([
+//            'message' => "You will receive email with download link once export is complete."
+//        ]);
+
+//        return Excel::store(new MembersExport, function(MembersExport $export) {
+//            return true;
+//        });
+//        new (new MembersExport)->store('members.xlsx');
+//        return Excel::store(new MembersExport, 'member_' . date('Y-m-d') . '.xlsx','public',\Maatwebsite\Excel\Excel::XLSX);
     }
 
 }

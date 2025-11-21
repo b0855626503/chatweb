@@ -3,7 +3,6 @@
 namespace Gametech\Admin\DataTables;
 
 
-
 use Gametech\Admin\Transformers\RpMemberIcTransformer;
 use Gametech\Member\Contracts\Member;
 use Gametech\Payment\Contracts\BankPayment;
@@ -63,7 +62,7 @@ class RpMemberIcDataTable extends DataTable
     public function query(Member $model)
     {
 
-
+        $config = core()->getConfigData();
         $user = request()->input('user_name');
         $startdate = request()->input('startDate');
         if (empty($startdate)) {
@@ -75,20 +74,34 @@ class RpMemberIcDataTable extends DataTable
             ->where('bills.enable', 'Y')
             ->where('bills.transfer_type', 1)
             ->when($startdate, function ($query, $startdate) {
-                $query->whereRaw(DB::raw("DATE_FORMAT(bills.date_create,'%Y-%m-%d') = ?"), [$startdate]);
+                $query->whereDate('bills.date_create', $startdate);
             })
-            ->groupBy(DB::raw('Date(bills.date_create)'))
-            ->groupBy('bills.member_code');
+            ->groupBy('bills.member_code', DB::raw('Date(bills.date_create)'));
 
-        $latestWD = DB::table('withdraws')
-            ->select('withdraws.member_code', DB::raw('SUM(withdraws.amount)  as withdraw_amount'), DB::raw("DATE_FORMAT(withdraws.date_approve,'%Y-%m-%d') as date_approve"))
-            ->where('withdraws.enable', 'Y')
-            ->where('withdraws.status', 1)
-            ->when($startdate, function ($query, $startdate) {
-                $query->whereRaw(DB::raw("DATE_FORMAT(withdraws.date_approve,'%Y-%m-%d') = ?"), [$startdate]);
-            })
-            ->groupBy(DB::raw('Date(withdraws.date_approve)'))
-            ->groupBy('withdraws.member_code');
+        if($config->seamless == 'Y') {
+            $latestWD = DB::table('withdraws_seamless','withdraws')
+                ->select('withdraws.member_code', DB::raw('SUM(withdraws.amount)  as withdraw_amount'), DB::raw("DATE_FORMAT(withdraws.date_approve,'%Y-%m-%d') as date_approve"))
+                ->where('withdraws.enable', 'Y')
+                ->where('withdraws.status', 1)
+                ->when($startdate, function ($query, $startdate) {
+                    $query->whereDate('withdraws.date_approve', $startdate);
+
+                })
+                ->groupBy('withdraws.member_code', DB::raw('Date(withdraws.date_approve)'));
+
+        }else{
+            $latestWD = DB::table('withdraws')
+                ->select('withdraws.member_code', DB::raw('SUM(withdraws.amount)  as withdraw_amount'), DB::raw("DATE_FORMAT(withdraws.date_approve,'%Y-%m-%d') as date_approve"))
+                ->where('withdraws.enable', 'Y')
+                ->where('withdraws.status', 1)
+                ->when($startdate, function ($query, $startdate) {
+                    $query->whereDate('withdraws.date_approve', $startdate);
+
+                })
+                ->groupBy('withdraws.member_code', DB::raw('Date(withdraws.date_approve)'));
+
+        }
+
 
         $latestBP = DB::table('bank_payment')
             ->select(DB::raw('MAX(bank_payment.code) as code'), DB::raw('MAX(bank_payment.date_approve) as date_approve'), DB::raw('SUM(bank_payment.value) as deposit_amount'), DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d') as date_cashback"), 'bank_payment.member_topup')
@@ -97,20 +110,20 @@ class RpMemberIcDataTable extends DataTable
             ->where('bank_payment.enable', 'Y')
             ->where('bank_payment.status', 1)
             ->when($startdate, function ($query, $startdate) {
-                $query->whereRaw(DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d') = ?"), [$startdate]);
+                $query->whereDate('bank_payment.date_approve', $startdate);
             })
-            ->groupBy(DB::raw('Date(bank_payment.date_approve)'))
-            ->groupBy('bank_payment.member_topup');
+            ->groupBy('bank_payment.member_topup', DB::raw('Date(bank_payment.date_approve)'));
 
 
-        return $model->newQuery()
 
+        return $model
             ->with(['member_ic' => function ($model) use ($startdate) {
-                $model->where('topupic','Y')->when($startdate, function ($query, $startdate) {
-                    $query->whereDate('members_ic.date_cashback',$startdate);
+                $model->where('topupic', 'Y')->when($startdate, function ($query, $startdate) {
+                    $query->whereDate('members_ic.date_cashback', $startdate);
                 });
             }])
-            ->select( 'membernew.user_name as upline_user','membernew.name as upline_name','members.upline_code', 'members.code as member_code', 'members.user_name as user_name', 'members.name as member_name', 'members.balance_free as balance', DB::raw('IFNULL(withdraw_amount,0) as withdraw_amount'), DB::raw('IFNULL(bonus_amount,0) as bonus_amount'), 'bank_payment.deposit_amount', 'bank_payment.date_cashback', 'bank_payment.date_approve', 'bank_payment.code')
+            ->where('members.upline_code','>', 0)
+            ->select('membernew.user_name as upline_user', 'membernew.name as upline_name', 'members.upline_code', 'members.code as member_code', 'members.user_name as user_name', 'members.name as member_name', 'members.balance as balance', DB::raw('IFNULL(withdraw_amount,0) as withdraw_amount'), DB::raw('IFNULL(bonus_amount,0) as bonus_amount'), 'bank_payment.deposit_amount', 'bank_payment.date_cashback', 'bank_payment.date_approve', 'bank_payment.code')
 //            ->with('member')
 //            ->active()->complete()->income()->where('bankstatus', 1)
 //            ->groupBy(DB::raw('Date(bank_payment.date_approve)'))
@@ -123,7 +136,7 @@ class RpMemberIcDataTable extends DataTable
 //            ->selectRaw([DB::raw('MAX(bank_payment.code) as code') , DB::raw('MAX(bank_payment.date_approve) as date_approve') , DB::raw('SUM(bank_payment.value) as deposit_amount') , DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d') as date_cashback")  , 'bank_payment.member_topup' , DB::raw('IFNULL(withdraws.amount,0) as withdraw_amount')] )
 //
             ->when($user, function ($query, $user) {
-                $query->where('members.user_name',$user);
+                $query->where('members.user_name', $user);
             })
 //
 //            ->when($user, function ($query, $user) {
@@ -137,11 +150,11 @@ class RpMemberIcDataTable extends DataTable
             })
             ->leftJoinSub($latestBi, 'bills', function ($join) {
                 $join->on('bank_payment.member_topup', '=', 'bills.member_code');
-                $join->on(DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d')"), '=', 'bills.date_approve');
+                $join->on(DB::raw('Date(bank_payment.date_approve)'), '=', 'bills.date_approve');
             })
             ->leftJoinSub($latestWD, 'withdraws', function ($join) {
                 $join->on('bank_payment.member_topup', '=', 'withdraws.member_code');
-                $join->on(DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d')"), '=', 'withdraws.date_approve');
+                $join->on(DB::raw('Date(bank_payment.date_approve)'), '=', 'withdraws.date_approve');
             });
 
 
@@ -175,8 +188,8 @@ class RpMemberIcDataTable extends DataTable
 
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'
@@ -230,6 +243,7 @@ class RpMemberIcDataTable extends DataTable
             ['data' => 'date_approve', 'name' => 'bills.user_name', 'title' => 'วันที่ฝากล่าสุด', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'deposit_amount', 'name' => 'bills.credit', 'title' => 'ยอดฝาก', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'withdraw_amount', 'name' => 'bills.credit', 'title' => 'ยอดถอน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'balance', 'name' => 'bills.credit', 'title' => 'ยอดเงินปัจจุบัน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'bonus_amount', 'name' => 'bills.pro_name', 'title' => 'ยอดรับโบนัส', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'balance_amount', 'name' => 'bills.pro_name', 'title' => 'คิดเป็นยอดเสีย', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
 //            ['data' => 'upline_code', 'name' => 'bills.credit_balance', 'title' => 'Upline Code', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
@@ -237,7 +251,7 @@ class RpMemberIcDataTable extends DataTable
             ['data' => 'upline_user', 'name' => 'bills.credit_balance', 'title' => 'Upline ID', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'ic', 'name' => 'bills.credit_balance', 'title' => 'ได้รับ IC', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'status', 'name' => 'bills.credit_balance', 'title' => 'สถานะรายการ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'action', 'name' => 'bills.credit_balance', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%'],
+            ['data' => 'action', 'name' => 'bills.credit_balance', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];
     }
 

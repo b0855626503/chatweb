@@ -13,6 +13,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -158,6 +159,13 @@ class CreditTransferGameController extends AppBaseController
             return redirect()->route('customer.credit.transfer.game.index');
         }
 
+//        $lock = Cache::lock('transfer_credit_out', 5);
+//
+//        if ($lock->get()){
+//            $lock->release();
+//            session()->flash('error', 'รออีก 5 วินาที ค่อยทำการโยกใหม่นะ');
+//            return redirect()->route('customer.credit.transfer.game.index');
+//        }
 
         $encrypted = $request->input('gametoken');
 
@@ -200,8 +208,15 @@ class CreditTransferGameController extends AppBaseController
         $item = $this->checkPro($game, $this->id(), $promotion_id, $amount, $balance);
 
 
+        if (Cache::has('transfer_'.$user_id)) {
+            session()->flash('error', 'รออีก 10 วินาที ค่อยทำการโยกใหม่นะ');
+            return redirect()->route('customer.credit.transfer.game.index');
+        }
+
+        Cache::put('transfer_'.$user_id, 'lock', now()->addSeconds(10));
+
         $response = $this->billFreeRepository->transferGame($item);
-        if ($response['success'] == false) {
+        if ($response['success'] === false) {
             session()->flash('error', $response['msg']);
             return redirect()->route('customer.credit.transfer.game.index');
         }
@@ -225,6 +240,7 @@ class CreditTransferGameController extends AppBaseController
             'wallet' => $item['wallet'],
             'date_create' => core()->formatDate($bills['date_create'], 'd/m/y H:i:s')
         ]);
+
 
 
         session()->flash('bills', $bills);

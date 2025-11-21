@@ -10,14 +10,15 @@
         "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js"
     },
     "devDependencies": {
+        "laravel-echo": "^1.12.0",
         "laravel-mix": "^5.0.7",
         "laravel-mix-merge-manifest": "^0.1.2",
-        "sass": "^1.32.12",
-        "sass-loader": "^8.0.2",
+        "sass": "^1.27.0",
+        "sass-loader": "7.*",
         "vue-template-compiler": "^2.6.12"
     },
     "dependencies": {
-        "admin-lte": "^3.1.0-rc",
+        "admin-lte": "^3.1.0",
         "axios": "^0.21.1",
         "bootstrap": "^4.5.3",
         "bootstrap-vue": "^2.21.2",
@@ -27,8 +28,7 @@
         "datatables.net-responsive-bs4": "^2.2.7",
         "egalink-toasty.js": "^1.5.5",
         "@fortawesome/fontawesome-free": "^5.15.1",
-        "jquery": "^3.5.1",
-        "laravel-echo": "^1.10.0",
+        "jquery": "3.6.0",
         "lodash": "^4.17.20",
         "@popperjs/core": "^2.6.0",
         "pusher-js": "5.1.1",
@@ -40,6 +40,8 @@
         "vue-carousel": "^0.18.0",
         "vue-echo": "^1.0.2",
         "vue-echo-laravel": "^0.0.6",
-        "vue-owl-carousel2": "^2.0.7"
+        "vue-owl-carousel2": "^2.0.7",
+        "vue-toast-notification": "^0.6.2",
+        "vee-validate": "^2.2.15"
     }
 }

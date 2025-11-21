@@ -111,9 +111,9 @@ class BankinController extends AppBaseController
             return $this->sendSuccess('ไม่พบข้อมูลดังกล่าว');
         }
 
-        if($chk->autocheck == 'W'){
-            return $this->sendSuccess('รายการนี้ กำลัง รอเติมเงินผ่านระบบ Auto อยู่');
-        }
+//        if($chk->autocheck == 'W'){
+//            return $this->sendSuccess('รายการนี้ กำลัง รอเติมเงินผ่านระบบ Auto อยู่');
+//        }
 
         if($chk->autocheck == 'Y' && $chk->status == 1){
             return $this->sendSuccess('รายการนี้ เติมสำเร็จไปแล้ว');
@@ -129,6 +129,36 @@ class BankinController extends AppBaseController
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
 
+    }
+
+    public function approve(Request $request)
+    {
+        $ip = $request->ip();
+        $user = $this->user()->name.' '.$this->user()->surname;
+        $id = $request->input('id');
+
+        $chk = $this->repository->find($id);
+        if(!$chk){
+            return $this->sendSuccess('ไม่พบข้อมูลดังกล่าว');
+        }
+
+        if($chk->autocheck == 'W'){
+            return $this->sendSuccess('รายการนี้ กำลัง รอเติมเงินผ่านระบบ Auto อยู่');
+        }
+
+        if($chk->autocheck == 'Y' && $chk->status == 1){
+            return $this->sendSuccess('รายการนี้ เติมสำเร็จไปแล้ว');
+        }
+
+        $data['emp_topup'] = $this->id();
+        $data['autocheck'] = 'W';
+        $data['ip_admin'] = $ip;
+        $data['remark_admin'] = 'รอระบบเติมอัตโนมัติ อนุมัติรายการเติมเงินโดย Staff : '.$user;
+        $data['user_create'] = 'รอระบบเติมอัตโนมัติ อนุมัติรายการเติมเงินโดย Staff : '.$user;
+        $data['user_update'] = $user;
+        $this->repository->update($data, $id);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
     }
 
 

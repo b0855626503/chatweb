@@ -13,6 +13,7 @@ class BonusRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Payment\Contracts\Bonus';
+        return \Gametech\Payment\Models\Bonus::class;
+
     }
 }

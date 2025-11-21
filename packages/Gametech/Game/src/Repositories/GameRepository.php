@@ -16,7 +16,8 @@ class GameRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Game\Contracts\Game';
+        return \Gametech\Game\Models\Game::class;
+
     }
 
     public function getGameUserById($id, $update = true)
@@ -26,15 +27,30 @@ class GameRepository extends Repository
 
         }])->findWhere(['status_open' => 'Y', 'enable' => 'Y', ['filepic', '<>', '']]);
 
+//        dd($results);
+
         if ($update) {
 
             foreach ($results as $i => $result) {
                 if ($result->gameUser) {
                     $response = app('Gametech\Game\Repositories\GameUserRepository')->checkBalance($result->id, $result->gameUser->user_name);
-                    if ($response['success'] == true) {
+                    $results[$i]['new'] = false;
+                    if ($response['success'] === true) {
+
+                        $results[$i]['success'] = true;
+                        $results[$i]['connect'] = $response['connect'];
                         $result->gameUser->balance = $response['score'];
                         $result->gameUser->save();
+                    }else{
+                        $results[$i]['success'] = false;
+                        $results[$i]['connect'] = $response['connect'];
+
                     }
+                }else{
+                    $results[$i]['new'] = true;
+                    $results[$i]['success'] = true;
+                    $results[$i]['connect'] = true;
+
                 }
             }
         }
@@ -47,7 +63,7 @@ class GameRepository extends Repository
         $results = $this->orderBy('sort')->with(['gameUserFree' => function ($query) use ($id) {
             $query->where('member_code', $id)->active();
 
-        }])->findWhere(['status_open' => 'Y', 'enable' => 'Y', ['filepic', '<>', '']]);
+        }])->findWhere(['status_open' => 'Y', 'enable' => 'Y', 'cashback' => 'Y' , ['filepic', '<>', '']]);
 
 
         if ($update) {
@@ -55,7 +71,7 @@ class GameRepository extends Repository
             foreach ($results as $i => $result) {
                 if ($result->gameUserFree) {
                     $response = app('Gametech\Game\Repositories\GameUserFreeRepository')->checkBalance($result->id, $result->gameUserFree->user_name);
-                    if ($response['success'] == true) {
+                    if ($response['success'] === true) {
                         $result->gameUserFree->balance = $response['score'];
                         $result->gameUserFree->save();
                     }

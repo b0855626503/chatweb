@@ -24,6 +24,7 @@
                 timePicker24Hour: false,
                 timePickerSeconds: false,
                 startDate: moment().subtract(1, 'days'),
+                maxDate: moment().subtract(1, 'days'),
                 autoApply: true,
                 locale: {
                     format: 'DD/MM/YYYY'

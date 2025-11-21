@@ -2,7 +2,8 @@
     @include('admin::layouts.datatables_css')
 @endsection
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('vendor/daterangepicker/daterangepicker.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.0.5/daterangepicker.css" integrity="sha512-gp+RQIipEa1X7Sq1vYXnuOW96C4704yI1n0YB9T/KqdvqaEgL6nAuTSrKufUX3VBONq/TPuKiXGLVgBKicZ0KA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+{{--    <link ref="stylesheet" href="{{ asset('vendor/daterangepicker/daterangepicker.css') }}">--}}
 @endpush
 
 {!! $dataTable->table(['width' => '100%', 'class' => 'table table-striped table-sm']) !!}
@@ -67,6 +68,14 @@
 
                 let html = '<tr>';
                 html += '<th style="text-align:right;width:80%;color:blue">รวมยอดฝาก (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().deposit + '</th>';
+                html += '</tr>';
+                html += '<tr>';
+                html += '<tr>';
+                html += '<th style="text-align:right;width:80%;color:blue">จำนวนสมาชิก (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().member_count + '</th>';
+                html += '</tr>';
+                html += '<tr>';
+                html += '<tr>';
+                html += '<th style="text-align:right;width:80%;color:blue">รวมค่าธรรมเนียม (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().fees_sum + '</th>';
                 html += '</tr>';
                 html += '<tr>';
 

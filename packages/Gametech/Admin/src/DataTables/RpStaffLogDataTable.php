@@ -3,10 +3,7 @@
 namespace Gametech\Admin\DataTables;
 
 use Gametech\Admin\Transformers\RpStaffLogTransformer;
-use Gametech\Admin\Transformers\RpUserLogTransformer;
 use Gametech\LogAdmin\Contracts\Activity;
-use Gametech\LogUser\Contracts\ActivityUser;
-use Gametech\Payment\Contracts\BonusSpin;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder;
@@ -26,7 +23,6 @@ class RpStaffLogDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-
             ->setTransformer(new RpStaffLogTransformer);
 
     }
@@ -41,6 +37,8 @@ class RpStaffLogDataTable extends DataTable
         $ip = request()->input('ip');
         $bonus = request()->input('bonus_name');
         $user = request()->input('user_name');
+        $description = request()->input('description');
+        $details = request()->input('details');
         $startdate = request()->input('startDate');
         $enddate = request()->input('endDate');
         if (empty($startdate)) {
@@ -55,6 +53,12 @@ class RpStaffLogDataTable extends DataTable
             ->select('logger_admin_activity.*')->withCasts([
                 'created_at' => 'datetime:Y-m-d H:00'
             ])
+            ->when($details, function ($query, $details)  {
+                $query->where('details','like', "%$details%");
+            })
+            ->when($description, function ($query, $description)  {
+                $query->where('description','like', "%$description%");
+            })
             ->when($startdate, function ($query, $startdate) use ($enddate) {
                 $query->whereBetween('created_at', array($startdate, $enddate));
             })
@@ -94,8 +98,8 @@ class RpStaffLogDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'

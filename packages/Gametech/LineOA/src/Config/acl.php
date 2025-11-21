@@ -2,9 +2,9 @@
 
 return [
     [
-        'key'   => 'lineoa',
-        'name'  => 'LineOA',
-        'route' => 'admin.lineoa.index',
-        'sort'  => 2
-    ]
+        'key' => 'line-oa',
+        'name' => 'Line Chat',
+        'route' => 'admin.line-oa.chat',
+        'sort' => 88,
+    ],
 ];

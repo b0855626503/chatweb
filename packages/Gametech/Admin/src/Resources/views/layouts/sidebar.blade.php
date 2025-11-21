@@ -2,7 +2,7 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     <a href="javascript:void(0)" class="brand-link {{ ($config->admin_brand_color?$config->admin_brand_color:'navbar-gray-dark') }}">
-        {!! core()->showImg('logo.png','img','','','brand-image img-circle elevation-3') !!}
+        {!! core()->showImg($config->logo,'img','','','brand-image img-circle elevation-3') !!}
         <span class="brand-text font-weight-light">{{ config('app.name') }}</span>
     </a>
 

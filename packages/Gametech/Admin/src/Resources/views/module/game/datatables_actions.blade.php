@@ -13,6 +13,7 @@
             <a class="dropdown-item" href="javascript:void(0)" onclick="debug({{ $code }},'balance')">View Balance</a>
             <a class="dropdown-item" href="javascript:void(0)" onclick="debug({{ $code }},'deposit')">Deposit</a>
             <a class="dropdown-item" href="javascript:void(0)" onclick="debug({{ $code }},'withdraw')">Withdraw</a>
+            <a class="dropdown-item" href="javascript:void(0)" onclick="debug({{ $code }},'login')">Login</a>
             <div class="dropdown-divider"></div>
             <h6 class="dropdown-header">Free User</h6>
             <a class="dropdown-item" href="javascript:void(0)" onclick="debug_free({{ $code }},'add')">Add User</a>

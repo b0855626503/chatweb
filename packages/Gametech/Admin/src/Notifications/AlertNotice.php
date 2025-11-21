@@ -21,6 +21,11 @@ class AlertNotice extends Notification implements ShouldBroadcast
         return ['broadcast'];
     }
 
+    public function broadcastType()
+    {
+        return 'broadcast.message';
+    }
+
     public function toBroadcast($notifiable): BroadcastMessage
     {
         return new BroadcastMessage([

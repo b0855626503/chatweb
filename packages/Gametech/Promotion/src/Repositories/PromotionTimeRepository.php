@@ -8,6 +8,18 @@ use Gametech\Core\Eloquent\Repository;
 class PromotionTimeRepository extends Repository
 {
 
+
+    public function promotionBetween($pro_code,$amount)
+    {
+        $time = now()->toTimeString();
+        $result = $this->orderBy('code','desc')->where('pro_code',$pro_code)->active()->whereRaw("? between deposit_amount and deposit_stop and ? between time_start and time_stop",[$amount,$time]);
+
+        if($result->exists()){
+            return ['amount' => ($result->value('amount') * 1) ];
+        }
+        return ['amount' => 0 ];
+    }
+
     public function promotion($id, $datenow)
     {
 
@@ -35,6 +47,7 @@ class PromotionTimeRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Promotion\Contracts\PromotionTime';
+        return \Gametech\Promotion\Models\PromotionTime::class;
+
     }
 }

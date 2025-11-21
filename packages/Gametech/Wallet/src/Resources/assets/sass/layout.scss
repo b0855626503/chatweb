@@ -110,6 +110,25 @@
     color: #fff;
 }
 
+.exchange-single {
+    border-radius: 50%;
+    display: block;
+    width: 80px;
+    height: 80px;
+    position: absolute;
+    border: 2px solid #ccc;
+    bottom: 0px;
+    color: #033!important;
+    box-shadow: 2px 2px 5px 1px rgb(0 0 0 / 40%);
+}
+
+.exchange-single img {
+    color: #fff;
+    width: 65px;
+    height: 65px;
+    margin-top: 5px;
+}
+
 .list-inline-item p {
     // color:#091735 ;
     margin: 0;

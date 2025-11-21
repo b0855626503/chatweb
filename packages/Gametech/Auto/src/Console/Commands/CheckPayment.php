@@ -51,12 +51,15 @@ class CheckPayment extends Command
 
 
         foreach ($payments as $i => $payment) {
-            CheckPaymentsJob::dispatchNow($id, $payment);
+            CheckPaymentsJob::dispatch($id, $payment)->onQueue('topup');
             $bar->advance();
 
         }
 
         $bar->finish();
+
+//        $this->call("payment:emp-topup 50");
+        return 0;
     }
 
 

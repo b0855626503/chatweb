@@ -6,8 +6,10 @@ namespace Gametech\Admin\Http\Controllers;
 use Gametech\Admin\DataTables\BankAccountInDataTable;
 use Gametech\Payment\Repositories\BankAccountRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use PragmaRX\Google2FA\Google2FA;
 
 
 class BankAccountInController extends AppBaseController
@@ -73,17 +75,19 @@ class BankAccountInController extends AppBaseController
 
     public function create(Request $request)
     {
+        $google2fa = new Google2FA();
         $user = $this->user()->name.' '.$this->user()->surname;
         $data = json_decode($request['data'],true);
 
-
+        $banks = $data['banks'];
+        $acc_no = $data['acc_no'];
 
        $validator = Validator::make($data, [
            'acc_no' => [
                'required',
-               'digits_between:1,14',
-               Rule::unique('banks_account', 'acc_no')->where(function ($query) {
-                   return $query->where('bank_type', 1);
+               'digits_between:1,20',
+               Rule::unique('banks_account')->where(function ($query) use ($banks,$acc_no) {
+                   return $query->where('banks', $banks)->where('acc_no', $acc_no)->where('bank_type', 1);
                })
            ]
         ]);
@@ -92,8 +96,21 @@ class BankAccountInController extends AppBaseController
             return $this->sendError($errors->messages(),200);
         }
 
+        $secret = $data['one_time_password'];
+
+        if ($this->user()->superadmin == 'N') {
+
+            $valid = $google2fa->verifyKey($this->user()->google2fa_secret, $secret);
+            if (!$valid) {
+                return $this->sendError('รหัสยืนยันไม่ถูกต้อง', 200);
+            }
+        }
+
+        unset($data['one_time_password']);
 
 
+
+        $data['balance'] = 0;
         $data['user_create'] = $user;
         $data['user_update'] = $user;
         $data['bank_type'] = 1;
@@ -102,7 +119,7 @@ class BankAccountInController extends AppBaseController
 
 //        dd($data);
 
-        $this->repository->create($data);
+        $this->repository->createnew($data);
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
 
@@ -110,17 +127,22 @@ class BankAccountInController extends AppBaseController
 
     public function update($id,Request $request)
     {
+        $google2fa = new Google2FA();
         $user = $this->user()->name.' '.$this->user()->surname;
 
         $data = json_decode($request['data'],true);
 
+        $banks = $data['banks'];
+        $acc_no = $data['acc_no'];
+
         $validator = Validator::make($data, [
             'acc_no' => [
                 'required',
-                'digits_between:1,14',
-                Rule::unique('banks_account', 'acc_no')->ignore($id,'code')->where(function ($query) {
-                    return $query->where('bank_type', 1);
-                })
+                'digits_between:1,20',
+                Rule::unique('banks_account')->where(function ($query) use ($banks,$acc_no) {
+                    return $query->where('banks', $banks)->where('acc_no', $acc_no)->where('bank_type', 1);
+                })->ignore($id,'code')
+
             ]
         ]);
         if ($validator->fails()) {
@@ -128,6 +150,17 @@ class BankAccountInController extends AppBaseController
             return $this->sendError($errors->messages(),200);
         }
 
+        $secret = $data['one_time_password'];
+
+        if ($this->user()->superadmin == 'N') {
+
+            $valid = $google2fa->verifyKey($this->user()->google2fa_secret, $secret);
+            if (!$valid) {
+                return $this->sendError('รหัสยืนยันไม่ถูกต้อง', 200);
+            }
+        }
+
+        unset($data['one_time_password']);
 
         $chk = $this->repository->find($id);
         if(!$chk){
@@ -135,7 +168,7 @@ class BankAccountInController extends AppBaseController
         }
 
         $data['user_update'] = $user;
-        $this->repository->update($data, $id);
+        $this->repository->updatenew($data, $id);
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
 
@@ -143,6 +176,7 @@ class BankAccountInController extends AppBaseController
 
     public function edit(Request $request)
     {
+        $success = true;
         $user = $this->user()->name.' '.$this->user()->surname;
         $id = $request->input('id');
         $status = $request->input('status');
@@ -154,6 +188,78 @@ class BankAccountInController extends AppBaseController
         $chk = $this->repository->find($id);
         if(!$chk){
             return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        }
+
+//        if($method === 'status_auto' && $chk['banks'] === 11 && $chk['local'] === 'N'){
+//            if($status == 'Y'){
+//
+//                $url = 'https://bays.z7z.work/'.$chk['acc_no'].'/transection.php?bot-status=start';
+//               $response = Http::timeout(15)->withHeaders([
+//                    'access-key' => '0dbbe3a5-8a3d-4505-9a8e-5790b4a6c90d'
+//                ])->post($url);
+//               if(!$response->successful()){
+//                   return $this->sendError('ไม่สามารถเปิดการทำงานบอทดึงยอดได้');
+//               }
+//
+//            }else{
+//
+//                $url = 'https://bays.z7z.work/'.$chk['acc_no'].'/transection.php?bot-status=stop';
+//                $response = Http::timeout(15)->withHeaders([
+//                    'access-key' => '0dbbe3a5-8a3d-4505-9a8e-5790b4a6c90d'
+//                ])->post($url);
+//                if(!$response->successful()){
+//                    return $this->sendError('ไม่สามารถปิดการทำงานบอทดึงยอดได้');
+//                }
+//
+//            }
+//        }
+
+        if($method === 'status_auto' && $chk['banks'] === 2 && $chk['local'] === 'N'){
+            if($status == 'Y'){
+
+//                $url = 'https://api-kbank.me2me.biz/kbiz/'.$chk['acc_no'].'/status?action=start';
+//                $response = Http::timeout(15)->withHeaders([
+//                    'access-key' => 'b499fe72-a9fb-4a6a-817d-c096c39a6896'
+//                ])->post($url);
+//                if(!$response->successful()){
+//                    return $this->sendError('ไม่สามารถเปิดการทำงานบอทดึงยอดได้');
+//                }
+
+            }else{
+
+//                $url = 'https://api-kbank.me2me.biz/kbiz/'.$chk['acc_no'].'/status?action=stop';
+//                $response = Http::timeout(15)->withHeaders([
+//                    'access-key' => 'b499fe72-a9fb-4a6a-817d-c096c39a6896'
+//                ])->post($url);
+//                if(!$response->successful()){
+//                    return $this->sendError('ไม่สามารถปิดการทำงานบอทดึงยอดได้');
+//                }
+
+            }
+        }
+
+        if($method === 'status_auto' && $chk['banks'] === 4 && $chk['local'] === 'N'){
+            if($status == 'Y'){
+
+//                $url = 'https://api-scb.me2me.biz/'.$chk['acc_no'].'/status?action=start';
+//                $response = Http::timeout(15)->withHeaders([
+//                    'access-key' => '8e3b25e3c19b'
+//                ])->post($url);
+//                if(!$response->successful()){
+//                    return $this->sendError('ไม่สามารถเปิดการทำงานบอทดึงยอดได้');
+//                }
+
+            }else{
+
+//                $url = 'https://api-scb.me2me.biz/'.$chk['acc_no'].'/status?action=stop';
+//                $response = Http::timeout(15)->withHeaders([
+//                    'access-key' => '8e3b25e3c19b'
+//                ])->post($url);
+//                if(!$response->successful()){
+//                    return $this->sendError('ไม่สามารถปิดการทำงานบอทดึงยอดได้');
+//                }
+
+            }
         }
 
         $data['user_update'] = $user;

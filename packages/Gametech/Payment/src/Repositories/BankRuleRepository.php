@@ -13,7 +13,8 @@ class BankRuleRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Payment\Contracts\BankRule';
+        return \Gametech\Payment\Models\BankRule::class;
+
     }
 
     public function getRule()

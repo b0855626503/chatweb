@@ -56,6 +56,15 @@ return [
         'badge-color' => 'badge-warning',
         'status' => 1
     ], [
+        'key' => 'fix',
+        'name' => 'การแก้ไขเบื้องต้น',
+        'route' => 'admin.fix.index',
+        'sort' => 8,
+        'icon-class' => 'fa-tachometer-alt',
+        'badge' => 0,
+        'badge-color' => 'badge-purple',
+        'status' => 0
+    ], [
         'key' => 'payment',
         'name' => 'ค่าใช้จ่าย',
         'route' => 'admin.payment.index',
@@ -72,7 +81,7 @@ return [
         'icon-class' => 'fa-user',
         'badge' => 1,
         'badge-color' => 'badge-warning',
-        'status' => 0
+        'status' => 1
     ], [
         'key' => 'wallet',
         'name' => 'Members',
@@ -290,10 +299,19 @@ return [
         'badge-color' => 'badge-primary',
         'status' => 1
     ], [
+        'key' => 'mep.rp_member_ref',
+        'name' => 'ที่มาการสมัคร',
+        'route' => 'admin.rp_member_ref.index',
+        'sort' => 4,
+        'icon-class' => 'fa-university',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
         'key' => 'mep.rp_online_behavior',
         'name' => 'Online Behavior',
         'route' => 'admin.rp_online_behavior.index',
-        'sort' => 4,
+        'sort' => 5,
         'icon-class' => 'fa-university',
         'badge' => 0,
         'badge-color' => 'badge-primary',
@@ -302,7 +320,7 @@ return [
         'key' => 'mep.rp_user_log',
         'name' => 'Activity Log',
         'route' => 'admin.rp_user_log.index',
-        'sort' => 5,
+        'sort' => 6,
         'icon-class' => 'fa-university',
         'badge' => 0,
         'badge-color' => 'badge-primary',
@@ -348,6 +366,33 @@ return [
         'name' => 'สรุปยอดค่าใช้จ่าย',
         'route' => 'admin.rp_sum_payment.index',
         'sort' => 4,
+        'icon-class' => 'fa-university',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'mon.rp_top_payment',
+        'name' => 'ฝากถอน 100 อันดับ',
+        'route' => 'admin.rp_top_payment.index',
+        'sort' => 5,
+        'icon-class' => 'fa-university',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'mon.rp_no_refill',
+        'name' => 'สมาชิกไม่เติมเงิน',
+        'route' => 'admin.rp_no_refill.index',
+        'sort' => 6,
+        'icon-class' => 'fa-university',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'mon.rp_summary',
+        'name' => 'สรุปทั้งหมด',
+        'route' => 'admin.rp_summary.index',
+        'sort' => 7,
         'icon-class' => 'fa-university',
         'badge' => 0,
         'badge-color' => 'badge-primary',
@@ -470,19 +515,10 @@ return [
         'badge-color' => 'badge-primary',
         'status' => 1
     ], [
-        'key' => 'st.bank_rule',
-        'name' => 'การมองเห็นธนาคาร',
-        'route' => 'admin.bank_rule.index',
-        'sort' => 5,
-        'icon-class' => '',
-        'badge' => 0,
-        'badge-color' => 'badge-primary',
-        'status' => 1
-    ], [
         'key' => 'st.spin',
         'name' => 'วงล้อมหาสนุก',
         'route' => 'admin.spin.index',
-        'sort' => 6,
+        'sort' => 5,
         'icon-class' => '',
         'badge' => 0,
         'badge-color' => 'badge-primary',
@@ -491,7 +527,43 @@ return [
         'key' => 'st.reward',
         'name' => 'ตั้งค่าของรางวัล',
         'route' => 'admin.reward.index',
+        'sort' => 6,
+        'icon-class' => '',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'st.notice',
+        'name' => 'ตั้งค่าข้อความวิ่ง',
+        'route' => 'admin.notice.index',
         'sort' => 7,
+        'icon-class' => '',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'st.notice_new',
+        'name' => 'ตั้งค่าประกาศ',
+        'route' => 'admin.notice_new.index',
+        'sort' => 8,
+        'icon-class' => '',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'st.coupon',
+        'name' => 'ตั้งค่าคูปอง',
+        'route' => 'admin.coupon.index',
+        'sort' => 9,
+        'icon-class' => '',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'st.slide',
+        'name' => 'ตั้งค่า สไลด์',
+        'route' => 'admin.slide.index',
+        'sort' => 9,
         'icon-class' => '',
         'badge' => 0,
         'badge-color' => 'badge-primary',
@@ -528,6 +600,15 @@ return [
         'name' => 'Staff Activity Log',
         'route' => 'admin.rp_staff_log.index',
         'sort' => 3,
+        'icon-class' => '',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1
+    ], [
+        'key' => 'dev.rp_log',
+        'name' => 'Log',
+        'route' => 'admin.rp_log.index',
+        'sort' => 4,
         'icon-class' => '',
         'badge' => 0,
         'badge-color' => 'badge-primary',

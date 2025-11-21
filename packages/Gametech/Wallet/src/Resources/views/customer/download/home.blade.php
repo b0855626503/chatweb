@@ -32,13 +32,22 @@
 
                                             </p>
                                             @if($item['link_ios'])
-                                                <button class="btn btn-sm btn-success btn-block" @click.prevent="onOpen('{{ $item['link_ios'] }}')"><i class="fa fa-apple"></i> iOS</button>
+                                                <button class="btn btn-sm btn-success btn-block"
+                                                        @click.prevent="onOpen('{{ $item['link_ios'] }}')"><i
+                                                        class="fa fa-apple"></i> iOS
+                                                </button>
                                             @endif
                                             @if($item['link_android'])
-                                                <button class="btn btn-sm btn-primary btn-block" @click.prevent="onOpen('{{ $item['link_android'] }}')"><i class="fa fa-android"></i> Android</button>
+                                                <button class="btn btn-sm btn-primary btn-block"
+                                                        @click.prevent="onOpen('{{ $item['link_android'] }}')"><i
+                                                        class="fa fa-android"></i> Android
+                                                </button>
                                             @endif
                                             @if($item['link_web'])
-                                                <button class="btn btn-sm btn-theme btn-block" @click.prevent="onOpen('{{ $item['link_web'] }}')"><i class="fa fa-link"></i> Web</button>
+                                                <button class="btn btn-sm btn-theme btn-block"
+                                                        @click.prevent="onOpen('{{ $item['link_web'] }}')"><i
+                                                        class="fa fa-link"></i> Web
+                                                </button>
                                             @endif
                                         </div>
                                     @endforeach

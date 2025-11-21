@@ -3,8 +3,6 @@
 namespace Gametech\Admin\DataTables;
 
 
-
-
 use Gametech\Admin\Transformers\ReferTransformer;
 use Gametech\Core\Contracts\Refer;
 use Yajra\DataTables\DataTableAbstract;
@@ -54,7 +52,7 @@ class ReferDataTable extends DataTable
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->parameters([
-                'dom'       => 'Bfrtip',
+                'dom' => 'Bfrtip',
 
                 'processing' => true,
                 'serverSide' => true,
@@ -65,14 +63,14 @@ class ReferDataTable extends DataTable
                 'searching' => false,
                 'deferRender' => true,
                 'retrieve' => true,
-'ordering' => true,
+                'ordering' => true,
 
-                'order'     => [[0, 'desc']],
-                'buttons'   => [
+                'order' => [[0, 'desc']],
+                'buttons' => [
                     'pageLength'
                 ],
                 'columnDefs' => [
-                    [ 'targets' => '_all' , 'className' => 'text-nowrap']
+                    ['targets' => '_all', 'className' => 'text-nowrap']
                 ]
             ]);
     }
@@ -85,10 +83,10 @@ class ReferDataTable extends DataTable
     protected function getColumns()
     {
         return [
-            ['data' => 'code' , 'name' => 'refers.code' , 'title' => '#' , 'orderable' => true , 'searchable' => true , 'className' => 'text-center text-nowrap'],
-            ['data' => 'name' , 'name' => 'refers.name' , 'title' => 'หัวข้อ' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'enable' , 'name' => 'refers.enable' , 'title' => 'เปิดใช้งาน' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'action' , 'name' => 'action' , 'title' => 'Action' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
+            ['data' => 'code', 'name' => 'refers.code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'name', 'name' => 'refers.name', 'title' => 'หัวข้อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+            ['data' => 'enable', 'name' => 'refers.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];
     }
 

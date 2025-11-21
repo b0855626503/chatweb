@@ -2,13 +2,11 @@
 
 namespace Gametech\Admin\DataTables;
 
-use Gametech\Admin\Transformers\RpBillTransformer;
 use Gametech\Admin\Transformers\RpTopProTransformer;
 use Gametech\Payment\Contracts\Bill;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
-use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Html\Builder;
 use Yajra\DataTables\Services\DataTable;
 
@@ -29,21 +27,21 @@ class RpTopProDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-
-            ->with('p1', function () use ($query) {
-                return (clone $query)->where('pro_code', 1)->count();
+            ->with('count', function () use ($query) {
+                return (clone $query)->count();
             })
-            ->with('p2', function () use ($query) {
-                return (clone $query)->where('pro_code', 2)->count();
+            ->with('sum', function () use ($query) {
+                return (clone $query)->sum('credit_bonus');
             })
-            ->with('p4', function () use ($query) {
-                return (clone $query)->where('pro_code', 4)->count();
-            })
-            ->with('p6', function () use ($query) {
-                return (clone $query)->where('pro_code', 6)->count();
-            })
-
-
+//            ->with('p2', function () use ($query) {
+//                return (clone $query)->where('pro_code', 2)->count();
+//            })
+//            ->with('p4', function () use ($query) {
+//                return (clone $query)->where('pro_code', 4)->count();
+//            })
+//            ->with('p6', function () use ($query) {
+//                return (clone $query)->where('pro_code', 6)->count();
+//            })
             ->setTransformer(new RpTopProTransformer);
 
     }
@@ -87,10 +85,8 @@ class RpTopProDataTable extends DataTable
 //            });
 
 
-
         $first = DB::table('payments_promotion')
-
-            ->where('payments_promotion.enable','Y')
+            ->where('payments_promotion.enable', 'Y')
             ->when($startdate, function ($query, $startdate) use ($enddate) {
                 $query->whereBetween('payments_promotion.date_create', array($startdate, $enddate));
             })
@@ -102,18 +98,14 @@ class RpTopProDataTable extends DataTable
                     $q->from('members')->select('members.code')->where('members.user_name', $user);
                 });
             })
-            ->select(['payments_promotion.code', 'payments_promotion.member_code', 'payments_promotion.pro_code', 'payments_promotion.date_create']);
-
+            ->select(['payments_promotion.code', 'payments_promotion.member_code', 'payments_promotion.pro_code', 'payments_promotion.date_create', 'payments_promotion.credit_bonus', 'payments_promotion.amount']);
 
 
         $union = $model->newQuery()
-
-            ->where('bills.enable','Y')
-            ->where('bills.transfer_type',1)
-            ->where('bills.pro_code','>' ,0)
-
-            ->select(['bills.code', 'bills.member_code', 'bills.pro_code', 'bills.date_create'])
-
+            ->where('bills.enable', 'Y')
+            ->where('bills.transfer_type', 1)
+            ->where('bills.pro_code', '>', 0)
+            ->select(['bills.code', 'bills.member_code', 'bills.pro_code', 'bills.date_create','bills.credit_bonus','bills.amount'])
             ->when($startdate, function ($query, $startdate) use ($enddate) {
                 $query->whereBetween('bills.date_create', array($startdate, $enddate));
             })
@@ -128,7 +120,6 @@ class RpTopProDataTable extends DataTable
             ->union($first);
 
         return $union->orderByDesc('date_create');
-
 
 
     }
@@ -161,8 +152,8 @@ class RpTopProDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'
@@ -186,7 +177,9 @@ class RpTopProDataTable extends DataTable
             ['data' => 'pro_name', 'name' => 'bills.pro_name', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
             ['data' => 'member_name', 'name' => 'bills.member_name', 'title' => 'สมาชิก', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
             ['data' => 'user_name', 'name' => 'members.user_name', 'title' => 'User ID', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-         ];
+            ['data' => 'amount', 'name' => 'bills.amount', 'title' => 'ยอดเงิน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'bonus', 'name' => 'bills.bonus', 'title' => 'โบนัสที่ได้', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+        ];
     }
 
     /**

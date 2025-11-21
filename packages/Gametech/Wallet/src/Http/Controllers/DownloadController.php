@@ -46,8 +46,15 @@ class DownloadController extends AppBaseController
     {
         $games = $this->loadGame();
 
+        $config = core()->getConfigData();
 
-        return view($this->_config['view'], compact('games'));
+        if($config['multigame_open'] == 'Y'){
+            return view($this->_config['view'], compact('games'));
+        }else{
+            return view($this->_config['view_single'], compact('games'));
+        }
+
+
     }
 
     public function loadGame(): array

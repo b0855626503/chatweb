@@ -16,14 +16,15 @@ class PromotionContentRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Promotion\Contracts\PromotionContent';
+        return \Gametech\Promotion\Models\PromotionContent::class;
+
     }
 
     public function createnew(array $data)
     {
         $reward = $this->create($data);
 
-        $order = $this->find($reward->code);
+        $order = $this->findOrFail($reward->code);
 
 
         $this->uploadImages($data, $order);
@@ -34,7 +35,7 @@ class PromotionContentRepository extends Repository
 
     public function updatenew(array $data, $id, $attribute = "id")
     {
-        $order = $this->find($id);
+        $order = $this->findOrFail($id);
 
         $order->update($data);
 

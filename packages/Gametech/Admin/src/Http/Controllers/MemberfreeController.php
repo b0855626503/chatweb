@@ -5,12 +5,14 @@ namespace Gametech\Admin\Http\Controllers;
 use Gametech\Admin\DataTables\MemberfreeDataTable;
 use Gametech\Game\Repositories\GameRepository;
 use Gametech\Game\Repositories\GameUserFreeRepository;
+use Gametech\Member\Repositories\MemberCreditFreeLogRepository;
 use Gametech\Member\Repositories\MemberFreeCreditRepository;
 use Gametech\Member\Repositories\MemberPointLogRepository;
 use Gametech\Member\Repositories\MemberRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-
+use PragmaRX\Google2FA\Google2FA;
 
 class MemberfreeController extends AppBaseController
 {
@@ -23,6 +25,8 @@ class MemberfreeController extends AppBaseController
     protected $memberRepository;
 
     protected $memberCreditLogRepository;
+
+    protected $memberCreditFreeLogRepository;
 
     protected $memberPointLogRepository;
 
@@ -40,13 +44,14 @@ class MemberfreeController extends AppBaseController
         GameRepository $gameRepository,
         MemberRepository $memberRepository,
         MemberFreeCreditRepository $memberCreditLogRepository,
-        MemberPointLogRepository $memberPointLogRepository
+        MemberPointLogRepository $memberPointLogRepository,
+        MemberCreditFreeLogRepository $memberCreditFreeLogRepository
     )
 
     {
         $this->_config = request('_config');
 
-        $this->middleware('admin');
+        $this->middleware(['auth', 'admin']);
 
         $this->gameUserRepository = $gameUserRepository;
 
@@ -55,6 +60,8 @@ class MemberfreeController extends AppBaseController
         $this->memberRepository = $memberRepository;
 
         $this->memberCreditLogRepository = $memberCreditLogRepository;
+
+        $this->memberCreditFreeLogRepository = $memberCreditFreeLogRepository;
 
         $this->memberPointLogRepository = $memberPointLogRepository;
     }
@@ -67,6 +74,9 @@ class MemberfreeController extends AppBaseController
 
     public function setWallet(Request $request)
     {
+        $user = Auth::guard('admin')->user();
+        $google2fa = new Google2FA();
+
         $return['success'] = false;
 
         $request->validate([
@@ -80,6 +90,15 @@ class MemberfreeController extends AppBaseController
         $amount = $request->input('amount');
         $remark = $request->input('remark');
         $method = $request->input('type');
+//        $secret = $request->input('one_time_password');
+//
+//        if($user->superadmin == 'N') {
+//
+//            $valid = $google2fa->verifyKey($user->google2fa_secret, $secret);
+//            if (!$valid) {
+//                return $this->sendError('รหัสยืนยันไม่ถูกต้อง', 200);
+//            }
+//        }
 
         $types = ['D' => 'เพิ่ม Credit' , 'W' => 'ลด Credit'];
 
@@ -87,7 +106,7 @@ class MemberfreeController extends AppBaseController
 
         $member = $this->memberRepository->find($id);
 
-        if ($amount < 1) {
+        if ($amount < 0) {
             return $this->sendError('ยอดเงินไม่ถูกต้อง',200);
         } elseif ($amount > $config['maxsetcredit']) {
             return $this->sendError('ไม่สามารถทำรายการเกินครั้งละ '.core()->currency($config['maxsetcredit']),200);
@@ -96,6 +115,8 @@ class MemberfreeController extends AppBaseController
         }
 
         $data = [
+            'refer_code' => $id,
+            'refer_table' => 'members',
             'kind' => 'SETCREDIT',
             'remark' => $remark,
             'amount' => $amount,
@@ -105,7 +126,19 @@ class MemberfreeController extends AppBaseController
             'emp_name' => $this->user()->name.' '.$this->user()->surname
         ];
 
-        $response = $this->memberCreditLogRepository->setCredit($data);
+        if ($config->seamless == 'Y') {
+            $response = $this->memberCreditFreeLogRepository->setWalletSeamless($data);
+        }else{
+            if ($config->multigame_open == 'Y') {
+                $response = $this->memberCreditLogRepository->setCredit($data);
+            } else {
+                $response = $this->memberCreditFreeLogRepository->setWalletSingle($data);
+//                dd($response);
+            }
+//            $response = $this->memberCreditLogRepository->setCredit($data);
+        }
+
+
         if($response){
             return $this->sendSuccess('ดำเนินการ '.$types[$method].' เรียบร้อยแล้ว');
         }else{
@@ -159,14 +192,19 @@ class MemberfreeController extends AppBaseController
     public function gameuser($id)
     {
 
-        $games = collect($this->gameRepository->getGameUserFreeById($id)->toArray())->whereNotNull('game_user_free');
+        $games = collect($this->gameRepository->getGameUserFreeById($id,false)->toArray())->whereNotNull('game_user_free');
 
         $games = $games->map(function ($items){
             $item = (object)$items;
             return [
+                'status' => '<span class="text-danger">db</span>',
+                'game_code' => $item->code,
                 'game' => $item->name,
+                'member_code' => $item->game_user_free['member_code'],
                 'user_name' => $item->game_user_free['user_name'],
                 'balance' => $item->game_user_free['balance'],
+                'action' => '<button class="btn btn-xs icon-only ' . ($item->game_user_free['enable'] == 'Y' ? 'btn-warning' : 'btn-danger') . '" onclick="editdatasub(' . $item->game_user_free['code'] . "," . "'" . core()->flip($item->game_user_free['enable']) . "'" . "," . "'enable'" . ')">' . ($item->game_user_free['enable'] == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-trash"></i>') . '</button>',
+
             ];
 
         });
@@ -258,6 +296,54 @@ class MemberfreeController extends AppBaseController
         $this->memberRepository->update($data, $id);
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function editsub(Request $request)
+    {
+        $id = $request->input('id');
+        $status = $request->input('status');
+        $method = $request->input('method');
+
+        $data[$method] = $status;
+
+        $member = $this->gameUserRepository->find($id);
+        if(!$member){
+            return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        }
+
+        $member = $this->gameUserRepository->update($data, $id);
+
+        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+
+    }
+
+    public function balance(Request $request)
+    {
+        $id = $request->input('game_code');
+        $member_code = $request->input('member_code');
+
+        $item = $this->gameUserRepository->getOneUser($member_code,$id,true);
+
+
+        $item = collect($item)->toArray();
+        $item = $item['data'];
+
+
+        $game = [
+            'status' => '<span class="text-success">game</span>',
+            'game_id' => $item['game']['id'],
+            'game' => $item['game']['name'],
+            'member_code' => $item['member_code'],
+            'user_name' =>$item['user_name'],
+            'balance' => $item['balance'],
+            'action' => '<button class="btn btn-xs icon-only ' . ($item['enable'] == 'Y' ? 'btn-warning' : 'btn-danger') . '" onclick="editdatasub(' . $item['code'] . "," . "'" . core()->flip($item['enable']) . "'" . "," . "'enable'" . ')">' . ($item['enable'] == 'Y' ? '<i class="fa fa-check"></i>' : '<i class="fa fa-trash"></i>') . '</button>',
+
+        ];
+
+
+        $result['list'] = $game;
+        return $this->sendResponseNew($result,'ดำเนินการเสร็จสิ้น');
 
     }
 

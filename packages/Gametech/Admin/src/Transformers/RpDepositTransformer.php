@@ -3,32 +3,76 @@
 namespace Gametech\Admin\Transformers;
 
 use Gametech\Payment\Contracts\BankPayment;
+use Illuminate\Support\Str;
 use League\Fractal\TransformerAbstract;
 
 class RpDepositTransformer extends TransformerAbstract
 {
-
-
-    public function transform(BankPayment $model)
+    public function transform(BankPayment $model): array
     {
+        // ----- code/enable ปุ่มสลับ
+        $enable   = (string)$model->enable === 'Y';
+        $codeCell = (int)$model->code;
+        if (!$enable) {
+            $next    = core()->flip($model->enable);
+            $code    = (int)$model->code;
+            $css     = $enable ? 'btn-success' : 'btn-danger';
+            $icon    = $enable ? '<i class="fa fa-check"></i>' : '<i class="fa fa-reply"></i>';
+            $codeCell = '<button class="btn btn-xs icon-only '.$css.'" onclick="editdata('.$code.',\''.$next.'\',\'enable\')">'.$icon.'</button>';
+        }
 
+        // ----- relations (ต้อง eager load: member, admin, bank_account.bank)
+        $bankAccount = $model->bank_account ?? null;
+        $bank        = $bankAccount?->bank ?? null;
+        $member      = $model->member ?? null;
+        $admin       = $model->admin ?? null;
+
+        // ----- bank logo
+        $bankHtml = '';
+        if (($bank?->shortcode ?? null) && ($bank?->filepic ?? null)) {
+            $bankHtml = core()->displayBank($bank->shortcode, $bank->filepic);
+        }
+
+        // ----- channel
+        $channelText = (string)($model->channel ?? '');
+        $channelHtml = '<span class="text-long" data-toggle="tooltip" title="'.e($channelText).'">'
+            . e(Str::limit($channelText, 10))
+            . '</span>';
+
+        // ----- amount
+        $amountHtml = core()->textcolor(core()->currency((float)$model->value), 'text-success');
+
+        // ----- fee (ได้จาก joinSub คำนวณแล้ว)
+        $feeValue = is_numeric($model->fees ?? null) ? (float) $model->fees : 0.0;
+        $feeHtml  = core()->currency($feeValue);
+
+        // ----- emp_name
+        $empName = $model->emp_topup === 0
+            ? ($model->create_by ?: $model->topup_by)
+            : ($admin?->user_name ?? '');
 
         return [
-            'code' => (int)$model->code,
-            'bank' => core()->displayBank($model->bank_account->bank->shortcode, $model->bank_account->bank->filepic),
-            'acc_no' => $model->bank_account->acc_no,
-            'date' => $model->bank_time->format('d/m/y H:i:s'),
-            'date_approve' => (is_null($model->date_approve) ? '' : $model->date_approve->format('d/m/y H:i:s')),
-            'channel' => $model->channel,
-            'detail' => $model->detail,
-            'amount' => core()->textcolor(core()->currency($model->value), 'text-success'),
-            'member_name' => (is_null($model->member) ? '' : $model->member->name),
-            'user_name' => (is_null($model->member) ? '' : $model->member->user_name),
-            'remark' => $model->remark_admin,
-            'emp_name' => ($model->emp_topup === 0 ? ($model->topup_by ? $model->topup_by : $model->create_by) : (is_null($model->admin) ? '' : $model->admin->user_name)),
-            'ip' => ($model->emp_topup === 0 ? '127.0.0.1' : $model->ip_admin)
+            'code'          => $codeCell,
+            'bank_raw'      => $bank->name_th ?? '',
+            'money'         => (float)$model->value,
+            'bank'          => $bankHtml,
+            'acc_no'        => $bankAccount->acc_no ?? '',
+            'date'          => $model->bank_time?->format('d/m/y H:i:s') ?? '',
+            'date_create'   => $model->date_create?->format('d/m/y H:i:s') ?? '',
+            'date_approve'  => $model->date_approve?->format('d/m/y H:i:s') ?? '',
+            'date_regis'    => $model->member?->date_regis?->format('d/m/y') ?? '',
+            'channel'       => $channelHtml,
+            'detail'        => (string)($model->detail ?? ''),
+            'amount'        => $amountHtml,
+
+            // ★★ ค่าธรรมเนียมที่คำนวณแล้ว ★★
+            'fees'           => $feeHtml,
+
+            'member_name'   => $member->name ?? '',
+            'user_name'     => $member->user_name ?? '',
+            'remark'        => (string)($model->remark_admin ?? ''),
+            'emp_name'      => $empName,
+            'ip'            => $model->emp_topup === 0 ? '127.0.0.1' : (string)($model->ip_admin ?? ''),
         ];
     }
-
-
 }

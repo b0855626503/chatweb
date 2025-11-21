@@ -4,7 +4,6 @@ namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class PlusRepository extends Repository
@@ -56,30 +55,66 @@ class PlusRepository extends Repository
         parent::__construct($app);
     }
 
-    public function GameCurl($param, $action): Response
+    public function GameCurl($param, $action)
     {
-        $agentid = $this->agent;
-        $agentpass = $this->agentPass;
-        $secretkey = $this->secretkey;
-        $key = $agentpass . $secretkey;
+        $response = rescue(function () use ($param, $action) {
 
-        $message = json_encode($param, JSON_UNESCAPED_UNICODE);
-        $hash = hash_hmac('SHA256', $message, $key);
+            $agentid = $this->agent;
+            $agentpass = $this->agentPass;
+            $secretkey = $this->secretkey;
+            $key = $agentpass . $secretkey;
+
+            $message = json_encode($param, JSON_UNESCAPED_UNICODE);
+            $hash = hash_hmac('SHA256', $message, $key);
 
 
-        $url = $this->url . $action . '?hash=' . $hash . '&from=' . $agentid . '&secret=' . $agentpass;
+            $url = $this->url . $action . '?hash=' . $hash . '&from=' . $agentid . '&secret=' . $agentpass;
 
 
-        $response = Http::timeout(15)->withHeaders([
-            'Content-Type' => 'application/json',
-            'Cache-Control' => 'no-store'
-        ])->post($url, $param);
+            return Http::timeout(15)->withHeaders([
+                'Content-Type' => 'application/json',
+                'Cache-Control' => 'no-store'
+            ])->post($url, $param);
+
+
+        }, function ($e) {
+
+            return false;
+
+        }, true);
 
         if ($this->debug) {
             $this->Debug($response);
         }
 
-        return $response;
+        if($response === false){
+//            $result['main'] = false;
+            $result['success'] = false;
+            $result['msg'] = 'เชื่อมต่อไม่ได้';
+            return $result;
+        }
+
+        $result = $response->json();
+
+
+        $result['msg'] = ($result['message'] ?? 'พบข้อผิดพลาดในการเชื่อมต่อ');
+
+        if($response->failed() || $response->clientError() || $response->serverError()){
+            $result['success'] = false;
+            return $result;
+        }
+
+
+        if ($response->successful()) {
+            $result['success'] = true;
+        }else{
+            $result['success'] = false;
+        }
+
+//        dd($result);
+
+        return $result;
+
 
     }
 
@@ -123,9 +158,9 @@ class PlusRepository extends Repository
         $return['success'] = true;
         $return['account'] = '';
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
-        }
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+//        }
 
         return $return;
     }
@@ -144,12 +179,9 @@ class PlusRepository extends Repository
             'desc' => 'Player',
         ];
 
-        $responses = $this->GameCurl($param, 'addAccount');
+        $response = $this->GameCurl($param, 'addAccount');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
+        if ($response['success'] === true) {
             if ($response['status'] === 'success') {
 
                 $return['msg'] = 'Complete';
@@ -159,14 +191,13 @@ class PlusRepository extends Repository
 
             } else {
                 $return['success'] = false;
-                $return['msg'] = $response['message'];
+                $return['msg'] = $response['msg'];
             }
         } else {
-
             $return['success'] = false;
-            $return['msg'] = $response['message'];
-
+            $return['msg'] = $response['msg'];
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -188,26 +219,23 @@ class PlusRepository extends Repository
         ];
 
 
-        $responses = $this->GameCurl($param, 'editAccount');
+        $response = $this->GameCurl($param, 'editAccount');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
-            if ($response['success'] === true) {
+        if ($response['success'] === true) {
+            if ($response['status'] === 'success') {
 
                 $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
 
             } else {
                 $return['success'] = false;
-                $return['msg'] = $response['message'];
+                $return['msg'] = $response['msg'];
             }
         } else {
-
             $return['success'] = false;
-            $return['msg'] = $response['message'];
+            $return['msg'] = $response['msg'];
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -226,13 +254,10 @@ class PlusRepository extends Repository
         ];
 
 
-        $responses = $this->GameCurl($param, 'getAccount');
+        $response = $this->GameCurl($param, 'getAccount');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
-            if ($response['status'] === 'success') {
+        if ($response['success'] === true) {
+            if ($response['status'] == 'success') {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['connect'] = true;
@@ -241,16 +266,19 @@ class PlusRepository extends Repository
             } else {
                 $return['connect'] = true;
                 $return['success'] = false;
-                $return['msg'] = $response['message'];
+                $return['msg'] = $response['msg'];
             }
         } else {
             $return['connect'] = false;
             $return['success'] = false;
-            $return['msg'] = $response['message'];
+            $return['msg'] = $response['msg'];
         }
 
+
         if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true];
+            $return['debug'] =  $this->responses;
+            $return['success'] =  true;
+            return $return;
         }
 
         return $return;
@@ -275,18 +303,18 @@ class PlusRepository extends Repository
         } else {
             $transID = "DP" . date('YmdHis');
             $before = $this->viewBalance($username);
+
             if ($before['success'] == true) {
                 $param = [
                     'account' => $username,
                     'setScore' => strval($score)
                 ];
 
-                $responses = $this->GameCurl($param, 'setScore');
-                $response = $responses->json();
+                $response = $this->GameCurl($param, 'setScore');
 
-                if ($responses->successful()) {
 
-                    if ($response['status'] === 'success') {
+                if ($response['success'] === true) {
+                    if ($response['status'] == 'success') {
 
                         $after = $this->viewBalance($username);
 
@@ -305,9 +333,14 @@ class PlusRepository extends Repository
 
                     } else {
                         $return['success'] = false;
-                        $return['msg'] = $response['message'];
+                        $return['msg'] = $response['msg'];
                     }
+                } else {
+                    $return['success'] = false;
+                    $return['msg'] = $response['msg'];
                 }
+
+
             } else {
 
                 $return['success'] = false;
@@ -349,11 +382,11 @@ class PlusRepository extends Repository
                     'setScore' => strval($score)
                 ];
 
-                $responses = $this->GameCurl($param, 'setScore');
-                $response = $responses->json();
+                $response = $this->GameCurl($param, 'setScore');
 
-                if ($responses->successful()) {
 
+
+                if ($response['success'] === true) {
                     if ($response['status'] === 'success') {
 
                         $after = $this->viewBalance($username);
@@ -372,9 +405,14 @@ class PlusRepository extends Repository
 
                     } else {
                         $return['success'] = false;
-                        $return['msg'] = $response['message'];
+                        $return['msg'] = $response['msg'];
                     }
+                } else {
+                    $return['success'] = false;
+                    $return['msg'] = $response['msg'];
                 }
+
+
             } else {
 
                 $return['success'] = false;

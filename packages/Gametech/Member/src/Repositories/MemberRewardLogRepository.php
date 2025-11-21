@@ -38,7 +38,8 @@ class MemberRewardLogRepository extends Repository
      */
     function model(): string
     {
-        return MemberRewardLog::class;
+        return \Gametech\Member\Models\MemberRewardLog::class;
+
     }
 
     public function exchangeReward($id, $user): array

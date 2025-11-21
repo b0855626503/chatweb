@@ -17,13 +17,23 @@ class LineConversation extends Model implements LineConversationContract
         'status',
         'last_message_preview',
         'last_message_at',
+        'assigned_at',
         'unread_count',
         'assigned_employee_id',
+        'assigned_employee_name',
         'locked_by_employee_id',
+        'locked_by_employee_name',
+        'locked_at',
+        'closed_by_employee_id',
+        'closed_by_employee_name',
+        'closed_at',
     ];
 
     protected $casts = [
         'last_message_at' => 'datetime',
+        'assigned_at' => 'datetime',
+        'locked_at' => 'datetime',
+        'closed_at' => 'datetime',
     ];
 
     public function account(): BelongsTo

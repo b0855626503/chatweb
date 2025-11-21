@@ -4,7 +4,6 @@ namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class LiveRepository extends Repository
@@ -81,31 +80,59 @@ class LiveRepository extends Repository
 
     }
 
-    public function GameCurl($param, $action): Response
-    {
-        $url = $this->url . $action;
 
-        $response = Http::timeout(15)->withHeaders([
-            'Content-Type' => 'application/json',
-            'Cache-Control' => 'no-store'
-        ])->withOptions([
-            'debug' => false,
-            'verify' => false
-        ])->post($url, $param);
+    public function GameCurl($param, $action)
+    {
+        $response =  rescue(function () use ($param, $action) {
+
+            $url = $this->url . $action;
+
+            return Http::timeout(30)->withHeaders([
+                'Cache-Control' => 'no-store'
+            ])->withOptions([
+                'verify' => false,
+                'debug' => false
+            ])->asJson()->post($url, $param);
+
+
+        }, function ($e) {
+
+            return false;
+
+        }, true);
 
         if ($this->debug) {
             $this->Debug($response);
         }
 
-        return $response;
+        if($response === false){
+            $result['success'] = false;
+            $result['msg'] = 'เชื่อมต่อไม่ได้';
+            return $result;
+        }
+
+        if ($response->successful()) {
+            $result = $response->json();
+        }else{
+            $result = $response->json();
+            $result['success'] = false;
+
+        }
+
+        $result['msg'] = ($result['error'] ?? 'พบข้อผิดพลาดในการเชื่อมต่อ');
+
+        return $result;
+
 
     }
 
+    /**
+     */
     public function addGameAccount($data): array
     {
 
         $result = $this->newUser();
-        if ($result['success'] === true) {
+        if ($result['success'] == true) {
             $account = $result['account'];
             $result = $this->addUser($account, $data);
         }
@@ -118,13 +145,15 @@ class LiveRepository extends Repository
         $return['success'] = true;
         $return['account'] = '';
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
-        }
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+//        }
 
         return $return;
     }
 
+    /**
+     */
     public function addUser($username, $data): array
     {
         $return['success'] = false;
@@ -137,29 +166,20 @@ class LiveRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $responses = $this->GameCurl($param, 'createmember');
+        $response = $this->GameCurl($param, 'createmember');
 
-        $response = $responses->json();
 
-        if ($responses->successful()) {
+        if ($response['success'] === true) {
 
-            if ($response['success'] == true) {
-
-                $return['msg'] = 'Complete';
-                $return['success'] = true;
-                $return['user_name'] = $response['player_id'];
-                $return['user_pass'] = $response['player_password'];
-
-            } else {
-                $return['success'] = false;
-                $return['msg'] = $response['error'];
-            }
+            $return['msg'] = 'Complete';
+            $return['success'] = true;
+            $return['user_name'] = $response['player_id'];
+            $return['user_pass'] = $response['player_password'];
 
         } else {
             $return['success'] = false;
-            $return['msg'] = $response['error'];
+            $return['msg'] = $response['msg'];
         }
-
 
 
         if ($this->debug) {
@@ -169,6 +189,8 @@ class LiveRepository extends Repository
     }
 
 
+    /**
+     */
     public function changePass($data): array
     {
         $return['success'] = false;
@@ -182,26 +204,19 @@ class LiveRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $responses = $this->GameCurl($param, 'updatepassword');
+        $response = $this->GameCurl($param, 'updatepassword');
 
-        $response = $responses->json();
 
-        if ($responses->successful()) {
+        if ($response['success'] === true) {
+            $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
+            $return['success'] = true;
 
-            if ($response['success'] === true) {
-
-                $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
-                $return['success'] = true;
-
-            } else {
-                $return['success'] = false;
-                $return['msg'] = $response['error'];
-
-            }
         } else {
             $return['success'] = false;
-            $return['msg'] = $response['error'];
+            $return['msg'] = $response['msg'];
+
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -209,6 +224,8 @@ class LiveRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function viewBalance($username): array
     {
         $return['success'] = false;
@@ -221,30 +238,22 @@ class LiveRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $responses = $this->GameCurl($param, 'getbalance');
+        $response = $this->GameCurl($param, 'getbalance');
 
-        $response = $responses->json();
 
-        if ($responses->successful()) {
+        if ($response['success'] === true) {
+            $return['msg'] = 'Complete';
+            $return['success'] = true;
+            $return['connect'] = true;
+            $return['score'] = $response['balance'];
 
-            if ($response['success'] === true) {
-                $return['msg'] = 'Complete';
-                $return['success'] = true;
-                $return['connect'] = true;
-                $return['score'] = $response['balance'];
-
-            } else {
-                $return['connect'] = true;
-                $return['success'] = false;
-                $return['msg'] = $response['error'];
-
-            }
         } else {
-            $return['connect'] = false;
+            $return['connect'] = true;
             $return['success'] = false;
-            $return['msg'] = $response['error'];
+            $return['msg'] = $response['msg'];
 
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -252,6 +261,8 @@ class LiveRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function deposit($username, $amount): array
     {
         $return['success'] = false;
@@ -279,26 +290,21 @@ class LiveRepository extends Repository
                 'client_ip' => request()->server('SERVER_ADDR')
             ];
 
-            $responses = $this->GameCurl($param, 'deposit');
-            $response = $responses->json();
+            $response = $this->GameCurl($param, 'deposit');
 
-            if ($responses->successful()) {
 
-                if ($response['success'] === true) {
-                    $return['success'] = true;
-                    $return['ref_id'] = $transID;
-                    $return['after'] = $response['after_balance'];
-                    $return['before'] = $response['before_balance'];
-                } else {
-
-                    $return['success'] = false;
-                    $return['msg'] = $response['error'];
-
-                }
+            if ($response['success'] === true) {
+                $return['success'] = true;
+                $return['ref_id'] = $transID;
+                $return['after'] = $response['after_balance'];
+                $return['before'] = $response['before_balance'];
             } else {
+
                 $return['success'] = false;
-                $return['msg'] = $response['error'];
+                $return['msg'] = $response['msg'];
+
             }
+
 
         }
 
@@ -309,6 +315,8 @@ class LiveRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function withdraw($username, $amount): array
     {
         $return['success'] = false;
@@ -337,25 +345,19 @@ class LiveRepository extends Repository
                 'client_ip' => request()->server('SERVER_ADDR')
             ];
 
-            $responses = $this->GameCurl($param, 'withdrawal');
+            $response = $this->GameCurl($param, 'withdrawal');
 
-            $response = $responses->json();
 
-            if ($responses->successful()) {
-
-                if ($response['success'] === true) {
-                    $return['success'] = true;
-                    $return['ref_id'] = $transID;
-                    $return['after'] = $response['after_balance'];
-                    $return['before'] = $response['before_balance'];
-                } else {
-                    $return['success'] = false;
-                    $return['msg'] = $response['error'];
-                }
+            if ($response['success'] === true) {
+                $return['success'] = true;
+                $return['ref_id'] = $transID;
+                $return['after'] = $response['after_balance'];
+                $return['before'] = $response['before_balance'];
             } else {
                 $return['success'] = false;
-                $return['msg'] = $response['error'];
+                $return['msg'] = $response['msg'];
             }
+
 
         }
 

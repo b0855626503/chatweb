@@ -15,11 +15,11 @@ class BankAccountTransformer extends TransformerAbstract
 
 
         return [
-            'code' => (int) $model->code,
+            'code' => (int)$model->code,
             'acc_name' => $model->acc_name,
             'acc_no' => $model->acc_no,
             'banks' => $model->banks
-          ];
+        ];
     }
 
 

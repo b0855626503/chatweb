@@ -9,7 +9,7 @@
     <div class="login-box">
 
         <div class="login-logo text-center">
-            {!! core()->showImg('logo.png','img','100px','100px','img-fluid') !!}
+            {!! core()->showImg($config->logo,'img','100px','100px','img-fluid') !!}
         </div>
 
         <div class="card">

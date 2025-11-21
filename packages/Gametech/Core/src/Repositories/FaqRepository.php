@@ -13,6 +13,6 @@ class FaqRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Core\Contracts\Faq';
+        return \Gametech\Core\Models\Faq::class;
     }
 }

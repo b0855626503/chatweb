@@ -28,7 +28,8 @@ class MemberFreeCreditRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Member\Contracts\MemberFreeCredit';
+        return \Gametech\Member\Models\MemberFreeCredit::class;
+
     }
 
     public function setCredit(array $data): bool

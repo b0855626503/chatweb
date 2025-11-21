@@ -12,7 +12,7 @@ if (mix.inProduction()) {
     var publicPath = "../../../public/assets/ui";
 }
 
-mix.setPublicPath(publicPath);
+mix.setPublicPath(publicPath).mergeManifest();
 mix.disableNotifications();
 
 mix.inProduction()
@@ -27,7 +27,7 @@ mix.js(
     .sass(__dirname + "/src/Resources/assets/sass/app.scss", "css/ui.css")
     .options({
         processCssUrls: false
-    }).mergeManifest();
+    });
 
 // mix.less(__dirname + "/src/Resources/assets/less/app.less", "css/btn.css");
 

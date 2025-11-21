@@ -13,9 +13,9 @@ class AddIndexMembersCreditLog extends Migration
      */
     public function up()
     {
-        Schema::table('members_credit_log', function (Blueprint $table) {
-            $table->index(['kind','member_code','date_create']);
-        });
+//        Schema::table('members_credit_log', function (Blueprint $table) {
+////            $table->index(['kind','member_code','date_create']);
+//        });
     }
 
     /**

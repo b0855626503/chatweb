@@ -4,7 +4,6 @@ namespace Gametech\Game\Repositories\Games;
 
 use Gametech\Core\Eloquent\Repository;
 use Illuminate\Container\Container as App;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -83,22 +82,47 @@ class JokerRepository extends Repository
 
     }
 
-    public function GameCurl($param, $action): Response
+    public function GameCurl($param, $action)
     {
 
-        $postString = Arr::query($param);
+        $response =  rescue(function () use ($param, $action) {
+            $postString = Arr::query($param);
 
-        $signature = base64_encode(hash_hmac("sha1", $postString, $this->secretkey, true));
-        $signature = urlencode($signature);
-        $url = $this->url . "?AppID=" . $this->login . "&Signature=$signature";
+            $signature = base64_encode(hash_hmac("sha1", $postString, $this->secretkey, true));
+            $signature = urlencode($signature);
+            $url = $this->url . "?AppID=" . $this->login . "&Signature=$signature";
 
-        $response = Http::timeout(15)->asForm()->post($url, $param);
+            return Http::timeout(15)->asForm()->post($url, $param);
+
+
+        }, function ($e) {
+
+            return false;
+
+        }, false);
 
         if ($this->debug) {
             $this->Debug($response);
         }
 
-        return $response;
+        if($response === false){
+            $result['success'] = false;
+            $result['msg'] = 'เชื่อมต่อไม่ได้';
+            return $result;
+        }
+
+        $result = $response->json();
+        $result['msg'] = ($result['Message'] ?? 'พบปัญหาบางประการ');
+
+
+        if ($response->successful()) {
+            $result['success'] = true;
+        }else{
+            $result['success'] = false;
+        }
+
+        return $result;
+
     }
 
     public function addGameAccount($data): array
@@ -107,6 +131,10 @@ class JokerRepository extends Repository
         if ($result['success'] === true) {
             $account = $result['account'];
             $result = $this->addUser($account, $data);
+        }
+
+        if ($this->debug) {
+            return ['debug' => $this->responses, 'success' => true];
         }
 
         return $result;
@@ -137,9 +165,9 @@ class JokerRepository extends Repository
             $return['msg'] = 'ไม่สามารถลงทะเบียนรหัสเกมได้ เนื่องจาก ID เกมหมด โปรดแจ้ง Staff';
         }
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
-        }
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+//        }
         return $return;
     }
 
@@ -154,12 +182,9 @@ class JokerRepository extends Repository
             'Username' => $username
         ];
 
-        $responses = $this->GameCurl($param, '');
+        $response = $this->GameCurl($param, '');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
+        if ($response['success'] === true) {
             if ($response['Status'] === 'Created') {
                 $this->changePass([
                     'user_name' => $username,
@@ -181,20 +206,19 @@ class JokerRepository extends Repository
                     ->where('user_name', $username)
                     ->update(['use_account' => 'Y']);
 
-                $return['msg'] = $response['Message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
 
             }
         } else {
-
-            $return['msg'] = $response['Message'];
+            $return['msg'] = $response['msg'];
             $return['success'] = false;
-
         }
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true];
-        }
+
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true];
+//        }
         return $return;
     }
 
@@ -209,21 +233,15 @@ class JokerRepository extends Repository
             'Username' => $data['user_name']
         ];
 
-        $responses = $this->GameCurl($param, '');
+        $response = $this->GameCurl($param, '');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
+        if ($response['success'] === true) {
             if ($response['Status'] === 'OK') {
                 $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
-            } else {
-                $return['msg'] = $response['Message'];
-                $return['success'] = false;
             }
         } else {
-            $return['msg'] = $response['Message'];
+            $return['msg'] = $response['msg'];
             $return['success'] = false;
         }
 
@@ -246,28 +264,27 @@ class JokerRepository extends Repository
         ];
 
 
-        $responses = $this->GameCurl($param, '');
+        $response = $this->GameCurl($param, '');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
+        if ($response['success'] === true) {
             if ($response['Username'] === $username) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['connect'] = true;
                 $return['score'] = $response['Credit'];
+//                $return['outstanding'] =  $response['OutstandingCredit'];
 
             } else {
-                $return['msg'] = $response['Message'];
+                $return['msg'] = 'เกิดข้อผิดพลาด';
                 $return['connect'] = true;
                 $return['success'] = false;
             }
         } else {
-            $return['msg'] = $response['Message'];
+            $return['msg'] = 'ไม่สามารถเชื่อมต่อ api ได้';
             $return['connect'] = false;
             $return['success'] = false;
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -287,7 +304,7 @@ class JokerRepository extends Repository
             if ($this->debug) {
                 $this->Debug($return, true);
             }
-        } elseif (empty($username)) {
+        } elseif (empty($username) || !$username || is_null($username)) {
             $return['msg'] = "เกิดข้อผิดพลาด ไม่พบข้อมูลรหัสสมาชิก";
             if ($this->debug) {
                 $this->Debug($return, true);
@@ -303,25 +320,21 @@ class JokerRepository extends Repository
             ];
 
 
-            $responses = $this->GameCurl($param, '');
-            $response = $responses->json();
+            $response = $this->GameCurl($param, '');
 
-            if ($responses->successful()) {
-
+            if ($response['success'] === true) {
                 if ($response['Username'] === $username) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = $response['Credit'];
                     $return['before'] = $response['BeforeCredit'];
 
-                } else {
-                    $return['msg'] = $response['Message'];
-                    $return['success'] = false;
                 }
             } else {
-                $return['msg'] = $response['Message'];
+                $return['msg'] = 'พบข้อผิดพลาด ลองใหม่ในภายหลัง';
                 $return['success'] = false;
             }
+
 
         }
 
@@ -360,25 +373,20 @@ class JokerRepository extends Repository
                 'Username' => $username
             ];
 
-            $responses = $this->GameCurl($param, '');
+            $response = $this->GameCurl($param, '');
 
-            $response = $responses->json();
-
-            if ($responses->successful()) {
-
+            if ($response['success'] === true) {
                 if ($response['Username'] == $username) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = $response['Credit'];
                     $return['before'] = $response['BeforeCredit'];
-                } else {
-                    $return['msg'] = $response['Message'];
-                    $return['success'] = false;
                 }
             } else {
-                $return['msg'] = $response['Message'];
+                $return['msg'] = 'พบข้อผิดพลาด ลองใหม่ในภายหลัง';
                 $return['success'] = false;
             }
+
 
         }
 

@@ -1,6 +1,6 @@
 <div class="container text-light mt-5">
     <h1 class="text-center text-light">ฝากเงิน</h1>
-    <p  class="text-center text-color-fixed  ">Deposit</p>
+    <p class="text-center text-color-fixed  ">Deposit</p>
     <div class="row ">
         <div class="col-md-8 offset-md-2 col-sm-12">
             <div _ngcontent-oov-c6="" class="card card-trans">

@@ -37,6 +37,19 @@
                                 </div>
 
                                 <div class="form-group col-6">
+                                    {!! Form::select('status_withdraw', ['' => 'ทั้งหมด' , 'Y' => 'เปิดใช้ถอนออโต้', 'N' => 'ไม่เปิดใช้'], '',['id' => 'status_withdraw', 'class' => 'form-control form-control-sm']) !!}
+                                </div>
+
+                                <div class="form-group col-6">
+                                    {!! Form::select('bankm_code', (['' => '== ธนาคาร ==']+$banks->toArray()), '',['id' => 'bankm_code', 'class' => 'form-control form-control-sm']) !!}
+                                </div>
+                                <div class="form-group col-6">
+                                    {!! Form::select('account_code', (['' => '== ธนาคาร ==']+$banks_out->toArray()), '',['id' => 'account_code', 'class' => 'form-control form-control-sm']) !!}
+                                </div>
+
+
+
+                                <div class="form-group col-6">
                                     <input type="text" class="form-control form-control-sm" id="user_name"
                                            placeholder="Username"
                                            name="user_name">
@@ -46,6 +59,13 @@
                                     <input type="text" class="form-control form-control-sm" id="ip" name="ip"
                                            placeholder="IP">
                                 </div>
+
+                                <div class="form-group col-6">
+                                    <input type="text" class="form-control form-control-sm" id="remark_admin" name="remark_admin"
+                                           placeholder="หมายเหตุทีมงาน">
+                                </div>
+
+                                <div class="form-group col-6"></div>
 
                                 <div class="form-group col-auto">
                                     <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>

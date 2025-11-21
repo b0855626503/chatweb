@@ -30,8 +30,12 @@
                                     </div>
                                 </div>
 
+                                <div class="form-group col-6">
+                                    {!! Form::select('type', ['NORMAL' => 'Wallet' , 'FREE' => 'Free Credit'], '',['id' => 'type', 'class' => 'form-control form-control-sm']) !!}
 
-                                <div class="form-group col-6"></div>
+                                </div>
+
+{{--                                <div class="form-group col-6"></div>--}}
 
                                 <div class="form-group col-auto">
                                     <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>

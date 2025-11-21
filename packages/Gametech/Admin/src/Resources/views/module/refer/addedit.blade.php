@@ -24,57 +24,57 @@
     </b-form>
 </b-modal>
 @push('scripts')
-    <script type="text/javascript">
-        (() => {
-            window.app = new Vue({
-                el: '#app',
-                data() {
-                    return {
-                        show: true,
-                        formmethod: 'add',
-                        formaddedit: {
-                            name: ''
-                        }
-                    };
+
+    <script type="module">
+        window.app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    show: true,
+                    formmethod: 'add',
+                    formaddedit: {
+                        name: ''
+                    }
+                };
+            },
+            created() {
+                this.audio = document.getElementById('alertsound');
+                this.autoCnt(false);
+            },
+            methods: {
+                editModal(code) {
+                    this.code = null;
+                    this.formaddedit.name = '';
+                    this.formmethod = 'edit';
+
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.code = code;
+                        this.loadData();
+                        this.$refs.addedit.show();
+
+                    })
                 },
-                created() {
-                    this.audio = document.getElementById('alertsound');
-                    this.autoCnt(false);
+                addModal() {
+                    this.code = null;
+                    this.formaddedit.name = '';
+                    this.formmethod = 'add';
+
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.$refs.addedit.show();
+
+                    })
                 },
-                methods: {
-                    editModal(code) {
-                        this.code = null;
-                        this.formaddedit.name = '';
-                        this.formmethod = 'edit';
-
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.code = code;
-                            this.loadData();
-                            this.$refs.addedit.show();
-
-                        })
-                    },
-                    addModal() {
-                        this.code = null;
-                        this.formaddedit.name = '';
-                        this.formmethod = 'add';
-
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.$refs.addedit.show();
-
-                        })
-                    },
-                    async loadData() {
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
-                        this.formaddedit.name = response.data.data.name;
-                    },
+                async loadData() {
+                    const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
+                    this.formaddedit.name = response.data.data.name;
                 },
-            });
-        })()
+            },
+        });
+
     </script>
 @endpush
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace Gametech\LineOa\Http\Controllers;
+namespace Gametech\LineOA\Http\Controllers;
 
-use Gametech\LineOa\Models\LineAccount;
-use Gametech\LineOa\Models\LineWebhookLog;
-use Gametech\LineOa\Services\LineWebhookService;
+use Gametech\LineOA\Models\LineAccount;
+use Gametech\LineOA\Models\LineWebhookLog;
+use Gametech\LineOA\Services\LineWebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -19,10 +19,7 @@ class LineWebhookController extends Controller
      * URL example:
      *   https://api.xxx.com/api/line-oa/webhook/{token}
      *
-     * @param  \Illuminate\Http\Request         $request
-     * @param  string                           $token    webhook_token ที่ map กับ line_accounts.webhook_token
-     * @param  \Gametech\LineOa\Services\LineWebhookService $service
-     * @return \Illuminate\Http\JsonResponse
+     * @param  string  $token  webhook_token ที่ map กับ line_accounts.webhook_token
      */
     public function handle(Request $request, string $token, LineWebhookService $service): JsonResponse
     {
@@ -34,16 +31,16 @@ class LineWebhookController extends Controller
             ->first();
 
         // 2) เตรียม raw data สำหรับ log
-        $rawBody   = $request->getContent();
-        $json      = json_decode($rawBody, true) ?: [];
-        $headers   = $request->headers->all();
-        $ip        = $request->ip();
+        $rawBody = $request->getContent();
+        $json = json_decode($rawBody, true) ?: [];
+        $headers = $request->headers->all();
+        $ip = $request->ip();
         $userAgent = $request->userAgent();
         $requestId = (string) Str::uuid();
 
         // 3) เดา event_type / event_id จาก event แรก (ถ้ามี)
         $firstEvent = $json['events'][0] ?? null;
-        $eventType  = $firstEvent['type'] ?? null;
+        $eventType = $firstEvent['type'] ?? null;
 
         // LINE v2 ใช้ field ต่างกันบ้าง ลองดึงจาก message.id หรือ webhookEventId
         $eventId = $firstEvent['message']['id']
@@ -53,17 +50,17 @@ class LineWebhookController extends Controller
         /** @var LineWebhookLog $log */
         $log = LineWebhookLog::create([
             'line_account_id' => $account?->id,
-            'event_type'      => $eventType,
-            'event_id'        => $eventId,
-            'request_id'      => $requestId,
-            'ip'              => $ip,
-            'user_agent'      => $userAgent,
-            'headers'         => $headers,
-            'body'            => $rawBody,
-            'http_status'     => null,
-            'is_processed'    => false,
-            'processed_at'    => null,
-            'error_message'   => null,
+            'event_type' => $eventType,
+            'event_id' => $eventId,
+            'request_id' => $requestId,
+            'ip' => $ip,
+            'user_agent' => $userAgent,
+            'headers' => $headers,
+            'body' => $rawBody,
+            'http_status' => null,
+            'is_processed' => false,
+            'processed_at' => null,
+            'error_message' => null,
         ]);
 
         // 5) ถ้าไม่เจอ account ให้ตอบ 404 (LINE verify จะขึ้น error → ช่วยให้รู้ว่า token ผิด)
@@ -71,13 +68,13 @@ class LineWebhookController extends Controller
             $message = 'LINE Account not found for given webhook token.';
 
             $log->update([
-                'http_status'   => 404,
-                'is_processed'  => false,
+                'http_status' => 404,
+                'is_processed' => false,
                 'error_message' => $message,
             ]);
 
             Log::warning('[LineWebhook] invalid webhook token', [
-                'token'      => $token,
+                'token' => $token,
                 'request_id' => $requestId,
             ]);
 
@@ -91,7 +88,7 @@ class LineWebhookController extends Controller
             $service->handle($account, $json, $log);
 
             $log->update([
-                'http_status'  => 200,
+                'http_status' => 200,
                 'is_processed' => true,
                 'processed_at' => now(),
             ]);
@@ -103,15 +100,15 @@ class LineWebhookController extends Controller
         } catch (\Throwable $e) {
             // กันไม่ให้ error ภายในทำให้ LINE ยิงซ้ำซ้อนเกินไป
             $log->update([
-                'http_status'   => 500,
-                'is_processed'  => false,
+                'http_status' => 500,
+                'is_processed' => false,
                 'error_message' => $e->getMessage(),
             ]);
 
             Log::error('[LineWebhook] error while processing payload', [
                 'account_id' => $account->id,
                 'request_id' => $requestId,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             // ส่วนใหญ่ production จะตอบ 200 กลับ LINE เพื่อป้องกัน retry loop

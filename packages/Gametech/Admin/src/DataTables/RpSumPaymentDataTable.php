@@ -4,7 +4,6 @@ namespace Gametech\Admin\DataTables;
 
 
 use Gametech\Admin\Transformers\PaymentTransformer;
-
 use Gametech\Payment\Contracts\Payment;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
@@ -28,7 +27,6 @@ class RpSumPaymentDataTable extends DataTable
             ->setTransformer(new PaymentTransformer);
 
     }
-
 
 
     public function query(Payment $model)

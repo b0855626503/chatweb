@@ -16,12 +16,12 @@ class Controller extends BaseController
 
     public function user(): ?Authenticatable
     {
-        return Auth::guard('admin')->user();
+        return Auth::guard('customer')->user();
     }
 
     public function id()
     {
-        return Auth::guard('admin')->id();
+        return Auth::guard('customer')->id();
     }
 
     public function redirectToLogin(): RedirectResponse

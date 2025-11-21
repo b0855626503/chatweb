@@ -16,17 +16,19 @@
 
                 <div class="row">
                     <div class="col-6">
-                        <a class="btn btn-trans-light btn-block text-white">โยกเข้าเกมส์ <i class="fas fa-arrow-right"></i></a>
+                        <a class="btn btn-trans-light btn-block text-white">โยกเข้าเกมส์ <i
+                                class="fas fa-arrow-right"></i></a>
                     </div>
                     <div class="col-6">
-                        <a class="btn btn-trans btn-block text-white" href="{{ route('customer.credit.transfer.wallet.index') }}">
+                        <a class="btn btn-trans btn-block text-white"
+                           href="{{ route('customer.credit.transfer.wallet.index') }}">
                             <i class="fas fa-arrow-left"></i> โยกเข้ากระเป๋า</a></div>
                 </div>
                 <br>
                 <div class="card text-light card-trans">
                     <div class="card-body py-3 px-2">
 
-                        <credit></credit>
+                        <cashback></cashback>
 
                     </div>
                 </div>
@@ -40,7 +42,10 @@
 
                             <div class="col">
 
-                                <carousel-free :games="{{ json_encode($games)}}" :items="5" :loop="true" :center="true" :nav="false" :margin="10"  :responsive="{0:{items:2,nav:false},600:{items:5,nav:false}}" responsive-base-element=".owl-stage"></carousel-free>
+                                <carousel-free :games="{{ json_encode($games)}}" :items="5" :loop="true" :center="true"
+                                               :nav="false" :margin="10"
+                                               :responsive="{0:{items:2,nav:false},600:{items:5,nav:false}}"
+                                               responsive-base-element=".owl-stage"></carousel-free>
                             </div>
                         </div>
                     </div>
@@ -60,12 +65,15 @@
                                         @csrf
                                         <div class="col-12">
                                             <input type="hidden" name="game" id="game">
-                                            <p class="text-center text-warning">ระบุจำนวนเงินที่โยกเข้าเกม (Cashback)</p>
+                                            <p class="text-center text-warning">ระบุจำนวนเงินที่โยกเข้าเกม
+                                                (Cashback)</p>
 
                                             <div class="form-group">
                                                 <div class="input-group mb-3">
                                                     <input
-                                                        v-validate="'required|numeric'"
+                                                        required
+                                                        type="number"
+                                                        min="1"
                                                         class="form-control"
                                                         :class="[errors.has('amount') ? 'is-invalid' : '']"
                                                         id="amount" name="amount"
@@ -76,17 +84,21 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p class="text-center text-warning">โยก Cashback เข้าเกมส์ขั้นต่ำ {{ core()->currency($config->free_mintransfer) }} บาท</p>
-                                           @if($promotions)
-                                                <p class="text-center text-warning">ต้องกดรับโปรโมชั่นก่อนโยกเงินเข้าเกมนะคะ</p>
+                                            <p class="text-center text-warning">โยก Cashback
+                                                เข้าเกมส์ขั้นต่ำ {{ core()->currency($config->free_mintransfer) }}
+                                                บาท</p>
+                                            @if($promotions)
+                                                <p class="text-center text-warning">
+                                                    ต้องกดรับโปรโมชั่นก่อนโยกเงินเข้าเกมนะคะ</p>
                                                 <div class="form-group">
                                                     <div class="input-group mb-3">
                                                         <select class="form-control"
-                                                            :class="[errors.has('promotion') ? 'is-invalid' : '']"
-                                                            id="promotion" name="promotion">
+                                                                :class="[errors.has('promotion') ? 'is-invalid' : '']"
+                                                                id="promotion" name="promotion">
                                                             <option value="">== เลือกโปรโมชั่น ==</option>
                                                             @foreach($promotions as $promotion)
-                                                                <option value="{{ $promotion->code }}">{{ $promotion->name_th }}</option>
+                                                                <option
+                                                                    value="{{ $promotion->code }}">{{ $promotion->name_th }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>

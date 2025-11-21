@@ -15,7 +15,8 @@ class RewardRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Core\Contracts\Reward';
+        return \Gametech\Core\Models\Reward::class;
+
     }
 
     public function createnew(array $data)

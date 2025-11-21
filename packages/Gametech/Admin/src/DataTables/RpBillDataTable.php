@@ -4,7 +4,6 @@ namespace Gametech\Admin\DataTables;
 
 use Gametech\Admin\Transformers\RpBillTransformer;
 use Gametech\Payment\Contracts\Bill;
-use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder;
@@ -56,7 +55,6 @@ class RpBillDataTable extends DataTable
             ->with('bonus', function () use ($query) {
                 return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->sum('credit_bonus'));
             })
-
             ->with('p1', function () use ($query) {
                 return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 1)->sum('credit_bonus'));
             })
@@ -66,9 +64,6 @@ class RpBillDataTable extends DataTable
             ->with('p4', function () use ($query) {
                 return core()->currency((clone $query)->where('transfer_type', 1)->where('enable', 'Y')->where('pro_code', 4)->sum('credit_bonus'));
             })
-
-
-
             ->setTransformer(new RpBillTransformer);
 
     }
@@ -172,8 +167,8 @@ class RpBillDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'
@@ -204,7 +199,7 @@ class RpBillDataTable extends DataTable
             ['data' => 'pro_name', 'name' => 'bills.pro_name', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'credit_bonus', 'name' => 'bills.credit_bonus', 'title' => 'โบนัส', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'credit_balance', 'name' => 'bills.credit_balance', 'title' => 'รวม', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-           ['data' => 'balance_before', 'name' => 'bills.balance_before', 'title' => 'Wallet (ก่อน)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+            ['data' => 'balance_before', 'name' => 'bills.balance_before', 'title' => 'Wallet (ก่อน)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'balance_after', 'name' => 'bills.balance_after', 'title' => 'Wallet (หลัง)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'credit_before', 'name' => 'bills.credit_before', 'title' => 'Game (ก่อน)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'credit_after', 'name' => 'bills.credit_after', 'title' => 'Game (หลัง)', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],

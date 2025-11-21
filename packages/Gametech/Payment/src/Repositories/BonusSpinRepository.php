@@ -30,7 +30,8 @@ class BonusSpinRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Payment\Contracts\BonusSpin';
+        return \Gametech\Payment\Models\BonusSpin::class;
+
     }
 
     public function SpinCreate(array $data): bool

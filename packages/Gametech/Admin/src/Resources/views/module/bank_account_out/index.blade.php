@@ -10,7 +10,8 @@
     <section class="content text-xs" id="content">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">{{ $menu->currentName }}</h3>
+                <h3 class="card-title">{{ $menu->currentName }} - ระบบ เปิดถอนอัตโนมัติ ปัจจุบันรองรับ ธนาคารกรุงเทพ</h3>
+
 
             </div>
             <div class="card-body">

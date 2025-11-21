@@ -236,21 +236,40 @@ class PromotionController extends AppBaseController
                 break;
 
         }
+        if($method === 'TIME' || $method === 'TIMEPC'){
+            $no = 0;
+            $responses = collect($responses)->map(function ($items) use ($no,$table){
+                ++$no;
+                $item = (object)$items;
+                return [
+                    'no' => $item->code,
+                    'time_start' => $item->time_start,
+                    'time_stop' => $item->time_stop,
+                    'deposit_amount' => $item->deposit_amount,
+                    'deposit_stop' => $item->deposit_stop,
+                    'amount' => $item->amount,
+                    'action' => '<button type="button" class="btn btn-warning btn-xs icon-only" onclick="delSub('.$item->code.','. "'" .$table."'" .')"><i class="fa fa-times"></i></button>'
 
-        $no = 0;
-        $responses = collect($responses)->map(function ($items) use ($no,$table){
-            ++$no;
-            $item = (object)$items;
-            return [
-                'no' => $item->code,
-                'deposit_amount' => $item->deposit_amount,
-                'deposit_stop' => $item->deposit_stop,
-                'amount' => $item->amount,
-                'action' => '<button type="button" class="btn btn-warning btn-xs icon-only" onclick="delSub('.$item->code.','. "'" .$table."'" .')"><i class="fa fa-times"></i></button>'
+                ];
 
-            ];
+            });
+        }else{
+            $no = 0;
+            $responses = collect($responses)->map(function ($items) use ($no,$table){
+                ++$no;
+                $item = (object)$items;
+                return [
+                    'no' => $item->code,
+                    'deposit_amount' => $item->deposit_amount,
+                    'deposit_stop' => $item->deposit_stop,
+                    'amount' => $item->amount,
+                    'action' => '<button type="button" class="btn btn-warning btn-xs icon-only" onclick="delSub('.$item->code.','. "'" .$table."'" .')"><i class="fa fa-times"></i></button>'
 
-        });
+                ];
+
+            });
+        }
+
 
         $result['list'] = $responses;
 

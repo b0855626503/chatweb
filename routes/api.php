@@ -14,3 +14,26 @@
 //Route::middleware('auth:api')->get('/user', function (Request $request) {
 //    return $request->user();
 //});
+
+//Route::get('/status', fn() => view('status.index'));
+
+
+$apiRoute = config('gametech.api_url') ?? 'api';
+
+
+Route::domain("$apiRoute." . (is_null(config('app.admin_domain_url')) ? config('app.domain_url') : config('app.admin_domain_url')))->group(function () {
+
+
+
+        Route::group(['middleware' => ['api']], function () {
+
+            Route::any('tw/{mobile}/webhook', 'WebhookController@index');
+
+            Route::post('/daily-report', 'ReportController@daily')->name('api.daily.report');
+
+        });
+
+
+});
+
+

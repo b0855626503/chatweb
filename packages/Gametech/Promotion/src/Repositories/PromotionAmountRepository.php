@@ -35,6 +35,7 @@ class PromotionAmountRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Promotion\Contracts\PromotionAmount';
+        return \Gametech\Promotion\Models\PromotionAmount::class;
+
     }
 }

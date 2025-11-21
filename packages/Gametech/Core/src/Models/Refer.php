@@ -4,6 +4,7 @@ namespace Gametech\Core\Models;
 
 use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
+use Gametech\Member\Models\MemberProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Gametech\Core\Contracts\Refer as ReferContract;
@@ -11,7 +12,7 @@ use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Refer extends Model implements ReferContract
 {
-    use  LadaCacheTrait;
+    use LaravelSubQueryTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {
@@ -51,4 +52,10 @@ class Refer extends Model implements ReferContract
     {
         return $query->where('enable','N');
     }
+
+    public function members()
+    {
+        return $this->hasMany(MemberProxy::modelClass(),'refer_code');
+    }
+
 }

@@ -20,7 +20,8 @@
                     <div class="my-1 owl-expansion-panel">
 
                         <div class="card-header">
-                            <p class="my-auto align-middle owl-expansion-panel-header-title with-arrow" data-toggle="collapse" href="#collapse{{ $i }}">
+                            <p class="my-auto align-middle owl-expansion-panel-header-title with-arrow"
+                               data-toggle="collapse" href="#collapse{{ $i }}">
                                 {{ $item->question }}
                             </p>
                         </div>

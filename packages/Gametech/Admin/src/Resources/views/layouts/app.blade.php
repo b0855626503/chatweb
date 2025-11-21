@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <title>{{ ucwords($config->sitename) }} - @yield('title')</title>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ core()->imgurl('favicon.png','img') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ core()->imgurl($config->favicon,'img') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="{{ $config->description }}">
+    <meta name="description" content="Admin Zone">
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <!-- Font Awesome -->
@@ -44,9 +44,9 @@
 </script>
 
 
-<script src="{{ asset('assets/admin/js/manifest.js') }}"></script>
-<script src="{{ asset('assets/admin/js/vendor.js') }}"></script>
-<script baseUrl="{{ url()->to('/') }}" src="{{ asset('assets/admin/js/app.js') }}"></script>
+<script src="{{ mix('assets/admin/js/manifest.js') }}"></script>
+<script src="{{ mix('assets/admin/js/vendor.js') }}"></script>
+<script baseUrl="{{ url()->to('/') }}" id="mainscript" src="{{ mix('assets/admin/js/app.js') }}"></script>
 <script type="text/javascript" src="{{ asset('assets/ui/js/ui.js') }}"></script>
 
 @stack('scripts')

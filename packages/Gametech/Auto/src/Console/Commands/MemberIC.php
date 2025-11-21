@@ -63,20 +63,19 @@ class MemberIC extends Command
             ->where('bills.enable', 'Y')
             ->where('bills.transfer_type', 1)
             ->when($startdate, function ($query, $startdate) {
-                $query->whereRaw(DB::raw("DATE_FORMAT(bills.date_create,'%Y-%m-%d') = ?"), [$startdate]);
-            })
-            ->groupBy(DB::raw('Date(bills.date_create)'))
-            ->groupBy('bills.member_code');
+                $query->whereDate('bills.date_create', $startdate);
+           })
+            ->groupBy('bills.member_code', DB::raw('Date(bills.date_create)'));
 
         $latestWD = DB::table('withdraws')
             ->select('withdraws.member_code', DB::raw('SUM(withdraws.amount)  as withdraw_amount'), DB::raw("DATE_FORMAT(withdraws.date_approve,'%Y-%m-%d') as date_approve"))
             ->where('withdraws.enable', 'Y')
             ->where('withdraws.status', 1)
             ->when($startdate, function ($query, $startdate) {
-                $query->whereRaw(DB::raw("DATE_FORMAT(withdraws.date_approve,'%Y-%m-%d') = ?"), [$startdate]);
-            })
-            ->groupBy(DB::raw('Date(withdraws.date_approve)'))
-            ->groupBy('withdraws.member_code');
+                $query->whereDate('withdraws.date_approve', $startdate);
+             })
+            ->groupBy('withdraws.member_code', DB::raw('Date(withdraws.date_approve)'));
+
 
         $latestBP = DB::table('bank_payment')
             ->select(DB::raw('MAX(bank_payment.code) as code'), DB::raw('MAX(bank_payment.date_approve) as date_approve'), DB::raw('SUM(bank_payment.value) as deposit_amount'), DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d') as date_cashback"), 'bank_payment.member_topup')
@@ -85,10 +84,9 @@ class MemberIC extends Command
             ->where('bank_payment.enable', 'Y')
             ->where('bank_payment.status', 1)
             ->when($startdate, function ($query, $startdate) {
-                $query->whereRaw(DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d') = ?"), [$startdate]);
+               $query->whereDate('bank_payment.date_approve', $startdate);
             })
-            ->groupBy(DB::raw('Date(bank_payment.date_approve)'))
-            ->groupBy('bank_payment.member_topup');
+            ->groupBy('bank_payment.member_topup', DB::raw('Date(bank_payment.date_approve)'));
 
 
         $lists = DB::table('members')
@@ -100,11 +98,13 @@ class MemberIC extends Command
             })
             ->leftJoinSub($latestBi, 'bills', function ($join) {
                 $join->on('bank_payment.member_topup', '=', 'bills.member_code');
-                $join->on(DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d')"), '=', 'bills.date_approve');
+               $join->on(DB::raw('Date(bank_payment.date_approve)'), '=', 'bills.date_approve');
+
             })
             ->leftJoinSub($latestWD, 'withdraws', function ($join) {
                 $join->on('bank_payment.member_topup', '=', 'withdraws.member_code');
-                $join->on(DB::raw("DATE_FORMAT(bank_payment.date_approve,'%Y-%m-%d')"), '=', 'withdraws.date_approve');
+                $join->on(DB::raw('Date(bank_payment.date_approve)'), '=', 'withdraws.date_approve');
+
             });
 
         $bar = $this->output->createProgressBar($lists->count());
@@ -124,7 +124,7 @@ class MemberIC extends Command
 
             $chk = DB::table('members_ic')->whereDate('date_cashback', $startdate)->where('member_code', $items->upline_code)->where('downline_code', $items->member_code)->where('topupic', 'Y');
             if ($chk->doesntExist()) {
-                MemberIcJob::dispatch($startdate, $items)->delay(now()->addMinutes(5))->onQueue('ic');
+                MemberIcJob::dispatch($startdate, $items)->onQueue('ic');
             }
             $bar->advance();
         }

@@ -1,6 +1,6 @@
 <?php
 
-use Gametech\LineOa\Http\Controllers\Admin\ChatController;
+use Gametech\LineOA\Http\Controllers\Admin\ChatController;
 use Illuminate\Support\Facades\Route;
 
 // admin.xxx.com
@@ -17,6 +17,8 @@ Route::domain(
         ->as('admin.line-oa.') // 👈 ชื่อ route ทั้งกลุ่มขึ้นต้น admin.
         ->group(function () {
 
+            Route::get('chat', [ChatController::class, 'page'])->name('chat');
+
             Route::get('conversations', [ChatController::class, 'index'])
                 ->name('conversations.index');
             // => admin.line-oa.conversations.index
@@ -28,6 +30,32 @@ Route::domain(
             Route::post('conversations/{conversation}/reply', [ChatController::class, 'reply'])
                 ->name('conversations.reply');
             // => admin.line-oa.conversations.reply
+
+            Route::post('conversations/{conversation}/reply-image', [ChatController::class, 'replyImage'])
+                ->name('conversations.reply_image');
+
+            Route::get('messages/{message}/content', [
+                ChatController::class, 'content',
+            ])->name('messages.content');
+
+            Route::get('members/find', [ChatController::class, 'findMember'])->name('members.find');
+
+            Route::post('contacts/{contact}/attach-member', [ChatController::class, 'attachMember'])
+                ->name('contacts.attach-member');
+
+            Route::post('conversations/{conversation}/accept', [ChatController::class, 'accept'])
+                ->name('conversations.accept');
+// => admin.line-oa.conversations.accept
+
+            Route::post('conversations/{conversation}/lock', [ChatController::class, 'lock'])
+                ->name('conversations.lock');
+// => admin.line-oa.conversations.lock
+
+            Route::post('conversations/{conversation}/unlock', [ChatController::class, 'unlock'])
+                ->name('conversations.unlock');
+
+            Route::post('conversations/{conversation}/close', [ChatController::class, 'close'])
+                ->name('conversations.close');
 
         });
 

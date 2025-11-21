@@ -473,14 +473,9 @@
             }
         });
 
-        window.app = new Vue({
-            el: '#app',
-
-            created() {
-                // this.audio = document.getElementById('alertsound');
-                // this.autoCnt(false);
-            }
-        });
+        // window.app = new Vue({
+        //     el: '#app',
+        // });
 
     </script>
 @endpush

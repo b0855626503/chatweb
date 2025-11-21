@@ -88,6 +88,7 @@
                     },
                     addEditSubmit(event) {
                         event.preventDefault();
+                        this.toggleButtonDisable(true);
                         if (this.formmethod === 'add') {
                             var url = "{{ url($menu->currentRoute.'/create') }}";
                         } else if (this.formmethod === 'edit') {

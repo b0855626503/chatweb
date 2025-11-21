@@ -1,12 +1,13 @@
 <template>
     <div class="row">
-        <audio hidden preload="none" id="tick" :src="`${this.$root.baseUrl}/storage/spin_img/tick.mp3`" type='audio/mp3'>
+        <audio hidden preload="none" id="tick" :src="`${this.$root.baseUrl}/storage/spin_img/tick.mp3`"
+               type='audio/mp3'>
 
         </audio>
         <div class="mx-auto text-center">
             <div id="canvasContainer mt-5">
-                <canvas height="390" id="spinwheel" width="340" data-responsiveminwidth="180"
-                        data-responsivescaleheight="true" data-responsivemargin="0">
+                <canvas height="390" id="spinwheel" width="340" data-responsiveMinWidth="180"
+                        data-responsiveScaleHeight="true" data-responsiveMargin="0">
                     <p style="{color: white}" align="center">Sorry, your browser doesn't support canvas. Please try
                         another.</p>
                 </canvas>
@@ -55,7 +56,6 @@ export default {
         create() {
             this.winwheel = new Winwheel({
                 'canvasId': 'spinwheel',
-                'stopAngle': 1,
                 'numSegments': 10,                 // Specify number of segments.
                 'fillStyle': '#e7706f',
                 'outerRadius': 190,               // Set outer radius so wheel fits inside the background.
@@ -64,9 +64,9 @@ export default {
                 'textFontSize': 16,
                 'textOrientation': 'curved',
                 'textAlignment': 'inner',
-                'textMargin': 90,
+                'textMargin': 60,
                 'textFontFamily': 'monospace',
-                'textStrokeStyle': 'black',
+                'textStrokeStyle': 'white',
                 'textLineWidth': 3,
                 'textFillStyle': 'white',
                 'responsive': true,
@@ -86,7 +86,7 @@ export default {
                         'margin': 20,
                         'number': 10,
                         'fillStyle': 'red',
-                        'strokeStyle': 'black',
+                        'strokeStyle': 'white',
                         'outerRadius': 8,
                         'responsive': true, // This must be set to true if pin size is to be responsive.
                     },
@@ -99,17 +99,13 @@ export default {
             this.$http.post(`${this.$root.baseUrl}/member/reward`)
                 .then(response => {
                     this.diamond = parseInt(response.data.diamond);
-                    // console.log(response.data.format.point);
-                    // let stopAt = this.winwheel.getRandomForSegment(response.data.format.point);
-                    // console.log('stopAt '+stopAt);
-                    // let stopAt = this.winwheel.getIndicatedSegmentNumber(response.data.format.point);
+
                     this.winwheel.animation.stopAngle = response.data.format.point;
                     this.winwheel.startAnimation();
                     this.format = response.data.format;
-                    // console.log(this.winwheel.animation.stopAngle);
-                    // this.$emit('alertPrize',response.data.format);
+
                 })
-                .catch(exception => {
+                .catch(() => {
                     console.log('error');
                 });
         },
@@ -194,7 +190,7 @@ export default {
 
             let ctx = this.winwheel.ctx;
 
-            ctx.strokeStyle = 'navy';  // Set line colour.
+            ctx.strokeStyle = 'white';  // Set line colour.
             ctx.fillStyle = 'aqua';  // Set fill colour.
             ctx.lineWidth = 2;
             ctx.beginPath();           // Begin path.

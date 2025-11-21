@@ -48,7 +48,15 @@
 
 
             $("#frmsearch").submit(function () {
+                // var buttons = document.getElementsByTagName("button");
+                // for (var i = 0; i < buttons.length; i++) {
+                //     buttons[i].disabled = true;
+                // }
                 window.LaravelDataTables["dataTableBuilder"].draw(true);
+                // for (var i = 0; i < buttons.length; i++) {
+                //     buttons[i].disabled = false;
+                // }
+                // buttons.disabled = false;
             });
 
 

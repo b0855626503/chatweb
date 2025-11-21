@@ -14,7 +14,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class ChatService
+class ChatService_last
 {
     /**
      * LINE Messaging client สำหรับยิง/ดึงข้อมูลจาก LINE

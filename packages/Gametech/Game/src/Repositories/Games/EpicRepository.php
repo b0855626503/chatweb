@@ -56,7 +56,7 @@ class EpicRepository extends Repository
     }
 
 
-    public function Debug($response, $custom = false)
+    public function Debug($response = '', $custom = false)
     {
 
         if (!$custom) {
@@ -83,18 +83,49 @@ class EpicRepository extends Repository
     public function GameCurl($param, $action)
     {
 
-        $url = $this->url . $action;
+        $response =  rescue(function () use ($param, $action) {
+            $url = $this->url . $action;
 
-        $response = Http::timeout(15)->withHeaders([
-            'Content-Type' => 'application/json',
-            'Cache-Control' => 'no-store'
-        ])->post($url, $param);
+          return Http::timeout(15)->withHeaders([
+                'Content-Type' => 'application/json',
+                'Cache-Control' => 'no-store'
+            ])->post($url, $param);
+
+
+        }, function ($e) {
+
+            return false;
+
+        }, true);
 
         if ($this->debug) {
             $this->Debug($response);
         }
 
-        return $response;
+        if($response === false){
+            $result['success'] = false;
+            $result['msg'] = 'เชื่อมต่อไม่ได้';
+            return $result;
+        }
+
+        $result = $response->json();
+        $result['msg'] = ($result['error'] ?? 'พบข้อผิดพลาดในการเชื่อมต่อ');
+
+        if($response->failed() || $response->clientError() || $response->serverError()){
+            $result['success'] = false;
+            return $result;
+        }
+
+
+        if ($response->successful()) {
+            $result['success'] = true;
+        }else{
+            $result['success'] = false;
+
+        }
+        return $result;
+
+
     }
 
     public function addGameAccount($data): array
@@ -113,9 +144,9 @@ class EpicRepository extends Repository
         $return['success'] = true;
         $return['account'] = '';
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
-        }
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+//        }
         return $return;
     }
 
@@ -131,26 +162,20 @@ class EpicRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $responses = $this->GameCurl($param, 'createmember');
+        $response = $this->GameCurl($param, 'createmember');
 
-        $response = $responses->json();
+        if ($response['success'] === true) {
 
-        if ($responses->successful()) {
-
-            if ($response['success'] === true) {
-                $return['msg'] = 'Complete';
-                $return['success'] = true;
-                $return['user_name'] = $response['player_id'];
-                $return['user_pass'] = $response['player_password'];
-            } else {
-                $return['success'] = false;
-                $return['msg'] = $response['error'];
-            }
+            $return['msg'] = 'Complete';
+            $return['success'] = true;
+            $return['user_name'] = $response['player_id'];
+            $return['user_pass'] = $response['player_password'];
 
         } else {
             $return['success'] = false;
-            $return['msg'] = $response['error'];
+            $return['msg'] = $response['msg'];
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -170,27 +195,19 @@ class EpicRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $responses = $this->GameCurl($param, 'updatepassword');
+        $response = $this->GameCurl($param, 'updatepassword');
 
-        $response = $responses->json();
+        if ($response['success'] === true) {
 
-        if ($responses->successful()) {
+            $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
+            $return['success'] = true;
 
-            if ($response['success'] === true) {
-
-                $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
-                $return['success'] = true;
-
-            } else {
-                $return['success'] = false;
-                $return['msg'] = $response['error'];
-
-            }
 
         } else {
             $return['success'] = false;
-            $return['msg'] = $response['error'];
+            $return['msg'] = $response['msg'];
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -211,31 +228,23 @@ class EpicRepository extends Repository
             'client_ip' => request()->server('SERVER_ADDR')
         ];
 
-        $responses = $this->GameCurl($param, 'newgetbalance');
+        $response = $this->GameCurl($param, 'newgetbalance');
 
-        $response = $responses->json();
 
-        if ($responses->successful()) {
+        if ($response['success'] === true) {
+            $return['msg'] = 'Complete';
+            $return['success'] = true;
+            $return['connect'] = true;
+            $return['score'] = doubleval($response['balance']);
 
-            if ($response['success'] === true) {
-                $return['msg'] = 'Complete';
-                $return['success'] = true;
-                $return['connect'] = true;
-                $return['score'] = doubleval($response['balance']);
-
-            } else {
-
-                $return['success'] = false;
-                $return['connect'] = true;
-                $return['msg'] = $response['error'];
-
-            }
         } else {
+
             $return['success'] = false;
-            $return['connect'] = false;
-            $return['msg'] = $response['error'];
+            $return['connect'] = true;
+            $return['msg'] = $response['msg'];
 
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -272,27 +281,21 @@ class EpicRepository extends Repository
                 'amount' => $score
             ];
 
-            $responses = $this->GameCurl($param, 'deposit');
+            $response = $this->GameCurl($param, 'deposit');
 
-            $response = $responses->json();
 
-            if ($responses->successful()) {
-
-                if ($response['success'] === true) {
-                    $return['success'] = true;
-                    $return['ref_id'] = $transID;
-                    $return['after'] = $response['after_balance'];
-                    $return['before'] = $response['before_balance'];
-                } else {
-
-                    $return['success'] = false;
-                    $return['msg'] = $response['error'];
-
-                }
+            if ($response['success'] === true) {
+                $return['success'] = true;
+                $return['ref_id'] = $transID;
+                $return['after'] = $response['after_balance'];
+                $return['before'] = $response['before_balance'];
             } else {
+
                 $return['success'] = false;
-                $return['msg'] = $response['error'];
+                $return['msg'] = $response['msg'];
+
             }
+
 
         }
 
@@ -331,25 +334,19 @@ class EpicRepository extends Repository
                 'amount' => $score
             ];
 
-            $responses = $this->GameCurl($param, 'withdrawal');
+            $response = $this->GameCurl($param, 'withdrawal');
 
-            $response = $responses->json();
 
-            if ($responses->successful()) {
-
-                if ($response['success'] === true) {
-                    $return['success'] = true;
-                    $return['ref_id'] = $transID;
-                    $return['after'] = $response['after_balance'];
-                    $return['before'] = $response['before_balance'];
-                } else {
-                    $return['success'] = false;
-                    $return['msg'] = $response['error'];
-                }
+            if ($response['success'] === true) {
+                $return['success'] = true;
+                $return['ref_id'] = $transID;
+                $return['after'] = $response['after_balance'];
+                $return['before'] = $response['before_balance'];
             } else {
                 $return['success'] = false;
-                $return['msg'] = $response['error'];
+                $return['msg'] = $response['msg'];
             }
+
 
         }
 

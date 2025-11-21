@@ -2,10 +2,8 @@
 
 namespace Gametech\Payment\Models;
 
-use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
 use Gametech\Payment\Contracts\BankAccount as BankAccountContract;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Spiritix\LadaCache\Database\LadaCacheTrait;
 
@@ -29,6 +27,7 @@ class BankAccount extends Model implements BankAccountContract
     protected $primaryKey = 'code';
 
     protected $fillable = [
+        'local',
         'acc_name',
         'acc_no',
         'banks',
@@ -39,8 +38,6 @@ class BankAccount extends Model implements BankAccountContract
         'status_topup',
         'bank_type',
         'smestatus',
-        'device_id',
-        'api_refresh',
         'checktime',
         'display_wallet',
         'sort',
@@ -48,7 +45,33 @@ class BankAccount extends Model implements BankAccountContract
         'user_create',
         'user_update',
         'date_create',
-        'date_update'
+        'date_update',
+        'website',
+        'webhook',
+        'pattern',
+        'auto_transfer',
+        'min_amount',
+        'max_amount',
+        'pompay_default',
+        'secert',
+        'token',
+        'qrcode',
+        'filepic',
+        'rate_auto',
+        'rate',
+        'rate_update',
+        'slip',
+        'payment',
+        'deposit_min',
+        'bonus',
+        'bonus_max',
+        'date_start',
+        'time_start',
+        'date_end',
+        'time_end',
+        'start_at',
+        'end_at',
+        'remark',
     ];
 
     protected $casts = [
@@ -59,20 +82,28 @@ class BankAccount extends Model implements BankAccountContract
         'user_name' => 'string',
         'user_pass' => 'string',
         'balance' => 'decimal:2',
+        'min_amount' => 'decimal:2',
+        'max_amount' => 'decimal:2',
         'status_auto' => 'string',
+        'auto_transfer' => 'string',
         'status_topup' => 'string',
         'bank_type' => 'integer',
         'smestatus' => 'string',
-        'device_id' => 'string',
-        'api_refresh' => 'string',
         'checktime' => 'datetime',
         'display_wallet' => 'string',
         'sort' => 'integer',
         'enable' => 'string',
+        'pattern' => 'string',
+        'webhook' => 'string',
+        'date_start' => 'date',
+        'date_end'   => 'date',
+        'start_at'   => 'datetime',
+        'end_at'     => 'datetime',
         'user_create' => 'string',
         'user_update' => 'string',
         'date_create' => 'datetime:Y-m-d H:i',
         'date_update' => 'datetime:Y-m-d H:i',
+        'rate_update' => 'datetime:Y-m-d H:i',
     ];
 
     public static $rules = [
@@ -82,16 +113,19 @@ class BankAccount extends Model implements BankAccountContract
         'user_name' => 'required|string|max:100',
         'user_pass' => 'required|string|max:100',
         'balance' => 'required|numeric',
+        'min_amount' => 'numeric',
+        'max_amount' => 'numeric',
         'status_auto' => 'required|string',
         'status_topup' => 'required|string',
         'bank_type' => 'required|integer',
         'smestatus' => 'required|string',
-        'device_id' => 'nullable|string|max:150',
-        'api_refresh' => 'nullable|string|max:150',
         'checktime' => 'nullable',
         'display_wallet' => 'required|string',
         'sort' => 'required|integer',
         'enable' => 'nullable|string',
+        'website' => 'string',
+        'webhook' => 'string',
+        'pattern' => 'string',
         'user_create' => 'required|string|max:100',
         'user_update' => 'required|string|max:100',
         'date_create' => 'nullable',

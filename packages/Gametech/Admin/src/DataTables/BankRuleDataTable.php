@@ -4,7 +4,6 @@ namespace Gametech\Admin\DataTables;
 
 
 use Gametech\Admin\Transformers\BankRuleTransformer;
-use Gametech\Payment\Contracts\Bank;
 use Gametech\Payment\Contracts\BankRule;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTableAbstract;
@@ -24,14 +23,14 @@ class BankRuleDataTable extends DataTable
     public function dataTable($query)
     {
 
-        $bank = collect(DB::table('banks')->where('code','<>',0)->get()->toArray());
+        $bank = collect(DB::table('banks')->where('code', '<>', 0)->get()->toArray());
 
         $bank1 = [
             'value' => '0',
             'text' => ''
         ];
 
-        $banks = $bank->map(function ($items){
+        $banks = $bank->map(function ($items) {
             $item = (object)$items;
             return [
                 'value' => $item->code,
@@ -41,10 +40,9 @@ class BankRuleDataTable extends DataTable
         })->prepend($bank1);
 
         $bankss = collect($banks);
-        foreach($bankss as $i => $item){
+        foreach ($bankss as $i => $item) {
             $newbank[$item['value']] = $item['text'];
         }
-
 
 
         $dataTable = new EloquentDataTable($query);

@@ -22,6 +22,6 @@ return [
     |
     */
 
-    'connection' => null,
+    'connection' => 'session',
 
 ];

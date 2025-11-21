@@ -3,6 +3,7 @@
 namespace Gametech\Auto\Console\Commands;
 
 
+use Gametech\Auto\Jobs\MemberCashback as MemberCashbackJob;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 
@@ -40,19 +41,8 @@ class PreUpdate extends Command
      */
     public function handle()
     {
-        Artisan::call('lada-cache:disable');
-
-        $exitCode = Artisan::call('migrate', [
-            '--force' => true
-        ]);
-
-        $this->info($exitCode);
-
-        $exitCode = Artisan::call('optimize:clear');
-
-        $this->info($exitCode);
-
-        Artisan::call('lada-cache:enable');
+        $result = shell_exec('composer update');
+        $this->info($result);
 
     }
 }

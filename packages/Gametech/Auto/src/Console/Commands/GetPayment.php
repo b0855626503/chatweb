@@ -28,11 +28,6 @@ class GetPayment extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->bankPaymentRepository = app('Gametech\Payment\Repositories\BankPaymentRepository');
-        $this->memberRepository = app('Gametech\Member\Repositories\MemberRepository');
-        $this->allLogRepository = app('Gametech\Core\Repositories\AllLogRepository');
-        $this->paymentPromotionRepository = app('Gametech\Payment\Repositories\PaymentPromotionRepository');
-        $this->bankAccountRepository = app('Gametech\Payment\Repositories\BankAccountRepository');
     }
 
     /**
@@ -45,7 +40,7 @@ class GetPayment extends Command
         $id = $this->argument('bank');
 
         $this->info('Get Transaction : ' . $id);
-        $banks = $this->bankAccountRepository->getAccount($id);
+        $banks = app('Gametech\Payment\Repositories\BankAccountRepository')->getAccount($id);
 //        $this->info($banks);
 
         $bar = $this->output->createProgressBar($banks->count());

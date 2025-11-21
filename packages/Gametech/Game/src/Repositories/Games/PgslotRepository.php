@@ -80,29 +80,59 @@ class PgslotRepository extends Repository
 
     }
 
+
     public function GameCurl($param, $action)
     {
-        $url = $this->url . $action;
 
-        $postString = json_encode($param);
-        $hash = hash_pbkdf2("sha512", $postString, $this->secretkey, 1000, 64, true);
-        $signature = base64_encode($hash);
+        $response = rescue(function () use ($param, $action) {
 
-        $response = Http::timeout(15)->withHeaders([
-            'Content-Type' => 'application/json',
-            'Cache-Control' => 'no-store',
-            'x-amb-signature' => $signature,
-        ])->post($url, $param);
+            $url = $this->url . $action;
+
+            $postString = json_encode($param);
+            $hash = hash_pbkdf2("sha512", $postString, $this->secretkey, 1000, 64, true);
+            $signature = base64_encode($hash);
+
+
+            return Http::timeout(15)->withHeaders([
+                'Content-Type' => 'application/json',
+                'Cache-Control' => 'no-store',
+                'x-amb-signature' => $signature,
+            ])->post($url, $param);
+
+
+        }, function ($e) {
+
+            return false;
+
+        }, true);
 
         if ($this->debug) {
             $this->Debug($response);
         }
 
-        return $response;
+        if($response === false){
+//            $result['main'] = false;
+            $result['success'] = false;
+            $result['msg'] = 'เชื่อมต่อไม่ได้';
+            return $result;
+        }
 
+
+        $result = $response->json();
+        $result['msg'] = ($result['status']['message'] ?? 'พบข้อผิดพลาดในการเชื่อมต่อ');
+
+        if ($response->successful()) {
+            $result['success'] = true;
+        } else {
+            $result['success'] = false;
+        }
+
+        return $result;
     }
 
 
+    /**
+     */
     public function addGameAccount($data): array
     {
         $result = $this->newUser();
@@ -139,13 +169,15 @@ class PgslotRepository extends Repository
             $return['msg'] = 'ไม่สามารถลงทะเบียนรหัสเกมได้ เนื่องจาก ID เกมหมด โปรดแจ้ง Staff';
         }
 
-        if ($this->debug) {
-            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
-        }
+//        if ($this->debug) {
+//            return ['debug' => $this->responses, 'success' => true, 'account' => ''];
+//        }
 
         return $return;
     }
 
+    /**
+     */
     public function addUser($username, $data): array
     {
         $return['success'] = false;
@@ -157,13 +189,10 @@ class PgslotRepository extends Repository
             'agent' => $this->agent
         ];
 
-        $responses = $this->GameCurl($param, 'partner/create');
+        $response = $this->GameCurl($param, 'partner/create');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
-            if ($response['status']['code'] === 0) {
+        if ($response['success'] === true) {
+            if ($response['status']['code'] == 0) {
 
                 DB::table('users_pgslot')
                     ->where('user_name', $username)
@@ -180,15 +209,13 @@ class PgslotRepository extends Repository
                     ->update(['use_account' => 'Y']);
 
                 $return['success'] = false;
-                $return['msg'] = $response['status']['message'];
+                $return['msg'] = $response['msg'];
             }
-
         } else {
-
             $return['success'] = false;
-            $return['msg'] = $response['status']['message'];
-
+            $return['msg'] = $response['msg'];
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -198,6 +225,8 @@ class PgslotRepository extends Repository
     }
 
 
+    /**
+     */
     public function changePass($data): array
     {
         $return['success'] = false;
@@ -208,24 +237,19 @@ class PgslotRepository extends Repository
             'agent' => $this->agent
         ];
 
-        $responses = $this->GameCurl($param, 'partner/password');
+        $response = $this->GameCurl($param, 'partner/password');
 
-        $response = $responses->json();
-
-        if ($responses->successful()) {
-
-            if ($response['status']['code'] === 0) {
+        if ($response['success'] === true) {
+            if ($response['status']['code'] == 0) {
                 $return['msg'] = 'เปลี่ยนรหัสผ่านเกม เรียบร้อย';
                 $return['success'] = true;
 
-            } else {
-                $return['success'] = false;
-                $return['msg'] = $response['status']['message'];
             }
         } else {
-            $return['msg'] = $response['status']['message'];
             $return['success'] = false;
+            $return['msg'] = $response['msg'];
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -233,6 +257,8 @@ class PgslotRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function viewBalance($username): array
     {
         $return['success'] = false;
@@ -243,30 +269,27 @@ class PgslotRepository extends Repository
             'agent' => $this->agent
         ];
 
-        $responses = $this->GameCurl($param, 'partner/balance');
+        $response = $this->GameCurl($param, 'partner/balance');
 
-        $response = $responses->json();
 
-        if ($responses->successful()) {
-
+        if ($response['success'] === true) {
             if ($response['status']['code'] === 0) {
                 $return['msg'] = 'Complete';
                 $return['success'] = true;
                 $return['connect'] = true;
-                $return['score'] = doubleval($response['data']['balance']);
-
+                $return['score'] = $response['data']['balance'];
+//                $return['outstanding'] = $response['data']['outstanding'];
             } else {
-
-                $return['msg'] = $response['status']['message'];
+                $return['msg'] = $response['msg'];
                 $return['connect'] = true;
                 $return['success'] = false;
-
             }
         } else {
-            $return['msg'] = $response['status']['message'];
+            $return['msg'] = $response['msg'];
             $return['connect'] = false;
             $return['success'] = false;
         }
+
 
         if ($this->debug) {
             return ['debug' => $this->responses, 'success' => true];
@@ -274,6 +297,8 @@ class PgslotRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function deposit($username, $amount): array
     {
         $return['success'] = false;
@@ -298,25 +323,20 @@ class PgslotRepository extends Repository
                 'agent' => $this->agent
             ];
 
-            $responses = $this->GameCurl($param, 'partner/deposit');
+            $response = $this->GameCurl($param, 'partner/deposit');
 
-            $response = $responses->json();
-
-            if ($responses->successful()) {
-
-                if ($response['status']['code'] === 0) {
+            if ($response['success'] === true) {
+                if ($response['status']['code'] == 0) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = doubleval($response['data']['balance']['after']);
                     $return['before'] = doubleval($response['data']['balance']['before']);
-                } else {
-                    $return['msg'] = $response['status']['message'];
-                    $return['success'] = false;
                 }
             } else {
-                $return['msg'] = $response['status']['message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
             }
+
 
         }
 
@@ -327,6 +347,8 @@ class PgslotRepository extends Repository
         return $return;
     }
 
+    /**
+     */
     public function withdraw($username, $amount): array
     {
         $return['success'] = false;
@@ -353,25 +375,20 @@ class PgslotRepository extends Repository
                 'agent' => $this->agent
             ];
 
-            $responses = $this->GameCurl($param, 'partner/withdraw');
+            $response = $this->GameCurl($param, 'partner/withdraw');
 
-            $response = $responses->json();
-
-            if ($responses->successful()) {
-
-                if ($response['status']['code'] === 0) {
+            if ($response['success'] === true) {
+                if ($response['status']['code'] == 0) {
                     $return['success'] = true;
                     $return['ref_id'] = $transID;
                     $return['after'] = doubleval($response['data']['balance']['after']);
                     $return['before'] = doubleval($response['data']['balance']['before']);
-                } else {
-                    $return['msg'] = $response['status']['message'];
-                    $return['success'] = false;
                 }
             } else {
-                $return['msg'] = $response['status']['message'];
+                $return['msg'] = $response['msg'];
                 $return['success'] = false;
             }
+
 
         }
 

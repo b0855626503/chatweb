@@ -55,8 +55,8 @@
                             <div class="col-2 d-flex align-items-center">
                                 <div class="mx-auto">
 
-                                        <p class="text-center text-top m-0 text-white">เงินที่โยก</p>
-                                        <p class="text-center text-color-fixed text-sub m-0">{{ $item['amount'] }} ฿</p>
+                                    <p class="text-center text-top m-0 text-white">เงินที่โยก</p>
+                                    <p class="text-center text-color-fixed text-sub m-0">{{ $item['amount'] }} ฿</p>
 
                                 </div>
                             </div>
@@ -74,7 +74,6 @@
                                 <div class="mx-auto">
 
 
-
                                 </div>
                             </div>
                             <div class="col-5">
@@ -86,7 +85,8 @@
                         <hr>
                         <div class="row ng-star-inserted">
                             <div class="col">
-                                <a href="{{ route('customer.transfer.wallet.index') }}" class="btn btn-theme btn-lg btn-block shadow-box"
+                                <a href="{{ route('customer.transfer.wallet.index') }}"
+                                   class="btn btn-theme btn-lg btn-block shadow-box"
                                    type="button">
                                     <i class="fas fa-home"></i> กลับไปสู่หน้าหลัก
                                 </a>

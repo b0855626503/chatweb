@@ -5,6 +5,7 @@ namespace Gametech\Admin\Http\Controllers;
 
 use Codedge\Updater\Traits\UseVersionFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 
 class CmdController extends AppBaseController
@@ -30,7 +31,9 @@ class CmdController extends AppBaseController
     public function optimizeClear()
     {
         Artisan::call('optimize:clear');
-        return 'Optimize Clear';
+        Artisan::call('lada-cache:flush');
+        opcache_reset();
+        return 'Optimize Clear & reset';
     }
 
     public function optimize()
@@ -61,6 +64,33 @@ class CmdController extends AppBaseController
     {
         Artisan::call('cache:clear');
         return 'Cache Clear';
+    }
+
+    public function cashback()
+    {
+        $exit = Artisan::call('cashback:list');
+        if($exit){
+            return 'Cashback Complete โปรดเชคก่อนอย่า กด f5 , refresh';
+        }
+        return 'Cashback';
+    }
+
+    public function ic()
+    {
+        $exit = Artisan::call('ic:list');
+        if($exit){
+            return 'IC Complete โปรดเชคก่อนอย่า กด f5 , refresh';
+        }
+        return 'ic';
+    }
+
+    public function resetPro()
+    {
+        $exit = DB::table('members')->update(['status_pro' => 0]);
+        if($exit){
+            return 'ล้างค่า โปรสมาชิกใหม่แล้ว';
+        }
+        return 'ลองใหม่';
     }
 
     public function updatePatch(\Codedge\Updater\UpdaterManager $updater)

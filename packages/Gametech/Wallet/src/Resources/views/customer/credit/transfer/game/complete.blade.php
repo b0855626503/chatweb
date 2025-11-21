@@ -83,7 +83,6 @@
                                 <div class="mx-auto">
 
 
-
                                 </div>
                             </div>
                             <div class="col-5">
@@ -94,7 +93,8 @@
                         <hr>
                         <div class="row ng-star-inserted">
                             <div class="col">
-                                <a href="{{ route('customer.credit.index') }}" class="btn btn-theme btn-lg btn-block shadow-box"
+                                <a href="{{ route('customer.credit.index') }}"
+                                   class="btn btn-theme btn-lg btn-block shadow-box"
                                    type="button">
                                     <i class="fas fa-home"></i> กลับไปสู่หน้าหลัก
                                 </a>

@@ -3,8 +3,6 @@
 namespace Gametech\Admin\DataTables;
 
 
-
-
 use Gametech\Admin\Transformers\FaqTransformer;
 use Gametech\Core\Contracts\Faq;
 use Yajra\DataTables\DataTableAbstract;
@@ -54,7 +52,7 @@ class AnnounceDataTable extends DataTable
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->parameters([
-                'dom'       => 'Bfrtip',
+                'dom' => 'Bfrtip',
 
                 'processing' => true,
                 'serverSide' => true,
@@ -64,15 +62,15 @@ class AnnounceDataTable extends DataTable
                 'searching' => false,
                 'deferRender' => true,
                 'retrieve' => true,
-'ordering' => true,
+                'ordering' => true,
                 'autoWidth' => false,
 
-                'order'     => [[0, 'desc']],
-                'buttons'   => [
+                'order' => [[0, 'desc']],
+                'buttons' => [
                     'pageLength'
                 ],
                 'columnDefs' => [
-                    [ 'targets' => '_all' , 'className' => 'text-nowrap']
+                    ['targets' => '_all', 'className' => 'text-nowrap']
                 ]
             ]);
     }
@@ -85,11 +83,11 @@ class AnnounceDataTable extends DataTable
     protected function getColumns()
     {
         return [
-            ['data' => 'code' , 'name' => 'faq.code' , 'title' => '#' , 'orderable' => true , 'searchable' => true , 'className' => 'text-center text-nowrap'],
-            ['data' => 'name' , 'name' => 'faq.question' , 'title' => 'คำถาม' , 'orderable' => false , 'searchable' => true , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'sort' , 'name' => 'faq.sort' , 'title' => 'ลำดับ' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'enable' , 'name' => 'faq.enable' , 'title' => 'เปิดใช้งาน' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'action' , 'name' => 'action' , 'title' => 'Action' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
+            ['data' => 'code', 'name' => 'faq.code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'name', 'name' => 'faq.question', 'title' => 'คำถาม', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+            ['data' => 'sort', 'name' => 'faq.sort', 'title' => 'ลำดับ', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'enable', 'name' => 'faq.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
         ];
     }
 

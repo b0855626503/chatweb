@@ -1,5 +1,5 @@
 {
-    "name": "lotto/api",
+    "name": "gametech/api",
     "description": "description",
     "license": "MIT",
 
@@ -14,14 +14,14 @@
 
     "autoload": {
         "psr-4": {
-            "Lotto\\API\\": "/"
+            "Gametech\\API\\": "src/"
         }
     },
 
     "extra": {
         "laravel": {
             "providers": [
-                "Lotto\\API\\Providers\\APIServiceProvider"
+                "Gametech\\API\\Providers\\APIServiceProvider"
             ],
             "aliases": {}
         }

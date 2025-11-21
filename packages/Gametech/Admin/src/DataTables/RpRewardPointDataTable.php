@@ -24,7 +24,7 @@ class RpRewardPointDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-            ->with('point', function() use ($query) {
+            ->with('point', function () use ($query) {
                 return core()->currency((clone $query)->sum('point'));
             })
             ->setTransformer(new RpRewardPointTransformer);
@@ -51,7 +51,7 @@ class RpRewardPointDataTable extends DataTable
         }
 
         return $model->newQuery()
-            ->with(['member','emp','reward'])
+            ->with(['member', 'emp', 'reward'])
             ->select('members_reward_logs.*')->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00',
                 'date_approve' => 'datetime:Y-m-d H:00',
@@ -101,8 +101,8 @@ class RpRewardPointDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'

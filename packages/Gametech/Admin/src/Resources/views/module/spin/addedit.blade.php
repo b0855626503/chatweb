@@ -93,151 +93,160 @@
 </b-modal>
 
 @push('scripts')
-    <script type="text/javascript">
-        (() => {
-            window.app = new Vue({
-                el: '#app',
-                data() {
-                    return {
-                        show: false,
-                        trigger: 0,
-                        fileupload: '',
-                        formmethod: 'edit',
-                        formaddedit: {
-                            name: '',
-                            amount: '',
-                            winloss: 0,
-                            filepic: '',
-                            types: 'WALLET'
-                        },
-                        option: {
-                            types: [
+    <script type="module">
 
-                                {text: 'Wallet', value: 'WALLET'},
-                                {text: 'Credit', value: 'CREDIT'},
-                                {text: 'Diamond', value: 'DIAMOND'},
-                                {text: 'รางวัลจริง', value: 'REAL'}
-                            ],
-                        },
-                        imgpath: '/storage/spin_img/'
-                    };
-                },
-                created() {
-                    this.audio = document.getElementById('alertsound');
-                    this.autoCnt(false);
-                },
-                methods: {
-                    editModal(code) {
-                        this.code = null;
-                        this.formaddedit = {
-                            name: '',
-                            amount: '',
-                            winloss: 0,
-                            types: ''
-
-                        }
-
-                        this.formmethod = 'edit';
-                        this.fileupload = '';
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.code = code;
-                            this.loadData();
-                            this.$refs.addedit.show();
-
-                        })
-
+        window.app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    show: false,
+                    trigger: 0,
+                    fileupload: '',
+                    formmethod: 'edit',
+                    formaddedit: {
+                        name: '',
+                        amount: '',
+                        winloss: 0,
+                        filepic: '',
+                        types: 'WALLET'
                     },
-                    addModal() {
-                        this.code = null;
-                        this.formaddedit = {
-                            name: '',
-                            amount: '',
-                            winloss: 0,
-                            filepic: '',
-                            types: ''
-                        }
-                        this.formmethod = 'add';
-                        this.fileupload = '';
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.$refs.addedit.show();
-
-                        })
+                    option: {
+                        @if($config->seamless == 'Y')
+                        types: [
+                            {text: 'Wallet', value: 'WALLET'},
+                            {text: 'BONUS', value: 'BONUS'}
+                        ],
+                        @else
+                        types: [
+                            {text: 'Wallet', value: 'WALLET'},
+                            {text: 'Credit', value: 'CREDIT'},
+                            {text: 'Diamond', value: 'DIAMOND'},
+                            {text: 'รางวัลจริง', value: 'REAL'}
+                        ],
+                        @endif
                     },
-
-                    async loadData() {
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
-
-                        this.formaddedit = {
-                            name: response.data.data.name,
-                            amount: response.data.data.amount,
-                            winloss: response.data.data.winloss,
-                            types: response.data.data.types
-                        }
-
-                        if (response.data.data.filepic) {
-                            this.trigger++;
-                            this.formaddedit.filepic = response.data.data.filepic;
-
-                            // $('img.preview').attr('src','/assets/images/spin_img/'+ this.formaddedit.filepic);
-                            // this.getImg(this.formaddedit.filepic);
-                        }
-
-                    },
-                    setImage(value) {
-                        // this.trigger++;
-                        this.formaddedit.filepic = value;
-                        console.log('Set :' + this.formaddedit.filepic);
-                    },
-                    clearImage() {
-                        this.trigger++;
-                        this.formaddedit.filepic = '';
-                        console.log('Clear :' + this.formaddedit.filepic);
-                    },
-                    handleUpload(value) {
-                        this.fileupload = value;
-                    },
-                    addEditSubmitNew(event) {
-                        event.preventDefault();
-                        var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
-
-
-                        let formData = new FormData();
-                        const json = JSON.stringify({
-                            name: this.formaddedit.name,
-                            amount: this.formaddedit.amount,
-                            winloss: this.formaddedit.winloss
-                        });
-
-                        formData.append('data', json);
-                        formData.append('fileupload', this.fileupload);
-
-                        // const formData = new FormData(this.$refs.addedit);
-
-                        const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
-
-                        axios.post(url, formData, config)
-                            .then(response => {
-                                this.$bvModal.msgBoxOk(response.data.message, {
-                                    title: 'ผลการดำเนินการ',
-                                    size: 'sm',
-                                    buttonSize: 'sm',
-                                    okVariant: 'success',
-                                    headerClass: 'p-2 border-bottom-0',
-                                    footerClass: 'p-2 border-top-0',
-                                    centered: true
-                                });
-                                window.LaravelDataTables["dataTableBuilder"].draw(false);
-                            })
-                            .catch(errors => console.log(errors));
+                    imgpath: '/storage/spin_img/'
+                };
+            },
+            created() {
+                this.audio = document.getElementById('alertsound');
+                this.autoCnt(false);
+            },
+            methods: {
+                editModal(code) {
+                    this.code = null;
+                    this.formaddedit = {
+                        name: '',
+                        amount: '',
+                        winloss: 0,
+                        types: ''
 
                     }
+
+                    this.formmethod = 'edit';
+                    this.fileupload = '';
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.code = code;
+                        this.loadData();
+                        this.$refs.addedit.show();
+
+                    })
+
                 },
-            });
-        })()
+                addModal() {
+                    this.code = null;
+                    this.formaddedit = {
+                        name: '',
+                        amount: '',
+                        winloss: 0,
+                        filepic: '',
+                        types: ''
+                    }
+                    this.formmethod = 'add';
+                    this.fileupload = '';
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.$refs.addedit.show();
+
+                    })
+                },
+
+                async loadData() {
+                    const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
+
+                    this.formaddedit = {
+                        name: response.data.data.name,
+                        amount: response.data.data.amount,
+                        winloss: response.data.data.winloss,
+                        types: response.data.data.types
+                    }
+
+                    if (response.data.data.filepic) {
+                        this.trigger++;
+                        this.formaddedit.filepic = response.data.data.filepic;
+
+                        // $('img.preview').attr('src','/assets/images/spin_img/'+ this.formaddedit.filepic);
+                        // this.getImg(this.formaddedit.filepic);
+                    }
+
+                },
+                setImage(value) {
+                    // this.trigger++;
+                    this.formaddedit.filepic = value;
+                    console.log('Set :' + this.formaddedit.filepic);
+                },
+                clearImage() {
+                    this.trigger++;
+                    this.formaddedit.filepic = '';
+                    console.log('Clear :' + this.formaddedit.filepic);
+                },
+                handleUpload(value) {
+                    this.fileupload = value;
+                },
+                addEditSubmitNew(event) {
+                    event.preventDefault();
+                    this.toggleButtonDisable(true);
+                    var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
+
+
+                    let formData = new FormData();
+                    const json = JSON.stringify({
+                        name: this.formaddedit.name,
+                        amount: this.formaddedit.amount,
+                        winloss: this.formaddedit.winloss,
+                        types: this.formaddedit.types,
+
+                    });
+
+                    formData.append('data', json);
+                    formData.append('fileupload', this.fileupload);
+
+                    // const formData = new FormData(this.$refs.addedit);
+
+                    const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
+
+                    axios.post(url, formData, config)
+                        .then(response => {
+                            this.$bvModal.msgBoxOk(response.data.message, {
+                                title: 'ผลการดำเนินการ',
+                                size: 'sm',
+                                buttonSize: 'sm',
+                                okVariant: 'success',
+                                headerClass: 'p-2 border-bottom-0',
+                                footerClass: 'p-2 border-top-0',
+                                centered: true
+                            });
+                            window.LaravelDataTables["dataTableBuilder"].draw(false);
+                        })
+                        .catch(errors => console.log(errors));
+
+                }
+            },
+        });
+
     </script>
 @endpush
 

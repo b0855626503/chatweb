@@ -6,6 +6,7 @@ use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 
 use DateTimeInterface;
 use Gametech\Member\Models\MemberProxy;
+use Gametech\Payment\Models\BillFreeProxy;
 use Gametech\Payment\Models\BillProxy;
 use Gametech\Payment\Models\PaymentWaitingProxy;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,7 +21,7 @@ use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class Game extends Model implements GameContract
 {
-    use LadaCacheTrait;
+    use LaravelSubQueryTrait;
 
 
     protected function serializeDate(DateTimeInterface $date)
@@ -55,7 +56,11 @@ class Game extends Model implements GameContract
         'user_create',
         'date_create',
         'user_update',
-        'date_update'
+        'date_update',
+        'autologin',
+        'token',
+        'token_expired',
+        'newuser'
     ];
 
     protected static function booted()
@@ -113,6 +118,11 @@ class Game extends Model implements GameContract
     public function bills()
     {
         return $this->hasMany(BillProxy::modelClass(),'game_code');
+    }
+
+    public function bills_free()
+    {
+        return $this->hasMany(BillFreeProxy::modelClass(),'game_code');
     }
 
 

@@ -3,8 +3,6 @@
 namespace Gametech\Admin\DataTables;
 
 
-
-
 use Gametech\Admin\Transformers\ConfirmwalletTransformer;
 use Gametech\Payment\Contracts\PaymentWaiting;
 use Yajra\DataTables\DataTableAbstract;
@@ -57,16 +55,16 @@ class ConfirmwalletDataTable extends DataTable
 
         $startdate = request()->input('startDate');
         $enddate = request()->input('endDate');
-        if(empty($startdate)){
-            $startdate = now()->toDateString().' 00:00:00';
+        if (empty($startdate)) {
+            $startdate = now()->toDateString() . ' 00:00:00';
         }
-        if(empty($enddate)){
-            $enddate = now()->toDateString().' 23:59:59';
+        if (empty($enddate)) {
+            $enddate = now()->toDateString() . ' 23:59:59';
         }
 
         return $model->newQuery()
             ->waiting()->active()
-            ->with(['member','game','promotion'])
+            ->with(['member', 'game', 'promotion'])
             ->select('payments_waiting.*')
             ->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
@@ -86,9 +84,9 @@ class ConfirmwalletDataTable extends DataTable
     {
         return $this->builder()
             ->columns($this->getColumns())
-            ->ajaxWithForm('','#frmsearch')
+            ->ajaxWithForm('', '#frmsearch')
             ->parameters([
-                'dom'       => 'Bfrtip',
+                'dom' => 'Bfrtip',
 
                 'processing' => true,
                 'serverSide' => true,
@@ -103,16 +101,16 @@ class ConfirmwalletDataTable extends DataTable
 
                 'pageLength' => 50,
 
-                'order'     => [[0, 'desc']],
+                'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [ 50, 100, 200 ],
-                    [ '50 rows', '100 rows', '200 rows' ]
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
-                'buttons'   => [
+                'buttons' => [
                     'pageLength'
                 ],
                 'columnDefs' => [
-                    [ 'targets' => '_all' , 'className' => 'text-nowrap']
+                    ['targets' => '_all', 'className' => 'text-nowrap']
                 ]
             ]);
     }
@@ -125,18 +123,18 @@ class ConfirmwalletDataTable extends DataTable
     protected function getColumns()
     {
         return [
-            ['data' => 'code' , 'name' => 'payments_waiting.code' , 'title' => '#' , 'orderable' => true , 'searchable' => true , 'className' => 'text-center text-nowrap'],
-            ['data' => 'date' , 'name' => 'payments_waiting.date_create' , 'title' => 'วันเวลา' , 'orderable' => false , 'searchable' => true , 'className' => 'text-center text-nowrap' ],
-            ['data' => 'name' , 'name' => 'member.name' , 'title' => 'ชื่อ' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'user_name' , 'name' => 'member.user_name' , 'title' => 'User ID' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'game' , 'name' => 'game.name' , 'title' => 'โอนเข้าเกม' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'pro' , 'name' => 'promotion.name_th' , 'title' => 'โปรโมชั่น' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'amount' , 'name' => 'payments_waiting.amount' , 'title' => 'จำนวนที่โยก' , 'orderable' => false , 'searchable' => true, 'className' => 'text-right text-nowrap' ],
-            ['data' => 'balance' , 'name' => 'member.balance' , 'title' => 'Wallet ปัจจุบัน' , 'orderable' => false , 'searchable' => true, 'className' => 'text-right text-nowrap' ],
-            ['data' => 'ip' , 'name' => 'payments_waiting.ip' , 'title' => 'IP' , 'orderable' => false , 'searchable' => true, 'className' => 'text-left text-nowrap' ],
-            ['data' => 'confirm' , 'name' => 'confirm' , 'title' => 'อนุมัติ' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'cancel' , 'name' => 'cancel' , 'title' => 'คืนยอด' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'delete' , 'name' => 'delete' , 'title' => 'ลบ' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
+            ['data' => 'code', 'name' => 'payments_waiting.code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'date', 'name' => 'payments_waiting.date_create', 'title' => 'วันเวลา', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'name', 'name' => 'member.name', 'title' => 'ชื่อ', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'user_name', 'name' => 'member.user_name', 'title' => 'User ID', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'game', 'name' => 'game.name', 'title' => 'โอนเข้าเกม', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'pro', 'name' => 'promotion.name_th', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'amount', 'name' => 'payments_waiting.amount', 'title' => 'จำนวนที่โยก', 'orderable' => false, 'searchable' => true, 'className' => 'text-right text-nowrap'],
+            ['data' => 'balance', 'name' => 'member.balance', 'title' => 'Wallet ปัจจุบัน', 'orderable' => false, 'searchable' => true, 'className' => 'text-right text-nowrap'],
+            ['data' => 'ip', 'name' => 'payments_waiting.ip', 'title' => 'IP', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+            ['data' => 'confirm', 'name' => 'confirm', 'title' => 'อนุมัติ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'cancel', 'name' => 'cancel', 'title' => 'คืนยอด', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'delete', 'name' => 'delete', 'title' => 'ลบ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
         ];
     }
 

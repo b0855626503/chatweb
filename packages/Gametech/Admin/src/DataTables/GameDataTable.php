@@ -69,7 +69,7 @@ class GameDataTable extends DataTable
                 'retrieve' => true,
                 'ordering' => true,
                 'autoWidth' => false,
-                'scrollX' => true,
+                'scrollX' => false,
 
                 'order' => [[0, 'asc']],
                 'buttons' => [
@@ -101,7 +101,7 @@ class GameDataTable extends DataTable
 //            ['data' => 'sort' , 'name' => 'games.sort' , 'title' => 'ลำดับ' , 'orderable' => false , 'searchable' => true , 'className' => 'text-center text-nowrap' ],
             ['data' => 'status', 'name' => 'games.batch_game', 'title' => 'สถานะเกม', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
 
-            ['data' => 'auto_open', 'name' => 'games.auto_open', 'title' => 'เปิดบัญชีอัตโนมัติ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
+//            ['data' => 'auto_open', 'name' => 'games.auto_open', 'title' => 'เปิดบัญชีอัตโนมัติ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
             ['data' => 'status_open', 'name' => 'games.status_open', 'title' => 'แสดงผล', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
 //            ['data' => 'enable' , 'name' => 'games.enable' , 'title' => 'เปิดใช้งาน' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' , 'width' => '3%' ],
             ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],

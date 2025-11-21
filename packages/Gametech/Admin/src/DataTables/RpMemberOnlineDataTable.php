@@ -4,9 +4,7 @@ namespace Gametech\Admin\DataTables;
 
 
 use Gametech\Admin\Transformers\RpMemberOnlineTransformer;
-
 use Gametech\Member\Contracts\Member;
-
 use Yajra\DataTables\DataTableAbstract;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder;
@@ -47,7 +45,6 @@ class RpMemberOnlineDataTable extends DataTable
     }
 
 
-
     public function query(Member $model)
     {
 
@@ -68,16 +65,15 @@ class RpMemberOnlineDataTable extends DataTable
         }
 
 
-
         return $model->newQuery()
             ->with('last_payment')
-            ->with(['last_payment' => function ($model) use ($start_lasttopup_date,$end_lasttopup_date) {
+            ->with(['last_payment' => function ($model) use ($start_lasttopup_date, $end_lasttopup_date) {
                 $model->when($start_lasttopup_date, function ($query, $start_lasttopup_date) use ($end_lasttopup_date) {
                     $query->whereBetween('date_topup', array($start_lasttopup_date, $end_lasttopup_date));
                 });
             }])
             ->when($user, function ($query, $user) {
-                $query->where('members.user_name',$user);
+                $query->where('members.user_name', $user);
             })
             ->when($start_lastlogin_date, function ($query, $start_lastlogin_date) use ($end_lastlogin_date) {
                 $query->whereBetween('lastlogin', array($start_lastlogin_date, $end_lastlogin_date));
@@ -85,9 +81,8 @@ class RpMemberOnlineDataTable extends DataTable
             ->when($start_regis_date, function ($query, $start_regis_date) use ($end_regis_date) {
                 $query->whereBetween('date_regis', array($start_regis_date, $end_regis_date));
             })
-            ->where('enable','Y')
+            ->where('enable', 'Y')
             ->select('members.*')->withCount('bank_payments')->withSum('bank_payments:value');
-
 
 
     }
@@ -120,8 +115,8 @@ class RpMemberOnlineDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[5, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'
@@ -149,7 +144,7 @@ class RpMemberOnlineDataTable extends DataTable
             ['data' => 'refill_cnt', 'name' => 'members.user_name', 'title' => 'จำนวนครั้งที่เติม', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'refill_total', 'name' => 'members.user_name', 'title' => 'จำนวนเงินที่เติม', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
             ['data' => 'refill_last', 'name' => 'members.user_name', 'title' => 'วันที่เติมล่าสุด', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-         ];
+        ];
     }
 
     /**

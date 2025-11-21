@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Broadcast;
+
 /*
 |--------------------------------------------------------------------------
 | Broadcast Channels
@@ -11,11 +13,25 @@
 |
 */
 
-//Broadcast::channel('Gametech.Admin.Models.Admin.{id}', function ($user, $id) {
-//    return (int) $user->id === (int) $id;
+
+//Broadcast::channel('Gametech.Member.Models.Member.{code}', function ($user, $code) {
+//    return (int) $user->code === (int) $code;
 //});
-//
-//Broadcast::channel('events', function ($user) {
-//    return true;
-//});
+
+Broadcast::channel(config('app.name') . '_members.{id}', function ($user, $id) {
+    return (int)$user->code === (int)$id;
+});
+
+Broadcast::channel(config('app.name') . '_members', function ($user) {
+    return !is_null($user);
+});
+
+Broadcast::channel(config('app.name') . '_admins.{id}', function ($user, $id) {
+    return (int)$user->code === (int)$id;
+});
+
+
+Broadcast::channel(config('app.name') . '_events', function ($user) {
+    return true;
+});
 //

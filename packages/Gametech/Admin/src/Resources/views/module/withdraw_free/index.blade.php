@@ -16,26 +16,27 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="form-group col-12">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="far fa-clock"></i></span>
-                                        </div>
-                                        <input type="text" class="form-control form-control-sm float-right"
-                                               id="search_date" readonly>
-                                        <input type="hidden" class="form-control float-right" id="startDate"
-                                               name="startDate">
-                                        <input type="hidden" class="form-control float-right" id="endDate"
-                                               name="endDate">
-                                    </div>
+                                    {{--                                            <div class="input-group">--}}
+                                    {{--                                                <div class="input-group-prepend">--}}
+                                    {{--                                                    <span class="input-group-text"><i class="far fa-clock"></i></span>--}}
+                                    {{--                                                </div>--}}
+                                    {{--                                                <input type="text" class="form-control form-control-sm float-right"--}}
+                                    {{--                                                       id="search_date" readonly>--}}
+                                    {{--                                                <input type="hidden" class="form-control float-right" id="startDate"--}}
+                                    {{--                                                       name="startDate">--}}
+                                    {{--                                                <input type="hidden" class="form-control float-right" id="endDate"--}}
+                                    {{--                                                       name="endDate">--}}
+                                    {{--                                            </div>--}}
                                 </div>
 
                                 <div class="form-group col-6">
-                                    {!! Form::select('status', ['A' => 'รออนุมัติ' , '1' => 'อนุมัติ', '2' => 'ไม่อนุมัติ'], '',['id' => 'status', 'class' => 'form-control form-control-sm']) !!}
+                                    {{--                                            {!! Form::select('status', ['' => '== สถานะการเติม ==' , '1' => 'เติมสำเร็จ', '2' => 'รอดำเนินการ'], '',['id' => 'status', 'class' => 'form-control form-control-sm']) !!}--}}
 
                                 </div>
                                 <div class="form-group col-auto">
-                                    <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
+                                    <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> ถ้ารายการใหม่ไม่ขึ้น กดตรงนี้ได้</button>
                                 </div>
+
                             </div>
                         </div>
                     </form>
@@ -44,6 +45,7 @@
                 <!-- /.info-box -->
             </div>
         </div>
+
         <div class="card">
 
             <div class="card-body">
@@ -53,6 +55,7 @@
             </div>
             <!-- /.card-body -->
         </div>
+
     </section>
 
 @endsection

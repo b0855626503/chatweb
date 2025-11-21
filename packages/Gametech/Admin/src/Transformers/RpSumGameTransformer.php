@@ -34,11 +34,11 @@ class RpSumGameTransformer extends TransformerAbstract
             'in' => core()->currency($in),
             'out' => core()->currency($out),
             'total' => core()->currency($total),
-            'bonus' =>  core()->currency($bonus),
-            'member_in' =>  core()->currency($member_in),
-            'member_in_cnt' =>  core()->currency($member_in_cnt),
-            'member_out' =>  core()->currency($member_out),
-            'member_out_cnt' =>  core()->currency($member_out_cnt),
+            'bonus' => core()->currency($bonus),
+            'member_in' => core()->currency($member_in),
+            'member_in_cnt' => core()->currency($member_in_cnt),
+            'member_out' => core()->currency($member_out),
+            'member_out_cnt' => core()->currency($member_out_cnt),
         ];
     }
 

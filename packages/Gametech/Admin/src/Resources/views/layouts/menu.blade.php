@@ -1,5 +1,12 @@
 @foreach ($menu->items as $menuItem)
 
+@if($config->freecredit_open == 'N')
+    @continue($menuItem['key'] == 'credit')
+    @continue($menuItem['key'] == 'withdraw_free')
+    @continue($menuItem['key'] == 'mop.rp_cashback')
+    @continue($menuItem['key'] == 'mop.rp_member_ic')
+@endif
+
         <li class="nav-item {{ $menu->getActives($menuItem) }} {{ ($menuItem['status'] == 0 ? 'hide' : '') }}">
             <a href="{{ count($menuItem['children']) ? 'javascript:void(0)' : $menuItem['url'] }}"
                class="nav-link {{ $menu->getActive($menuItem) }}">

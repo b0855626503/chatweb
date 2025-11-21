@@ -28,7 +28,7 @@ class LaravelLoggerController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('admin');
+        $this->middleware('customer');
 
         $this->_rolesEnabled = config('LaravelLoggerUser.rolesEnabled');
         $this->_rolesMiddlware = config('LaravelLoggerUser.rolesMiddlware');

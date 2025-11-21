@@ -48,7 +48,7 @@
                         id="input-group-prefix"
                         label="Prefix:"
                         label-for="prefix"
-                        description="ระบุ ตัวอักษร ภาษาอังกฤษผสมตัวเลข 5 ตัวอักษร">
+                        description="ระบุ ตัวอักษร ภาษาอังกฤษผสมตัวเลข 5-6 ตัวอักษร">
                         <b-form-input
                             id="prefix"
                             v-model="formaddedit.prefix"
@@ -58,7 +58,7 @@
                             autocomplete="off"
                             :maxlength="max"
                             required
-                            v-validate="{ required: true, min: 5 }"
+                            v-validate="{ required: true, min: 5 , max:6 }"
                             v-uppercase
                         ></b-form-input>
                     </b-form-group>
@@ -114,153 +114,154 @@
     </b-container>
 </b-modal>
 @push('scripts')
-    <script type="text/javascript">
-        (() => {
-            window.app = new Vue({
-                el: '#app',
-                data() {
-                    return {
-                        show: false,
-                        trigger: 0,
-                        max: 5,
-                        formmethod: 'edit',
-                        formaddedit: {
-                            game_code: '',
-                            game_id: '',
-                            prefix: '',
-                            freecredit: 'N',
-                            batch_start: 1,
-                            batch_stop: 30000
-                        },
-                        option: {
-                            freecredit: [{text: 'ปกติ', value: 'N'}, {text: 'ฟรีเครดิต', value: 'Y'}],
-                            game_code: [],
-                        },
-                        imgpath: '/storage/game_img/'
-                    };
-                },
-                created() {
-                    this.audio = document.getElementById('alertsound');
-                    this.autoCnt(false);
-                },
-                methods: {
+    <script type="module">
 
-                    editModal(code) {
-                        this.code = null;
-                        this.formaddedit = {
-                            name: '',
-                            game_type: '',
-                            user_demo: '',
-                            user_demofree: '',
-                            sort: 0,
-                            link_ios: '',
-                            link_android: '',
-                            link_web: '',
-                            batch_game: 'N',
-                            auto_open: 'N',
-                            filepic: ''
-                        }
-                        this.formmethod = 'edit';
-
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.code = code;
-                            this.loadData();
-                            this.$refs.addedit.show();
-
-                        })
+        window.app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    show: false,
+                    trigger: 0,
+                    max: 6,
+                    formmethod: 'edit',
+                    formaddedit: {
+                        game_code: '',
+                        game_id: '',
+                        prefix: '',
+                        freecredit: 'N',
+                        batch_start: 1,
+                        batch_stop: 30000
                     },
-                    addModal() {
-                        this.code = null;
-                        this.formaddedit = {
-                            game_code: '',
-                            game_id: '',
-                            prefix: '',
-                            freecredit: 'N',
-                            batch_start: 1,
-                            batch_stop: 30000
-                        }
-                        this.formmethod = 'add';
-
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.loadGame();
-                            this.$refs.addedit.show();
-
-                        })
+                    option: {
+                        freecredit: [{text: 'ปกติ', value: 'N'}, {text: 'ฟรีเครดิต', value: 'Y'}],
+                        game_code: [],
                     },
-                    async loadGame() {
-                        const response = await axios.post("{{ url($menu->currentRoute.'/loadgame') }}");
-                        this.option.game_code = response.data.games;
-                        this.formaddedit.game_code = response.data.games[0].value;
-                        this.loadData(response.data.games[0].value, response.data.games[0].value, this.formaddedit.freecredit);
-                    },
-                    async loadData(newObjectState, game, free) {
-                        // console.log(newObjectState + " --- " + game + '---' +free);
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {
-                            game_code: game,
-                            freecredit: free
-                        });
-                        if (response.data.success) {
-                            this.formaddedit = {
-                                game_code: response.data.data.game_code,
-                                freecredit: response.data.data.freecredit,
-                                prefix: response.data.data.prefix,
-                                batch_start: response.data.data.batch_start,
-                                batch_stop: response.data.data.batch_stop
-                            };
-                        } else {
-                            this.formaddedit = {
-                                game_code: game,
-                                freecredit: free,
-                                prefix: '',
-                                batch_start: 1,
-                                batch_stop: 30000
-                            };
-                        }
+                    imgpath: '/storage/game_img/'
+                };
+            },
+            created() {
+                this.audio = document.getElementById('alertsound');
+                this.autoCnt(false);
+            },
+            methods: {
 
-
-                    },
-                    addEditSubmitNew(event) {
-                        event.preventDefault();
-                        var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
-
-                        let formData = new FormData();
-                        const json = JSON.stringify({
-                            game_code: this.formaddedit.game_code,
-                            prefix: this.formaddedit.prefix,
-                            freecredit: this.formaddedit.freecredit,
-                            batch_start: this.formaddedit.batch_start,
-                            batch_stop: this.formaddedit.batch_stop
-                        });
-
-                        formData.append('data', json);
-                        // formData.append('filepic', $('input[name="filepic[image_0]"]')[1].files[0]);
-
-
-                        const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
-
-                        axios.post(url, formData, config)
-                            .then(response => {
-                                this.$bvModal.msgBoxOk(response.data.message, {
-                                    title: 'ผลการดำเนินการ',
-                                    size: 'sm',
-                                    buttonSize: 'sm',
-                                    okVariant: 'success',
-                                    headerClass: 'p-2 border-bottom-0',
-                                    footerClass: 'p-2 border-top-0',
-                                    centered: true
-                                });
-                                window.LaravelDataTables["dataTableBuilder"].draw(false);
-                            })
-                            .catch(errors => console.log(errors));
-
+                editModal(code) {
+                    this.code = null;
+                    this.formaddedit = {
+                        name: '',
+                        game_type: '',
+                        user_demo: '',
+                        user_demofree: '',
+                        sort: 0,
+                        link_ios: '',
+                        link_android: '',
+                        link_web: '',
+                        batch_game: 'N',
+                        auto_open: 'N',
+                        filepic: ''
                     }
+                    this.formmethod = 'edit';
+
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.code = code;
+                        this.loadData();
+                        this.$refs.addedit.show();
+
+                    })
                 },
-            });
-        })()
+                addModal() {
+                    this.code = null;
+                    this.formaddedit = {
+                        game_code: '',
+                        game_id: '',
+                        prefix: '',
+                        freecredit: 'N',
+                        batch_start: 1,
+                        batch_stop: 30000
+                    }
+                    this.formmethod = 'add';
+
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.loadGame();
+                        this.$refs.addedit.show();
+
+                    })
+                },
+                async loadGame() {
+                    const response = await axios.post("{{ url($menu->currentRoute.'/loadgame') }}");
+                    this.option.game_code = response.data.games;
+                    this.formaddedit.game_code = response.data.games[0].value;
+                    this.loadData(response.data.games[0].value, response.data.games[0].value, this.formaddedit.freecredit);
+                },
+                async loadData(newObjectState, game, free) {
+                    // console.log(newObjectState + " --- " + game + '---' +free);
+                    const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {
+                        game_code: game,
+                        freecredit: free
+                    });
+                    if (response.data.success) {
+                        this.formaddedit = {
+                            game_code: response.data.data.game_code,
+                            freecredit: response.data.data.freecredit,
+                            prefix: response.data.data.prefix,
+                            batch_start: response.data.data.batch_start,
+                            batch_stop: response.data.data.batch_stop
+                        };
+                    } else {
+                        this.formaddedit = {
+                            game_code: game,
+                            freecredit: free,
+                            prefix: '',
+                            batch_start: 1,
+                            batch_stop: 30000
+                        };
+                    }
+
+
+                },
+                addEditSubmitNew(event) {
+                    event.preventDefault();
+                    this.toggleButtonDisable(true);
+                    var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
+
+                    let formData = new FormData();
+                    const json = JSON.stringify({
+                        game_code: this.formaddedit.game_code,
+                        prefix: this.formaddedit.prefix,
+                        freecredit: this.formaddedit.freecredit,
+                        batch_start: this.formaddedit.batch_start,
+                        batch_stop: this.formaddedit.batch_stop
+                    });
+
+                    formData.append('data', json);
+                    // formData.append('filepic', $('input[name="filepic[image_0]"]')[1].files[0]);
+
+
+                    const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
+
+                    axios.post(url, formData, config)
+                        .then(response => {
+                            this.$bvModal.msgBoxOk(response.data.message, {
+                                title: 'ผลการดำเนินการ',
+                                size: 'sm',
+                                buttonSize: 'sm',
+                                okVariant: 'success',
+                                headerClass: 'p-2 border-bottom-0',
+                                footerClass: 'p-2 border-top-0',
+                                centered: true
+                            });
+                            window.LaravelDataTables["dataTableBuilder"].draw(false);
+                        })
+                        .catch(errors => console.log(errors));
+
+                }
+            },
+        });
+
     </script>
 @endpush
 

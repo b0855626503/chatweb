@@ -17,6 +17,7 @@ class PaymentWaitingRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Payment\Contracts\PaymentWaiting';
+        return \Gametech\Payment\Models\PaymentWaiting::class;
+
     }
 }

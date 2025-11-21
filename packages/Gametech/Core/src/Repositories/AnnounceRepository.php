@@ -13,6 +13,7 @@ class AnnounceRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Core\Contracts\Announce';
+
+        return \Gametech\Core\Models\Announce::class;
     }
 }

@@ -56,7 +56,7 @@
                             <div class="row">
                                 <games-slider>
                                     @foreach($games as $game)
-                                    <game :item="{{ json_encode($game) }}"></game>
+                                        <game :item="{{ json_encode($game) }}"></game>
                                     @endforeach
                                 </games-slider>
                             </div>
@@ -127,10 +127,9 @@
 
             <div class="slider">
                 <slot v-for="(game, index) in games" @click="selectTab(game.code)" :key="index"
-                    :name="`slide-${parseInt(index) - 1}`">
+                      :name="`slide-${parseInt(index) - 1}`">
                 </slot>
             </div>
-
 
 
         </div>
@@ -138,13 +137,13 @@
 
     <script type="text/x-template" id="game-template">
 
-          <div :data="item.code">
-                <img class="d-block mx-auto rounded-circle transfer-slide-img fix-img h-90 w-90"
-                     :src="`https://wallet.dumbovip.com/assets/images/icn-game/${item.filepic}`">
-                <p class="transfer-slide-name text-center text-color-fixed mb-0" v-text="item.name"></p>
-                <p class="mb-0">
-                <h4 class="transfer-slide-balance text-center" v-text="item.balance"></h4>
-          </div>
+        <div :data="item.code">
+            <img class="d-block mx-auto rounded-circle transfer-slide-img fix-img h-90 w-90"
+                 :src="`https://wallet.dumbovip.com/assets/images/icn-game/${item.filepic}`">
+            <p class="transfer-slide-name text-center text-color-fixed mb-0" v-text="item.name"></p>
+            <p class="mb-0">
+            <h4 class="transfer-slide-balance text-center" v-text="item.balance"></h4>
+        </div>
 
     </script>
 
@@ -155,15 +154,15 @@
 
                 data: function () {
                     return {
-                        games : []
+                        games: []
 
                     }
                 },
                 created: function () {
-                   this.games = this.$children;
+                    this.games = this.$children;
                 },
                 mounted: function () {
-console.log('this');
+                    console.log('this');
 
                     // this.slider.children().each(function (index) {
                     //     $(this).attr('data-position', index);
@@ -182,7 +181,6 @@ console.log('this');
                     // })
 
 
-
                     // this.slider.children().on('click',function (e){
                     //     console.log(e);
                     //     // this.slider.trigger('to.owl.carousel', [e.index, 300]);
@@ -194,9 +192,9 @@ console.log('this');
                     selectTab(code) {
                         // console.log(this.games);
                         // console.log(this.game.code);
-                        console.log('ev1 '+code);
-                        console.log('ev2 '+this.$refs.game.code);
-                        console.log('ev3 '+this.games);
+                        console.log('ev1 ' + code);
+                        console.log('ev2 ' + this.$refs.game.code);
+                        console.log('ev3 ' + this.games);
                         // document.getElementById("game").value = gamecode;
                     },
 
@@ -209,9 +207,7 @@ console.log('this');
                     item: {}
                 },
                 data: function () {
-                    return {
-
-                    }
+                    return {}
                 },
                 mounted: function () {
                     var this_this = this;

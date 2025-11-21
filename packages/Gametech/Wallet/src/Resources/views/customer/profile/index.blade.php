@@ -3,409 +3,310 @@
 {{-- page title --}}
 @section('title','')
 
-@section('back')
-    <a class="nav-link p-2 text-light mx-auto hand-point" href="{{ route('customer.home.index') }}">
-        <i class="fas fa-chevron-left"></i> กลับ</a>
-@endsection
-
-@push('styles')
-    <style>
-        .section {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .img-select {
-            border: 2px solid #fff;
-            border-radius: 10%;
-            background-color: #ffffff3a;
-        }
-
-        .img-bank {
-            width: 40px;
-            height: 40px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        a {
-            color: #007bff;
-            text-decoration: none;
-            background-color: transparent;
-        }
-    </style>
-@endpush
 
 @section('content')
-    <div class="container text-light mt-5">
-        <h3 class="text-center text-light">ข้อมูลส่วนตัว</h3>
-        <p class="text-center text-color-fixed">Profile</p>
-        <div class="row">
-            <div class="col-md-8 offset-md-2 col-sm-12">
-
-                <div class="card card-trans profile">
-                    <div class="card-body">
-                        <div class="align-items-center">
-                            <div class="row">
-                                <div class="col-6 col-sm-6">
-                                    {!! (!is_null($profile->bank) ? core()->showImg($profile->bank->filepic,'bank_img','48px','48px','img-thumbnail rounded-circle m-2') : '') !!}
-                                    <span>{{ (!is_null($profile->bank) ? $profile->bank->shortcode : '') }}</span>
-
-                                </div>
-                                <div class="col-5 col-sm-6">
-                                    <div class="profile-txt mb-0">
-                                        <p class="text-center mt-2 mb-0 align-middle text-color-fixed">
-                                            <i class="far fa-user-check"></i> เลขที่บัญชี</p>
-                                        <h6 class="text-center mb-0 align-middle ">{{ $profile->acc_no }}</h6>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card card-trans profile">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="profile-txt"><p
-                                        class=" text-color-fixed mb-0"><i
-                                            class="fas fa-user"></i> ชื่อ - นามสกุล</p>
-                                    <p>{{ $profile->name }}</p></div>
-                                <div class="profile-txt"><p
-                                        class=" text-color-fixed mb-0"><i
-                                            class="fab fa-line"></i> Line ID</p>
-                                    <p>{{ $profile->lineid }}</p></div>
-                            </div>
-                            <div class="col-6">
-                                <div class="profile-txt"><p
-                                        class=" text-color-fixed mb-0"><i
-                                            class="fas fa-phone"></i> เบอร์โทรศัพท์</p>
-                                    <p>{{ $profile->tel }}</p></div>
-                                <div class="mt-3">
-                                    <button class="btn btn-sm btn-theme" data-toggle="modal" data-target="#exampleModal">
-                                        <i class="far fa-key"></i> แก้ไขรหัสผ่าน
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="profile-txt"><p
-                                        class=" text-color-fixed mb-0"><i
-                                            class="fas fa-user-plus"></i> สมัครสมาชิกเมื่อ</p>
-                                    <p>{{ core()->formatDate($profile->date_regis,'d/m/Y') }}</p>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="profile-txt"><p
-                                        class=" text-color-fixed mb-0"><i
-                                            class="fas fa-user-check"></i> เข้าสู่ระบบล่าสุดเมื่อ</p>
-                                    <p>{{ core()->formatDate($profile->lastlogin,'d/m/Y H:i') }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <section class="content mt-3">
-                    <div class="card card-trans">
-                        <div class="card-header">Wallet</div>
-                        <div class="card-body">
-                            <div class="row">
-                                @foreach($games as $i => $item)
-                                    <game-list :product="{{ json_encode($item) }}"></game-list>
-                                @endforeach
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <btn-reset></btn-reset>
-                </section>
-
-                @if($config->freecredit_open == 'Y')
-                <section class="content mt-3">
-                    <div class="card card-trans">
-                        <div class="card-header">Cashback</div>
-                        <div class="card-body">
-                            <div class="row">
-                                @foreach($gamesfree as $i => $item)
-                                    <gamefree-list :product="{{ json_encode($item) }}"></gamefree-list>
-                                @endforeach
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <btnfree-reset></btnfree-reset>
-                </section>
-                    @endif
-
+    <div class="p-1">
+        <div class="headsecion">
+            <i class="fas fa-user-alt"></i> {{ __('app.profile.profile') }}
+        </div>
+        <div class="ctpersonal grid mt-4">
+            <div class="boxpsl">
+                <span>{{ __('app.profile.username') }} *</span>
+                <input type="text" value="{{ $profile->user_name }}" name="test" readonly="">
+            </div>
+            <div class="boxpsl">
+                <span>{{ __('app.profile.name') }}</span>
+                <input type="text" value="{{ $profile->name }}" name="test" readonly="">
+            </div>
+            <div class="boxpsl">
+                <span>{{ __('app.profile.tel') }}</span>
+                <input type="text" value="{{ $profile->tel }}" name="test" readonly="">
+            </div>
+            <div class="boxpsl">
+                <span>{{ __('app.profile.credit') }}</span>
+                <input type="text" value="{{ $profile->balance }}" name="test" readonly="">
+            </div>
+            <div class="boxpsl">
+                <span>{{ __('app.profile.point') }}</span>
+                <input type="text" value="{{ $profile->point_deposit }}" name="test" readonly="">
+            </div>
+            <div class="boxpsl">
+                <span>{{ __('app.profile.diamond') }}</span>
+                <input type="text" value="{{ $profile->diamond }}" name="test" readonly="">
+            </div>
+            <div class="boxpsl">
+                <span>{{ __('app.profile.bank') }}</span>
+                <input type="text" value="{{ (!is_null($profile->bank) ? $profile->bank->shortcode : '') }}" name="test" readonly="">
+            </div>
+            <div class="boxpsl">
+                <span>{{ __('app.profile.account') }}</span>
+                <input type="text" value="{{ $profile->acc_no }}" name="test" readonly="">
+            </div>
+            <div class="boxpsl">
+                <span>โปรโมชั่น</span>
+                <btn-changepro></btn-changepro>
             </div>
         </div>
+
     </div>
 
-    <example-modal ref="modal"></example-modal>
+
 
 @endsection
 
 @push('scripts')
-    <script type="text/x-template" id="example-modal">
-        <div class="modal fade" style="color: black !important;" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" data-backdrop="static" data-keyboard="false" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content text-sm">
-                    <div class="modal-header">
-                        <h5 class="modal-title">เปลี่ยนรหัสผ่าน</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-
-                    <div class="modal-body">
-                        <form id="frmchangepass" ref="form" @submit.prevent="submit" enctype="multipart/form-data">
-                            @csrf
-                            <div class="form-group">
-                                <label for="old_password">รหัสผ่านเก่า</label>
-                                <input type="password" class="form-control"
-                                       :class="[errors.has('old_password') ? 'is-invalid' : '']"
-                                       data-vv-as="&quot;Present Password&quot;"
-                                       id="old_password" name="old_password" v-validate="'required|min:6'" v-model="old_password">
-                            </div>
-                            <div class="form-group">
-                                <label for="password">รหัสผ่านใหม่</label>
-                                <input type="password" class="form-control"
-                                       :class="[errors.has('password') ? 'is-invalid' : '']"
-                                       data-vv-as="&quot;Password&quot;" ref="password"
-                                       id="password" name="password" v-validate="'required|min:6'" v-model="password">
-                            </div>
-                            <div class="form-group">
-                                <label for="password_confirmation">รหัสผ่านใหม่ (อีกครั้ง)</label>
-                                <input type="password" class="form-control"
-                                       :class="[errors.has('password_confirmation') ? 'is-invalid' : '']"
-                                       id="password_confirmation" name="password_confirmation"
-                                       data-vv-as="&quot;Password&quot;" data-vv-name="password_confirmation"
-                                       v-validate="'required|min:6|confirmed:password'" v-model="password_confirmation">
-                            </div>
-
-                            <div class="row">
-
-                                <!-- /.col -->
-                                <div class="col-12">
-                                    <button type="button" class="btn btn-primary btn-block" style="border: none" @click="validateBeforeSubmit"><i
-                                            class="fas fa-sign-in-alt"></i> ยืนยันการเปลี่ยนรหัสผ่าน
-                                    </button>
-                                </div>
-                                <!-- /.col -->
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <script type="text/x-template" id="btn-changepro">
+        @if($profile->promotion == 'Y')
+            <button type="button" class="btn btn-sm btn-success btn-block" ref="btnchangepro"
+                    v-on:click="changePro">
+                <i class="far fa-check"></i> รับโปรโมชั่น
+            </button>
+        @else
+            <button type="button" class="btn btn-sm btn-danger btn-block" ref="btnchangepro"
+                    v-on:click="changePro">
+                <i class="far fa-times"></i> ไม่รับโปรโมชั่น
+            </button>
+        @endif
     </script>
 
+    <script type="module">
 
 
-    <script type="text/x-template" id="btn-reset">
-        <div class="row">
-            <div class="col">
-                <button type="button" ref="btnreset" class="btn btn-theme mx-auto btn-block"  v-on:click="gameReset">รีเซ็ตรหัสเกมทั้งหมด</button>
-            </div>
-        </div>
+        Vue.component('example-modal', {
+            template: '#example-modal',
+            data: function () {
+                return {
+                    password: '',
+                    old_password: '',
+                    password_confirmation: ''
+                }
+            },
+            mounted() {
+                this.$validator.errors.clear();
+            },
+            methods: {
+                validateBeforeSubmit() {
+                    this.$validator.validate().then(valid => {
 
-    </script>
+                        if (valid) {
+                            this.submit();
+                        }
 
-    <script type="text/x-template" id="btnfree-reset">
-        <div class="row">
-            <div class="col">
-                <button type="button" ref="btnfreereset" class="btn btn-theme mx-auto btn-block"  v-on:click="gameFreeReset">รีเซ็ตรหัสเกมทั้งหมด</button>
-            </div>
-        </div>
 
-    </script>
-
-    <script type="text/javascript">
-        (() => {
-
-            Vue.component('example-modal', {
-                template: '#example-modal',
-                data: function () {
-                    return {
-                        password: '',
-                        old_password:'',
-                        password_confirmation:''
-                    }
+                    });
                 },
-                mounted() {
-                    this.$validator.errors.clear();
+                showModalNew() {
+                    console.log('tester');
+                    let element = this.$refs.modal.$el
+                    console.log(element);
+                    $(element).modal('show')
                 },
-                methods: {
-                    validateBeforeSubmit() {
-                        this.$validator.validate().then(valid => {
+                submit() {
 
-                            if (valid) {
-                                this.submit();
-                            }
+                    this.$http.post(`${this.$root.baseUrl}/member/profile/changepass`, {
+                        old_password: this.old_password,
+                        password: this.password,
+                        password_confirmation: this.password_confirmation,
+                        '_token': "{{ csrf_token() }}"
+                    })
+                        .then(response => {
+                            $('.modal').modal('hide');
 
-
-                        });
-                    },
-                    showModalNew() {
-                        console.log('tester');
-                        let element = this.$refs.modal.$el
-                        console.log(element);
-                        $(element).modal('show')
-                    },
-                    submit() {
-
-                        this.$http.post(`${this.$root.baseUrl}/member/profile/changepass` ,{ old_password: this.old_password, password: this.password , password_confirmation: this.password_confirmation , '_token': "{{ csrf_token() }}" })
-                            .then(response => {
-                                $('.modal').modal('hide');
-
-                                if (response.data.success) {
-                                    Swal.fire(
-                                        'เปลี่ยนรหัสผ่าน',
-                                        response.data.message,
-                                        'success'
-                                    )
-                                }else{
-                                    Swal.fire(
-                                        'เปลี่ยนรหัสผ่าน',
-                                        'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ ในขณะนี้',
-                                        'error'
-                                    )
-                                }
-                                this.old_password = '';
-                                this.password = '';
-                                this.password_confirmation = '';
-                                this.$validator.reset();
-                            })
-                            .catch(exception => {
-                                $('.modal').modal('hide');
+                            if (response.data.success) {
                                 Swal.fire(
                                     'เปลี่ยนรหัสผ่าน',
-                                    'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ เนื่องจากข้อมูล รหัสผ่านไม่ถูกต้อง',
+                                    response.data.message,
+                                    'success'
+                                )
+                            } else {
+                                Swal.fire(
+                                    'เปลี่ยนรหัสผ่าน',
+                                    'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ ในขณะนี้',
                                     'error'
-                                );
-                            });
+                                )
+                            }
+                            this.old_password = '';
+                            this.password = '';
+                            this.password_confirmation = '';
+                            this.$validator.reset();
+                        })
+                        .catch(exception => {
+                            $('.modal').modal('hide');
+                            Swal.fire(
+                                'เปลี่ยนรหัสผ่าน',
+                                'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ เนื่องจากข้อมูล รหัสผ่านไม่ถูกต้อง',
+                                'error'
+                            );
+                        });
 
-                    },
+                },
 
+            }
+        });
+
+        Vue.component('btn-changepro', {
+            template: '#btn-changepro',
+            methods: {
+                changePro: function (event) {
+                    Swal.fire({
+                        title: 'แก้ไขการรับโปรโมชั่น',
+                        text: "คุณต้องการดำเนินการ ใช่หรือไม่",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'ยืนยัน',
+                        cancelButtonText: 'ยกเลิก',
+                        customClass: {
+                            container: 'text-sm',
+                            popup: 'text-sm'
+                        },
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.$http.post(`${this.$root.baseUrl}/member/profile/changepro`)
+                                .then(response => {
+                                    $('.modal').modal('hide');
+
+                                    if (response.data.success) {
+                                        Swal.fire(
+                                            'การดำเนินการ',
+                                            response.data.message,
+                                            'success'
+                                        )
+                                        window.location.href = window.location;
+                                    } else {
+                                        Swal.fire(
+                                            'การดำเนินการ',
+                                            'ไม่สามารถเปลี่ยนข้อมูลการรับโปรโมชั่นได้ ในขณะนี้',
+                                            'error'
+                                        )
+                                    }
+                                })
+                                .catch(exception => {
+                                    $('.modal').modal('hide');
+                                    Swal.fire(
+                                        'การดำเนินการ',
+                                        'เกิดข้อผิดพลาดบางประการ โปรดลองใหม่อีกครั้ง',
+                                        'error'
+                                    );
+                                });
+                        }
+                    })
                 }
-            });
+            }
+        });
 
-            Vue.component('btn-reset', {
-                template: '#btn-reset',
-                methods: {
-                    gameReset : function (event) {
-                        Swal.fire({
-                            title: 'รีเซ็ตรหัสผ่านเกม (Wallet) ทั้งหมด',
-                            text: "คุณต้องการดำเนินการ ใช่หรือไม่",
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#3085d6',
-                            cancelButtonColor: '#d33',
-                            confirmButtonText: 'ยืนยัน',
-                            cancelButtonText: 'ยกเลิก',
-                            customClass: {
-                                container : 'text-sm',
-                                popup : 'text-sm'
-                            },
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                this.$http.post(`${this.$root.baseUrl}/member/profile/resetgamepass`)
-                                    .then(response => {
-                                        $('.modal').modal('hide');
+        Vue.component('btn-reset', {
+            template: '#btn-reset',
+            methods: {
+                gameReset: function (event) {
+                    Swal.fire({
+                        title: 'รีเซ็ตรหัสผ่านเกม (Wallet) ทั้งหมด',
+                        text: "คุณต้องการดำเนินการ ใช่หรือไม่",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'ยืนยัน',
+                        cancelButtonText: 'ยกเลิก',
+                        customClass: {
+                            container: 'text-sm',
+                            popup: 'text-sm'
+                        },
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.$http.post(`${this.$root.baseUrl}/member/profile/resetgamepass`)
+                                .then(response => {
+                                    $('.modal').modal('hide');
 
-                                        if (response.data.success) {
-                                            Swal.fire(
-                                                'เปลี่ยนรหัสผ่าน',
-                                                response.data.message,
-                                                'success'
-                                            )
-                                        }else{
-                                            Swal.fire(
-                                                'เปลี่ยนรหัสผ่าน',
-                                                'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ ในขณะนี้',
-                                                'error'
-                                            )
-                                        }
-                                        this.old_password = '';
-                                        this.password = '';
-                                        this.password_confirmation = '';
-                                        this.$validator.reset();
-                                    })
-                                    .catch(exception => {
-                                        $('.modal').modal('hide');
+                                    if (response.data.success) {
                                         Swal.fire(
                                             'เปลี่ยนรหัสผ่าน',
-                                            'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ เนื่องจากข้อมูล รหัสผ่านไม่ถูกต้อง',
-                                            'error'
-                                        );
-                                    });
-                            }
-                        })
-                    }
-                }
-            });
-
-            Vue.component('btnfree-reset', {
-                template: '#btnfree-reset',
-                methods: {
-                    gameFreeReset : function (event) {
-                        Swal.fire({
-                            title: 'รีเซ็ตรหัสผ่านเกม (Cashback) ทั้งหมด',
-                            text: "คุณต้องการดำเนินการ ใช่หรือไม่",
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#3085d6',
-                            cancelButtonColor: '#d33',
-                            confirmButtonText: 'ยืนยัน',
-                            cancelButtonText: 'ยกเลิก',
-                            customClass: {
-                                container : 'text-sm',
-                                popup : 'text-sm'
-                            },
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                this.$http.post(`${this.$root.baseUrl}/member/profile/resetgamefreepass`)
-                                    .then(response => {
-                                        $('.modal').modal('hide');
-
-                                        if (response.data.success) {
-                                            Swal.fire(
-                                                'เปลี่ยนรหัสผ่าน',
-                                                response.data.message,
-                                                'success'
-                                            )
-                                        }else{
-                                            Swal.fire(
-                                                'เปลี่ยนรหัสผ่าน',
-                                                'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ ในขณะนี้',
-                                                'error'
-                                            )
-                                        }
-                                        this.old_password = '';
-                                        this.password = '';
-                                        this.password_confirmation = '';
-                                        this.$validator.reset();
-                                    })
-                                    .catch(exception => {
-                                        $('.modal').modal('hide');
+                                            response.data.message,
+                                            'success'
+                                        )
+                                    } else {
                                         Swal.fire(
                                             'เปลี่ยนรหัสผ่าน',
-                                            'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ เนื่องจากข้อมูล รหัสผ่านไม่ถูกต้อง',
+                                            'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ ในขณะนี้',
                                             'error'
-                                        );
-                                    });
-                            }
-                        })
-                    }
+                                        )
+                                    }
+                                    this.old_password = '';
+                                    this.password = '';
+                                    this.password_confirmation = '';
+                                    this.$validator.reset();
+                                })
+                                .catch(exception => {
+                                    $('.modal').modal('hide');
+                                    Swal.fire(
+                                        'เปลี่ยนรหัสผ่าน',
+                                        'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ เนื่องจากข้อมูล รหัสผ่านไม่ถูกต้อง',
+                                        'error'
+                                    );
+                                });
+                        }
+                    })
                 }
-            });
+            }
+        });
 
-        })();
+        Vue.component('btnfree-reset', {
+            template: '#btnfree-reset',
+            methods: {
+                gameFreeReset: function (event) {
+                    Swal.fire({
+                        title: 'รีเซ็ตรหัสผ่านเกม (Cashback) ทั้งหมด',
+                        text: "คุณต้องการดำเนินการ ใช่หรือไม่",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'ยืนยัน',
+                        cancelButtonText: 'ยกเลิก',
+                        customClass: {
+                            container: 'text-sm',
+                            popup: 'text-sm'
+                        },
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.$http.post(`${this.$root.baseUrl}/member/profile/resetgamefreepass`)
+                                .then(response => {
+                                    $('.modal').modal('hide');
+
+                                    if (response.data.success) {
+                                        Swal.fire(
+                                            'เปลี่ยนรหัสผ่าน',
+                                            response.data.message,
+                                            'success'
+                                        )
+                                    } else {
+                                        Swal.fire(
+                                            'เปลี่ยนรหัสผ่าน',
+                                            'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ ในขณะนี้',
+                                            'error'
+                                        )
+                                    }
+                                    this.old_password = '';
+                                    this.password = '';
+                                    this.password_confirmation = '';
+                                    this.$validator.reset();
+                                })
+                                .catch(exception => {
+                                    $('.modal').modal('hide');
+                                    Swal.fire(
+                                        'เปลี่ยนรหัสผ่าน',
+                                        'ไม่สามารถเปลี่ยนข้อมูลรหัสผ่านได้ เนื่องจากข้อมูล รหัสผ่านไม่ถูกต้อง',
+                                        'error'
+                                    );
+                                });
+                        }
+                    })
+                }
+            }
+        });
+
+
     </script>
 @endpush
 

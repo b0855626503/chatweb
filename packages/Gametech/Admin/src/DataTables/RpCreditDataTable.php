@@ -43,6 +43,7 @@ class RpCreditDataTable extends DataTable
     {
         $ip = request()->input('ip');
         $type = request()->input('credit_type');
+        $kind = request()->input('kind');
         $user = request()->input('user_name');
         $startdate = request()->input('startDate');
         $enddate = request()->input('endDate');
@@ -55,7 +56,7 @@ class RpCreditDataTable extends DataTable
 
         return $model
             ->with(['member', 'admin'])
-            ->active()->notauto()->whereIn('members_freecredit.kind', ['SETCREDIT','ROLLBACK'])
+            ->active()->notauto()
             ->select(['members_freecredit.code', 'members_freecredit.member_code', 'members_freecredit.credit_type', 'members_freecredit.credit_amount', 'members_freecredit.credit_before', 'members_freecredit.credit_balance', 'members_freecredit.remark', 'members_freecredit.emp_code', 'members_freecredit.ip', 'members_freecredit.date_create', 'members_freecredit.kind', 'members_freecredit.user_create'])
             ->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
@@ -65,6 +66,9 @@ class RpCreditDataTable extends DataTable
             })
             ->when($type, function ($query, $type) {
                 $query->where('members_freecredit.credit_type', $type);
+            })
+            ->when($kind, function ($query, $kind) {
+                $query->where('members_freecredit.kind', $kind);
             })
             ->when($ip, function ($query, $ip) {
                 $query->where('members_freecredit.ip', 'like', "%" . $ip . "%");
@@ -105,8 +109,8 @@ class RpCreditDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'

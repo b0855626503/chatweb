@@ -5,6 +5,7 @@ namespace Gametech\Admin\Http\Controllers;
 use Gametech\Admin\DataTables\AdminDataTable;
 use Gametech\Admin\Repositories\AdminRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -53,7 +54,14 @@ class AdminController extends AppBaseController
             'text' => 'โปรดระบุ'
         ];
 
-        $responses = collect(app('Gametech\Admin\Repositories\RoleRepository')->where('code','<>',1)->get()->toArray());
+        $user = $this->user();
+        if($user->role_id === 1){
+            $responses = collect(app('Gametech\Admin\Repositories\RoleRepository')->get()->toArray());
+
+        }else{
+            $responses = collect(app('Gametech\Admin\Repositories\RoleRepository')->where('code','<>',1)->get()->toArray());
+
+        }
 
         $responses = $responses->map(function ($items){
             $item = (object)$items;
@@ -135,6 +143,7 @@ class AdminController extends AppBaseController
 
     public function edit(Request $request)
     {
+        $myid = Auth::guard('admin')->user();
         $user = $this->user()->name.' '.$this->user()->surname;
         $id = $request->input('id');
         $status = $request->input('status');
@@ -146,6 +155,12 @@ class AdminController extends AppBaseController
         $chk = $this->repository->find($id);
         if(!$chk){
             return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
+        }
+
+
+        if($method == 'google2fa_enable' && $status == 0){
+            $data['google2fa_secret'] = null;
+//            Auth::loginUsingId($myid->code);
         }
 
         $data['user_update'] = $user;

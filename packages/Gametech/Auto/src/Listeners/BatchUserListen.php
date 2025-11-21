@@ -20,7 +20,7 @@ class BatchUserListen implements ShouldQueue
 
         $data = $event->items;
 
-        DB::table('temp_index')->select('id')->whereBetween('code',[$data['batch_start'],$data['batch_stop']])->orderBy('code')->chunk(1000, function ($values) use ($data) {
+        DB::table('temp_index')->select('id')->whereBetween('code',[$data['batch_start'],$data['batch_stop']])->orderBy('code')->chunk(5000, function ($values) use ($data) {
             $items = [];
             foreach ($values as $item) {
                 $items[] = [

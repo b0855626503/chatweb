@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -39,8 +40,8 @@ class SpinController extends AppBaseController
      */
     public function __construct
     (
-        SpinRepository $spinRepo,
-        MemberRepository $memberRepo,
+        SpinRepository      $spinRepo,
+        MemberRepository    $memberRepo,
         BonusSpinRepository $bonusSpinRepo
     )
     {
@@ -57,6 +58,10 @@ class SpinController extends AppBaseController
 
     public function index()
     {
+        $config = core()->getConfigData();
+        if ($config->wheel_open == 'N') {
+            return redirect()->back();
+        }
 
         $spins = $this->loadSpin();
 
@@ -73,13 +78,13 @@ class SpinController extends AppBaseController
             return [
                 'fillStyle' => $item->spincolor,
                 'image' => Storage::url('spin_img/' . $item->filepic),
-                'text' => $item->name,
+                'text' => number_format($item->amount, 0),
                 'code' => $item->code,
                 'amount' => $item->amount,
                 'winloss' => $item->winloss,
                 'spincolor' => $item->spincolor,
                 'name' => $item->name,
-                'types' => $item->types,
+                'types' => $item->types
             ];
 
         });
@@ -107,19 +112,19 @@ class SpinController extends AppBaseController
         $ip = $request->ip();
         $config = core()->getConfigData();
         $maxbonus = $config->maxspin;
-        $bonustoday_sum = $this->bonusSpinRepository->scopeQuery(function($query){
-            return $query->where('enable','Y')->whereDate('date_create', now()->toDateString());
+        $bonustoday_sum = $this->bonusSpinRepository->scopeQuery(function ($query) {
+            return $query->where('enable', 'Y')->whereDate('date_create', now()->toDateString());
         });
 
         $bonustoday = $bonustoday_sum->sum('amount');
 
-
-
+//        dd($bonustoday);
+//        return $this->sendError('ปิดระบบชั่วคราว', 200);
 
 
         $diamond = ($this->user()->diamond - 1);
         if ($diamond < 0) {
-            return $this->sendError('ต้องใช้เพชรในการเล่น จำนวน 1 เม็ด', 200);
+            return $this->sendError(Lang::get('app.spin.usediamond'), 200);
         }
         $result['success'] = 'COMPLETE';
         $spins = $this->LoadSpin();
@@ -132,7 +137,7 @@ class SpinController extends AppBaseController
         $random = [];
 
         foreach ($spins as $i => $item) {
-
+//            $no_change += [$item['code'] => $item['winloss']];
             $change += [$item['code'] => $item['winloss']];
 
             if ($item['amount'] == 0) {
@@ -146,9 +151,8 @@ class SpinController extends AppBaseController
             $stop = (($i + 1) * $range);
 
             $wheel[] = [
-                'fillStyle' => ($item['spincolor'] ?: '#cccccc'),
-                'text' => $item['name'],
-                'image' => ''
+                'text' => $item['amount'],
+                'image' => $item['image']
             ];
 
             $data[] = [
@@ -169,6 +173,8 @@ class SpinController extends AppBaseController
 
         }
 
+//        dd($change);
+
         if ($bonustoday > $maxbonus) {
 //            dd($no_change);
             $spinid = getRandomWeightedElement($no_change);
@@ -176,7 +182,11 @@ class SpinController extends AppBaseController
             $spinid = getRandomWeightedElement($change);
         }
 
+//        dd($random);
+
         $point = rand($random[$spinid]['start'], $random[$spinid]['stop']);
+
+//        $point = $random[$spinid]['position'];
 
         $name_stop = $random[$spinid]['name'];
         $amount_stop = $random[$spinid]['amount'];
@@ -195,7 +205,7 @@ class SpinController extends AppBaseController
         //หัก ไดม่อน 1 เม็ด
         $response = app('Gametech\Member\Repositories\MemberDiamondLogRepository')->setDiamond($setdata);
         if (!$response) {
-            return $this->sendError('ไม่สามารถทำรายการได้', 200);
+            return $this->sendError(Lang::get('app.spin.fail'), 200);
         }
 
         //สร้าง รายการหมุนวงล้อ
@@ -216,7 +226,7 @@ class SpinController extends AppBaseController
             $response = $this->bonusSpinRepository->create($param);
         } catch (Throwable $e) {
             report($e);
-            return $this->sendError('ไม่สามารถทำรายการได้', 200);
+            return $this->sendError(Lang::get('app.spin.fail'), 200);
         }
 
 
@@ -233,9 +243,28 @@ class SpinController extends AppBaseController
                 'emp_name' => $this->user()->name
             ];
 
-            $response = app('Gametech\Member\Repositories\MemberCreditLogRepository')->setWallet($setdata);
+            if ($config->seamless == 'Y') {
+//                $response = app('Gametech\Member\Repositories\MemberCreditFreeLogRepository')->setBonus($setdata);
+                $response = app('Gametech\Member\Repositories\MemberCreditLogRepository')->setBonus($setdata);
+
+            } else {
+
+                if ($config->multigame_open == 'Y') {
+                    $response = app('Gametech\Member\Repositories\MemberCreditLogRepository')->setWallet($setdata);
+                } else {
+                    if ($config->freecredit_open == 'Y') {
+                        $response = app('Gametech\Member\Repositories\MemberCreditFreeLogRepository')->setBonus($setdata);
+
+                    } else {
+                        $response = app('Gametech\Member\Repositories\MemberCreditLogRepository')->setBonus($setdata);
+//                        $response = app('Gametech\Member\Repositories\MemberCreditLogRepository')->setWalletSingle($setdata);
+
+                    }
+                }
+
+            }
             if (!$response) {
-                return $this->sendError('ไม่สามารถทำรายการได้', 200);
+                return $this->sendError(Lang::get('app.spin.fail'), 200);
             }
         } elseif ($reward_type === 'CREDIT' && $amount_stop > 0) {
             $setdata = [
@@ -243,14 +272,16 @@ class SpinController extends AppBaseController
                 'remark' => 'ได้รับรางวัลจากการหมุนวงล้อ',
                 'amount' => $amount_stop,
                 'method' => 'D',
+                'refer_code' => $response->code,
+                'refer_table' => 'bonus_spin',
                 'member_code' => $this->id(),
                 'emp_code' => 0,
                 'emp_name' => $this->user()->name
             ];
-
-            $response = app('Gametech\Member\Repositories\MemberFreeCreditRepository')->setCredit($setdata);
+            $response = app('Gametech\Member\Repositories\MemberCreditFreeLogRepository')->setWallet($setdata);
+//            $response = app('Gametech\Member\Repositories\MemberFreeCreditRepository')->setCredit($setdata);
             if (!$response) {
-                return $this->sendError('ไม่สามารถทำรายการได้', 200);
+                return $this->sendError(Lang::get('app.spin.fail'), 200);
             }
         } elseif ($reward_type === 'DIAMOND' && $amount_stop > 0) {
 
@@ -265,27 +296,46 @@ class SpinController extends AppBaseController
 
             $response = app('Gametech\Member\Repositories\MemberDiamondLogRepository')->setDiamond($setdata);
             if (!$response) {
-                return $this->sendError('ไม่สามารถทำรายการได้', 200);
+                return $this->sendError(Lang::get('app.spin.fail'), 200);
             }
         }
 
 
         if ($amount_stop > 0) {
             $win = [
-                'title' => 'ได้รางวัล !! โชคของคุณมาแล้ววว',
-                'msg' => 'จากการหมุนวงล้อมหาสนุก ได้รับ ' . $name_stop . ' ( จำนวน ' . core()->currency($amount_stop) . ' )',
+                'title' => Lang::get('app.spin.win') . $name_stop,
+                'msg' => Lang::get('app.spin.win_msg'),
                 'img' => Storage::url('spin_img/spin-win.png'),
                 'point' => $point,
                 'diamond' => $diamond
             ];
+        } elseif ($reward_type === 'BONUS' && $amount_stop > 0) {
+            $setdata = [
+                'kind' => 'SPIN',
+                'remark' => 'ได้รับรางวัลจากการหมุนวงล้อ',
+                'amount' => $amount_stop,
+                'method' => 'D',
+                'member_code' => $this->id(),
+                'refer_code' => $response->code,
+                'refer_table' => 'bonus_spin',
+                'emp_code' => 0,
+                'emp_name' => $this->user()->name
+            ];
+
+            $response = app('Gametech\Member\Repositories\MemberCreditFreeLogRepository')->setBonus($setdata);
+
+            if (!$response) {
+                return $this->sendError(Lang::get('app.spin.fail'), 200);
+            }
+
         } else {
 
 //            $word[1] = [ 'title' => 'รอบนี้โชคยังมาไม่ถึง' , 'msg' => 'ลองอีกทีดูไหม โชคดีอาจจะมารอบหน้า' ];
 //            $word[2] = [ 'title' => 'หยุดดดด !! พลาดรางวัลไปซะแล้ว' , 'msg' => 'เกือบแล้วๆ เพชรยังมีให้ลุ้นอีกไหม' ];
 //
             $win = [
-                'title' => 'รอบนี้โชคยังมาไม่ถึง',
-                'msg' => 'ลองอีกทีดูไหม โชคดีอาจจะมารอบหน้า',
+                'title' => Lang::get('app.spin.lost'),
+                'msg' => Lang::get('app.spin.lost_msg'),
                 'img' => Storage::url('spin_img/spin-loss.png'),
                 'point' => $point,
                 'diamond' => $diamond

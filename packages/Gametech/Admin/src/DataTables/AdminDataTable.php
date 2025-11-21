@@ -37,10 +37,10 @@ class AdminDataTable extends DataTable
     {
         $status = request()->input('enable');
 
-        return $model->newQuery()->where('superadmin','N')
+        return $model->newQuery()->where('superadmin', 'N')
             ->when($status, function ($query, $status) {
 
-                $query->where('enable',$status);
+                $query->where('enable', $status);
             })
             ->select('employees.*')->with('role');
 
@@ -56,7 +56,7 @@ class AdminDataTable extends DataTable
     {
         return $this->builder()
             ->columns($this->getColumns())
-            ->ajaxWithForm('','#frmsearch')
+            ->ajaxWithForm('', '#frmsearch')
             ->parameters([
                 'dom' => 'Bfrtip',
 
@@ -96,6 +96,7 @@ class AdminDataTable extends DataTable
             ['data' => 'mobile', 'name' => 'employees.mobile', 'title' => 'เบอร์โทร', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
             ['data' => 'role', 'name' => 'employees.role_id', 'title' => 'ระดับ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'lastlogin', 'name' => 'employees.lastlogin', 'title' => 'เข้าสู่ระบบเมื่อ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'auth', 'name' => 'employees.google2fa_enable', 'title' => 'สแกน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'enable', 'name' => 'employees.enable', 'title' => 'เปิดใช้งาน', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
             ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];

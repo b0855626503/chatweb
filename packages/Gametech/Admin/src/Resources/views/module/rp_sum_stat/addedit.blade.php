@@ -24,56 +24,57 @@
         function ShowModel(id, method) {
             window.app.ShowModel(id, method);
         }
+    </script>
+    <script type="module">
 
-        (() => {
-            window.app = new Vue({
-                el: '#app',
-                data() {
-                    return {
-                        showtable: false,
-                        fields: [],
-                        items: [],
-                        isBusy: false,
-                        caption: ''
-                    };
+        window.app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    showtable: false,
+                    fields: [],
+                    items: [],
+                    isBusy: false,
+                    caption: ''
+                };
+            },
+            created() {
+                // this.audio = document.getElementById('alertsound');
+                this.autoCnt(false);
+            },
+            methods: {
+                ShowModel(id, method) {
+                    this.showtable = false;
+                    this.$nextTick(() => {
+                        this.showtable = true;
+                        this.code = id;
+                        this.method = method;
+                        this.$refs.addedit.show();
+
+                    })
                 },
-                created() {
-                    // this.audio = document.getElementById('alertsound');
-                    this.autoCnt(false);
+                async myTable() {
+                    const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {
+                        id: this.code,
+                        method: this.method
+                    });
+                    this.caption = response.data.caption;
+                    this.fields = [
+                        {key: 'no', label: '#', class: 'text-center'},
+                        {key: 'firstname', label: 'ชื่อ', class: 'text-left'},
+                        {key: 'lastname', label: 'นามสกุล', class: 'text-left'},
+                        {key: 'user_name', label: 'User ID', class: 'text-left'},
+                        {key: 'tel', label: 'เบอร์โทร', class: 'text-center'},
+
+                    ];
+
+
+                    return response.data.list;
+
                 },
-                methods: {
-                    ShowModel(id, method) {
-                        this.showtable = false;
-                        this.$nextTick(() => {
-                            this.showtable = true;
-                            this.code = id;
-                            this.method = method;
-                            this.$refs.addedit.show();
+            }
+        });
 
-                        })
-                    },
-                    async myTable() {
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {
-                            id: this.code,
-                            method: this.method
-                        });
-                        this.caption = response.data.caption;
-                        this.fields = [
-                            {key: 'no', label: '#', class: 'text-center'},
-                            {key: 'firstname', label: 'ชื่อ', class: 'text-left'},
-                            {key: 'lastname', label: 'นามสกุล', class: 'text-left'},
-                            {key: 'user_name', label: 'User ID', class: 'text-left'},
-                            {key: 'tel', label: 'เบอร์โทร', class: 'text-center'},
-
-                        ];
-
-
-                        return response.data.list;
-
-                    },
-                }
-            });
-        })()
     </script>
 @endpush
 

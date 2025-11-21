@@ -1,6 +1,6 @@
 <?php
 
-namespace Gametech\Payment\Http\Controllers;
+namespace Gametech\LineOA\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Response;

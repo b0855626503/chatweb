@@ -60,8 +60,8 @@
                             <div class="col-1 d-flex align-items-center">
                                 <div class="mx-auto">
                                     @if($item['pro_code'] > 0)
-                                    <p class="text-center text-top m-0">โบนัสที่ได้</p>
-                                    <p class="text-center text-color-fixed text-sub m-0">{{ $item['bonus'] }}</p>
+                                        <p class="text-center text-top m-0">โบนัสที่ได้</p>
+                                        <p class="text-center text-color-fixed text-sub m-0">{{ $item['bonus'] }}</p>
                                     @endif
                                 </div>
                             </div>
@@ -73,7 +73,7 @@
                         @if($item['pro_code'] > 0)
                             <div class="row">
                                 <div class="col align-items-center">
-                                        <p class="text-center text-top m-0">จากโปรโมชั่น : {{ $item['pro_name'] }}</p>
+                                    <p class="text-center text-top m-0">จากโปรโมชั่น : {{ $item['pro_name'] }}</p>
                                 </div>
                             </div>
                         @endif
@@ -85,10 +85,12 @@
                                 </button>
                             </div>
                             <div class="col-6">
-                                <form method="POST" action="{{ route('customer.transfer.success') }}" @submit.prevent="onSubmit">
+                                <form method="POST" action="{{ route('customer.transfer.success') }}"
+                                      @submit.prevent="onSubmit">
                                     @csrf
                                     <input type="hidden" name="gametoken" value="{{ session('gametoken') }}">
-                                    <button class="btn btn-primary btn-success btn-lg btn-block shadow-box" type="submit">
+                                    <button class="btn btn-primary btn-success btn-lg btn-block shadow-box"
+                                            type="submit">
                                         <i class="fas fa-check"></i> ยืนยัน
                                     </button>
                                 </form>

@@ -11,7 +11,7 @@ use Spiritix\LadaCache\Database\LadaCacheTrait;
 
 class PromotionContent extends Model implements PromotionContentContract
 {
-    use  LadaCacheTrait;
+    use LadaCacheTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {

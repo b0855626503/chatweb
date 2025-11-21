@@ -30,6 +30,8 @@ class PromotionTime extends Model implements PromotionTimeContract
         'pro_code',
         'time_start',
         'time_stop',
+        'deposit_amount',
+        'deposit_stop',
         'amount',
         'enable',
         'user_create',

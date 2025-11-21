@@ -37,6 +37,18 @@
                                            name="user_name">
                                 </div>
 
+                                <div class="form-group col-6">
+                                    <input type="text" class="form-control form-control-sm" id="description"
+                                           placeholder="description"
+                                           name="description">
+                                </div>
+
+                                <div class="form-group col-6">
+                                    <input type="text" class="form-control form-control-sm" id="details"
+                                           placeholder="details"
+                                           name="details">
+                                </div>
+
 
                                 <div class="form-group col-auto">
                                     <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>

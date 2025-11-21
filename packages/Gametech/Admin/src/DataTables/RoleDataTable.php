@@ -76,7 +76,7 @@ class RoleDataTable extends DataTable
 
                 'order' => [[0, 'desc']],
                 'buttons' => [
-                    'pageLength','excel'
+                    'pageLength'
                 ],
                 'columnDefs' => [
                     ['targets' => '_all', 'className' => 'text-nowrap']

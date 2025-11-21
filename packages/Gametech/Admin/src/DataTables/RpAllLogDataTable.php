@@ -3,11 +3,8 @@
 namespace Gametech\Admin\DataTables;
 
 use Gametech\Admin\Transformers\RpAllLogTransformer;
-
 use Gametech\Member\Contracts\MemberCreditLog;
-
 use Yajra\DataTables\EloquentDataTable;
-
 use Yajra\DataTables\Html\Builder;
 use Yajra\DataTables\Services\DataTable;
 
@@ -26,11 +23,9 @@ class RpAllLogDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-
             ->setTransformer(new RpAllLogTransformer(request()->get('start')));
 
     }
-
 
 
     public function query(MemberCreditLog $model)
@@ -40,6 +35,7 @@ class RpAllLogDataTable extends DataTable
         $game = request()->input('game_code');
         $kind = request()->input('kind');
         $user = request()->input('user_name');
+        $code = request()->input('member_code');
         $startdate = request()->input('startDate');
         $enddate = request()->input('endDate');
 
@@ -50,13 +46,21 @@ class RpAllLogDataTable extends DataTable
             $enddate = now()->toDateString() . ' 23:59:59';
         }
 
-        return $model->newQuery()->with(['member','admin','bank','game_user','promotion','game'])
+        return $model->newQuery()->with(['member', 'admin', 'bank', 'game_user', 'promotion', 'game'])
             ->select('members_credit_log.*')->orderByDesc('code')
             ->when($kind, function ($query, $kind) {
-                $query->where('kind', $kind);
+                if($kind === 'FREE'){
+                    $query->whereIn('kind', ['TRANBONUS','TRANFT','TRANCB','TRANIC','G_BONUS']);
+                }else{
+                    $query->where('kind', $kind);
+                }
+
             })
             ->when($game, function ($query, $game) {
                 $query->where('game_code', $game);
+            })
+            ->when($code, function ($query, $code) {
+                $query->where('member_code', $code);
             })
             ->when($user, function ($query, $user) {
                 $query->whereIn('members_credit_log.member_code', function ($q) use ($user) {
@@ -66,7 +70,6 @@ class RpAllLogDataTable extends DataTable
             ->when($startdate, function ($query, $startdate) use ($enddate) {
                 $query->whereBetween('date_create', array($startdate, $enddate));
             });
-
 
 
 //        $first = DB::table('payments_promotion')
@@ -199,7 +202,6 @@ class RpAllLogDataTable extends DataTable
 //            });
 
 
-
 //        $union = $model->newQuery()
 //            ->select([
 //                'code',
@@ -277,7 +279,6 @@ class RpAllLogDataTable extends DataTable
 //        return DB::table(DB::raw("({$union->toSql()}) as alllog"))->mergeBindings($union)->orderByDesc('date_create');
 
 
-
     }
 
     /**
@@ -287,37 +288,108 @@ class RpAllLogDataTable extends DataTable
      */
     public function html()
     {
-        return $this->builder()
-            ->columns($this->getColumns())
-            ->ajaxWithForm('', '#frmsearch')
-            ->parameters([
-                'dom' => 'Bfrtip',
+        $config = core()->getConfigData();
+        if ($config->seamless == 'Y') {
 
-                'processing' => true,
-                'serverSide' => true,
-                'responsive' => false,
-                'stateSave' => true,
-                'scrollX' => true,
+            return $this->builder()
+                ->columns($this->getColumns())
+                ->ajaxWithForm('', '#frmsearch')
+                ->parameters([
+                    'dom' => 'Bfrtip',
 
-                'paging' => true,
-                'searching' => false,
-                'deferRender' => true,
-                'retrieve' => true,
-                'ordering' => false,
-                'autoWidth' => false,
-                'pageLength' => 50,
-                'order' => [[0, 'desc']],
-                'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
-                ],
-                'buttons' => [
-                    'pageLength'
-                ],
-                'columnDefs' => [
-                    ['targets' => '_all', 'className' => 'text-nowrap']
-                ]
-            ]);
+                    'processing' => true,
+                    'serverSide' => true,
+                    'responsive' => false,
+                    'stateSave' => true,
+                    'scrollX' => true,
+
+                    'paging' => true,
+                    'searching' => false,
+                    'deferRender' => true,
+                    'retrieve' => true,
+                    'ordering' => false,
+                    'autoWidth' => false,
+                    'pageLength' => 50,
+                    'order' => [[0, 'desc']],
+                    'lengthMenu' => [
+                        [50, 100, 200, 500, 1000],
+                        ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
+                    ],
+                    'buttons' => [
+                        'pageLength'
+                    ],
+                    'columnDefs' => [
+                        ['targets' => '_all', 'className' => 'text-nowrap']
+                    ],
+                    'footerCallback' => "function (row, data, start, end, display) {
+                           var api = this.api();
+
+                           var intVal = function ( i ) {
+                                return typeof i === 'string' ?
+                                    i.replace(/[\$,]/g, '')*1 :
+                                    typeof i === 'number' ?
+                                        i : 0;
+                            };
+
+                           api.columns().every(function (i) {
+                            if(i == 6 || i == 8 || i == 9 || i == 10 || i == 11){
+                           var sum = this.data()
+                                      .reduce(function(a, b) {
+                                        var x = intVal(a) || 0;
+                                        var y = intVal(b) || 0;
+                                        return x + y;
+                                      }, 0);
+
+                                    var n = new Number(sum);
+                                    var myObj = {
+                                        style: 'decimal'
+                                    };
+                                    if(sum < 0){
+                                        $(this.column()).css('background-color','red');
+                                    }
+                                $(this.footer()).html(n.toLocaleString(myObj));
+                                }
+                            });
+                        }",
+                ]);
+
+        } else {
+
+            return $this->builder()
+                ->columns($this->getColumns())
+                ->ajaxWithForm('', '#frmsearch')
+                ->parameters([
+                    'dom' => 'Bfrtip',
+
+                    'processing' => true,
+                    'serverSide' => true,
+                    'responsive' => false,
+                    'stateSave' => true,
+                    'scrollX' => true,
+
+                    'paging' => true,
+                    'searching' => false,
+                    'deferRender' => true,
+                    'retrieve' => true,
+                    'ordering' => false,
+                    'autoWidth' => false,
+                    'pageLength' => 50,
+                    'order' => [[0, 'desc']],
+                    'lengthMenu' => [
+                        [50, 100, 200, 500, 1000],
+                        ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
+                    ],
+                    'buttons' => [
+                        'pageLength'
+                    ],
+                    'columnDefs' => [
+                        ['targets' => '_all', 'className' => 'text-nowrap']
+                    ],
+                ]);
+
+        }
+
+
     }
 
     /**
@@ -327,25 +399,88 @@ class RpAllLogDataTable extends DataTable
      */
     protected function getColumns()
     {
-        return [
+        $config = core()->getConfigData();
 
-            ['data' => 'code', 'name' => 'bills.code', 'title' => '#', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'date', 'name' => 'bills.date_create', 'title' => 'วันที่', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'user_name', 'name' => 'bills.pro_name', 'title' => 'User ID', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'name', 'name' => 'bills.member_name', 'title' => 'ชื่อสมาชิก', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'method', 'name' => 'members.user_name', 'title' => 'กิจกรรม', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'game_user', 'name' => 'members.user_name', 'title' => 'User Game', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'amount', 'name' => 'members.user_name', 'title' => 'จำนวน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'pro_name', 'name' => 'members.user_name', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'bonus', 'name' => 'members.user_name', 'title' => 'โบนัสที่ได้', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'total', 'name' => 'members.user_name', 'title' => 'รวมทั้งหมด', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
-            ['data' => 'wallet_before', 'name' => 'members.user_name', 'title' => 'Wallet ก่อน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-success'],
-            ['data' => 'wallet_after', 'name' => 'members.user_name', 'title' => 'Wallet หลัง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-danger'],
-            ['data' => 'credit_before', 'name' => 'members.user_name', 'title' => 'Credit ก่อน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-success'],
-            ['data' => 'credit_after', 'name' => 'members.user_name', 'title' => 'Credit หลัง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-danger'],
-            ['data' => 'ip', 'name' => 'members.user_name', 'title' => 'IP', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-            ['data' => 'user_create', 'name' => 'members.user_name', 'title' => 'ผู้ทำรายการ', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
-        ];
+        if ($config->seamless == 'Y') {
+
+            return [
+
+                ['data' => 'code', 'name' => 'bills.code', 'title' => '#', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'date', 'name' => 'bills.date_create', 'title' => 'วันที่', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'user_name', 'name' => 'bills.pro_name', 'title' => 'User ID', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'name', 'name' => 'bills.member_name', 'title' => 'ชื่อสมาชิก', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'method', 'name' => 'members.user_name', 'title' => 'กิจกรรม', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+//                ['data' => 'enable', 'name' => 'members.enable', 'title' => 'สถานะ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+//                ['data' => 'game_user', 'name' => 'members.user_name', 'title' => 'User Game', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'amount', 'name' => 'members.user_name', 'title' => 'จำนวน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'pro_name', 'name' => 'members.user_name', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'bonus', 'name' => 'members.user_name', 'title' => 'โบนัสที่ได้', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                ['data' => 'total', 'name' => 'members.user_name', 'title' => 'รวมทั้งหมด', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//                ['data' => 'wallet_before', 'name' => 'members.user_name', 'title' => 'Wallet ก่อน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-success'],
+//                ['data' => 'wallet_after', 'name' => 'members.user_name', 'title' => 'Wallet หลัง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-danger'],
+                ['data' => 'credit_before', 'name' => 'members.user_name', 'title' => 'Credit ก่อน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-success'],
+                ['data' => 'credit_after', 'name' => 'members.user_name', 'title' => 'Credit หลัง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-danger'],
+                ['data' => 'amount_balance', 'name' => 'members.user_name', 'title' => 'ตอนนี้ติดเทินอยู่', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-info'],
+                ['data' => 'withdraw_limit_amount', 'name' => 'members.user_name', 'title' => 'ถูกอั้นถอนที่', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-info'],
+//                ['data' => 'withdraw_limit', 'name' => 'members.user_name', 'title' => 'ยอดอั้นคงที่', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-info'],
+                ['data' => 'ip', 'name' => 'members.user_name', 'title' => 'IP', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ['data' => 'user_create', 'name' => 'members.user_name', 'title' => 'ผู้ทำรายการ', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+            ];
+
+        } else {
+
+
+            if ($config->multigame_open == 'Y') {
+                return [
+
+                    ['data' => 'code', 'name' => 'bills.code', 'title' => '#', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'date', 'name' => 'bills.date_create', 'title' => 'วันที่', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'user_name', 'name' => 'bills.pro_name', 'title' => 'User ID', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'name', 'name' => 'bills.member_name', 'title' => 'ชื่อสมาชิก', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'method', 'name' => 'members.user_name', 'title' => 'กิจกรรม', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'enable', 'name' => 'members.enable', 'title' => 'สถานะ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'game_user', 'name' => 'members.user_name', 'title' => 'User Game', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'amount', 'name' => 'members.user_name', 'title' => 'จำนวน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                    ['data' => 'pro_name', 'name' => 'members.user_name', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'bonus', 'name' => 'members.user_name', 'title' => 'โบนัสที่ได้', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                    ['data' => 'total', 'name' => 'members.user_name', 'title' => 'รวมทั้งหมด', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                    ['data' => 'wallet_before', 'name' => 'members.user_name', 'title' => 'Wallet ก่อน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-success'],
+                    ['data' => 'wallet_after', 'name' => 'members.user_name', 'title' => 'Wallet หลัง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-danger'],
+                    ['data' => 'credit_before', 'name' => 'members.user_name', 'title' => 'Credit ก่อน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-success'],
+                    ['data' => 'credit_after', 'name' => 'members.user_name', 'title' => 'Credit หลัง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-danger'],
+                    ['data' => 'ip', 'name' => 'members.user_name', 'title' => 'IP', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'user_create', 'name' => 'members.user_name', 'title' => 'ผู้ทำรายการ', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ];
+            } else {
+                return [
+
+                    ['data' => 'code', 'name' => 'bills.code', 'title' => '#', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'date', 'name' => 'bills.date_create', 'title' => 'วันที่', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'user_name', 'name' => 'bills.pro_name', 'title' => 'User ID', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'name', 'name' => 'bills.member_name', 'title' => 'ชื่อสมาชิก', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'method', 'name' => 'members.user_name', 'title' => 'กิจกรรม', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'enable', 'name' => 'members.enable', 'title' => 'สถานะ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'remark', 'name' => 'members.remark', 'title' => 'หมายเหตุ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+                    ['data' => 'game_user', 'name' => 'members.user_name', 'title' => 'User Game', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'amount', 'name' => 'members.user_name', 'title' => 'จำนวน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                    ['data' => 'pro_name', 'name' => 'members.user_name', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'bonus', 'name' => 'members.user_name', 'title' => 'โบนัสที่ได้', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+                    ['data' => 'total', 'name' => 'members.user_name', 'title' => 'รวมทั้งหมด', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap'],
+//                ['data' => 'wallet_before', 'name' => 'members.user_name', 'title' => 'Wallet ก่อน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-success'],
+//                ['data' => 'wallet_after', 'name' => 'members.user_name', 'title' => 'Wallet หลัง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-danger'],
+                    ['data' => 'credit_before', 'name' => 'members.user_name', 'title' => 'Credit ก่อน', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-success'],
+                    ['data' => 'credit_after', 'name' => 'members.user_name', 'title' => 'Credit หลัง', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-danger'],
+                    ['data' => 'amount_balance', 'name' => 'members.user_name', 'title' => 'ตอนนี้ติดเทินอยู่', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-info'],
+                    ['data' => 'withdraw_limit_amount', 'name' => 'members.user_name', 'title' => 'ถูกอั้นถอนที่', 'orderable' => false, 'searchable' => false, 'className' => 'text-right text-nowrap text-info'],
+                    ['data' => 'ip', 'name' => 'members.user_name', 'title' => 'IP', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                    ['data' => 'user_create', 'name' => 'members.user_name', 'title' => 'ผู้ทำรายการ', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+                ];
+            }
+
+        }
+
     }
 
     /**

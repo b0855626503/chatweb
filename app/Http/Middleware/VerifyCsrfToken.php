@@ -11,5 +11,5 @@ class VerifyCsrfToken extends Middleware
      *
      * @var array
      */
-    protected $except = [ 'api/*'];
+    protected $except = ['api/*','tw/*','scb/*','ttb/*','pompay/*','hengpay/*','luckypay/*','papayapay/*','commspay/*','login'];
 }

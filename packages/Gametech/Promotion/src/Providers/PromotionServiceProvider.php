@@ -2,6 +2,8 @@
 
 namespace Gametech\Promotion\Providers;
 
+use Gametech\Promotion\Models\PromotionProxy;
+use Gametech\Promotion\Observers\PromotionObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 
@@ -14,7 +16,7 @@ class PromotionServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
+        PromotionProxy::observe(PromotionObserver::class);
     }
 
     /**

@@ -51,7 +51,7 @@ class ConfigDataTable extends DataTable
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->parameters([
-                'dom'       => 'Bfrtip',
+                'dom' => 'Bfrtip',
 
                 'responsive' => false,
                 'paging' => true,
@@ -59,15 +59,15 @@ class ConfigDataTable extends DataTable
                 'deferRender' => true,
                 'serverSide' => true,
                 'retrieve' => true,
-'ordering' => true,
+                'ordering' => true,
                 'autoWidth' => false,
 
-                'order'     => [[3, 'asc']],
-                'buttons'   => [
+                'order' => [[3, 'asc']],
+                'buttons' => [
                     'pageLength'
                 ],
                 'columnDefs' => [
-                    [ 'targets' => '_all' , 'className' => 'text-nowrap']
+                    ['targets' => '_all', 'className' => 'text-nowrap']
                 ]
             ]);
     }
@@ -80,18 +80,18 @@ class ConfigDataTable extends DataTable
     protected function getColumns()
     {
         return [
-            ['data' => 'code' , 'name' => 'code' , 'title' => '#' , 'orderable' => true , 'searchable' => true , 'className' => 'text-center text-nowrap'],
-            ['data' => 'name' , 'name' => 'name_th' , 'title' => 'โปรโมชั่น' , 'orderable' => false , 'searchable' => false , 'className' => 'text-left text-nowrap' ],
-            ['data' => 'id' , 'name' => 'id' , 'title' => 'รหัส' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'sort' , 'name' => 'sort' , 'title' => 'ลำดับ' , 'orderable' => false , 'searchable' => true, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'type' , 'name' => 'length_type' , 'title' => 'ประเภท' , 'orderable' => false , 'searchable' => false, 'className' => 'text-left text-nowrap' ],
-            ['data' => 'pic' , 'name' => 'filepic' , 'title' => 'รูปภาพ' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'manual' , 'name' => 'use_manual' , 'title' => 'Manual' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'auto' , 'name' => 'use_auto' , 'title' => 'Auto' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'wallet' , 'name' => 'use_wallet' , 'title' => 'Wallet' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'active' , 'name' => 'active' , 'title' => 'Display' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'enable' , 'name' => 'enable' , 'title' => 'Active' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
-            ['data' => 'edit' , 'name' => 'edit' , 'title' => 'แก้ไข' , 'orderable' => false , 'searchable' => false, 'className' => 'text-center text-nowrap' ],
+            ['data' => 'code', 'name' => 'code', 'title' => '#', 'orderable' => true, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'name', 'name' => 'name_th', 'title' => 'โปรโมชั่น', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+            ['data' => 'id', 'name' => 'id', 'title' => 'รหัส', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'sort', 'name' => 'sort', 'title' => 'ลำดับ', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'type', 'name' => 'length_type', 'title' => 'ประเภท', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+            ['data' => 'pic', 'name' => 'filepic', 'title' => 'รูปภาพ', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'manual', 'name' => 'use_manual', 'title' => 'Manual', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'auto', 'name' => 'use_auto', 'title' => 'Auto', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'wallet', 'name' => 'use_wallet', 'title' => 'Wallet', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'active', 'name' => 'active', 'title' => 'Display', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'enable', 'name' => 'enable', 'title' => 'Active', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
+            ['data' => 'edit', 'name' => 'edit', 'title' => 'แก้ไข', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap'],
         ];
     }
 

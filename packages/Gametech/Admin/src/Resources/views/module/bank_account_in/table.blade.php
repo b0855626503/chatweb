@@ -6,6 +6,12 @@
 
 @push('scripts')
     @include('admin::layouts.datatables_js')
-
+    <script>
+        $(document).ready(function () {
+            $("#frmsearch").submit(function () {
+                window.LaravelDataTables["dataTableBuilder"].draw(true);
+            });
+        });
+    </script>
     {!! $dataTable->scripts() !!}
 @endpush

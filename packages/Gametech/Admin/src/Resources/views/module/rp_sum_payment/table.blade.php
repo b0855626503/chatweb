@@ -6,10 +6,10 @@
 @endpush
 
 {!! $dataTable->table(['width' => '100%', 'class' => 'table table-striped table-sm'],true) !!}
-{{--<hr>--}}
-{{--<table width="100%" class="table table-bordered" id="customfooter" style="font-size: medium">--}}
-{{--    <tbody></tbody>--}}
-{{--</table>--}}
+<hr>
+<table width="100%" class="table table-bordered" id="customfooter" style="font-size: medium">
+    <tbody></tbody>
+</table>
 
 @push('scripts')
     <script src="{{ asset('vendor/daterangepicker/daterangepicker.js') }}"></script>
@@ -61,33 +61,26 @@
     @include('admin::layouts.datatables_js')
     {!! $dataTable->scripts() !!}
 
-    {{--    <script>--}}
-    {{--        $(function() {--}}
+        <script>
+            $(function() {
 
-    {{--            var promotion = @json($pros->toArray());--}}
-    {{--            var table =  window.LaravelDataTables["dataTableBuilder"];--}}
-    {{--            window.LaravelDataTables["dataTableBuilder"].on('draw', function () {--}}
-    {{--                $("#customfooter tbody").html('');--}}
-
-    {{--                let html = '';--}}
-
-    {{--                $.each(promotion, function(index, value) {--}}
-    {{--                    let pro = table.ajax.json();--}}
-    {{--                    console.log(pro['p'+index]);--}}
-    {{--                    // let p = 'pro.p'+index;--}}
-    {{--                html += '<tr>';--}}
-    {{--                html += '<th style="text-align:right;width:80%;color:darkorange">รวม '+value+'</th><th style="text-align:right;color:darkorange;">'+pro['p'+index]+'</th>';--}}
-    {{--                html += '</tr>';--}}
-    {{--                html += '<tr>';--}}
-    {{--                });--}}
+                var table =  window.LaravelDataTables["dataTableBuilder"];
+                window.LaravelDataTables["dataTableBuilder"].on('draw', function () {
+                    $("#customfooter tbody").html('');
 
 
-    {{--                $("#customfooter tbody").append(html);--}}
+                    let html = '<tr>';
+                    html += '<th style="text-align:right;width:80%;color:blue">รวมยอดฝาก (ทั้งหมด)</th><th style="text-align:right;color:blue;">' + table.ajax.json().deposit + '</th>';
+                    html += '</tr>';
+                    html += '<tr>';
 
 
-    {{--            });--}}
+                    $("#customfooter tbody").append(html);
 
 
-    {{--        });--}}
-    {{--    </script>--}}
+                });
+
+
+            });
+        </script>
 @endpush

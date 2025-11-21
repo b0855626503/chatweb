@@ -7,7 +7,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class LineMessagingClient
+class LineMessagingClientBk
 {
     /**
      * base URL ของ LINE Messaging API

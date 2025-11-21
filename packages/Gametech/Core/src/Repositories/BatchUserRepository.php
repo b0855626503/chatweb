@@ -13,6 +13,6 @@ class BatchUserRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Core\Contracts\BatchUser';
+        return \Gametech\Core\Models\BatchUser::class;
     }
 }

@@ -11,13 +11,19 @@
             <a class="nav-link disabled active"><i class="far fa-user-circle"></i> Welcome
                 : {{ auth()->guard('admin')->user()->user_name }}</a>
         </li>
+        <li class="nav-item">
+            <a id="theme-toggle" class="nav-link" href="#" role="button" title="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </a>
+        </li>
     </ul>
 
 
     {{--    <!-- Right navbar links -->--}}
     <ul class="navbar-nav ml-auto">
+
         @if(!$patch)
-            <li class="nav-item d-sm-inline-block">
+            <li class="nav-item d-sm-inline-block d-none">
                 <a class="nav-link disabled">Version : {!! $version !!} </a>
             </li>
         @endif

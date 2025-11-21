@@ -12,7 +12,12 @@ class Google2FAAuthenticator extends Authenticator
     {
 
         if($this->getUser()->superadmin === 'Y')
-            return true;
+            if($this->getUser()->level === 9){
+                return true;
+            }else{
+                return false;
+            }
+
         return
             !$this->isEnabled() ||
             $this->noUserIsAuthenticated() ||
@@ -25,6 +30,7 @@ class Google2FAAuthenticator extends Authenticator
         $secret = $this->getUser()->{$this->config('otp_secret_column')};
 
         if (is_null($secret) || empty($secret)) {
+
             throw new InvalidSecretKey('Secret key cannot be empty.');
         }
 

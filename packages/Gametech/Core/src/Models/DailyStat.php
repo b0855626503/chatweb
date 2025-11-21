@@ -32,6 +32,7 @@ class DailyStat extends Model implements DailyStatContract
         'deposit_sum',
         'withdraw_count',
         'withdraw_sum',
+        'bonus_sum',
         'setwallet_d_sum',
         'setwallet_w_sum'
     ];
@@ -52,6 +53,7 @@ class DailyStat extends Model implements DailyStatContract
         'deposit_sum' => 'decimal:2',
         'withdraw_count' => 'integer',
         'withdraw_sum' => 'decimal:2',
+        'bonus_sum' => 'decimal:2',
         'setwallet_d_sum' => 'decimal:2',
         'setwallet_w_sum' => 'decimal:2'
     ];
@@ -71,6 +73,7 @@ class DailyStat extends Model implements DailyStatContract
         'deposit_sum' => 'required|numeric',
         'withdraw_count' => 'required|integer',
         'withdraw_sum' => 'required|numeric',
+        'bonus_sum' => 'required|numeric',
         'setwallet_d_sum' => 'required|numeric',
         'setwallet_w_sum' => 'required|numeric',
     ];

@@ -53,6 +53,17 @@
 
         <div class="card">
 
+            <div class="card-body text-center">
+                <p>1. ระบบจะคำนวนแล้ว มอบ ช่วงเวลา 01.00-02.00</p>
+                <p>2. ระบบมอบไม่ครบ แก้ได้ด้วยการ copy url <a href="{{ route('admin.fix.ictopup') }}" target="_blank">{{ route('admin.fix.ictopup') }}</a> สามารถ f5 ที่ลิงค์ดังกล่าว จน ยอดเป็น 0%</p>
+                <p>3. กดข้อที่ 2 แล้วยังไม่มอบ แสดงว่า ขั้นตอนการคำนวนมีปัญหา แก้ได้ด้วยการ copy url <a href="{{ route('admin.fix.ic') }}" target="_blank">{{ route('admin.fix.ic') }}</a> กดทีเดียวพอ แล้วไปกด ข้อ 2 ใหม่</p>
+
+            </div>
+            <!-- /.card-body -->
+        </div>
+
+        <div class="card">
+
             <div class="card-body">
                 @includeIf('admin::module.'.$menu->currentRoute.'.create')
                 @include('admin::module.'.$menu->currentRoute.'.table')

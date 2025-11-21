@@ -1,8 +1,8 @@
 <?php
 
-namespace Gametech\LineOa\Services;
+namespace Gametech\LineOA\Services;
 
-use Gametech\LineOa\Models\LineAccount;
+use Gametech\LineOA\Models\LineAccount;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -11,18 +11,15 @@ class LineMessagingClient
 {
     /**
      * base URL ของ LINE Messaging API
-     *
-     * @var string
      */
     protected string $baseUrl = 'https://api.line.me';
 
+    protected string $apiUrl = 'https://api-data.line.me';
+
     /**
-     * เตรียม Http client สำหรับ OA หนึ่งตัว
-     *
-     * - ใส่ access token ของ OA นั้น
-     * - ตั้งค่า timeout แบบอ่านจาก config line_oa (มี default เผื่อ)
+     * คืน Http client ที่ config token / baseUrl ให้เรียบร้อยแล้ว (สำหรับ JSON)
      */
-    protected function http(LineAccount $account)
+    public function http(LineAccount $account)
     {
         $timeout = (int) (config('line_oa.http_timeout', 5));
 
@@ -34,14 +31,7 @@ class LineMessagingClient
     }
 
     /**
-     * ส่งข้อความ text แบบ push (ใช้เวลาแอดมินตอบลูกค้า / บอทแจ้งเอง)
-     *
-     * @param LineAccount $account     OA ที่จะใช้ยิงข้อความ
-     * @param string      $toUserId    line_user_id ของลูกค้า (จาก LineContact)
-     * @param string      $text        ข้อความ
-     * @param array       $extraPayload สำหรับใส่ field เพิ่มใน message (เช่น quickReply ฯลฯ)
-     *
-     * @return array{success: bool, status: int|null, body: mixed, error: string|null}
+     * ส่งข้อความ text แบบ push
      */
     public function pushText(LineAccount $account, string $toUserId, string $text, array $extraPayload = []): array
     {
@@ -51,7 +41,7 @@ class LineMessagingClient
         ], $extraPayload);
 
         $payload = [
-            'to'       => $toUserId,
+            'to' => $toUserId,
             'messages' => [$message],
         ];
 
@@ -59,18 +49,26 @@ class LineMessagingClient
     }
 
     /**
-     * ส่งหลายข้อความ (ข้อความ text หลายอัน หรือ mix type ก็ได้) แบบ push
-     *
-     * @param LineAccount $account
-     * @param string      $toUserId
-     * @param array       $messages  array ของ message objects ตาม spec LINE
-     *
-     * @return array
+     * ส่งรูปแบบ push message (ให้ลูกค้าดูรูป)
+     */
+    public function sendImageMessage(LineAccount $account, string $lineUserId, string $originalUrl, string $previewUrl): array
+    {
+        $message = [
+            'type' => 'image',
+            'originalContentUrl' => $originalUrl,
+            'previewImageUrl' => $previewUrl ?: $originalUrl,
+        ];
+
+        return $this->pushMessages($account, $lineUserId, [$message]);
+    }
+
+    /**
+     * ส่งข้อความหลายอันแบบ push
      */
     public function pushMessages(LineAccount $account, string $toUserId, array $messages): array
     {
         $payload = [
-            'to'       => $toUserId,
+            'to' => $toUserId,
             'messages' => $messages,
         ];
 
@@ -78,9 +76,7 @@ class LineMessagingClient
     }
 
     /**
-     * ส่งข้อความตอบกลับแบบ reply (ใช้ได้เฉพาะภายใน window เวลาที่ LINE เปิดให้)
-     *
-     * ใช้ตอนเราอยาก reply ทันทีจาก webhook (ไม่ใช่กรณี admin มาตอบทีหลัง)
+     * ตอบกลับข้อความ (reply)
      */
     public function replyText(LineAccount $account, string $replyToken, string $text, array $extraPayload = []): array
     {
@@ -91,14 +87,137 @@ class LineMessagingClient
 
         $payload = [
             'replyToken' => $replyToken,
-            'messages'   => [$message],
+            'messages' => [$message],
         ];
 
         return $this->sendRequest($account, '/v2/bot/message/reply', $payload, 'replyText');
     }
 
     /**
-     * low-level: ส่ง request จริง แล้วรวมผลลัพธ์ออกมาเป็น array เดียว
+     * ดึง profile ของ user จาก LINE
+     */
+    public function getProfile(LineAccount $account, string $userId): array
+    {
+        $uri = '/v2/bot/profile/'.$userId;
+
+        try {
+            /** @var Response $response */
+            $response = $this->http($account)->get($uri);
+
+            $success = $response->successful();
+            $status = $response->status();
+            $body = $response->json();
+
+            if (! $success) {
+                $errorBody = $response->body();
+
+                Log::warning('[LineMessagingClient] getProfile failed', [
+                    'account_id' => $account->id,
+                    'uri' => $uri,
+                    'status' => $status,
+                    'response' => $errorBody,
+                ]);
+
+                return [
+                    'success' => false,
+                    'status' => $status,
+                    'body' => $body ?? $errorBody,
+                    'error' => is_string($errorBody) ? $errorBody : json_encode($errorBody),
+                ];
+            }
+
+            Log::info('[LineMessagingClient] getProfile success', [
+                'account_id' => $account->id,
+                'uri' => $uri,
+                'status' => $status,
+            ]);
+
+            return [
+                'success' => true,
+                'status' => $status,
+                'body' => $body,
+                'error' => null,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('[LineMessagingClient] getProfile exception', [
+                'account_id' => $account->id,
+                'uri' => $uri,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'status' => null,
+                'body' => null,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * ดึง binary ของ message content (image / video / audio) จาก LINE
+     *
+     * ใช้กับ message ที่ contentProvider.type = "line"
+     *
+     * @return array{success: bool, status: int|null, body: string|null, error: string|null}
+     */
+    public function downloadMessageContent(LineAccount $account, string $messageId): array
+    {
+        $uri = '/v2/bot/message/'.$messageId.'/content';
+
+        try {
+            $timeout = (int) (config('line_oa.http_timeout', 5));
+
+            /** @var Response $response */
+            $response = Http::withToken($account->access_token)
+                ->baseUrl($this->apiUrl)
+                ->timeout($timeout)
+                ->withHeaders(['Accept' => '*/*']) // สำคัญ: อย่าขอ JSON
+                ->get($uri);
+
+            $status = $response->status();
+            $body = $response->body(); // binary string
+
+            if (! $response->successful()) {
+                Log::warning('[LineMessagingClient] downloadMessageContent failed', [
+                    'account_id' => $account->id,
+                    'uri' => $uri,
+                    'status' => $status,
+                    'body' => $body,
+                ]);
+
+                return [
+                    'success' => false,
+                    'status' => $status,
+                    'body' => $body,
+                    'error' => $body,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'status' => $status,
+                'body' => $body,
+                'error' => null,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('[LineMessagingClient] downloadMessageContent exception', [
+                'account_id' => $account->id,
+                'uri' => $uri,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'status' => null,
+                'body' => null,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * core method สำหรับยิง POST ไปยัง LINE (JSON)
      *
      * @return array{success: bool, status: int|null, body: mixed, error: string|null}
      */
@@ -109,56 +228,56 @@ class LineMessagingClient
             $response = $this->http($account)->post($uri, $payload);
 
             $success = $response->successful();
-            $status  = $response->status();
-            $body    = $response->json();
+            $status = $response->status();
+            $body = $response->json();
 
             if (! $success) {
                 $errorBody = $response->body();
 
                 Log::warning('[LineMessagingClient] request failed', [
                     'account_id' => $account->id,
-                    'context'    => $context,
-                    'uri'        => $uri,
-                    'status'     => $status,
-                    'payload'    => $payload,
-                    'response'   => $errorBody,
+                    'context' => $context,
+                    'uri' => $uri,
+                    'status' => $status,
+                    'payload' => $payload,
+                    'response' => $errorBody,
                 ]);
 
                 return [
                     'success' => false,
-                    'status'  => $status,
-                    'body'    => $body ?? $errorBody,
-                    'error'   => is_string($errorBody) ? $errorBody : json_encode($errorBody),
+                    'status' => $status,
+                    'body' => $body ?? $errorBody,
+                    'error' => is_string($errorBody) ? $errorBody : json_encode($errorBody),
                 ];
             }
 
             Log::info('[LineMessagingClient] request success', [
                 'account_id' => $account->id,
-                'context'    => $context,
-                'uri'        => $uri,
-                'status'     => $status,
+                'context' => $context,
+                'uri' => $uri,
+                'status' => $status,
             ]);
 
             return [
                 'success' => true,
-                'status'  => $status,
-                'body'    => $body,
-                'error'   => null,
+                'status' => $status,
+                'body' => $body,
+                'error' => null,
             ];
         } catch (\Throwable $e) {
             Log::error('[LineMessagingClient] exception', [
                 'account_id' => $account->id,
-                'context'    => $context,
-                'uri'        => $uri,
-                'payload'    => $payload,
-                'error'      => $e->getMessage(),
+                'context' => $context,
+                'uri' => $uri,
+                'payload' => $payload,
+                'error' => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'status'  => null,
-                'body'    => null,
-                'error'   => $e->getMessage(),
+                'status' => null,
+                'body' => null,
+                'error' => $e->getMessage(),
             ];
         }
     }

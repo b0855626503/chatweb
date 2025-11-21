@@ -13,6 +13,6 @@ class RoleRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Admin\Contracts\Role';
+        return \Gametech\Admin\Models\Role::class;
     }
 }

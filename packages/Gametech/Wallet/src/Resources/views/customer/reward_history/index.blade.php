@@ -17,21 +17,23 @@
             <div class="col-md-8 offset-md-2 col-sm-12">
                 <div id="result">
 
-                        <div class="card text-black">
+                    <div class="card text-black">
                         <ul class="list-group list-group-flush">
                             @foreach($histories as $n => $item)
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    {{ $item['date_create'] }} รายการที่แลก : {{ $item['reward']['name'] }}<span class="float-right">{{ $item['point'] }} Point</span></li>
+                                    {{ $item['date_create'] }} รายการที่แลก : {{ $item['reward']['name'] }}<span
+                                        class="float-right">{{ $item['point'] }} Point</span></li>
                             @endforeach
                         </ul>
-                        </div>
+                    </div>
 
                 </div>
                 <br>
-                <a id="back-to-top" @click.prevent="topFunction" class="btn btn-primary back-to-top" role="button" aria-label="Scroll to top">
+                <a id="back-to-top" @click.prevent="topFunction" class="btn btn-primary back-to-top" role="button"
+                   aria-label="Scroll to top">
                     <i class="fas fa-chevron-up"></i>
                 </a>
-{{--                <button @click.prevent="topFunction" class="text-center btn btn-round btn-info mx-auto d-block"><i class="fas fa-arrow-up"></i> กลับขึ้นด้านบน </button>--}}
+                {{--                <button @click.prevent="topFunction" class="text-center btn btn-round btn-info mx-auto d-block"><i class="fas fa-arrow-up"></i> กลับขึ้นด้านบน </button>--}}
             </div>
         </div>
     </div>

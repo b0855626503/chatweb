@@ -1,5 +1,5 @@
 ### Laravel template
-/vendor/
+
 /node_modules/
 npm-debug.log
 yarn-error.log
@@ -15,7 +15,7 @@ yarn-error.log
 # Laravel 5 & Lumen specific with changed public path
 /public_html/storage
 /public_html/hot
-
+/storage/
 /storage/*.key
 .env
 Homestead.yaml
@@ -25,3 +25,4 @@ Homestead.json
 /.idea/
 /wallet_demo.zip
 /bank/
+/vendor/

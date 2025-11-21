@@ -88,128 +88,136 @@
 </b-modal>
 
 @push('scripts')
-    <script type="text/javascript">
-        (() => {
-            window.app = new Vue({
-                el: '#app',
-                data() {
-                    return {
-                        show: false,
-                        trigger: 0,
-                        fileupload: '',
-                        formmethod: 'edit',
-                        formaddedit: {
-                            name_th: '',
-                            name_en: '',
-                            shortcode: '',
-                            website: '',
-                            filepic: ''
-                        },
-                        imgpath: '/storage/bank_img/'
-                    };
-                },
-                created() {
-                    this.audio = document.getElementById('alertsound');
-                    this.autoCnt(false);
-                },
-                methods: {
-                    editModal(code) {
-                        this.code = null;
-                        this.formaddedit = {
-                            name_th: '',
-                            name_en: '',
-                            shortcode: '',
-                            website: ''
+    <script type="module">
 
-                        }
-                        this.formmethod = 'edit';
-                        this.fileupload = '';
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.code = code;
-                            this.loadData();
-                            this.$refs.addedit.show();
-
-                        })
+        window.app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    show: false,
+                    trigger: 0,
+                    fileupload: '',
+                    formmethod: 'edit',
+                    formaddedit: {
+                        name_th: '',
+                        name_en: '',
+                        shortcode: '',
+                        website: '',
+                        filepic: ''
                     },
-                    addModal() {
-                        this.code = null;
-                        this.formaddedit = {
-                            name_th: '',
-                            name_en: '',
-                            shortcode: '',
-                            website: '',
-                            filepic: ''
-                        }
-                        this.formmethod = 'add';
-                        this.fileupload = '';
-                        this.show = false;
-                        this.$nextTick(() => {
-                            this.show = true;
-                            this.$refs.addedit.show();
-
-                        })
-                    },
-                    async loadData() {
-                        const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
-                        this.formaddedit = {
-                            name_th: response.data.data.name_th,
-                            name_en: response.data.data.name_en,
-                            shortcode: response.data.data.shortcode,
-                            website: response.data.data.website
-                        };
-                        if (response.data.data.filepic) {
-                            this.trigger++;
-                            this.formaddedit.filepic = response.data.data.filepic;
-                        }
-                    },
-                    clearImage() {
-                        this.trigger++;
-                        this.formaddedit.filepic = '';
-                        // console.log('Clear :' + this.formaddedit.filepic);
-                    },
-                    handleUpload(value) {
-                        this.fileupload = value;
-                    },
-                    addEditSubmitNew(event) {
-                        event.preventDefault();
-                        var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
-
-
-                        let formData = new FormData();
-                        const json = JSON.stringify({
-                            name_th: this.formaddedit.name_th,
-                            name_en: this.formaddedit.name_en,
-                            shortcode: this.formaddedit.shortcode,
-                            website: this.formaddedit.website,
-                        });
-
-                        formData.append('data', json);
-                        formData.append('fileupload', this.fileupload);
-
-
-                        const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
-
-                        axios.post(url, formData, config)
-                            .then(response => {
-                                this.$bvModal.msgBoxOk(response.data.message, {
-                                    title: 'ผลการดำเนินการ',
-                                    size: 'sm',
-                                    buttonSize: 'sm',
-                                    okVariant: 'success',
-                                    headerClass: 'p-2 border-bottom-0',
-                                    footerClass: 'p-2 border-top-0',
-                                    centered: true
-                                });
-                                window.LaravelDataTables["dataTableBuilder"].draw(false);
-                            })
-                            .catch(errors => console.log(errors));
+                    imgpath: '/storage/bank_img/'
+                };
+            },
+            created() {
+                this.audio = document.getElementById('alertsound');
+                this.autoCnt(false);
+            },
+            methods: {
+                editModal(code) {
+                    this.code = null;
+                    this.formaddedit = {
+                        name_th: '',
+                        name_en: '',
+                        shortcode: '',
+                        website: ''
 
                     }
+                    this.formmethod = 'edit';
+                    this.fileupload = '';
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.code = code;
+                        this.loadData();
+                        this.$refs.addedit.show();
+
+                    })
                 },
-            });
-        })()
+                addModal() {
+                    this.code = null;
+                    this.formaddedit = {
+                        name_th: '',
+                        name_en: '',
+                        shortcode: '',
+                        website: '',
+                        filepic: ''
+                    }
+                    this.formmethod = 'add';
+                    this.fileupload = '';
+                    this.show = false;
+                    this.$nextTick(() => {
+                        this.show = true;
+                        this.$refs.addedit.show();
+
+                    })
+                },
+                async loadData() {
+                    const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
+                    this.formaddedit = {
+                        name_th: response.data.data.name_th,
+                        name_en: response.data.data.name_en,
+                        shortcode: response.data.data.shortcode,
+                        website: response.data.data.website
+                    };
+                    if (response.data.data.filepic) {
+                        this.trigger++;
+                        this.formaddedit.filepic = response.data.data.filepic;
+                    }
+                },
+                clearImage() {
+                    this.trigger++;
+                    this.formaddedit.filepic = '';
+                    // console.log('Clear :' + this.formaddedit.filepic);
+                },
+                handleUpload(value) {
+                    this.fileupload = value;
+                },
+                addEditSubmitNew(event) {
+                    event.preventDefault();
+                    this.toggleButtonDisable(true);
+
+                    if (this.formmethod === 'add') {
+                        var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
+                    } else if (this.formmethod === 'edit') {
+                        var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}/" + this.code;
+                    }
+
+
+
+
+                    let formData = new FormData();
+                    const json = JSON.stringify({
+                        name_th: this.formaddedit.name_th,
+                        name_en: this.formaddedit.name_en,
+                        shortcode: this.formaddedit.shortcode,
+                        website: this.formaddedit.website,
+                    });
+
+                    formData.append('data', json);
+                    formData.append('fileupload', this.fileupload);
+
+
+                    const config = {headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`}};
+
+                    axios.post(url, formData, config)
+                        .then(response => {
+                            this.$bvModal.msgBoxOk(response.data.message, {
+                                title: 'ผลการดำเนินการ',
+                                size: 'sm',
+                                buttonSize: 'sm',
+                                okVariant: 'success',
+                                headerClass: 'p-2 border-bottom-0',
+                                footerClass: 'p-2 border-top-0',
+                                centered: true
+                            });
+                            window.LaravelDataTables["dataTableBuilder"].draw(false);
+                        })
+                        .catch(errors => console.log(errors));
+
+                }
+            },
+        });
+
     </script>
 @endpush
 

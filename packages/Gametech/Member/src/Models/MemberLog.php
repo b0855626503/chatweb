@@ -4,7 +4,9 @@ namespace Gametech\Member\Models;
 
 use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
+use Gametech\Admin\Models\AdminProxy;
 use Gametech\Member\Contracts\MemberLog as MemberLogContract;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class MemberLog extends Model implements MemberLogContract
@@ -34,6 +36,11 @@ class MemberLog extends Model implements MemberLogContract
         'remark',
         'item_before',
         'item',
+        'username',
+        'password',
+        'username_real',
+        'password_real',
+        'summary',
         'ip',
         'enable',
         'user_create',
@@ -77,5 +84,17 @@ class MemberLog extends Model implements MemberLogContract
         'enable' => 'required|string',
         'user_create' => 'required|string|max:100'
     ];
+
+    protected static function booted()
+    {
+        static::addGlobalScope('code', function (Builder $builder) {
+            $builder->where('members_log.code', '>', 0);
+        });
+    }
+
+    public function admin()
+    {
+        return $this->hasOne(AdminProxy::modelClass(), 'code','member_code');
+    }
 
 }

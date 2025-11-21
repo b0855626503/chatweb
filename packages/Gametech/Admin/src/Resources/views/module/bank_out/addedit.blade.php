@@ -164,6 +164,14 @@
             window.app.clearModal(id);
         }
 
+        $(document).ready(function () {
+            $("body").tooltip({
+                selector: '[data-toggle="tooltip"]',
+                container: 'body'
+            });
+        });
+    </script>
+    <script type="module">
         window.app = new Vue({
             el: '#app',
             data() {
@@ -269,6 +277,7 @@
                 },
                 addEditSubmitNew(event) {
                     event.preventDefault();
+                    this.toggleButtonDisable(true);
 
                     if (this.formmethod === 'add') {
                         var url = "{{ url($menu->currentRoute.'/create') }}";
@@ -310,6 +319,7 @@
                                 });
                                 $('input').on('focus', function (event) {
                                     event.preventDefault();
+                                    this.toggleButtonDisable(true);
                                     event.stopPropagation();
                                     var id = $(this).attr('id');
                                     document.getElementById(id).classList.remove("is-invalid");
@@ -321,6 +331,7 @@
                 },
                 clearSubmit(event) {
                     event.preventDefault();
+                    this.toggleButtonDisable(true);
 
                     this.$http.post("{{ url($menu->currentRoute.'/clear') }}", {
                         id: this.code,
@@ -340,19 +351,12 @@
                         })
                         .catch(exception => {
                             console.log('error');
+                            this.toggleButtonDisable(false);
                         });
                 }
             },
         });
 
-        (() => {
-            $("body").tooltip({
-                selector: '[data-toggle="tooltip"]',
-                container: 'body'
-            });
-            // $('body').addClass('sidebar-collapse');
-
-        })()
     </script>
 @endpush
 

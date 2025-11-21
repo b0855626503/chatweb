@@ -4,7 +4,6 @@ namespace Gametech\Admin\DataTables;
 
 
 use Gametech\Admin\Transformers\RpSetDiamondTransformer;
-use Gametech\Admin\Transformers\RpWalletTransformer;
 use Gametech\Member\Contracts\MemberCreditLog;
 use Gametech\Member\Contracts\MemberDiamondLog;
 use Yajra\DataTables\DataTableAbstract;
@@ -15,7 +14,6 @@ use Yajra\DataTables\Services\DataTable;
 
 class RpSetDiamondDataTable extends DataTable
 {
-
 
 
     /**
@@ -29,7 +27,6 @@ class RpSetDiamondDataTable extends DataTable
         $dataTable = new EloquentDataTable($query);
 
         return $dataTable
-
             ->with('withdraw', function () use ($query) {
                 return core()->currency((clone $query)->where('diamond_type', 'W')->sum('diamond_amount'));
             })
@@ -63,7 +60,6 @@ class RpSetDiamondDataTable extends DataTable
         return $model->newQuery()
             ->with('member', 'admin')
             ->active()
-
             ->select('members_diamondlog.*')->withCasts([
                 'date_create' => 'datetime:Y-m-d H:00'
             ])
@@ -71,7 +67,7 @@ class RpSetDiamondDataTable extends DataTable
                 $query->whereBetween('date_create', array($startdate, $enddate));
             })
             ->when($type, function ($query, $type) {
-                $query->where('diamond_type',$type);
+                $query->where('diamond_type', $type);
             })
             ->when($ip, function ($query, $ip) {
                 $query->where('ip', 'like', "%" . $ip . "%");
@@ -112,8 +108,8 @@ class RpSetDiamondDataTable extends DataTable
                 'pageLength' => 50,
                 'order' => [[0, 'desc']],
                 'lengthMenu' => [
-                    [50, 100, 200],
-                    ['50 rows', '100 rows', '200 rows']
+                    [50, 100, 200, 500, 1000],
+                    ['50 rows', '100 rows', '200 rows', '500 rows', '1000 rows']
                 ],
                 'buttons' => [
                     'pageLength'

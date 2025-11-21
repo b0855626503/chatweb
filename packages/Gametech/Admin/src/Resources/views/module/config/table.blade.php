@@ -384,6 +384,7 @@
                 methods: {
                     addEditSubmitNew(event) {
                         event.preventDefault();
+                        this.toggleButtonDisable(true);
                         var url = "{{ url('admin/'.$menu->currentRoute.'/update') }}/" + this.code;
 
                         let form = $('#frmaddedit')[0];
@@ -421,6 +422,7 @@
                                     });
                                     $('input').on('focus', function (event) {
                                         event.preventDefault();
+                                        this.toggleButtonDisable(true);
                                         event.stopPropagation();
                                         var id = $(this).attr('id');
                                         document.getElementById(id).classList.remove("is-invalid");

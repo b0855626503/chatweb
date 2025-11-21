@@ -1,11 +1,12 @@
 @section('css')
     @include('admin::layouts.datatables_css')
 @endsection
+
 @push('styles')
     <link rel="stylesheet" href="{{ asset('vendor/daterangepicker/daterangepicker.css') }}">
 @endpush
 
-{!! $dataTable->table(['width' => '100%', 'class' => 'table table-striped table-sm']) !!}
+{!! $dataTable->table(['id' => 'deposittable','width' => '100%', 'class' => 'table table-striped table-sm']) !!}
 
 <hr>
 <table width="100%" class="table table-bordered" id="customfooter" style="font-size: medium">
@@ -52,7 +53,7 @@
 
 
             $("#frmsearch").submit(function () {
-                window.LaravelDataTables["dataTableBuilder"].draw(true);
+                window.LaravelDataTables["deposittable"].draw(true);
             });
 
 
@@ -64,9 +65,9 @@
 
     <script>
         $(function () {
-            var table = window.LaravelDataTables["dataTableBuilder"];
+            var table = window.LaravelDataTables["deposittable"];
 
-            window.LaravelDataTables["dataTableBuilder"].on('draw', function () {
+            window.LaravelDataTables["deposittable"].on('draw', function () {
                 $("#customfooter tbody").html('');
 
                 let html = '<tr>';

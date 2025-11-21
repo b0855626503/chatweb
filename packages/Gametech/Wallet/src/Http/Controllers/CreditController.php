@@ -4,6 +4,9 @@ namespace Gametech\Wallet\Http\Controllers;
 
 
 use Gametech\Game\Repositories\GameRepository;
+use Gametech\Game\Repositories\GameSeamlessRepository;
+use Gametech\Game\Repositories\GameTypeRepository;
+use Gametech\Game\Repositories\GameUserFreeRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
@@ -23,6 +26,10 @@ class CreditController extends AppBaseController
 
     protected $gameRepository;
 
+    protected $gameTypeRepository;
+
+    protected $gameSeamlessRepository;
+
     protected $withdrawFreeRepository;
 
     /**
@@ -31,7 +38,10 @@ class CreditController extends AppBaseController
      */
     public function __construct
     (
-        GameRepository $gameRepo
+        GameRepository $gameRepo,
+        GameUserFreeRepository $gameUserFreeRepo,
+        GameTypeRepository           $gameTypeRepo,
+        GameSeamlessRepository       $gameSeamlessRepo
     )
     {
         $this->middleware('customer');
@@ -40,11 +50,44 @@ class CreditController extends AppBaseController
 
         $this->gameRepository = $gameRepo;
 
+        $this->gameUserFreeRepository = $gameUserFreeRepo;
+
+        $this->gameTypeRepository = $gameTypeRepo;
+
+        $this->gameSeamlessRepository = $gameSeamlessRepo;
+
     }
 
     public function index()
     {
+        $config = collect(core()->getConfigData());
+        $profile = $this->user();
         $games = $this->loadGame();
+
+        if ($config['seamless'] == 'Y') {
+            $gameuser = $this->gameUserFreeRepository->findOneByField('member_code', $profile->code);
+            if (!$gameuser) {
+                $game = $this->gameRepository->findOneWhere(['enable' => 'Y', 'status_open' => 'Y']);
+                $this->gameUserFreeRepository->addGameUser($game->code, $profile->code, ['username' => $profile->user_name, 'product_id' => 'PGSOFT', 'user_create' => $profile->user_name]);
+            }
+
+            $games = [];
+            $gameTypes = $this->gameTypeRepository->findWhere(['enable' => 'Y', 'status_open' => 'Y']);
+            foreach ($gameTypes as $type) {
+                $games[$type->id] = $this->gameSeamlessRepository->orderBy('sort')->findWhere(['game_type' => $type->id, 'status_open' => 'Y', 'enable' => 'Y']);
+            }
+
+            return view($this->_config['view'], compact('games'));
+        }else{
+            if($config['multigame_open'] == 'N'){
+                $gameuser = $this->gameUserFreeRepository->findOneByField('member_code', $profile->code);
+                if(!$gameuser){
+                    $game = $this->gameRepository->findOneWhere(['enable' => 'Y', 'status_open' => 'Y']);
+                    $this->gameUserFreeRepository->addGameUser($game->code, $profile->code, $profile);
+                }
+            }
+
+        }
 
         $games = $games->mapToGroups(function ($items, $key){
             $item = (object)$items;
@@ -60,8 +103,10 @@ class CreditController extends AppBaseController
         });
 
 
-        return view($this->_config['view'],compact('games'));
+        return view($this->_config['view'],compact('games','profile'));
     }
+
+
 
     public function loadGame(): Collection
     {

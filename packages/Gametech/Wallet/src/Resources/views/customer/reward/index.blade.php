@@ -51,28 +51,13 @@
                     </div>
                 </div>
 
-                {{--                <section class="main-menu">--}}
-                {{--                    <div class="card card-trans">--}}
-                {{--                        <div class="card-body py-1">--}}
-                {{--                            <div class="row">--}}
-                {{--                                <div class="col-4 main-menu-item px-0">--}}
-                {{--                                    <a href="{{ route('customer.topup.index') }}"><i--}}
-                {{--                                            class="fal fa-wallet fa-2x"></i><br>--}}
-                {{--                                        <span class="text-main"> เติมเงิน</span>--}}
-                {{--                                    </a>--}}
-                {{--                                </div>--}}
-
-                {{--                            </div>--}}
-                {{--                        </div>--}}
-                {{--                    </div>--}}
-                {{--                </section>--}}
 
                 <section class="content mt-3">
 
                     <div class="card card-trans">
                         <div class="card-body">
 
-                                <reward-list :rewards="{{ json_encode($rewards) }}"></reward-list>
+                            <reward-list :rewards="{{ json_encode($rewards) }}"></reward-list>
 
                         </div>
                     </div>

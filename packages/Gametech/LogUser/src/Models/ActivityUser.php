@@ -95,12 +95,12 @@ class ActivityUser  extends Model implements ActivityUserContract
 //     *
 //     * @return void
 //     */
-//    public function __construct($attributes = [])
-//    {
-//        parent::__construct($attributes);
-//        $this->table = config('LaravelLoggerUser.loggerDatabaseTable');
-//        $this->connection = config('LaravelLoggerUser.loggerDatabaseConnection');
-//    }
+    public function __construct($attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->table = config('LaravelLoggerUser.loggerDatabaseTable');
+        $this->connection = config('LaravelLoggerUser.loggerDatabaseConnection');
+    }
 
     /**
      * Get the database connection.

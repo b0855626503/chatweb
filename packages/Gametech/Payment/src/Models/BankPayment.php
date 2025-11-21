@@ -86,7 +86,9 @@ class BankPayment extends Model implements BankPaymentContract
         'create_by',
         'autocheck',
         'amount',
-        'topup_by'
+        'topup_by',
+        'rate',
+        'usdt',
     ];
 
     /**

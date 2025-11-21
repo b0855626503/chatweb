@@ -13,8 +13,14 @@
             <p class="text-main text-center mb-0 cut-text">{{ product.name }}</p>
             <p class="mb-0"></p>
 
-
-            <p class="text-color-fixed text-center mb-0"> {{ product.balance }} ฿</p>
+            <div class="text-center mb-0" v-if="changepass === 'password'">
+                <button class="btn btn-link p-0 mx-auto" @click="openQuickPass({details: product, event: $event})"><i
+                    class="fas fa-key text-light"></i> เปลี่ยนรหัส
+                </button>
+            </div>
+            <div v-else>
+                <p class="text-color-fixed text-center mb-0"> {{ product.balance }} ฿</p>
+            </div>
         </div>
 
         <div style="opacity: 0.1;" v-else>
@@ -57,7 +63,7 @@ import to from "../toPromise";
 
 export default {
     props: [
-        'product',
+        'product', 'pass'
     ],
 
     data: function () {
@@ -65,7 +71,9 @@ export default {
             quickView: null,
             quickViewDetails: false,
             quickRegisDetails: false,
+            quickPassDetails: false,
             copycontent: '',
+            changepass: ''
 
         }
     },
@@ -74,6 +82,7 @@ export default {
         this.quickView = $('.cd-quick-view');
 
         this.$nextTick(() => {
+            this.changepass = this.pass;
             this.loadGameId();
         })
 
@@ -246,6 +255,61 @@ export default {
             })
 
             this.quickRegisDetails = details;
+        },
+        openQuickPass: function ({details, event}) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            Swal.fire({
+                title: 'ยืนยันการทำรายการนี้ ?',
+                text: "คุณต้องการเปลี่ยนรหัสผ่าน เกม " + details.name + " หรือไม่",
+                imageUrl: details.image,
+                imageWidth: 90,
+                imageHeight: 90,
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'ตกลง',
+                cancelButtonText: 'ยกเลิก',
+                customClass: {
+                    container: 'text-sm',
+                    popup: 'text-sm'
+                },
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('.modal').modal('hide');
+                    this.$http.post(`${this.$root.baseUrl}/member/profile/changefree`, {id: details.code})
+                        .then(response => {
+
+                            if (response.data.success) {
+                                Swal.fire(
+                                    'ดำเนินการสำเร็จ',
+                                    response.data.message,
+                                    'success'
+                                );
+                            } else {
+                                Swal.fire(
+                                    'พบข้อผิดพลาด',
+                                    response.data.message,
+                                    'error'
+                                );
+                            }
+                        })
+                        .catch(response => {
+
+                            $('.modal').modal('hide');
+                            Swal.fire(
+                                'การเชื่อมต่อระบบ มีปัญหา',
+                                response.data.message,
+                                'error'
+                            );
+                        });
+                }
+            })
+
+            this.quickRPassDetails = details;
         }
     }
 }

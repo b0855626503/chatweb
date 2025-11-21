@@ -249,25 +249,26 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0">
 
-                                            {{-- ถ้ายังไม่มี member_id ให้คลิกชื่อเพื่อผูกสมาชิก --}}
+                                            {{-- ===== ตรงนี้คือ “ชื่อที่กดผูกสมาชิกได้” ===== --}}
                                             <template v-if="selectedConversation.contact && !selectedConversation.contact.member_id">
-                                                <span
-                                                        class="text-primary"
-                                                        style="cursor: pointer; text-decoration: underline;"
-                                                        @click="openMemberModal"
-                                                >
-                                                    @{{ (selectedConversation.contact &&
-                                                    (selectedConversation.contact.display_name ||
-                                                    selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
-                                                </span>
+                        <span
+                                class="text-primary"
+                                style="cursor: pointer; text-decoration: underline;"
+                                @click="openMemberModal"
+                        >
+                            @{{ (selectedConversation.contact &&
+                            (selectedConversation.contact.display_name ||
+                            selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
+                        </span>
                                             </template>
                                             <template v-else>
-                                                <span>
-                                                    @{{ (selectedConversation.contact &&
-                                                    (selectedConversation.contact.display_name ||
-                                                    selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
-                                                </span>
+                        <span>
+                            @{{ (selectedConversation.contact &&
+                            (selectedConversation.contact.display_name ||
+                            selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
+                        </span>
                                             </template>
+                                            {{-- ========================================== --}}
 
                                         </h5>
                                         <div class="text-right">
@@ -322,6 +323,7 @@
                                 </div>
                             </div>
                         </div>
+
 
                         <div class="p-2 border-bottom bg-light text-muted text-center" v-else>
                             เลือกห้องแชตจากด้านซ้ายเพื่อเริ่มสนทนา

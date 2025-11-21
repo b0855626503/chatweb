@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '3.4.1'),
+    'version_installed' => env('SELF_UPDATER_VERSION_INSTALLED', '4.1.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -77,8 +77,8 @@ return [
         'storage/framework',
         'storage/logs',
         'storage/self-update',
-        'vendor',
         'game',
+        'vendor',
     ],
 
     /*

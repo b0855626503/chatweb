@@ -133,6 +133,7 @@
                         })
                         .catch(exception => {
                             console.log('error');
+                            this.toggleButtonDisable(false);
                         });
 
                 }

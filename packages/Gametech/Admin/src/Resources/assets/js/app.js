@@ -1,19 +1,33 @@
+require('./bootstrap');
+window.moment = window.Moment = require('moment');
+require('admin-lte');
+require('tempusdominus-bootstrap-4');
+require('datatables.net-bs4');
+require('datatables.net-responsive-bs4');
+require('datatables.net-buttons-bs4');
+require('./toasty/src/toasty.js');
+require('./jquery.marquee');
+
+window.Pusher = require('pusher-js');
+
+global.$ = global.jQuery = require('jquery');
+
 import Vue from 'vue';
-import VueCarousel from 'vue-owl-carousel2'
-import VueToast from 'vue-toast-notification';
-import 'vue-toast-notification/dist/index.css';
+import Echo from "laravel-echo";
+// import VueToast from 'vue-toast-notification';
+// import 'vue-toast-notification/dist/theme-sugar.css';
 import th from 'vee-validate/dist/locale/th';
 import VeeValidate from 'vee-validate';
 import Swal from 'sweetalert2';
-import axios from 'axios';
-import moment from "moment";
 import {BootstrapVue, IconsPlugin} from 'bootstrap-vue';
 
-
-window.Vue = Vue;
-window.Carousel = VueCarousel;
-window.axios = axios;
-window.VeeValidate = VeeValidate;
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: 'app-key',
+    wsHost: window.location.hostname,
+    disableStats: true,
+    authEndpoint: '/broadcasting/auth'
+});
 
 const Toast = Swal.mixin({
     toast: true,
@@ -26,7 +40,9 @@ const Toast = Swal.mixin({
         toast.addEventListener('mouseleave', Swal.resumeTimer)
     }
 })
-window.moment = moment;
+
+window.Vue = Vue;
+window.VeeValidate = VeeValidate;
 window.Toast = Toast;
 window.Swal = Swal;
 
@@ -34,8 +50,21 @@ window.Swal = Swal;
 Vue.prototype.$http = axios;
 
 
-Vue.use(VueToast);
-Vue.use(VueCarousel);
+// Vue.use(VueToast,{
+//     classname: "toast",
+//         transition: "scale",
+//         insertBefore: true,
+//         duration: 5000,
+//         enableSounds: true,
+//         autoClose: false,
+//         progressBar: true,
+//         sounds: {
+//         info: "storage/sound/alert.mp3",
+//             success: "storage/sound/alert.mp3",
+//             warning: "storage/sound/alert.mp3",
+//             error: "storage/sound/alert.mp3",
+//     }
+// });
 Vue.use(BootstrapVue);
 Vue.use(IconsPlugin);
 
@@ -47,23 +76,22 @@ Vue.use(VeeValidate, {
     fieldsBagName: 'veeFields'
 });
 
-require('./bootstrap');
 
-// window.Toastie = new Toasty({
-//     classname: "toast",
-//     transition: "scale",
-//     insertBefore: true,
-//     duration: 1000,
-//     enableSounds: true,
-//     autoClose: true,
-//     progressBar: true,
-//     sounds: {
-//         info: "storage/sound/alert.mp3",
-//         success: "storage/sound/alert.mp3",
-//         warning: "storage/sound/alert.mp3",
-//         error: "storage/sound/alert.mp3",
-//     }
-// });
+window.Toasty = new Toasty({
+    classname: "toast",
+    transition: "fade",
+    insertBefore: true,
+    duration: 5000,
+    enableSounds: true,
+    autoClose: true,
+    progressBar: true,
+    sounds: {
+        info: "storage/sound/alert.mp3",
+        success: "storage/sound/alert.mp3",
+        warning: "storage/sound/alert.mp3",
+        error: "storage/sound/alert.mp3",
+    }
+});
 
 window.eventBus = new Vue();
 
@@ -73,7 +101,7 @@ $(document).ready(function () {
         data: function () {
             return {
                 'imageObserver': null,
-                'baseUrl': document.querySelector("script[src$='app.js']").getAttribute('baseUrl')
+                'baseUrl': document.getElementById("mainscript").getAttribute('baseUrl')
 
             }
         },
@@ -139,7 +167,6 @@ $(document).ready(function () {
 
     new Vue({
         el: "#app",
-        VueToast,
 
         data: function () {
             return {

@@ -15,30 +15,32 @@
                     <form id="frmsearch" method="post" onsubmit="return false;">
                         <div class="card-body">
                             <div class="row">
-                                <div class="form-group col-12">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="far fa-clock"></i></span>
-                                        </div>
-                                        <input type="text" class="form-control form-control-sm float-right"
-                                               id="search_date" readonly>
-                                        <input type="hidden" class="form-control float-right" id="startDate"
-                                               name="startDate">
-                                        <input type="hidden" class="form-control float-right" id="endDate"
-                                               name="endDate">
-                                    </div>
-                                </div>
+{{--                                <div class="form-group col-12">--}}
+{{--                                    <div class="input-group">--}}
+{{--                                        <div class="input-group-prepend">--}}
+{{--                                            <span class="input-group-text"><i class="far fa-clock"></i></span>--}}
+{{--                                        </div>--}}
+{{--                                        <input type="text" class="form-control form-control-sm float-right"--}}
+{{--                                               id="search_date" readonly>--}}
+{{--                                        <input type="hidden" class="form-control float-right" id="startDate"--}}
+{{--                                               name="startDate">--}}
+{{--                                        <input type="hidden" class="form-control float-right" id="endDate"--}}
+{{--                                               name="endDate">--}}
+{{--                                    </div>--}}
+{{--                                </div>--}}
 
-                                <div class="form-group col-6">
-                                    {!! Form::select('status', ['A' => 'รออนุมัติ' , '1' => 'อนุมัติ', '2' => 'ไม่อนุมัติ'], '',['id' => 'status', 'class' => 'form-control form-control-sm']) !!}
+{{--                                <div class="form-group col-6">--}}
+{{--                                    {!! Form::select('status', ['A' => 'รออนุมัติ' , '1' => 'อนุมัติ', '2' => 'ไม่อนุมัติ'], '',['id' => 'status', 'class' => 'form-control form-control-sm']) !!}--}}
 
-                                </div>
+{{--                                </div>--}}
 
-                                <div class="form-group col-auto">
-                                    <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
-                                </div>
+
+{{--                                <div class="form-group col-auto">--}}
+{{--                                    <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>--}}
+{{--                                </div>--}}
                             </div>
                             <p>* เมื่อเลือกคืนยอด จะมีการคืนยอดเงินเข้า บัญชีของลูกค้า</p>
+                            <p>* ตรวจสอบ ใช้เมื่อต้องการ เชคข้อมูลการเล่นของลูกค้าก่อน อนุมัติ (โอนเงิน) รายการแจ้งถอน (กรณี แยกกันทำงาน ระหว่าง ผู้ตรวจสอบข้อมูลการเล่น กับผู้ที่โอนเงิน)</p>
                         </div>
                     </form>
 

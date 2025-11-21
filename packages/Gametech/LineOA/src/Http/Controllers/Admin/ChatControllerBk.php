@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-class ChatController extends Controller
+class ChatControllerBk extends Controller
 {
     protected ChatService $chat;
 

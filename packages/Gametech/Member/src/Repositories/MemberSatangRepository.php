@@ -13,6 +13,7 @@ class MemberSatangRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Member\Contracts\MemberSatang';
+        return \Gametech\Member\Models\MemberSatang::class;
+
     }
 }

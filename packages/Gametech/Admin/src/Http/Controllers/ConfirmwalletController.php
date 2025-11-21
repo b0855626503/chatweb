@@ -74,7 +74,7 @@ class ConfirmwalletController extends AppBaseController
         ];
 
         $response =  app('Gametech\Payment\Repositories\BillRepository')->confirmWallet($data_new);
-        if($response['success'] == false){
+        if($response['success'] === false){
             return $this->sendError('ไม่สามารถทำรายการ อนุมัติการโอนเงินนี้ได้',200);
         }
 
@@ -126,7 +126,7 @@ class ConfirmwalletController extends AppBaseController
         ];
 
         $response =  app('Gametech\Payment\Repositories\BillRepository')->rejectWallet($data_new);
-        if($response['success'] == false){
+        if($response['success'] === false){
             return $this->sendError('ไม่สามารถทำรายการ คืนยอดการโอนเงินนี้ได้',200);
         }
 

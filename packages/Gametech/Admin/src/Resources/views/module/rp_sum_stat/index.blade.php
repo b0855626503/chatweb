@@ -47,6 +47,15 @@
 
         <div class="card">
 
+            <div class="card-body text-center">
+                <p>กดเพื่อ คำนวนสรุป วันปัจจุบัน <a href="{{ route('admin.fix.sumtoday') }}" target="_blank">กดตรงนี้ โปรดกดเมื่อต้องการข้อมูล</a></p>
+                <p>ระบบจะคำนวนยอด สรุปย้อนหลัง เวลา 00.05 ของทุกวัน <a href="{{ route('admin.fix.sumyesterday') }}" target="_blank">กดตรงนี้ เมื่อระบบไม่คำนวนย้อนหลังให้</a></p>
+            </div>
+            <!-- /.card-body -->
+        </div>
+
+        <div class="card">
+
             <div class="card-body">
                 @includeIf('admin::module.'.$menu->currentRoute.'.create')
                 @include('admin::module.'.$menu->currentRoute.'.table')

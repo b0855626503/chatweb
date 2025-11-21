@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Gametech\Game\Contracts\GameUserFree as GameUserFreeContract;
 use Gametech\Member\Models\MemberProxy;
 use Gametech\Payment\Models\BillFreeProxy;
+use Gametech\Promotion\Models\PromotionProxy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,15 @@ class GameUserFree extends Model implements GameUserFreeContract
 
     protected $fillable = [
         'game_code',
+        'bill_code',
+        'pro_code',
+        'amount',
+        'bonus',
+        'turnpro',
+        'amount_balance',
+        'withdraw_limit',
+        'withdraw_limit_rate',
+        'withdraw_limit_amount',
         'member_code',
         'user_name',
         'user_pass',
@@ -102,6 +112,11 @@ class GameUserFree extends Model implements GameUserFreeContract
     public function members()
     {
         return $this->hasMany(MemberProxy::modelClass(),'member_code');
+    }
+
+    public function promotion()
+    {
+        return $this->belongsTo(PromotionProxy::modelClass(), 'pro_code');
     }
 
     public function bills()

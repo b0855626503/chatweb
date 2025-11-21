@@ -203,7 +203,7 @@ class TransferController extends AppBaseController
 
 
         $response = $this->billRepository->transferGame($item);
-        if($response['success'] == false){
+        if($response['success'] === false){
             session()->flash('error', $response['msg']);
             return redirect()->route('customer.transfer.game.index');
         }

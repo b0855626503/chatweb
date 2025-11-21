@@ -1,94 +1,165 @@
 <!DOCTYPE html>
 <html lang="{{ config('app.locale') }}">
+
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <title>{{ ucwords($config->sitename) }} - {{ $config->title }}</title>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ core()->imgurl('favicon.png','img') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{!! core()->imgurl($config->favicon,'img') !!}">
     <meta name="description" content="{{ $config->description }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- Google Font: Source Sans Pro -->
-    <link href="https://fonts.googleapis.com/css?family=Prompt&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.7.2/css/all.css"
-          integrity="sha384-6jHF7Z3XI3fF4XZixAuSu0gGKrXwoX/w3uFPxC56OtjChio7wtTGJWRW53Nhx6Ev" crossorigin="anonymous">
 
-    <link rel="stylesheet" href="{{ asset('assets/ui/css/ui.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/main/css/default.css') }}">
+    <!-- Scrollbar Custom CSS -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+
+    <!-- Font Awesome JS -->
+    <link href="https://kit-pro.fontawesome.com/releases/v5.15.3/css/pro.min.css" rel="stylesheet">
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+    />
+    <!-- AOS JS -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css"/>
+
+    <link rel="stylesheet" href="{{ mix('css/web.css') }}">
     @stack('styles')
-    <link rel="stylesheet" href="{{ asset('assets/main/css/web.css') }}">
-    <style>
-        .nav-top {
-            background: {{ ($config->wallet_navbar_color?$config->wallet_navbar_color:'#6f0000') }} !important;
-        }
-        .nav-footer {
-            background: {{ ($config->wallet_footer_color?$config->wallet_footer_color:'#6f0000') }} !important;
-        }
-        .custom-theme {
-            background: linear-gradient(45deg, {{ ($config->wallet_body_start_color?$config->wallet_body_start_color:'#200122') }} 10%, {{ ($config->wallet_body_stop_color?$config->wallet_body_stop_color:'#6f0000') }} 90%) !important;
-        }
-        .exchange {
-            background: {{ ($config->wallet_footer_exchange?$config->wallet_footer_exchange:'#6f0000') }} !important;
-        }
-        a.active, a.active i, a.active p {
-            color: {{ ($config->wallet_footer_active?$config->wallet_footer_active:'#6f0000') }} !important;
-        }
 
-    </style>
-    @yield('css')
+
+    <!-- Facebook shared -->
+    <meta property="og:url" content=""/>
+    <meta property="og:type" content="article"/>
+    <meta property="og:title" content="{{ $config->title }}"/>
+    <meta property="og:description" content="{{ $config->description }}"/>
+    <meta property="og:image" content="{{ url(core()->imgurl($config->logo,'img')) }}"/>
+    <meta name='robots' content='max-image-preview:large'/>
+
 </head>
 
-<body class="layout-navbar-fixed custom-theme">
-
-<div id="app" class="bg-login">
+<body class="custom-theme">
+<div id="app">
     <div class="wrapper">
+        <!-- Sidebar  -->
+        <div class="insidebarleft">
+            <a href="{{ route('customer.home.index') }}">
+                {!! core()->showImg($config->logo,'img','','','') !!}
 
-        <nav class=" navbar navbar-expand border-bottom nav-header nav-top">
-            <div class="container">
-                <div class="row w-100">
-                    <div class="col-3 h-40">&nbsp;</div>
-                    {!! core()->showImg('logo.png','img','','','img-top') !!}
-                    <div class="col-1 offset-8">&nbsp;</div>
-                </div>
-            </div>
-        </nav>
-
-        <div style="margin-top: 6rem;margin-bottom: 6rem;">
-            @yield('content')
-        </div>
-
-
-        <div class="navigation nav-footer">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-8 offset-md-2">
-                        <div class="navigation-nav mt-2">
-                            <div class="list-inline-item d-flex align-items-end text-center">
-                                <a href="{{ route('customer.home.index') }}" class="active"><i class="fa fa-home mb-0"></i><br>หน้าแรก</a>
-                            </div>
-                            <div class="list-inline-item d-flex align-items-end text-center">
-                                <a href="{{ route('customer.session.store') }}"><i class="fa fa-user mb-0"></i><br> สมัคร</a>
-                            </div>
-
-                            <div class="list-inline-item d-flex align-items-end text-center">
-                                <a href="{{ route('customer.home.download') }}">
-                                    <i class="fa fa-download m-0"></i><br>ดาวน์โหลด</a>
-                            </div>
-                            <div class="list-inline-item d-flex align-items-end text-center">
-                                <a target="_blank" href="{{ $config->linelink }}">
-                                    <i class="fa fa-comments mb-0"></i>
-                                    <br>ติดต่อ </a>
-                            </div>
+            </a>
+            <ul>
+                <li>
+                    <a href="{{ route('customer.home.index') }}">
+                        <img src="images/icon/icon-home.png">
+                        {{ __('app.login.home') }}
+                    </a>
+                </li>
+                @if($config->pro_onoff == 'Y')
+                    <li>
+                        <a href="{{ route('customer.promotion.show') }}">
+                            <img src="images/icon/icon-promotion.png">
+                            {{ __('app.login.promotion') }}
+                        </a>
+                    </li>
+                @endif
+                <li>
+                    <a target="_blank" href="{{ $config->linelink }}">
+                        <img src="images/icon/icon-contact.png">
+                        {{ __('app.login.contact') }}
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-toggle="dropdown" aria-expanded="false">
+                        &nbsp;<span class="fi fi-{{ $lang }} fis"></span>&nbsp;&nbsp;&nbsp;&nbsp;
+                        {{ __('app.login.language') }}
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" style="color:black" href="{{ route('customer.home.lang', ['lang' => 'th']) }}">TH</a>
+                            <a class="dropdown-item" style="color:black" href="{{ route('customer.home.lang', ['lang' => 'kh']) }}">KH</a>
                         </div>
-                    </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="overlaysidebar"></div>
+        <div class="x-hamburger js-hamburger-toggle sidebarCollapse">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+
+        <!-- DIV SECCOND BAR -->
+        <div class="second-bar">
+            <div class="ctscb">
+                <div class="leftscb">
+                    <a href="{{ route('customer.home.index') }}">
+                        {!! core()->showImg($config->logo,'img','','','') !!}
+                    </a>
+                </div>
+                <div class="rightscb">
+                    <ul>
+                        <li>
+                            <a href="{{ route('customer.home.index') }}">
+                                <img src="images/icon/icon-home.png">
+                                {{ __('app.login.home') }}
+                            </a>
+                        </li>
+                        @if($config->pro_onoff == 'Y')
+                            <li>
+                                <a href="{{ route('customer.promotion.show') }}">
+                                    <img src="images/icon/icon-promotion.png">
+                                    {{ __('app.login.promotion') }}
+                                </a>
+                            </li>
+                        @endif
+                        <li>
+                            <a target="_blank" href="{{ $config->linelink }}">
+                                <img src="images/icon/icon-contact.png">
+                                {{ __('app.login.contact') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                <span class="fi fi-{{ $lang }} fis" style="width:1.9em;line-height: 2.8em"></span><br>
+                                {{ __('app.login.language') }}
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" style="color:black" href="{{ route('customer.home.lang', ['lang' => 'th']) }}">TH</a>
+                                    <a class="dropdown-item" style="color:black" href="{{ route('customer.home.lang', ['lang' => 'kh']) }}">KH</a>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+
+                </div>
+                <div class="toploginbox">
+                    <a href="{{ route('customer.home.index') }}">
+                        <button class="btn">
+                            {{ __('app.login.login') }}
+                        </button>
+                    </a>
+                    <a href="{{ route('customer.session.store') }}">
+                        <button class="btn">
+                            {{ __('app.login.register') }}
+                        </button>
+                    </a>
+
                 </div>
             </div>
         </div>
+        <!-- DIV SECCOND BAR -->
+
+
+        @yield('content')
 
 
     </div>
 </div>
+<footer class="x-footer -anon mt-auto bg-black">
+    <div class="copyright">
+        COPYRIGHT©2022, GAMETECH
+    </div>
+</footer>
 
+
+<div class="overlay"></div>
 <script type="text/javascript">
     window.flashMessages = [];
     window.serverErrors = [];
@@ -106,11 +177,12 @@
     @endif
 
 </script>
-
-<script src="{{ asset('assets/main/js/manifest.js') }}"></script>
-<script src="{{ asset('assets/main/js/vendor.js') }}"></script>
-<script baseUrl="{{ url()->to('/') }}" src="{{ asset('assets/main/js/app.js') }}"></script>
-
+<script src="{{ mix('js/manifest.js') }}"></script>
+<script src="{{ mix('js/vendor.js') }}"></script>
+<script src="{{ mix('js/app.js') }}" id="mainscript" baseUrl="{{ url()->to('/') }}"></script>
 @stack('scripts')
+<script src="{{ asset('js/js.js?'.time()) }}"></script>
 </body>
 </html>
+
+

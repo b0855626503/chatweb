@@ -1,37 +1,47 @@
+require('./bootstrap');
+window.Winwheel = require('./Winwheel.js');
+require('malihu-custom-scrollbar-plugin');
+window.moment = window.Moment = require('moment');
+require('./daterangepicker/daterangepicker.js');
+window.Pusher = require('pusher-js');
+
+global.$ = global.jQuery = require('jquery');
+
 import Vue from 'vue';
-// import VueCarousel from 'vue-carousel'
-import VueCarousel from 'vue-owl-carousel2'
-import VueToast from 'vue-toast-notification';
-import 'vue-toast-notification/dist/index.css';
+import Echo from "laravel-echo";
+// import VueToast from 'vue-toast-notification';
+// import 'vue-toast-notification/dist/theme-sugar.css';
 import th from 'vee-validate/dist/locale/th';
 import VeeValidate from 'vee-validate';
 import Swal from 'sweetalert2';
-import axios from 'axios';
-import moment from "moment";
+import AOS from 'aos';
 import {BootstrapVue, IconsPlugin} from 'bootstrap-vue';
+// import VueI18n from 'vue-i18n';
+import _ from 'lodash';
+// window.Echo = new Echo({
+//     broadcaster: 'pusher',
+//     key: 'app-key',
+//     wsHost: window.location.hostname,
+//     encrypted: false,
+//     wsPort: 80, // Yor http port
+//     forceTLS: true,
+//     disableStats: true,
+//     enabledTransports: ['ws', 'wss'],
+//     authEndpoint: '/member/broadcasting/auth'
+// });
 
-const Winwheel = require('./winwheel');
-
-
-// CommonJS
-// import Swal from 'sweetalert2/src/sweetalert2.js'
-
-
-
-
-window.Vue = Vue;
-
-window.Winwheel = Winwheel;
-
-window.Carousel = VueCarousel;
-// window.OwlCarousel = OwlCarousel;
-window.axios = axios;
-window.VeeValidate = VeeValidate;
-
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: 'app-key',
+    wsHost: window.location.hostname,
+    disableStats: true,
+    authEndpoint: '/member/broadcasting/auth'
+});
 
 const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
+    animation: true,
     showConfirmButton: false,
     timer: 3000,
     timerProgressBar: true,
@@ -39,28 +49,34 @@ const Toast = Swal.mixin({
         toast.addEventListener('mouseenter', Swal.stopTimer)
         toast.addEventListener('mouseleave', Swal.resumeTimer)
     }
-})
-window.moment = moment;
+});
+
+
+window.Vue = Vue;
+window.VeeValidate = VeeValidate;
 window.Toast = Toast;
 window.Swal = Swal;
 
 Vue.prototype.$http = axios;
+Vue.prototype.__ = str => _.get(window.i18n, str);
+// Vue.use(VueToast,{
+//     position: 'top-right',
+//     duration: 30000
+// });
 
-
-Vue.use(VueToast);
-Vue.use(VueCarousel);
 Vue.use(BootstrapVue);
 Vue.use(IconsPlugin);
 Vue.use(VeeValidate, {
     dictionary: {
         th: th
-    }
+    },
+    inject: 'true',
+    fieldsBagName: 'veeFields'
 });
-
-
-require('./bootstrap');
+// Vue.use(VueI18n);
 
 Vue.component('game-list', require('./components/game-list').default);
+Vue.component('gameseamless-list', require('./components/gameseamless-list').default);
 Vue.component('gamefree-list', require('./components/gamefree-list').default);
 Vue.component('slide', require('./components/Slide').default);
 
@@ -70,25 +86,40 @@ Vue.component('game', require('./components/game').default);
 Vue.component('gamefree', require('./components/gamefree').default);
 Vue.component('wheel', require('./components/wheel').default);
 Vue.component('wallet', require('./components/wallet').default);
+Vue.component('cashback', require('./components/cashback').default);
 Vue.component('credit', require('./components/credit').default);
+Vue.component('seamless', require('./components/seamless').default);
+Vue.component('seamlessfree', require('./components/seamlessfree').default);
+Vue.component('wheel', require('./components/wheel').default);
+Vue.component('change-pass', require('./components/changepass').default);
+Vue.component('profile', require('./components/profile').default);
+Vue.component('profile-min', require('./components/profilemin').default);
 
+Vue.component('profilefree', require('./components/profilefree').default);
+Vue.component('profilefree-min', require('./components/profilefreemin').default);
 
+Vue.component('checkin', require('./components/checkin').default);
+Vue.component('checkinlog', require('./components/checkinlog').default);
+Vue.component('checkinlog-item', require('./components/checkinlog-item').default);
 Vue.component('recapcha', require('./components/recapcha').default);
 Vue.component('reward-list', require('./components/reward-list').default);
 Vue.component('reward-item', require('./components/reward-item').default);
-
-
+Vue.component('window-portal', require('./components/window-portal').default);
 
 
 window.eventBus = new Vue();
 
 $(document).ready(function () {
 
+    AOS.init({
+        once: true
+    });
+
     Vue.mixin({
         data: function () {
             return {
                 'imageObserver': null,
-                'baseUrl': document.querySelector("script[src$='app.js']").getAttribute('baseUrl')
+                'baseUrl': document.getElementById("mainscript").getAttribute('baseUrl')
 
             }
         },
@@ -99,7 +130,7 @@ $(document).ready(function () {
 
 
             isMobile: function () {
-                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i|/mobi/i.test(navigator.userAgent)) {
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i | /mobi/i.test(navigator.userAgent)) {
                     if (this.isMaxWidthCrossInLandScape()) {
                         return false;
                     }
@@ -109,13 +140,13 @@ $(document).ready(function () {
                 }
             },
 
-            isMaxWidthCrossInLandScape: function() {
+            isMaxWidthCrossInLandScape: function () {
                 return window.innerWidth > 900;
             },
 
             getDynamicHTML: function (input) {
                 var _staticRenderFns;
-                const { render, staticRenderFns } = Vue.compile(input);
+                const {render, staticRenderFns} = Vue.compile(input);
 
                 if (this.$options.staticRenderFns.length > 0) {
                     _staticRenderFns = this.$options.staticRenderFns;
@@ -154,8 +185,6 @@ $(document).ready(function () {
 
     new Vue({
         el: "#app",
-        VueToast,
-
         data: function () {
             return {
                 modalIds: {},
@@ -195,7 +224,7 @@ $(document).ready(function () {
             onSubmit: function (e) {
                 this.toggleButtonDisable(true);
 
-                if(typeof tinyMCE !== 'undefined')
+                if (typeof tinyMCE !== 'undefined')
                     tinyMCE.triggerSave();
 
                 this.$validator.validateAll().then(result => {
@@ -209,7 +238,7 @@ $(document).ready(function () {
                 });
             },
 
-            toggleButtonDisable (value) {
+            toggleButtonDisable(value) {
                 var buttons = document.getElementsByTagName("button");
 
                 for (var i = 0; i < buttons.length; i++) {
@@ -220,8 +249,8 @@ $(document).ready(function () {
             addServerErrors: function (scope = null) {
                 for (var key in serverErrors) {
                     var inputNames = [];
-                    key.split('.').forEach(function(chunk, index) {
-                        if(index) {
+                    key.split('.').forEach(function (chunk, index) {
+                        if (index) {
                             inputNames.push('[' + chunk + ']')
                         } else {
                             inputNames.push(chunk)
@@ -248,7 +277,7 @@ $(document).ready(function () {
 
             addFlashMessages: function () {
                 for (let key in flashMessages) {
-                    if(flashMessages[key].message)
+                    if (flashMessages[key].message)
                         Toast.fire({
                             icon: flashMessages[key].type,
                             title: flashMessages[key].message
@@ -298,7 +327,6 @@ $(document).ready(function () {
         }
     });
 
-    // for compilation of html coming from server
     Vue.component('vnode-injector', {
         functional: true,
         props: ['nodes'],

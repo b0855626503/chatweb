@@ -51,7 +51,7 @@ class BankRuleTransformer extends TransformerAbstract
         return [
             'code' => (int)$model->code,
             'types' => $types[$model->types],
-            'bank' => $types[$model->types].(!is_null($model->bank) ? $model->bank->name_th : ''),
+            'bank' => $types[$model->types] . (!is_null($model->bank) ? $model->bank->name_th : ''),
             'method' => $method[$model->method],
             'other' => $replace,
             'action' => view('admin::module.bank_rule.datatables_actions', ['code' => $model->code])->render(),

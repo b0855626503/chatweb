@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use PragmaRX\Google2FALaravel\Support\Authenticator;
-use Updater;
+
 
 class LoginController extends AppBaseController
 {
@@ -80,6 +80,10 @@ class LoginController extends AppBaseController
         }
 
         if ($this->attemptLogin($request)) {
+            if ($request->hasSession()) {
+                $request->session()->put('auth.password_confirmed_at', time());
+            }
+
             return $this->sendLoginResponse($request);
         }
 
@@ -103,14 +107,19 @@ class LoginController extends AppBaseController
 
     protected function authenticated(Request $request, $user)
     {
-
-        if (!$user->google2fa_secret ||!$user->google2fa_enable) {
-            return redirect()->route('admin.2fa.setting');
-        }
+        $request->session()->regenerate();
 
         Auth::guard('admin')->logoutOtherDevices(request('password'));
 
-        return redirect()->route('admin.home.index');
+        Event::dispatch('admin.login.after', $user);
+
+        if (!$user->google2fa_secret ||!$user->google2fa_enable) {
+            return redirect()->route('admin.2fa.setting');
+//            return redirect()->intended('auth');
+        }
+
+        return redirect()->intended('dashboard');
+//        return redirect()->route('admin.home.index');
 
     }
 

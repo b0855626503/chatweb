@@ -28,7 +28,8 @@ class MemberDiamondLogRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Member\Contracts\MemberDiamondLog';
+        return \Gametech\Member\Models\MemberDiamondLog::class;
+
     }
 
     public function setDiamond(array $data): bool

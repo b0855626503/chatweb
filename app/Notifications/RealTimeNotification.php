@@ -2,13 +2,13 @@
 
 namespace App\Notifications;
 
+
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
 class RealTimeNotification extends Notification implements ShouldBroadcast
 {
-
     public $message;
 
     public function __construct(string $message)
@@ -24,7 +24,11 @@ class RealTimeNotification extends Notification implements ShouldBroadcast
     public function toBroadcast($notifiable): BroadcastMessage
     {
         return new BroadcastMessage([
-            'message' => "$this->message (User $notifiable->id)"
+            'message' => "$this->message"
         ]);
     }
+
+
+
+
 }

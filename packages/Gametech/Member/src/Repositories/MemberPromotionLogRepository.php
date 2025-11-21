@@ -13,6 +13,7 @@ class MemberPromotionLogRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Member\Contracts\MemberPromotionLog';
+        return \Gametech\Member\Models\MemberPromotionLog::class;
+
     }
 }

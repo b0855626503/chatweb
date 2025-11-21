@@ -13,6 +13,6 @@ class AdminRepository extends Repository
      */
     function model()
     {
-        return 'Gametech\Admin\Contracts\Admin';
+        return \Gametech\Admin\Models\Admin::class;
     }
 }

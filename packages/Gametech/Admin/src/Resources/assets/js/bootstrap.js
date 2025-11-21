@@ -7,18 +7,9 @@ window._ = require('lodash');
  */
 
 try {
-    window.Popper = require('@popperjs/core');
+    window.Popper = require('popper.js').default;
     window.$ = window.jQuery = require('jquery');
-    window.Bootstrap = require('bootstrap');
-    window.Moment = require('moment');
-
-    require('admin-lte');
-    require('tempusdominus-bootstrap-4');
-    require('datatables.net-bs4');
-    require('datatables.net-responsive-bs4');
-    require('datatables.net-buttons-bs4');
-    // require('egalink-toasty.js');
-    require('./jquery.marquee');
+    require('bootstrap');
 } catch (e) {}
 
 /**
@@ -27,6 +18,7 @@ try {
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
 
+window.axios = require('axios');
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -43,21 +35,3 @@ if (token) {
 } else {
     console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
 }
-
-// import Echo from 'laravel-echo';
-//
-// window.Pusher = require('pusher-js');
-//
-// window.Echo = new Echo({
-//     broadcaster: 'pusher',
-//     key: '251227',
-//     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
-//     forceTLS: true,
-//     encrypted: false,
-//     wsHost: window.location.hostname,
-//     wsPort: 6001,
-//     wssPort: 6001,
-//     disableStats: true,
-//     enabledTransports: ['ws', 'wss'],
-//     authEndpoint: 'admin/broadcasting/auth',
-// });

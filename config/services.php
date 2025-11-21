@@ -29,5 +29,9 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    'track' => [
+        'base_url' => env('TRACK_BASE_URL', 'https://thegrand789.com'),
+    ],
+
 
 ];

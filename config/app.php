@@ -15,10 +15,65 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
-
     'checkfaststart' => env('CHECKFASTSTART', false),
 
     'checkpromotion' => env('CHECKPROMOTION', false),
+
+    'pompay_url_payment' => env('POMPAY_URL_PAYMENT', 'https://pompay.asia/payment'),
+
+    'pompay_url_payout' => env('POMPAY_URL_PAYOUT', 'https://pompay.asia/v2/payout'),
+
+    'pompay_clientId' => env('POMPAY_CLIENTID', ''),
+
+    'pompay_clientSecret' => env('POMPAY_CLIENTSECRET', ''),
+
+    'hengpay_secret' => env('HENGPAY_SECRET', null),
+
+    'hengpay_shop' => env('HENGPAY_SHOP', null),
+
+    'luckypay_private' => env('LUCKYPAY_PRIVATE', null),
+
+    'luckypay_client' => env('LUCKYPAY_CLIENT', null),
+
+    'luckypay_url' => env('LUCKYPAY_URL', null),
+
+    'papayapay_url' => env('PAPAYAPAY_URL', null),
+
+    'papayapay_token' => env('PAPAYAPAY_TOKEN', null),
+
+    'superrich_user' => env('SUPERRICH_USER', null),
+
+    'superrich_apikey' => env('SUPERRICH_KEY', null),
+
+    'superrich_secertkey' => env('SUPERRICH_SECERT', null),
+
+    'superrich_apiurl' => env('SUPERRICH_URL', null),
+
+    'ezpay_apiurl' => env('EZPAY_URL', null),
+
+    'ezpay_secertkey' => env('EZPAY_SECERTKEY', null),
+
+    'ezpay_merid' => env('EZPAY_MERID', null),
+
+    'ezpay_subid' => env('EZPAY_SUBID', null),
+
+    'ezpay_hash' => env('EZPAY_HASH', null),
+
+    'commspay_merchant_code' => env('COMMSPAY_MERCHANT_CODE', null),
+
+    'commspay_api_url' => env('COMMSPAY_API_URL', null),
+
+    'commspay_api_key' => env('COMMSPAY_API_KEY', null),
+
+    'commspay_secret_key' => env('COMMSPAY_SECERT_KEY', null),
+
+    'commspay_payment_code' => env('COMMSPAY_PAYMENT_CODE', null),
+
+    'commspay_payout_code' => env('COMMSPAY_PAYOUT_CODE', null),
+
+    'commspay_settlement_code' => env('COMMSPAY_SETTLEMENT_CODE', null),
+
+    'binance_url' => env('BINANCE_URL', null),
 
     /*
     |--------------------------------------------------------------------------
@@ -73,6 +128,8 @@ return [
 
     'user_domain_url' => env('APP_USER_DOMAIN_URL', null),
 
+    'user_domain_addon_url' => env('APP_USER_DOMAIN_ADDON_URL', null),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
@@ -84,8 +141,7 @@ return [
     |
     */
 
-    'timezone' => env('APP_TIMEZONE','Asia/Bangkok'),
-
+    'timezone' => env('APP_TIMEZONE', 'Asia/Bangkok'),
 
     /*
     |--------------------------------------------------------------------------
@@ -98,7 +154,7 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'th'),
 
     'currency' => env('APP_CURRENCY', 'USD'),
 
@@ -117,7 +173,7 @@ return [
     |
     */
 
-    'fallback_locale' => 'en',
+    'fallback_locale' => 'th',
 
     /*
     |--------------------------------------------------------------------------
@@ -150,16 +206,16 @@ return [
     'debug_blacklist' => [
         '_ENV' => [
             'APP_KEY',
-            'DB_PASSWORD'
+            'DB_PASSWORD',
         ],
 
         '_SERVER' => [
             'APP_KEY',
-            'DB_PASSWORD'
+            'DB_PASSWORD',
         ],
 
         '_POST' => [
-            'password'
+            'password',
         ],
     ],
 
@@ -190,14 +246,16 @@ return [
         Illuminate\Filesystem\FilesystemServiceProvider::class,
         Illuminate\Foundation\Providers\FoundationServiceProvider::class,
         Illuminate\Hashing\HashServiceProvider::class,
-        Illuminate\Mail\MailServiceProvider::class,
+        //        Illuminate\Mail\MailServiceProvider::class,
         Illuminate\Notifications\NotificationServiceProvider::class,
-        Illuminate\Pagination\PaginationServiceProvider::class,
+        //        Illuminate\Pagination\PaginationServiceProvider::class,
         Illuminate\Pipeline\PipelineServiceProvider::class,
         Illuminate\Queue\QueueServiceProvider::class,
         Illuminate\Redis\RedisServiceProvider::class,
-        Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
-        Rairlie\LockingSession\LockingSessionServiceProvider::class,
+        Illuminate\Session\SessionServiceProvider::class,
+        //        Very\Redis\RedisServiceProvider::class,
+        //        Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
+        //        Rairlie\LockingSession\LockingSessionServiceProvider::class,
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
@@ -206,34 +264,44 @@ return [
          * Package Service Providers...
          */
         Yajra\DataTables\DataTablesServiceProvider::class,
-//        Barryvdh\Debugbar\ServiceProvider::class,
-        Intervention\Image\ImageServiceProvider::class,
-        Rainwater\Active\ActiveServiceProvider::class,
+        //        Pimlie\DataTables\MongodbDataTablesServiceProvider::class,
+        //        Barryvdh\Debugbar\ServiceProvider::class,
+        //        Intervention\Image\ImageServiceProvider::class,
+        //        Rainwater\Active\ActiveServiceProvider::class,
         PragmaRX\Google2FALaravel\ServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Codedge\Updater\UpdaterServiceProvider::class,
         Konekt\Concord\ConcordServiceProvider::class,
-//        App\Providers\LaravelLoggerServiceProvider::class,
+        Jenssegers\Mongodb\MongodbServiceProvider::class,
+        //        Alimranahmed\LaraOCR\LaraOCRServiceProvider::class,
+        //        Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
         /*
          * Application Service Providers...
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
-//        App\Providers\BroadcastServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
+        App\Providers\HorizonServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
         /*
          * Gametech Service Providers...
          */
-        Gametech\Admin\Providers\AdminServiceProvider::class,
         Gametech\Core\Providers\CoreServiceProvider::class,
+        Gametech\Admin\Providers\AdminServiceProvider::class,
+        Gametech\Member\Providers\MemberServiceProvider::class,
         Gametech\API\Providers\APIServiceProvider::class,
         Gametech\Ui\Providers\UiServiceProvider::class,
         Gametech\Wallet\Providers\WalletServiceProvider::class,
         Gametech\Game\Providers\GameServiceProvider::class,
         Gametech\LogAdmin\Providers\LogAdminServiceProvider::class,
         Gametech\LogUser\Providers\LogUserServiceProvider::class,
+        Gametech\Payment\Providers\PaymentServiceProvider::class,
+        Gametech\Promotion\Providers\PromotionServiceProvider::class,
+        //        Gametech\TelegramBot\Providers\TelegramBotServiceProvider::class,
+        Gametech\Marketing\Providers\MarketingServiceProvider::class,
+        Gametech\LineOA\Providers\LineOAServiceProvider::class,
 
     ],
 
@@ -286,15 +354,12 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
-        'Form'      => Collective\Html\FormFacade::class,
-        'Html'      => Collective\Html\HtmlFacade::class,
-        'Flash'     => Laracasts\Flash\Flash::class,
+        'Form' => Collective\Html\FormFacade::class,
+        'Html' => Collective\Html\HtmlFacade::class,
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
         'Core' => Gametech\Core\Facades\Core::class,
         'Concord' => Konekt\Concord\Facades\Concord::class,
-        'Helper'  => Konekt\Concord\Facades\Helper::class,
-        'Image' => Intervention\Image\Facades\Image::class,
-        'Active' => Rainwater\Active\ActiveFacade::class,
+        'Helper' => Konekt\Concord\Facades\Helper::class,
         'Google2FA' => PragmaRX\Google2FALaravel\Facade::class,
         'FastExcel' => Rap2hpoutre\FastExcel\Facades\FastExcel::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,

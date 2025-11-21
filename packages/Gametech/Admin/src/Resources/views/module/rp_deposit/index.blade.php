@@ -47,7 +47,31 @@
                                            placeholder="IP">
                                 </div>
 
-                                <div class="form-group col-6"></div>
+                                {{--                                <div class="form-groๅup col-6"></div>--}}
+                                <div class="form-group col-6">
+                                    {!! Form::select('channel', ['' => '== ประเภททั้งหมด ==' , 'MANUAL' => 'เพิ่มโดยทีมงาน'], '',['id' => 'channel', 'class' => 'form-control form-control-sm']) !!}
+
+                                </div>
+
+                                <div class="form-group col-6">
+                                    {!! Form::select('bankname', (['' => '==เลือกช่องทาง ==']+$banks->toArray()), '',['id' => 'bankname', 'class' => 'form-control form-control-sm']) !!}
+
+                                </div>
+
+                                <div class="form-group col-6">
+                                    {!! Form::select('status', ['' => '== สถานะทั้งหมด ==' , '1' => 'เติมแล้ว','2' => 'ปฏิเสธ'], '',['id' => 'status', 'class' => 'form-control form-control-sm']) !!}
+
+                                </div>
+                                <div class="form-group col-6">
+                                    {!! Form::select('enable', ['Y' => 'ปกติ','N' => 'ลบ'], '',['id' => 'enable', 'class' => 'form-control form-control-sm']) !!}
+
+                                </div>
+
+                                <div class="form-group col-6">
+                                    {!! Form::select('member_status', ['' => 'สมา่ชิกทั้งหมด','old' => 'สมาชิกเก่า','today' => 'สมาชิกสมัครวันนี้'], '',['id' => 'member_status', 'class' => 'form-control form-control-sm']) !!}
+
+                                </div>
+                                {{--                                <div class="form-group col-6"></div>--}}
 
                                 <div class="form-group col-auto">
                                     <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>

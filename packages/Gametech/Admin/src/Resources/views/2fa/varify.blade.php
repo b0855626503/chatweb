@@ -5,11 +5,12 @@
     <div class="login-box">
 
         <div class="login-logo text-center">
-            {!! core()->showImg('logo.png','img','100px','100px','img-fluid') !!}
+            {!! core()->showImg($config->logo,'img','100px','100px','img-fluid') !!}
         </div>
 
         <div class="card">
             <div class="card-body login-card-body">
+{{--                {!! core()->showImg($config->logo,'img','','','img-fluid') !!}--}}
                 <p class="login-box-msg">One Time Password</p>
 
                 <form method="POST" action="{{ route('2fa') }}" @submit.prevent="onSubmit">
@@ -44,7 +45,7 @@
 
                 <div class="row text-center mt-2">
                     <div class="col-6">
-                        <a href="{{ route('admin.2fa.activate') }}">Re-Activate</a>
+{{--                        <a href="{{ route('admin.2fa.activate') }}">Re-Activate</a>--}}
                     </div>
                     <div class="col-6">
                         <a href="{{ route('admin.session.destroy') }}" class="text-center">Logout</a>

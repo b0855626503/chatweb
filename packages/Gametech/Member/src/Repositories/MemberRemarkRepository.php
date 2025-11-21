@@ -13,7 +13,8 @@ class MemberRemarkRepository extends Repository
      */
     function model(): string
     {
-        return 'Gametech\Member\Contracts\MemberRemark';
+        return \Gametech\Member\Models\MemberRemark::class;
+
     }
 
     public function loadRemark($id)

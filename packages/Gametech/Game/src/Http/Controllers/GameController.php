@@ -119,7 +119,7 @@ class GameController extends AppBaseController
             return redirect()->route($this->_config['redirect']);
         }
 
-        $game = $this->gameRepository->update($request->all(), $id);
+        $game = $this->gameRepository->updatenew($request->all(), $id);
 
         if($game->wasChanged()){
             Flash::success('ระบบได้ทำการ บันทึกข้อมูลดังกล่าวแล้ว');

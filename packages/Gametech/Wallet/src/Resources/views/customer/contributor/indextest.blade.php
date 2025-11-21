@@ -59,7 +59,8 @@
                         <div class="card card-trans">
                             <div class="card-body">
                                 <h4 class="content-heading">ลิงค์สำหรับแนะนำเพื่อน</h4>
-                                <input id="copy" class="form-control w-100" data-container="body" data-toggle="popover" data-placement="top" data-content="คัดลอกสำเร็จ"
+                                <input id="copy" class="form-control w-100" data-container="body" data-toggle="popover"
+                                       data-placement="top" data-content="คัดลอกสำเร็จ"
                                        type="text" value="{{ route('customer.session.store',$profile->code) }}">
                                 <br>
                                 <button class="btn btn-sm btn-theme float-right btn-outline" onclick="myFunction()">

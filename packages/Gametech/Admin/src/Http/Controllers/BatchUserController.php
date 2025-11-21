@@ -46,7 +46,8 @@ class BatchUserController extends AppBaseController
             return $this->sendError('ไม่พบข้อมูลดังกล่าว',200);
         }
 
-        $data['game_id'] = $chk->id;
+
+        $data['game_id'] = ($chk->id == 'jokerNew' ? 'joker' : $chk->id);
         $data['ip'] = $request->ip();
         $data['user_create'] = $user;
         $data['user_update'] = $user;
@@ -56,6 +57,7 @@ class BatchUserController extends AppBaseController
         $items = collect($response->toArray());
 
         event(new BatchUser($items));
+
 //        Event::dispatch('admin.batch_user.after', $response);
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');

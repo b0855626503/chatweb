@@ -6,7 +6,66 @@ return [
         'name' => 'DashBoard',
         'route' => 'admin.home.index',
         'sort' => 1
-
+    ], [
+        'key' => 'dashboard.deposit',
+        'name' => 'สิทธิ์ เห็นข้อมูลยอดฝาก',
+        'route' => '',
+        'sort' => 1
+    ], [
+        'key' => 'dashboard.withdraw',
+        'name' => 'สิทธิ์ เห็นข้อมูลยอดถอน',
+        'route' => '',
+        'sort' => 2
+    ], [
+        'key' => 'dashboard.bonus',
+        'name' => 'สิทธิ์ เห็นข้อมูลยอดโบนัส',
+        'route' => '',
+        'sort' => 3
+    ], [
+        'key' => 'dashboard.balance',
+        'name' => 'สิทธิ์ เห็นข้อมูลยอดคงเหลือ',
+        'route' => '',
+        'sort' => 4
+    ], [
+        'key' => 'dashboard.deposit_wait',
+        'name' => 'สิทธิ์ เห็นข้อมูลยอดฝาก (มีปัญหา)',
+        'route' => '',
+        'sort' => 5
+    ], [
+        'key' => 'dashboard.setdeposit',
+        'name' => 'สิทธิ์ เห็นข้อมูลทีมงานเพิ่ม ยอดเงิน',
+        'route' => '',
+        'sort' => 6
+    ], [
+        'key' => 'dashboard.setwithdraw',
+        'name' => 'สิทธิ์ เห็นข้อมูลทีมงานลด ยอดเงิน',
+        'route' => '',
+        'sort' => 7
+    ], [
+        'key' => 'dashboard.income',
+        'name' => 'สิทธิ์ เห็นข้อมูลรายได้',
+        'route' => '',
+        'sort' => 8
+    ], [
+        'key' => 'dashboard.topup',
+        'name' => 'สิทธิ์ เห็นข้อมูลเติมเงิน',
+        'route' => '',
+        'sort' => 9
+    ], [
+        'key' => 'dashboard.regis',
+        'name' => 'สิทธิ์ เห็นข้อมูลสมาชิกใหม่',
+        'route' => '',
+        'sort' => 10
+    ], [
+        'key' => 'dashboard.bankin',
+        'name' => 'สิทธิ์ เห็นข้อมูลบัญชีเงินเข้า',
+        'route' => '',
+        'sort' => 11
+    ], [
+        'key' => 'dashboard.bankout',
+        'name' => 'สิทธิ์ เห็นข้อมูลบัญชีเงินออก',
+        'route' => '',
+        'sort' => 12
     ], [
         'key' => 'bank_in',
         'name' => 'รายการ เงินเข้า',
@@ -35,12 +94,12 @@ return [
     ], [
         'key' => 'bank_out.clear',
         'name' => 'สิทธิ์ เคลียร์ รายการ เงินออก',
-        'route' => 'admin.bank_in.clear',
+        'route' => 'admin.bank_out.clear',
         'sort' => 1
     ], [
         'key' => 'bank_out.delete',
         'name' => 'สิทธิ์ ลบ รายการ เงินออก',
-        'route' => 'admin.bank_in.delete',
+        'route' => 'admin.bank_out.delete',
         'sort' => 2
     ], [
         'key' => 'withdraw',
@@ -102,6 +161,11 @@ return [
         'name' => 'สิทธิ์ ลบรายการโยกเงิน',
         'route' => 'admin.confirm_wallet.delete',
         'sort' => 3
+    ], [
+        'key' => 'fix',
+        'name' => 'การแก้ไขเบื้องต้น',
+        'route' => 'admin.fix.index',
+        'sort' => 8
     ], [
         'key' => 'payment',
         'name' => 'ค่าใช้จ่าย',
@@ -185,10 +249,15 @@ return [
         'route' => 'admin.member.delete',
         'sort' => 6
     ], [
-        'key' => 'wallet.member.tel',
-        'name' => 'สิทธิ์ เห็นเบอร์โทร',
+        'key' => 'wallet.member.index',
+        'name' => 'สิทธิ์ เห็นข้อมูล',
         'route' => 'admin.member.index',
         'sort' => 7
+    ], [
+        'key' => 'wallet.member.tel',
+        'name' => 'สิทธิ์ เห็นเบอร์โทร',
+        'route' => '',
+        'sort' => 8
     ], [
         'key' => 'wallet.rp_wallet',
         'name' => 'รายงาน เพิ่ม-ลด (Wallet)',
@@ -234,7 +303,7 @@ return [
 
     ], [
         'key' => 'credit.member_free.setwallet',
-        'name' => 'สิทธิ์ ์เพิ่มลด Credit',
+        'name' => 'สิทธิ์ เพิ่มลด Credit',
         'route' => 'admin.member_free.setwallet',
         'sort' => 1
     ], [
@@ -308,15 +377,20 @@ return [
         'route' => 'admin.rp_sponsor.index',
         'sort' => 3
     ], [
+        'key' => 'mep.rp_member_ref',
+        'name' => 'ที่มาการสมัคร',
+        'route' => 'admin.rp_member_ref.index',
+        'sort' => 4
+    ], [
         'key' => 'mep.rp_online_behavior',
         'name' => 'Online Behavior',
         'route' => 'admin.rp_online_behavior.index',
-        'sort' => 4
+        'sort' => 5
     ], [
         'key' => 'mep.rp_user_log',
         'name' => 'Activity Log',
         'route' => 'admin.rp_user_log.index',
-        'sort' => 5
+        'sort' => 6
     ], [
         'key' => 'mon',
         'name' => 'รายงานการเงิน',
@@ -345,7 +419,21 @@ return [
         'name' => 'สรุปยอดค่าใช้จ่าย',
         'route' => 'admin.rp_sum_payment.index',
         'sort' => 4,
-
+    ], [
+        'key' => 'mon.rp_top_payment',
+        'name' => 'ฝากถอน 100 อันดับ',
+        'route' => 'admin.rp_top_payment.index',
+        'sort' => 5,
+    ], [
+        'key' => 'mon.rp_no_refill',
+        'name' => 'สมาชิกไม่เติมเงิน',
+        'route' => 'admin.rp_no_refill.index',
+        'sort' => 6,
+    ], [
+        'key' => 'mon.rp_summary',
+        'name' => 'สรุปทั้งหมด',
+        'route' => 'admin.rp_summary.index',
+        'sort' => 7,
     ], [
         'key' => 'ats',
         'name' => 'ตั้งค่าบัญชี',
@@ -371,7 +459,16 @@ return [
         'name' => 'ลบบัญชีรับเข้า',
         'route' => 'admin.bank_account_in.delete',
         'sort' => 3,
-
+    ], [
+        'key' => 'ats.bank_account_in.index',
+        'name' => 'สิทธิ์ เห็นข้อมูล',
+        'route' => 'admin.bank_account_in.index',
+        'sort' => 4
+    ], [
+        'key' => 'ats.bank_account_in.tel',
+        'name' => 'สิทธิ์ เห็น User Pass',
+        'route' => '',
+        'sort' => 5
     ], [
         'key' => 'ats.bank_account_out',
         'name' => 'บัญชีถอนออก',
@@ -392,7 +489,16 @@ return [
         'name' => 'ลบบัญชีถอนออก',
         'route' => 'admin.bank_account_out.delete',
         'sort' => 3,
-
+    ], [
+        'key' => 'ats.bank_account_out.index',
+        'name' => 'สิทธิ์ เห็นข้อมูล',
+        'route' => 'admin.bank_account_out.index',
+        'sort' => 4
+    ], [
+        'key' => 'ats.bank_account_out.tel',
+        'name' => 'สิทธิ์ เห็น User Pass',
+        'route' => '',
+        'sort' => 5
     ], [
         'key' => 'top',
         'name' => 'เกมส์ & โปรโมชั่น',
@@ -555,6 +661,26 @@ return [
         'route' => 'admin.reward.delete',
         'sort' => 3
     ], [
+        'key' => 'st.notice',
+        'name' => 'ตั้งค่าประกาศ',
+        'route' => 'admin.notice.index',
+        'sort' => 8
+    ], [
+        'key' => 'st.notice.create',
+        'name' => 'เพิ่ม ประกาศ',
+        'route' => 'admin.notice.create',
+        'sort' => 1
+    ], [
+        'key' => 'st.notice.update',
+        'name' => 'แก้ไข ประกาศ',
+        'route' => 'admin.notice.update',
+        'sort' => 2
+    ], [
+        'key' => 'st.notice.delete',
+        'name' => 'ลบ ประกาศ',
+        'route' => 'admin.notice.delete',
+        'sort' => 3
+    ], [
         'key' => 'dev',
         'name' => 'Admin Zone',
         'route' => 'admin.employees.index',
@@ -604,5 +730,10 @@ return [
         'name' => 'Staff Activity Log',
         'route' => 'admin.rp_staff_log.index',
         'sort' => 3
+    ], [
+        'key' => 'dev.rp_log',
+        'name' => 'Log',
+        'route' => 'admin.r_log.index',
+        'sort' => 4
     ]
 ];

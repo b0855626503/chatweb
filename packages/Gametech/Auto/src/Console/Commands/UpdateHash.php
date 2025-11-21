@@ -39,14 +39,14 @@ class UpdateHash extends Command
     public function handle()
     {
         $payments = app('Gametech\Payment\Repositories\BankPaymentRepository')->scopeQuery(function($query){
-            return $query->orderBy('code','desc')->where('tx_hash','')->whereDate('date_create','>=','2021-01-01')->limit(500);
+            return $query->orderBy('code','desc')->where('bankname','BAY')->whereDate('date_create','2021-11-17')->limit(500);
         })->all();
 
         $bar = $this->output->createProgressBar($payments->count());
         $bar->start();
 
         foreach ($payments as $i => $payment) {
-            $hash = md5($payment->account_code . $payment->bank_time . $payment->value . $payment->detail . $payment->atranferer);
+            $hash = md5($payment->bank_time . $payment->value . $payment->detail . $payment->atranferer);
             $payment->tx_hash = $hash;
             $payment->save();
             $bar->advance();

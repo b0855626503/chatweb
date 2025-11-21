@@ -2,10 +2,13 @@
 
 return [
     [
-        'key'   => 'lineoa',
-        'name'  => 'LineOA',
-        'route' => 'admin.lineoa.index',
-        'sort'  => 2,
-        'icon'  => 'icon-sales',
-    ]
+        'key' => 'line-oa',
+        'name' => 'Line Chat',
+        'route' => 'admin.line-oa.chat',
+        'sort' => 88,
+        'icon-class' => 'fa-gamepad',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1,
+    ],
 ];

@@ -1,166 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ config('app.locale') }}">
 <head>
-    <meta charset="UTF-8">
-    <title>{{ config('app.name') }}</title>
-    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin=""/>
+    <link rel="dns-prefetch" href="//fonts.gstatic.com/"/>
+    <link preload href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap"
+          as="font" onload="this.onload=null;this.rel='stylesheet'" crossorigin=""/>
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" crossorigin=""
+              rel="stylesheet"/>
+    </noscript>
 
-    <!-- Bootstrap 3.3.7 -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="{!! core()->imgurl($webconfig->favicon,'img') !!}">
+    <link rel="icon" type="image/x-icon" href="{!! core()->imgurl($webconfig->favicon,'img') !!}">
+    <link rel="apple-touch-icon" sizes="60x60" href="{!! core()->imgurl($webconfig->favicon,'img') !!}">
+    <meta name="apple-mobile-web-app-title" content="{{ ucwords($webconfig->sitename) }} - {{ $webconfig->title }}"/>
+    <title>{{ ucwords($webconfig->sitename) }} - {{ $webconfig->title }}</title>
+    <meta name="description" content="{{ $webconfig->description }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="keywords"
+          content="slot, casino, pgslot, joker, บาคาร่าออนไลน์, พนันออนไลน์, เว็บพนันออนไลน์, คาสิโนออนไลน์, บาคาร่า, บอลออนไลน์, สล็อต, ค่าน้ำดีที่สุด, เว็บพนัน, เกมสล็อต, นักพนัน"/>
 
-    <!-- Theme style -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/2.4.3/css/AdminLTE.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/2.4.3/css/skins/_all-skins.min.css">
+    <meta property="og:title" content="{{ ucwords($webconfig->sitename) }} - {{ $webconfig->title }}"/>
+    <meta property="og:description"
+          content="{{ $webconfig->description }}"/>
+    <meta property="og:locale" content="{{ config('app.locale') }}"/>
+    <meta property="og:site_name" content="{{ ucwords($webconfig->sitename) }}"/>
+    <meta property="og:url" content="{{ url('') }}"/>
+    <meta property="og:image" content="{{ url(core()->imgurl($webconfig->logo,'img')) }}"/>
 
-    <!-- iCheck -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/iCheck/1.0.2/skins/square/_all.css">
+    <link rel="canonical" href=""/>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css">
+    <meta name="twitter:site" content="@twitter"/>
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:title" content="{{ ucwords($webconfig->sitename) }} - {{ $webconfig->title }}"/>
+    <meta name="twitter:description"
+          content="{{ $webconfig->description }}"/>
+    <meta name="twitter:image" content="{{ url(core()->imgurl($webconfig->logo,'img')) }}"/>
 
-    <!-- Ionicons -->
-    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css">
 
-    @yield('css')
-</head>
+    <link preload href="{!! core()->imgurl($webconfig->favicon,'img') !!}" as="style"
+          onload="this.onload=null;this.rel='icon'" crossorigin=""/>
+    <noscript>
+        <link rel="icon" href="{!! core()->imgurl($webconfig->favicon,'img') !!}"/>
+    </noscript>
+    <meta name="msapplication-TileColor" content="#ffffff"/>
+    <meta name="msapplication-TileImage" content="assets/wm356/images/ms-icon-144x144.png"/>
+    <meta name="theme-color" content="#ffffff"/>
 
-<body class="skin-blue sidebar-mini">
-@if (!Auth::guest())
-    <div class="wrapper">
-        <!-- Main Header -->
-        <header class="main-header">
+    <meta name="format-detection" content="telephone=no"/>
+    <link rel="stylesheet" href="assets/wm356/css/style.css?v=3"/>
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+    />
+    <script type="text/javascript">
+        window["gif64"] = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        window["Bonn"] = {
+            boots: [],
+            inits: [],
+        };
+    </script>
+    @stack('script')
 
-            <!-- Logo -->
-            <a href="#" class="logo">
-                <b>InfyOm</b>
-            </a>
+    <style>
+        .x-header {
+            background: {{ ($webconfig->wallet_navbar_color? $webconfig->wallet_navbar_color :'#1d1d1d') }}    !important;
+        }
 
-            <!-- Header Navbar -->
-            <nav class="navbar navbar-static-top" role="navigation">
-                <!-- Sidebar toggle button-->
-                <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
-                    <span class="sr-only">Toggle navigation</span>
-                </a>
-                <!-- Navbar Right Menu -->
-                <div class="navbar-custom-menu">
-                    <ul class="nav navbar-nav">
-                        <!-- User Account Menu -->
-                        <li class="dropdown user user-menu">
-                            <!-- Menu Toggle Button -->
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                <!-- The user image in the navbar-->
-                                <img src="http://infyom.com/images/logo/blue_logo_150x150.jpg"
-                                     class="user-image" alt="User Image"/>
-                                <!-- hidden-xs hides the username on small devices so only the image appears. -->
-                                <span class="hidden-xs">{{ Auth::user()->name }}</span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <!-- The user image in the menu -->
-                                <li class="user-header">
-                                    <img src="http://infyom.com/images/logo/blue_logo_150x150.jpg"
-                                         class="img-circle" alt="User Image"/>
-                                    <p>
-                                        {{ Auth::user()->name }}
-                                        <small>Member since {{ Auth::user()->created_at->format('M. Y') }}</small>
-                                    </p>
-                                </li>
-                                <!-- Menu Footer-->
-                                <li class="user-footer">
-                                    <div class="pull-left">
-                                        <a href="#" class="btn btn-default btn-flat">Profile</a>
-                                    </div>
-                                    <div class="pull-right">
-                                        <a href="{{ url('/logout') }}" class="btn btn-default btn-flat"
-                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                            Sign out
-                                        </a>
-                                        <form id="logout-form" action="{{ url('/logout') }}" method="POST" style="display: none;">
-                                            @csrf
-                                        </form>
-                                    </div>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-        </header>
+        .x-footer.-ezl .-copy-right-container {
+            background-color: {{ ($webconfig->wallet_footer_color?$webconfig->wallet_footer_color:'#255b48') }}    !important;
+        }
+        {{--body, html {--}}
+        {{--    height: 100%;--}}
+        {{--    font-family: FC Iconic Text, Helvetica Neue, Helvetica, Arial, sans-serif;--}}
+        {{--    background-color: {{ ($webconfig->wallet_body_start_color? $webconfig->wallet_body_start_color :'#0f0f0f') }} !important;--}}
+        {{--}--}}
+        {{--.x-provider-category.-provider_casinos {--}}
+        {{--    background: {{ ($webconfig->wallet_body_start_color? $webconfig->wallet_body_start_color :'#0f0f0f') }} !important;--}}
+        {{--}--}}
 
-        <!-- Left side column. contains the logo and sidebar -->
-        @include('layouts.sidebar')
-        <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
-            @yield('content')
-        </div>
+        {{--#main__content {--}}
+        {{--    background: {{ ($webconfig->wallet_body_start_color? $webconfig->wallet_body_start_color :'#0f0f0f') }} !important;--}}
+        {{--}--}}
+    </style>
 
-        <!-- Main Footer -->
-        <footer class="main-footer" style="max-height: 100px;text-align: center">
-            <strong>Copyright © 2016 <a href="#">Company</a>.</strong> All rights reserved.
-        </footer>
-
-    </div>
-@else
-    <nav class="navbar navbar-default navbar-static-top">
-        <div class="container">
-            <div class="navbar-header">
-
-                <!-- Collapsed Hamburger -->
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                        data-target="#app-navbar-collapse">
-                    <span class="sr-only">Toggle Navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-
-                <!-- Branding Image -->
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    InfyOm Generator
-                </a>
-            </div>
-
-            <div class="collapse navbar-collapse" id="app-navbar-collapse">
-                <!-- Left Side Of Navbar -->
-                <ul class="nav navbar-nav">
-                    <li><a href="{{ url('/home') }}">Home</a></li>
-                </ul>
-
-                <!-- Right Side Of Navbar -->
-                <ul class="nav navbar-nav navbar-right">
-                    <!-- Authentication Links -->
-                    <li><a href="{{ url('/login') }}">Login</a></li>
-                    <li><a href="{{ url('/register') }}">Register</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div id="page-content-wrapper">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-lg-12">
-                    @yield('content')
-                </div>
-            </div>
-        </div>
-    </div>
+    @if($webconfig->header_code)
+        {!! $webconfig->header_code !!}
     @endif
 
-    <!-- jQuery 3.1.1 -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.1/moment.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
-    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
-    <!-- AdminLTE App -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/2.4.3/js/adminlte.min.js"></script>
+{{--    @laravelPWA--}}
+</head>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/iCheck/1.0.2/icheck.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+<body class="">
 
-    @stack('scripts')
+<nav class="x-header js-header-selector navbar navbar-expand-lg -anon">
+    <div class="container-fluid -inner-container">
+        <div class="">
+            <button type="button" class="btn bg-transparent p-0 x-hamburger" data-toggle="modal"
+                    data-target="#themeSwitcherModal">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+
+        <div id="headerBrand">
+            <a class="navbar-brand" href="{{ route('customer.session.index') }}">
+                <img alt="{{ $webconfig->description }}" class="-logo -default img-fluid" width="440"
+                     height="104" src="{{ url(core()->imgurl($webconfig->logo,'img')) }}"/>
+                <img alt="{{ $webconfig->description }}" class="-logo -invert img-fluid" width="440"
+                     height="104" src="{{ url(core()->imgurl($webconfig->logo,'img')) }}"/>
+            </a>
+        </div>
+
+        <div class="x-menu">
+            <div class="-menu-container">
+
+            </div>
+        </div>
+
+        <div id="headerContent">
+            <div class="d-flex">
+                <a href="{{ $webconfig->linelink }}" class="x-header-btn-support -in-anon" target="_blank"
+                   rel="noreferrer nofollow">
+                    <picture>
+                        <source type="image/webp" srcset="/assets\wm356\web\ezl-wm-356\img\ic-line-support.webp?v=1"/>
+                        <source type="image/png?v=2" srcset="/assets\wm356\web\ezl-wm-356\img\ic-line-support.png?v=1"/>
+                        <img alt="{{ $webconfig->description }}" class="img-fluid -ic" loading="lazy" fetchpriority="low"
+                             width="120" height="39" src="/assets\wm356\web\ezl-wm-356\img\ic-line-support.png?v=1"/>
+                    </picture>
+                    <picture>
+                        <source type="image/webp"
+                                srcset="/assets\wm356\web\ezl-wm-356\img\ic-line-support-mobile.webp?v={{ time() }}"/>
+                        <source type="image/png"
+                                srcset="/assets\wm356\web\ezl-wm-356\img\ic-line-support-mobile.png?v={{ time() }}"/>
+                        <img alt="{{ $webconfig->description }}" class="img-fluid -ic -mobile" loading="lazy"
+                             fetchpriority="low"
+                             width="28" height="28"
+                             src="/assets\wm356\web\ezl-wm-356\img\ic-line-support-mobile.png?v={{ time() }}"/>
+                    </picture>
+                </a>
+
+                <a href="{{ route('customer.session.store') }}" class="-btn-header-login btn mr-1 mr-sm-2">
+                    {{ __('app.login.register') }}
+                </a>
+
+                <a href="{{ route('customer.session.index') }}" class="-btn-header-login btn">
+                    {{ __('app.login.login') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+@yield('content')
+
+<footer class="x-footer -ezl -anon">
+    <div class="-inner-wrapper lazyload x-bg-position-center"
+         data-bgset="https://asset.cloudigame.co/build/admin/img/wt_theme/ezl/footer-inner-bg.png">
+        <div class="container -inner-title-wrapper">
+            {!! $webconfig->content_detail !!}
+        </div>
+
+
+    </div>
+
+    <div class="text-center -copy-right-container">
+        <p class="mb-0 -copy-right-text">
+            Copyright © 2023 {{ $webconfig->sitename }}. All Rights Reserved.
+        </p>
+    </div>
+</footer>
+
+
+
+
+{{--<script src="https://js.pusher.com/7.2.0/pusher.min.js"></script>--}}
+
+<script></script>
+
+{{--<script>--}}
+{{--    Bonn.boots.push(function () {--}}
+{{--        setTimeout(function () {--}}
+{{--            $("#bankInfoModal").modal("show");--}}
+{{--        }, 500);--}}
+{{--    });--}}
+{{--</script>--}}
+
+<script>
+    var IS_ANDROID = false;
+    var IS_MOBILE = false;
+</script>
+
+
+{{--<script src="assets/wm356/web/ezl-wm-356/app.629ea432.js"></script>--}}
+
+
+<script type="text/javascript">
+    window.flashMessages = [];
+    window.serverErrors = [];
+
+    @foreach (['success', 'warning', 'error', 'info'] as $key)
+    @if ($value = session($key))
+    window.flashMessages.push({'type': '{{ $key }}', 'message': "{{ $value }}"});
+    @endif
+            @endforeach
+
+            @if (isset($errors))
+            @if (count($errors))
+        window.serverErrors = @json($errors->getMessages());
+    @endif
+    @endif
+
+</script>
+
+
+{{--<script src="{{ mix('assets/wm356/js/manifest.js') }}"></script>--}}
+<script src="{{ mix('assets/wm356/js/vendor.js') }}"></script>
+
+<script src="assets/wm356/js/runtime.1ba6bf05.js?v=5"></script>
+<script src="assets/wm356/js/0.e84cf97a.js?v=1"></script>
+<script src="assets/wm356/js/1.9a969cca.js?v=1"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+        crossorigin="anonymous"></script>
+<script src="assets/wm356/web/ezl-wm-356/app.629ea432.js?v=1"></script>
+<script src="{{ mix('assets/wm356/js/app.js') }}" id="mainscript" baseUrl="{{ url()->to('/') }}"></script>
+{{--<script src="{{ mix('assets/wm356/js/vue.js') }}" id="mainscript" baseUrl="{{ url()->to('/') }}"></script>--}}
+@stack('scripts')
+<script src="{{ asset('lang-').app()->getLocale() }}.js?time={{ time() }}"></script>
+
+{{--@stack('scripts')--}}
+{{--<script src="{{ asset('js/js.js?'.time()) }}"></script>--}}
 </body>
 </html>
+
+
