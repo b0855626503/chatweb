@@ -23,15 +23,11 @@
     <ul class="navbar-nav ml-auto">
         <button type="button"
                 class="btn btn-outline-light btn-sm"
-                onclick="VueApp.openLineChat()">
+                onclick="window.app.openLineChat()">
             <i class="far fa-comments"></i>
             แชต LINE OA
         </button>
-        @if(!$patch)
-            <li class="nav-item d-sm-inline-block d-none">
-                <a class="nav-link disabled">Version : {!! $version !!} </a>
-            </li>
-        @endif
+
         <li class="nav-item d-sm-inline-block">
             <a href="{{ route('admin.session.destroy') }}" class="nav-link"><i class="fas fa-sign-out"></i> Logout</a>
         </li>

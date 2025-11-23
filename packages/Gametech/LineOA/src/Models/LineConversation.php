@@ -27,6 +27,8 @@ class LineConversation extends Model implements LineConversationContract
         'closed_by_employee_id',
         'closed_by_employee_name',
         'closed_at',
+        'outgoing_language',
+        'incoming_language',
     ];
 
     protected $casts = [

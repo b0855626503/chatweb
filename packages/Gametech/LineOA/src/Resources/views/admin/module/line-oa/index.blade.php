@@ -15,6 +15,14 @@
             </div>
         </div>
     </section>
+
+    <div id="line-oa-chat-overlay" v-if="showLineChat">
+        <div class="lineoa-backdrop" @click="closeLineChat"></div>
+
+        <div class="lineoa-popup">
+            <line-oa-chat :is-overlay="true"></line-oa-chat>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -44,6 +52,29 @@
 
         .gt-msg-agent .text-muted {
             color: #084298 !important;
+        }
+        #line-oa-chat-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+        }
+
+        .lineoa-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+        }
+
+        .lineoa-popup {
+            position: fixed;
+            inset: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            z-index: 9999;
+            overflow: hidden;
         }
     </style>
 @endpush
@@ -278,7 +309,11 @@
                                                 </span>
                                             </template>
                                             <template v-else>
-                                                <span>
+                                                 <span
+                                                         class="text-primary"
+                                                         style="cursor: pointer; text-decoration: underline;"
+                                                         @click="openMemberModal"
+                                                 >
                                                     @{{ (selectedConversation.contact &&
                                                     (selectedConversation.contact.display_name ||
                                                     selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
@@ -527,19 +562,19 @@
                     id="line-oa-member-modal"
                     ref="memberModal"
                     title="เชื่อมลูกค้ากับสมาชิก"
-                    size="sm"
+                    size="md"
                     centered
                     hide-footer
                     body-class="pt-2 pb-2"
                     @hide="resetMemberModal"
             >
                 <b-form @submit.prevent="saveMemberLink">
-                    <b-form-group label="Member ID:" label-for="member_id" label-cols="4" label-class="pt-1">
+                    <b-form-group label="Username:" label-for="member_id" label-cols="4" label-class="pt-1">
                         <b-input-group>
                             <b-form-input
                                     id="member_id"
                                     v-model="memberModal.member_id"
-                                    placeholder="เช่น 12345"
+                                    placeholder=""
                                     autocomplete="off"
                                     size="sm"
                             ></b-form-input>
@@ -1236,7 +1271,7 @@
                     const contact = this.selectedConversation.contact;
                     this.memberModal.error = '';
                     this.memberModal.member = null;
-                    this.memberModal.member_id = contact.member_id || '';
+                    this.memberModal.member_id = '';
 
                     this.$nextTick(() => {
                         if (this.$refs.memberModal) {
@@ -1479,5 +1514,29 @@
 
             }
         });
+    </script>
+    <script type="module">
+
+        Vue.mixin({
+            data() {
+                return {
+                    showLineChat: false,
+                    lineChatActiveConversationId: null,
+                };
+            },
+
+            methods: {
+                openLineChat(id = null) {
+                    console.log('openLineChat', id);
+                    this.showLineChat = true;
+                    this.lineChatActiveConversationId = id;
+                },
+                closeLineChat() {
+                    this.showLineChat = false;
+                    this.lineChatActiveConversationId = null;
+                },
+            },
+        });
+
     </script>
 @endpush

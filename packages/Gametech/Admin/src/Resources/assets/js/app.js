@@ -165,7 +165,7 @@ $(document).ready(function () {
         }
     });
 
-    new Vue({
+    window.app = new Vue({
         el: "#app",
 
         data: function () {

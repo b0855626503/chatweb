@@ -181,12 +181,24 @@
                                             </div>
 
                                             <div class="d-flex justify-content-between align-items-center mt-1">
-                                                <small class="text-muted">
-                                                    ยูส: @{{ conv.contact && conv.contact.member_username || '-' }}
-                                                </small>
+                                                <div>
+                                                    <small class="text-muted d-block">
+                                                        ยูส: @{{ conv.contact && conv.contact.member_username || '-' }}
+                                                    </small>
+                                                    {{-- แสดงชื่อคนปิด + เวลา ถ้าห้องปิดแล้ว --}}
+                                                    <div
+                                                            v-if="conv.status === 'closed'"
+                                                            class="text-muted small"
+                                                    >
+                                                        ปิดโดย @{{ conv.closed_by_employee_name || 'พนักงาน' }}
+                                                        <span v-if="conv.closed_at">
+                                                            เมื่อ @{{ formatDateTime(conv.closed_at) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                                 <div class="d-flex align-items-center">
                                                     <b-badge
-                                                            v-if="conv.assigned_employee_name"
+                                                            v-if="conv.assigned_employee_name && conv.status !== 'closed'"
                                                             variant="info"
                                                             class="mr-1"
                                                     >
@@ -284,7 +296,7 @@
                                                         variant="secondary"
                                                         class="mr-1"
                                                 >
-                                                    ปิดเคสแล้ว
+                                                    ปิดโดย @{{ selectedConversation.closed_by_employee_name || 'พนักงาน' }}
                                                 </b-badge>
                                                 <b-badge
                                                         v-else-if="selectedConversation.assigned_employee_name"
@@ -311,6 +323,15 @@
                                                 >
                                                     ปิดเคส
                                                 </b-button>
+                                            </div>
+
+                                            <div
+                                                    class="mt-1"
+                                                    v-if="selectedConversation.status === 'closed' && selectedConversation.closed_at"
+                                            >
+                                                <small class="text-muted">
+                                                    ปิดเมื่อ @{{ formatDateTime(selectedConversation.closed_at) }}
+                                                </small>
                                             </div>
                                         </div>
                                     </div>
@@ -910,7 +931,6 @@
 
                     if (idx !== -1) {
                         // --- อัปเดตเฉพาะฟิลด์ที่เปลี่ยน ไม่ replace object ทิ้ง ---
-                        // การใช้ Vue.set หรือ Object.assign ป้องกันปัญหา UI ไม่ยอม reactive
                         this.$set(this.conversations, idx, {
                             ...this.conversations[idx],
                             ...conv
@@ -1068,12 +1088,20 @@
                         .listen('.LineOAChatConversationUpdated', (e) => {
                             const conv = e.conversation;
                             this.updateOrInsertConversation(conv);
-                            // หา index เดิมใน conversations แล้วอัปเดต หรือถ้าไม่มีให้ push เข้า list
                             if (this.selectedConversation &&
                                 this.selectedConversation.id === conv.id)
                             {
                                 this.fetchMessages(conv.id, { limit: 50, silent: true });
                             }
+                        })
+                        .listen('.LineOAConversationAssigned', (e) => {
+                            vm.handleConversationAssigned(e);
+                        })
+                        .listen('.LineOAConversationClosed', (e) => {
+                            vm.handleConversationClosed(e);
+                        })
+                        .listen('.LineOAConversationLocked', (e) => {
+                            vm.handleConversationLocked(e);
                         });
 
                     console.log('[LineOA] subscribeRealtime ตั้งค่าเรียบร้อย');
@@ -1156,6 +1184,39 @@
                         this.$nextTick(() => {
                             this.scrollToBottom();
                         });
+                    }
+                },
+
+                handleConversationAssigned(e) {
+                    if (!e || !e.conversation) return;
+                    const conv = e.conversation;
+
+                    this.updateOrInsertConversation(conv);
+
+                    if (this.selectedConversation && this.selectedConversation.id === conv.id) {
+                        this.selectedConversation = Object.assign({}, this.selectedConversation, conv);
+                    }
+                },
+
+                handleConversationClosed(e) {
+                    if (!e || !e.conversation) return;
+                    const conv = e.conversation;
+
+                    this.updateOrInsertConversation(conv);
+
+                    if (this.selectedConversation && this.selectedConversation.id === conv.id) {
+                        this.selectedConversation = Object.assign({}, this.selectedConversation, conv);
+                    }
+                },
+
+                handleConversationLocked(e) {
+                    if (!e || !e.conversation) return;
+                    const conv = e.conversation;
+
+                    this.updateOrInsertConversation(conv);
+
+                    if (this.selectedConversation && this.selectedConversation.id === conv.id) {
+                        this.selectedConversation = Object.assign({}, this.selectedConversation, conv);
                     }
                 },
 

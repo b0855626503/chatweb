@@ -232,7 +232,7 @@ class AdminServiceProvider extends ServiceProvider
         };
 
         // ✅ แชร์เมนูให้ทั้ง layout และ module
-        view()->composer('admin::layouts.master', $menuComposer);
+        view()->composer('admin::layouts.*', $menuComposer);
         view()->composer('admin::module.*',       $menuComposer);
 
         // ✅ ACL สำหรับ module views
@@ -241,7 +241,7 @@ class AdminServiceProvider extends ServiceProvider
         });
 
         // header: version
-        view()->composer(['admin::layouts.header'], function ($view) {
+        view()->composer(['admin::layouts.*'], function ($view) {
             $this->deleteVersionFile();
             $newpatch = false;
             $current = config('self-update.version_installed');

@@ -183,7 +183,7 @@
 
     <div class="wrapper">
 
-        @include('admin::layouts.header')
+        @include('admin::layouts.line-header')
 
         @include('admin::layouts.sidebar')
 
@@ -192,7 +192,6 @@
         @include('admin::layouts.footer')
 
     </div>
-
 
 </div>
 
@@ -214,7 +213,6 @@
 </script>
 <audio hidden preload="auto" muted="false" src="{{ asset('storage/sound/alert.mp3') }}" id="alertsound"></audio>
 <audio hidden preload="auto" muted="false" src="{{ asset('storage/sound/line-noti.mp3') }}" id="line-noti-audio"></audio>
-
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script src="{{ mix('assets/admin/js/manifest.js') }}"></script>
 <script src="{{ mix('assets/admin/js/vendor.js') }}"></script>

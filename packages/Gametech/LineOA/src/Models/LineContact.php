@@ -23,6 +23,8 @@ class LineContact extends Model implements LineContactContract
         'tags',
         'last_seen_at',
         'blocked_at',
+        'preferred_language',
+        'last_detected_language',
     ];
 
     protected $casts = [

@@ -573,11 +573,11 @@ class ChatController extends Controller
         }
 
         // ดึงข้อมูล member มาใส่เพิ่ม (optional)
-        $memberName = null;
-        $memberUsername = null;
-        $memberMobile = null;
-        $memberBankName = null;
-        $memberAccNo = null;
+        $memberName      = null;
+        $memberUsername  = null;
+        $memberMobile    = null;
+        $memberBankName  = null;
+        $memberAccNo     = null;
 
         try {
             /** @var \Prettus\Repository\Contracts\RepositoryInterface $memberRepo */
@@ -592,59 +592,66 @@ class ChatController extends Controller
             }
 
             if ($member) {
-                $memberName = $member->name ?? null;
+                $memberName     = $member->name ?? null;
                 $memberUsername = $member->user_name ?? null;
-                $memberMobile = $member->tel ?? null;
+                $memberMobile   = $member->tel ?? null;
                 $memberBankName = $member->bank?->name_th ?? null;
-                $memberAccNo = $member->acc_no ?? null;
+                $memberAccNo    = $member->acc_no ?? null;
             }
         } catch (\Throwable $e) {
             // ถ้าดึง member พัง ไม่เป็นไร แค่ log ไว้ แล้วผูกเฉพาะ member_id
             Log::warning('[LineOA] attachMember: cannot load member detail', [
                 'member_id' => $memberId,
-                'error' => $e->getMessage(),
+                'error'     => $e->getMessage(),
             ]);
         }
 
-        // อัปเดต contact
-        $contact->member_id = $memberId;
+        // เตรียม payload สำหรับอัปเดตทุก LineContact ที่มี line_user_id เดียวกัน
+        $update = [
+            'member_id' => $memberId,
+        ];
 
         if ($memberUsername !== null) {
-            $contact->member_username = $memberUsername;
+            $update['member_username'] = $memberUsername;
         }
+
         if ($memberMobile !== null) {
-            $contact->member_mobile = $memberMobile;
+            $update['member_mobile'] = $memberMobile;
         }
-//        if ($memberName !== null) {
-//            $contact->member_name = $memberName;
-//        }
-//        if ($memberBankName !== null) {
-//            $contact->member_bank_name = $memberBankName;
-//        }
-//        if ($memberAccNo !== null) {
-//            $contact->member_acc_no = $memberAccNo;
-//        }
 
-        $contact->save();
+        // ถ้าอยากเก็บชื่อ/ธนาคาร/เลขบัญชีลง contact ด้วย เปิดส่วนนี้ได้
+        // if ($memberName !== null) {
+        //     $update['member_name'] = $memberName;
+        // }
+        // if ($memberBankName !== null) {
+        //     $update['member_bank_name'] = $memberBankName;
+        // }
+        // if ($memberAccNo !== null) {
+        //     $update['member_acc_no'] = $memberAccNo;
+        // }
 
-        // โหลดความสัมพันธ์ที่ front ใช้
+        // อัปเดตทุก contact ที่มี line_user_id เดียวกัน
+        LineContact::where('line_user_id', $contact->line_user_id)->update($update);
+
+        // reload contact ปัจจุบันให้ใช้ค่าล่าสุด
         $contact->refresh();
 
         return response()->json([
             'message' => 'success',
             'data' => [
-                'id' => $contact->id,
-                'display_name' => $contact->display_name,
-                'member_id' => $contact->member_id,
-                'member_username' => $contact->member_username,
-                'member_mobile' => $contact->member_mobile,
-                'member_name' => $memberName,
+                'id'               => $contact->id,
+                'display_name'     => $contact->display_name,
+                'member_id'        => $contact->member_id,
+                'member_username'  => $contact->member_username,
+                'member_mobile'    => $contact->member_mobile,
+                'member_name'      => $memberName,
                 'member_bank_name' => $memberBankName,
-                'member_acc_no' => $memberAccNo,
-                'picture_url' => $contact->picture_url,
+                'member_acc_no'    => $memberAccNo,
+                'picture_url'      => $contact->picture_url,
             ],
         ]);
     }
+
 
     /**
      * fallback เวอร์ชันเก่าที่โบ๊ทเคยใช้

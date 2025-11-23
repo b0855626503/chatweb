@@ -4,8 +4,7 @@ namespace Gametech\LineOA\Services;
 
 use Gametech\LineOA\Contracts\LineMemberRegistrar;
 use Gametech\LineOA\Contracts\MemberRegistrationResult;
-use Gametech\Marketing\Models\MarketingMember;
-use Gametech\Member\Models\Member;
+use Gametech\Marketing\Models\MarketingMember as Member;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -36,7 +35,7 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
 
         // user_name = phone, password fixed = 123456
         $username = $phone;
-        $plainPassword = '123456';
+        $plainPassword = $phone;
 
         try {
             return DB::transaction(function () use ($phone, $name, $surname, $bankCode, $accountNo, $username, $plainPassword) {
@@ -66,7 +65,7 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
                 $fullname = trim($name.' '.$surname);
 
                 // ค่า default หลาย ๆ ตัวอิงจาก register() เดิม แต่ simple ลง
-                $member = MarketingMember::create([
+                $member = Member::create([
                     'user_name' => $username,
                     'user_pass' => $plainPassword,
                     'password' => Hash::make($plainPassword),
@@ -139,7 +138,12 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
     protected function isPhoneExistInMembersOrBankAccount(string $phone): bool
     {
         // 1) members.tel
-        if (Member::where('tel', $phone)->exists()) {
+        $existsInMember = Member::where(function ($q) use ($phone) {
+            $q->where('tel', $phone)
+                ->orWhere('user_name', $phone);
+        })->exists();
+
+        if ($existsInMember) {
             return true;
         }
 
@@ -187,7 +191,7 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
     {
         // ใช้ phone เป็น user_name ตรง ๆ ตาม requirement
         $username = $phone;
-        $password = '123456';
+        $password = $phone;
 
         return [$username, $password];
     }
