@@ -36,14 +36,19 @@ class LineOAConversationClosed implements ShouldBroadcastNow
             'last_message'     => $conversation->last_message_preview,
             'last_message_at'  => optional($conversation->last_message_at)->toIso8601String(),
             'unread_count'     => $conversation->unread_count,
-
-            'closed_by_employee_id'   => $conversation->closed_by_employee_id,
-            'closed_by_employee_name' => $conversation->closed_by_employee_name,
-            'closed_at'               => optional($conversation->closed_at)->toIso8601String(),
+            'is_registering' => $conversation->is_registering,
 
             'assigned_employee_id'   => $conversation->assigned_employee_id,
             'assigned_employee_name' => $conversation->assigned_employee_name,
             'assigned_at'            => optional($conversation->assigned_at)->toIso8601String(),
+
+            'locked_by_employee_id'   => $conversation->locked_by_employee_id,
+            'locked_by_employee_name' => $conversation->locked_by_employee_name,
+            'locked_at'               => optional($conversation->locked_at)->toIso8601String(),
+
+            'closed_by_employee_id'   => $conversation->closed_by_employee_id,
+            'closed_by_employee_name' => $conversation->closed_by_employee_name,
+            'closed_at'               => optional($conversation->closed_at)->toIso8601String(),
 
             'line_account' => [
                 'id'   => $conversation->account?->id,

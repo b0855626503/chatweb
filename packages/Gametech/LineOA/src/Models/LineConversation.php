@@ -38,6 +38,14 @@ class LineConversation extends Model implements LineConversationContract
         'closed_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'is_registering',
+    ];
+
+    // ===============================
+    //      RELATIONS
+    // ===============================
+
     public function account(): BelongsTo
     {
         return $this->belongsTo(LineAccount::class, 'line_account_id');
@@ -51,5 +59,37 @@ class LineConversation extends Model implements LineConversationContract
     public function messages(): HasMany
     {
         return $this->hasMany(LineMessage::class, 'line_conversation_id');
+    }
+
+    /**
+     * Sessions สมัครสมาชิกทั้งหมดที่ผูกกับห้องนี้
+     */
+    public function registerSessions(): HasMany
+    {
+        return $this->hasMany(LineRegisterSession::class, 'line_conversation_id');
+    }
+
+    /**
+     * session สมัครที่ยัง active อยู่ (in_progress)
+     */
+    public function activeRegisterSession()
+    {
+        return $this->hasOne(LineRegisterSession::class, 'line_conversation_id')
+            ->where('status', 'in_progress')
+            ->latest('id');
+    }
+
+    // ===============================
+    //      ACCESSORS
+    // ===============================
+
+    /**
+     * กำลังสมัครกับบอทอยู่ไหม?
+     */
+    public function getIsRegisteringAttribute(): bool
+    {
+        return $this->registerSessions()
+            ->where('status', 'in_progress')
+            ->exists();
     }
 }

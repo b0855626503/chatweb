@@ -124,19 +124,19 @@ class RegisterFlowService
         LineConversation $conversation
     ): RegisterFlowResult {
         // เคยสมัครสำเร็จแล้ว
-        $existingCompleted = LineRegisterSession::query()
-            ->where('line_contact_id', $contact->id)
-            ->where('status', 'completed')
-            ->first();
-
-        if ($existingCompleted) {
-            return RegisterFlowResult::make()
-                ->handled(true)
-                ->finished(true)
-                ->replyText(
-                    $this->templates->render('register.already_completed')
-                );
-        }
+//        $existingCompleted = LineRegisterSession::query()
+//            ->where('line_contact_id', $contact->id)
+//            ->where('status', 'completed')
+//            ->first();
+//
+//        if ($existingCompleted) {
+//            return RegisterFlowResult::make()
+//                ->handled(true)
+//                ->finished(true)
+//                ->replyText(
+//                    $this->templates->render('register.already_completed')
+//                );
+//        }
 
         // session ค้างอยู่
         $session = $this->getInProgressSession($contact);
@@ -833,6 +833,7 @@ class RegisterFlowService
     protected function getBankQuickReplyOptions(): array
     {
         return [
+            // TOP banks + True Wallet + TTB
             [
                 'label' => 'กสิกรไทย',
                 'text' => 'กสิกรไทย',
@@ -859,15 +860,11 @@ class RegisterFlowService
             ],
             [
                 'label' => 'ทรูวอเลท',
-                'text' => 'TW',
+                'text' => 'ทรูวอเลท',
             ],
             [
                 'label' => 'TTB',
                 'text' => 'TTB',
-            ],
-            [
-                'label' => 'ทิสโก้',
-                'text' => 'ทิสโก้',
             ],
             [
                 'label' => 'ธกส',
@@ -882,17 +879,14 @@ class RegisterFlowService
                 'text' => 'เกียรตินาคิน',
             ],
             [
-                'label' => 'แลนด์แอนด์เฮ้าส์',
-                'text' => 'แลนด์แอนด์เฮ้าส์',
-            ],
-            [
-                'label' => 'อาคารสงเคราะห์',
-                'text' => 'อาคารสงเคราะห์',
-            ],
-            [
                 'label' => 'ซีไอเอ็มบี',
                 'text' => 'CIMB',
             ],
+            // ถ้าอยากได้ครบ 13 ปุ่ม จะเติมอีกตัวเช่น ทิสโก้ ก็ได้
+            // [
+            //     'label' => 'ทิสโก้',
+            //     'text'  => 'ทิสโก้',
+            // ],
         ];
     }
 

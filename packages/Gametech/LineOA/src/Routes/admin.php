@@ -57,6 +57,12 @@ Route::domain(
             Route::post('conversations/{conversation}/close', [ChatController::class, 'close'])
                 ->name('conversations.close');
 
+            Route::post('conversations/{conversation}/open', [ChatController::class, 'open'])
+                ->name('conversations.open');
+
+            Route::post('conversations/{conversation}/cancel-register', [ChatController::class, 'cancelRegister'])
+                ->name('conversations.cancel-register');
+
         });
 
 });

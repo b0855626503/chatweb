@@ -44,6 +44,9 @@ class LineOAChatMessageReceived implements ShouldBroadcastNow
         if (! isset($convArr['last_message'])) {
             $convArr['last_message'] = $conversation->last_message_preview;
         }
+        if (! isset($convArr['is_registering'])) {
+            $convArr['is_registering'] = $conversation->is_registering;
+        }
 
         // เติมฟิลด์เสริมแบบเดียวกับ API (index/show) เข้าไปใน contact
         if (isset($convArr['contact']) && is_array($convArr['contact'])) {

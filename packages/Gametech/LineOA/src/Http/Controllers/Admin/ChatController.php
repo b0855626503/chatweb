@@ -6,11 +6,14 @@ use Gametech\LineOA\Events\LineOAChatConversationUpdated;
 use Gametech\LineOA\Events\LineOAConversationAssigned;
 use Gametech\LineOA\Events\LineOAConversationClosed;
 use Gametech\LineOA\Events\LineOAConversationLocked;
+use Gametech\LineOA\Events\LineOAConversationOpen;
 use Gametech\LineOA\Models\LineContact;
 use Gametech\LineOA\Models\LineConversation;
 use Gametech\LineOA\Models\LineMessage;
+use Gametech\LineOA\Models\LineRegisterSession;
 use Gametech\LineOA\Services\ChatService;
 use Gametech\LineOA\Services\LineMessagingClient;
+use Gametech\LineOA\Services\RegisterFlowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -50,7 +53,13 @@ class ChatController extends Controller
         $scope = $request->get('scope', 'all'); // all | mine
 
         $query = LineConversation::query()
-            ->with(['contact.member', 'account'])
+            ->with([
+                'contact.member',
+                'account',
+                'registerSessions' => function ($q) {
+                    $q->where('status', 'in_progress');
+                },
+            ])
             ->orderByDesc('last_message_at')
             ->orderByDesc('id');
 
@@ -103,7 +112,7 @@ class ChatController extends Controller
                     'last_message' => $conv->last_message_preview,
                     'last_message_at' => optional($conv->last_message_at)->toIso8601String(),
                     'unread_count' => $conv->unread_count,
-
+                    'is_registering' => $conv->is_registering,
                     // *** ที่ต้องส่งเพิ่ม ***
                     'assigned_employee_id' => $conv->assigned_employee_id,
                     'assigned_employee_name' => $conv->assigned_employee_name,
@@ -113,10 +122,9 @@ class ChatController extends Controller
                     'locked_by_employee_name' => $conv->locked_by_employee_name,
                     'locked_at' => optional($conv->locked_at)->toIso8601String(),
 
-                    'closed_by_employee_id'   => $conv->closed_by_employee_id,
+                    'closed_by_employee_id' => $conv->closed_by_employee_id,
                     'closed_by_employee_name' => $conv->closed_by_employee_name,
-                    'closed_at'               => optional($conv->closed_at)->toIso8601String(),
-
+                    'closed_at' => optional($conv->closed_at)->toIso8601String(),
 
                     'line_account' => [
                         'id' => $conv->account?->id,
@@ -154,7 +162,13 @@ class ChatController extends Controller
         $limit = (int) $request->get('limit', 50);
         $beforeId = $request->get('before_id');
 
-        $conversation->load(['contact.member', 'account']);
+        $conversation->load([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]);
 
         $messagesQuery = LineMessage::query()
             ->where('line_conversation_id', $conversation->id)
@@ -177,9 +191,15 @@ class ChatController extends Controller
 
             // broadcast ให้ agent คนอื่นเห็นว่า unread เคลียร์แล้ว
             DB::afterCommit(function () use ($conversation) {
-                event(new LineOAChatConversationUpdated(
-                    $conversation->fresh(['contact.member', 'account']) ?? $conversation
-                ));
+                $conv = $conversation->fresh([
+                    'contact.member',
+                    'account',
+                    'registerSessions' => function ($q) {
+                        $q->where('status', 'in_progress');
+                    },
+                ]) ?? $conversation;
+
+                event(new LineOAChatConversationUpdated($conv));
             });
         }
 
@@ -189,7 +209,7 @@ class ChatController extends Controller
                 'status' => $conversation->status,
                 'last_message_at' => optional($conversation->last_message_at)->toDateTimeString(),
                 'unread_count' => $conversation->unread_count,
-
+                'is_registering' => $conversation->is_registering,
                 // *** ส่งเพิ่ม ***
                 'assigned_employee_id' => $conversation->assigned_employee_id,
                 'assigned_employee_name' => $conversation->assigned_employee_name,
@@ -199,9 +219,9 @@ class ChatController extends Controller
                 'locked_by_employee_name' => $conversation->locked_by_employee_name,
                 'locked_at' => optional($conversation->locked_at)->toIso8601String(),
 
-                'closed_by_employee_id'   => $conversation->closed_by_employee_id,
+                'closed_by_employee_id' => $conversation->closed_by_employee_id,
                 'closed_by_employee_name' => $conversation->closed_by_employee_name,
-                'closed_at'               => optional($conversation->closed_at)->toIso8601String(),
+                'closed_at' => optional($conversation->closed_at)->toIso8601String(),
 
                 'line_account' => [
                     'id' => $conversation->account?->id,
@@ -274,6 +294,12 @@ class ChatController extends Controller
             ], 403);
         }
 
+        if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
+            return response()->json([
+                'message' => 'ห้องนี้ถูกล็อกโดย ' . ($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น') . ' คุณไม่สามารถตอบได้',
+            ], 403);
+        }
+
         $message = $this->chat->createOutboundMessageFromAgent(
             $conversation,
             $text,
@@ -283,7 +309,7 @@ class ChatController extends Controller
             ]
         );
 
-        $conversation->loadMissing(['account', 'contact']);
+        $conversation->loadMissing(['account', 'contact.member']);
         $account = $conversation->account;
         $contact = $conversation->contact;
 
@@ -351,6 +377,12 @@ class ChatController extends Controller
             ], 403);
         }
 
+        if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
+            return response()->json([
+                'message' => 'ห้องนี้ถูกล็อกโดย ' . ($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น') . ' คุณไม่สามารถตอบได้',
+            ], 403);
+        }
+
         $message = $this->chat->createOutboundImageFromAgent(
             $conversation,
             $file,
@@ -371,7 +403,7 @@ class ChatController extends Controller
             $previewUrl = url($previewUrl);
         }
 
-        $conversation->loadMissing(['account', 'contact']);
+        $conversation->loadMissing(['account', 'contact.member']);
         $account = $conversation->account;
         $contact = $conversation->contact;
 
@@ -573,11 +605,11 @@ class ChatController extends Controller
         }
 
         // ดึงข้อมูล member มาใส่เพิ่ม (optional)
-        $memberName      = null;
-        $memberUsername  = null;
-        $memberMobile    = null;
-        $memberBankName  = null;
-        $memberAccNo     = null;
+        $memberName = null;
+        $memberUsername = null;
+        $memberMobile = null;
+        $memberBankName = null;
+        $memberAccNo = null;
 
         try {
             /** @var \Prettus\Repository\Contracts\RepositoryInterface $memberRepo */
@@ -592,17 +624,17 @@ class ChatController extends Controller
             }
 
             if ($member) {
-                $memberName     = $member->name ?? null;
+                $memberName = $member->name ?? null;
                 $memberUsername = $member->user_name ?? null;
-                $memberMobile   = $member->tel ?? null;
+                $memberMobile = $member->tel ?? null;
                 $memberBankName = $member->bank?->name_th ?? null;
-                $memberAccNo    = $member->acc_no ?? null;
+                $memberAccNo = $member->acc_no ?? null;
             }
         } catch (\Throwable $e) {
             // ถ้าดึง member พัง ไม่เป็นไร แค่ log ไว้ แล้วผูกเฉพาะ member_id
             Log::warning('[LineOA] attachMember: cannot load member detail', [
                 'member_id' => $memberId,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
 
@@ -639,19 +671,18 @@ class ChatController extends Controller
         return response()->json([
             'message' => 'success',
             'data' => [
-                'id'               => $contact->id,
-                'display_name'     => $contact->display_name,
-                'member_id'        => $contact->member_id,
-                'member_username'  => $contact->member_username,
-                'member_mobile'    => $contact->member_mobile,
-                'member_name'      => $memberName,
+                'id' => $contact->id,
+                'display_name' => $contact->display_name,
+                'member_id' => $contact->member_id,
+                'member_username' => $contact->member_username,
+                'member_mobile' => $contact->member_mobile,
+                'member_name' => $memberName,
                 'member_bank_name' => $memberBankName,
-                'member_acc_no'    => $memberAccNo,
-                'picture_url'      => $contact->picture_url,
+                'member_acc_no' => $memberAccNo,
+                'picture_url' => $contact->picture_url,
             ],
         ]);
     }
-
 
     /**
      * fallback เวอร์ชันเก่าที่โบ๊ทเคยใช้
@@ -732,7 +763,13 @@ class ChatController extends Controller
 
         $conversation->save();
 
-        $conversationFresh = $conversation->fresh(['contact.member', 'account']);
+        $conversationFresh = $conversation->fresh([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]) ?? $conversation;
 
         DB::afterCommit(function () use ($conversationFresh) {
             event(new LineOAChatConversationUpdated($conversationFresh));
@@ -777,7 +814,13 @@ class ChatController extends Controller
         $conversation->locked_at = now();
         $conversation->save();
 
-        $conversationFresh = $conversation->fresh(['contact.member', 'account']);
+        $conversationFresh = $conversation->fresh([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]) ?? $conversation;
 
         DB::afterCommit(function () use ($conversationFresh) {
             event(new LineOAChatConversationUpdated($conversationFresh));
@@ -821,7 +864,13 @@ class ChatController extends Controller
         $conversation->locked_at = null;
         $conversation->save();
 
-        $conversationFresh = $conversation->fresh(['contact.member', 'account']);
+        $conversationFresh = $conversation->fresh([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]) ?? $conversation;
 
         DB::afterCommit(function () use ($conversationFresh) {
             event(new LineOAChatConversationUpdated($conversationFresh));
@@ -848,7 +897,13 @@ class ChatController extends Controller
 
         // ถ้าปิดอยู่แล้ว ไม่ต้องทำอะไร
         if ($conversation->status === 'closed') {
-            $conversationFresh = $conversation->fresh(['contact.member', 'account']);
+            $conversationFresh = $conversation->fresh([
+                'contact.member',
+                'account',
+                'registerSessions' => function ($q) {
+                    $q->where('status', 'in_progress');
+                },
+            ]) ?? $conversation;
 
             DB::afterCommit(function () use ($conversationFresh) {
                 event(new LineOAChatConversationUpdated($conversationFresh));
@@ -874,7 +929,13 @@ class ChatController extends Controller
 
         $conversation->save();
 
-        $conversationFresh = $conversation->fresh(['contact.member', 'account']);
+        $conversationFresh = $conversation->fresh([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]) ?? $conversation;
 
         DB::afterCommit(function () use ($conversationFresh) {
             event(new LineOAChatConversationUpdated($conversationFresh));
@@ -887,4 +948,122 @@ class ChatController extends Controller
         ]);
     }
 
+    public function open(Request $request, LineConversation $conversation): JsonResponse
+    {
+        $employee = Auth::guard('admin')->user();
+        $employeeId = $employee?->code ?? null;
+        $employeeName = $employee->user_name ?? ($employee->name ?? 'พนักงาน');
+
+        if (! $employeeId) {
+            return response()->json([
+                'message' => 'ไม่พบข้อมูลผู้ใช้งาน (admin)',
+            ], 403);
+        }
+
+        // ===== ป้องกันลูกค้าเดียวกันมี open ซ้อนหลายห้อง =====
+        $contactId  = $conversation->line_contact_id;
+        $accountId  = $conversation->line_account_id;
+
+        $existingOpen = LineConversation::query()
+            ->where('line_contact_id', $contactId)
+            ->where('line_account_id', $accountId)
+            ->whereIn('status', ['open','assigned'])
+            ->where('id', '!=', $conversation->id)
+            ->first();
+
+        if ($existingOpen) {
+            return response()->json([
+                'message' => 'ลูกค้าคนนี้มีห้องแชตที่เปิดอยู่แล้ว',
+                'current_open_conversation' => $existingOpen->id,
+            ], 409);
+        }
+        // ===============================================
+
+        // ถ้าเปิดอยู่แล้ว ไม่ต้องทำอะไร
+        if ($conversation->status !== 'closed') {
+            $conversationFresh = $conversation->fresh([
+                'contact.member',
+                'account',
+                'registerSessions' => function ($q) {
+                    $q->where('status', 'in_progress');
+                },
+            ]) ?? $conversation;
+
+            DB::afterCommit(function () use ($conversationFresh) {
+                event(new LineOAChatConversationUpdated($conversationFresh));
+                event(new LineOAConversationOpen($conversationFresh));
+            });
+
+            return response()->json([
+                'message' => 'success',
+                'data' => $conversationFresh,
+            ]);
+        }
+
+        // เซตสถานะเป็น open
+        $conversation->status = 'assigned';
+        $conversation->closed_by_employee_id = null;
+        $conversation->closed_by_employee_name = null;
+        $conversation->closed_at = null;
+
+        // ล็อกห้องด้วย
+        $conversation->locked_by_employee_id = $employeeId;
+        $conversation->locked_by_employee_name = $employeeName;
+        $conversation->locked_at = now();
+
+        $conversation->save();
+
+        $conversationFresh = $conversation->fresh([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]) ?? $conversation;
+
+        DB::afterCommit(function () use ($conversationFresh) {
+            event(new LineOAChatConversationUpdated($conversationFresh));
+            event(new LineOAConversationOpen($conversationFresh));
+        });
+
+        return response()->json([
+            'message' => 'success',
+            'data' => $conversationFresh,
+        ]);
+    }
+
+    public function cancelRegister(LineConversation $conversation)
+    {
+        // หา session ค้าง
+        $session = LineRegisterSession::where('line_conversation_id', $conversation->id)
+            ->where('status', 'in_progress')
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $session) {
+            return response()->json([
+                'message' => 'ไม่มี flow สมัครที่กำลังทำงาน',
+            ], 404);
+        }
+
+        // ยกเลิก session
+        $session->status = 'cancelled';
+        $session->current_step = RegisterFlowService::STEP_FINISHED;
+        $session->save();
+
+        // broadcast อัปเดตสถานะ
+        DB::afterCommit(function () use ($conversation) {
+            $conversation->load([
+                'contact.member',
+                'account',
+                'registerSessions' => fn ($q) => $q->where('status', 'in_progress'),
+            ]);
+
+            event(new LineOAChatConversationUpdated($conversation));
+        });
+
+        return response()->json([
+            'message' => 'success',
+        ]);
+    }
 }

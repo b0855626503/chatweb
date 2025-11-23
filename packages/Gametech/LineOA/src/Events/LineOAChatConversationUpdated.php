@@ -42,7 +42,7 @@ class LineOAChatConversationUpdated implements ShouldBroadcastNow
             'last_message'   => $conversation->last_message_preview,
             'last_message_at'=> optional($conversation->last_message_at)->toIso8601String(),
             'unread_count'   => $conversation->unread_count,
-
+            'is_registering' => $conversation->is_registering,
             // ฟิลด์ assignment (ใช้ใน tab “ที่ฉันรับเรื่อง”)
             'assigned_employee_id'   => $conversation->assigned_employee_id,
             'assigned_employee_name' => $conversation->assigned_employee_name,

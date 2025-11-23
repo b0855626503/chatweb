@@ -9,30 +9,23 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class LineOAConversationAssigned implements ShouldBroadcastNow
+class LineOAConversationOpen implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * ใช้เป็น key ง่าย ๆ ฝั่ง JS
-     */
     public int $conversation_id;
 
-    /**
-     * payload ของห้อง (shape ให้ match กับ list จาก index/show)
-     */
     public array $conversation;
 
     public function __construct(LineConversation $conversation)
     {
-        // ให้ชัวร์ว่ามี relation ที่ต้องใช้เหมือน index/show
         $conversation->loadMissing(['contact.member', 'account']);
 
-        \Log::info('[LineOA] LineOAConversationAssigned::__construct', [
-            'conversation_id'       => $conversation->id,
-            'status'                => $conversation->status,
-            'assigned_employee_id'  => $conversation->assigned_employee_id,
-            'assigned_employee_name'=> $conversation->assigned_employee_name,
+        \Log::info('[LineOA] LineOAConversationClosed::__construct', [
+            'conversation_id'          => $conversation->id,
+            'status'                   => $conversation->status,
+            'closed_by_employee_id'    => $conversation->closed_by_employee_id,
+            'closed_by_employee_name'  => $conversation->closed_by_employee_name,
         ]);
 
         $this->conversation_id = (int) $conversation->id;
@@ -56,7 +49,6 @@ class LineOAConversationAssigned implements ShouldBroadcastNow
             'closed_by_employee_id'   => $conversation->closed_by_employee_id,
             'closed_by_employee_name' => $conversation->closed_by_employee_name,
             'closed_at'               => optional($conversation->closed_at)->toIso8601String(),
-
 
             'line_account' => [
                 'id'   => $conversation->account?->id,
@@ -82,12 +74,11 @@ class LineOAConversationAssigned implements ShouldBroadcastNow
 
     public function broadcastOn(): Channel
     {
-        // ต้องตรงกับ Echo.channel('{{ config('app.name') }}_events')
         return new Channel(config('app.name') . '_events');
     }
 
     public function broadcastAs(): string
     {
-        return 'LineOAConversationAssigned';
+        return 'LineOAConversationOpen';
     }
 }
