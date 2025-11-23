@@ -53,6 +53,7 @@
         .gt-msg-agent .text-muted {
             color: #084298 !important;
         }
+
         #line-oa-chat-overlay {
             position: fixed;
             inset: 0;
@@ -62,7 +63,7 @@
         .lineoa-backdrop {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.55);
+            background: rgba(0, 0, 0, 0.55);
         }
 
         .lineoa-popup {
@@ -70,11 +71,16 @@
             inset: 20px;
             background: #ffffff;
             border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
             display: flex;
             flex-direction: column;
             z-index: 9999;
             overflow: hidden;
+        }
+
+        .list-group-item.gt-conv-active .oa-reg-badge {
+            background-color: #ffc107 !important; /* สี warning */
+            color: #212529 !important; /* ดำ */
         }
     </style>
 @endpush
@@ -84,6 +90,10 @@
     {{-- ชื่อ channel เดียวกับที่ใช้ใน Echo.channel('{{ config('app.name') }}_events') --}}
     <script>
         window.LineOAEventsChannel = "{{ config('app.name') }}_events";
+        window.LineOAEmployee = {
+            id: '{{ auth('admin')->user()->code ?? '' }}',
+            name: '{{ auth('admin')->user()->user_name ?? '' }}',
+        };
     </script>
 
     <script type="text/x-template" id="line-oa-chat-template">
@@ -203,11 +213,18 @@
                                                     @{{ formatDateTime(conv.last_message_at) }}
                                                 </small>
                                             </div>
-
+                                            <!-- เพิ่มส่วนนี้ -->
+                                            <div v-if="conv.is_registering" class="mt-1">
+                                                <b-badge variant="warning" class="text-dark oa-reg-badge">
+                                                    <i class="fa fa-robot"></i>
+                                                    กำลังสมัครสมาชิกกับบอท
+                                                </b-badge>
+                                            </div>
+                                            <!-- /เพิ่มส่วนนี้ -->
                                             <div class="text-muted small text-truncate">
-                                                <span v-if="conv.line_account && conv.line_account.name">
-                                                    [@{{ conv.line_account.name }}]
-                                                </span>
+                                            <span v-if="conv.line_account && conv.line_account.name">
+                                                [@{{ conv.line_account.name }}]
+                                            </span>
                                                 @{{ conv.last_message || 'ยังไม่มีข้อความ' }}
                                             </div>
 
@@ -216,6 +233,7 @@
                                                     <small class="text-muted d-block">
                                                         ยูส: @{{ conv.contact && conv.contact.member_username || '-' }}
                                                     </small>
+
                                                     {{-- แสดงชื่อคนปิด + เวลา ถ้าห้องปิดแล้ว --}}
                                                     <div
                                                             v-if="conv.status === 'closed'"
@@ -223,8 +241,8 @@
                                                     >
                                                         ปิดโดย @{{ conv.closed_by_employee_name || 'พนักงาน' }}
                                                         <span v-if="conv.closed_at">
-                                                            เมื่อ @{{ formatDateTime(conv.closed_at) }}
-                                                        </span>
+                                                        เมื่อ @{{ formatDateTime(conv.closed_at) }}
+                                                    </span>
                                                     </div>
                                                 </div>
                                                 <div class="d-flex align-items-center">
@@ -298,26 +316,26 @@
                                             {{-- ถ้ายังไม่มี member_id ให้คลิกชื่อเพื่อผูกสมาชิก --}}
                                             <template
                                                     v-if="selectedConversation.contact && !selectedConversation.contact.member_id">
-                                                <span
-                                                        class="text-primary"
-                                                        style="cursor: pointer; text-decoration: underline;"
-                                                        @click="openMemberModal"
-                                                >
-                                                    @{{ (selectedConversation.contact &&
-                                                    (selectedConversation.contact.display_name ||
-                                                    selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
-                                                </span>
+                                            <span
+                                                    class="text-primary"
+                                                    style="cursor: pointer; text-decoration: underline;"
+                                                    @click="openMemberModal"
+                                            >
+                                                @{{ (selectedConversation.contact &&
+                                                (selectedConversation.contact.display_name ||
+                                                selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
+                                            </span>
                                             </template>
                                             <template v-else>
-                                                 <span
-                                                         class="text-primary"
-                                                         style="cursor: pointer; text-decoration: underline;"
-                                                         @click="openMemberModal"
-                                                 >
-                                                    @{{ (selectedConversation.contact &&
-                                                    (selectedConversation.contact.display_name ||
-                                                    selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
-                                                </span>
+                                            <span
+                                                    class="text-primary"
+                                                    style="cursor: pointer; text-decoration: underline;"
+                                                    @click="openMemberModal"
+                                            >
+                                                @{{ (selectedConversation.contact &&
+                                                (selectedConversation.contact.display_name ||
+                                                selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
+                                            </span>
                                             </template>
 
                                         </h5>
@@ -325,39 +343,83 @@
                                             <small class="text-muted d-block" v-if="selectedConversation.line_account">
                                                 OA: @{{ selectedConversation.line_account.name }}
                                             </small>
-                                            <div class="mt-1">
-                                                <b-badge
-                                                        v-if="selectedConversation.status === 'closed'"
-                                                        variant="secondary"
-                                                        class="mr-1"
-                                                >
-                                                    ปิดโดย @{{ selectedConversation.closed_by_employee_name || 'พนักงาน' }}
-                                                </b-badge>
-                                                <b-badge
-                                                        v-else-if="selectedConversation.assigned_employee_name"
-                                                        variant="info"
-                                                        class="mr-1"
-                                                >
-                                                    รับเรื่องโดย @{{ selectedConversation.assigned_employee_name }}
-                                                </b-badge>
 
-                                                <b-button
-                                                        v-if="selectedConversation.status === 'open'"
-                                                        size="sm"
-                                                        variant="outline-primary"
-                                                        class="mr-1"
-                                                        @click="acceptConversation"
-                                                >
-                                                    รับเรื่อง
-                                                </b-button>
-                                                <b-button
-                                                        v-if="selectedConversation.status !== 'closed'"
-                                                        size="sm"
-                                                        variant="outline-danger"
-                                                        @click="closeConversation"
-                                                >
-                                                    ปิดเคส
-                                                </b-button>
+                                            <div class="mt-1">
+                                                <div class="mb-1">
+                                                    <b-badge
+                                                            v-if="selectedConversation.status === 'closed'"
+                                                            variant="secondary"
+                                                            class="mr-1"
+                                                    >
+                                                        ปิดโดย @{{ selectedConversation.closed_by_employee_name ||
+                                                        'พนักงาน' }}
+                                                    </b-badge>
+                                                    <b-badge
+                                                            v-else-if="selectedConversation.assigned_employee_name"
+                                                            variant="info"
+                                                            class="mr-1"
+                                                    >
+                                                        รับเรื่องโดย @{{ selectedConversation.assigned_employee_name }}
+                                                    </b-badge>
+                                                </div>
+
+                                                <div class="d-flex justify-content-end flex-wrap">
+                                                    <b-button
+                                                            v-if="selectedConversation.status === 'open'"
+                                                            size="sm"
+                                                            variant="outline-primary"
+                                                            class="mr-1 mb-1"
+                                                            @click="acceptConversation"
+                                                    >
+                                                        รับเรื่อง
+                                                    </b-button>
+                                                    <b-button
+                                                            v-if="selectedConversation.status !== 'closed'"
+                                                            size="sm"
+                                                            variant="outline-danger"
+                                                            class="mr-1 mb-1"
+                                                            @click="closeConversation"
+                                                    >
+                                                        ปิดเคส
+                                                    </b-button>
+                                                    <b-button
+                                                            v-if="selectedConversation.status === 'closed'"
+                                                            size="sm"
+                                                            variant="outline-danger"
+                                                            class="mr-1 mb-1"
+                                                            @click="openConversation"
+                                                    >
+                                                        เปิดเคส
+                                                    </b-button>
+
+                                                    <b-button
+                                                            v-if="selectedConversation.is_registering"
+                                                            size="sm"
+                                                            variant="outline-warning"
+                                                            class="mr-1 mb-1"
+                                                            @click="cancelRegisterFlow"
+                                                    >
+                                                        ยกเลิกสมัคร
+                                                    </b-button>
+                                                    <b-button
+                                                            v-else
+                                                            size="sm"
+                                                            variant="outline-success"
+                                                            class="mr-1 mb-1"
+                                                            @click="openRegisterModal"
+                                                    >
+                                                        สมัคร
+                                                    </b-button>
+
+                                                    <b-button
+                                                            size="sm"
+                                                            variant="outline-success"
+                                                            class="mb-1"
+                                                            @click="openTopupModal"
+                                                    >
+                                                        เติมเงิน
+                                                    </b-button>
+                                                </div>
                                             </div>
 
                                             <div
@@ -370,6 +432,7 @@
                                             </div>
                                         </div>
                                     </div>
+
                                     <div class="d-flex justify-content-between align-items-center mt-1">
                                         <div class="text-muted">
                                             ยูส: @{{ selectedConversation.contact &&
@@ -387,6 +450,12 @@
                                             เลขบัญชี: @{{ selectedConversation.contact &&
                                             selectedConversation.contact.member_acc_no || '-' }}
                                         </div>
+                                    </div>
+
+                                    <div class="mt-1" v-if="selectedConversation.is_registering">
+                                        <p class="text-success">
+                                            กำลังสมัครสมาชิกผ่านบอทอยู่ ทีมงานสามารถกด "ยกเลิกสมัคร" เพื่อดูแลต่อเอง
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -512,7 +581,7 @@
                                 <b-input-group-prepend>
                                     <b-button variant="outline-secondary" size="sm"
                                               @click="$refs.imageInput.click()"
-                                              :disabled="selectedConversation && selectedConversation.status === 'closed'">
+                                              :disabled="!canReply">
                                         <i class="fa fa-paperclip"></i>
                                     </b-button>
                                 </b-input-group-prepend>
@@ -522,24 +591,24 @@
                                         rows="1"
                                         max-rows="4"
                                         :placeholder="selectedConversation && selectedConversation.status === 'closed'
-            ? 'เคสนี้ถูกปิดแล้ว ไม่สามารถส่งข้อความได้'
-            : 'พิมพ์ข้อความเพื่อตอบลูกค้า แล้วกด Enter หรือปุ่ม ส่ง'"
-                                        :disabled="selectedConversation && selectedConversation.status === 'closed'"
-                                        @keydown.enter.exact.prevent="selectedConversation && selectedConversation.status !== 'closed' && sendReply()"
+                                    ? 'เคสนี้ถูกปิดแล้ว ไม่สามารถส่งข้อความได้'
+                                    : 'พิมพ์ข้อความเพื่อตอบลูกค้า แล้วกด Enter หรือปุ่ม ส่ง'"
+                                        :disabled="!canReply"
+                                        @keydown.enter.exact.prevent="canReply && sendReply()"
                                 ></b-form-textarea>
 
                                 <b-input-group-append>
                                     <b-button variant="primary"
                                               :disabled="sending
-                  || replyText.trim() === ''
-                  || (selectedConversation && selectedConversation.status === 'closed')"
+                                              || replyText.trim() === ''
+                                              || !canReply"
                                               @click="sendReply">
-        <span v-if="sending">
-            <b-spinner small class="mr-1"></b-spinner> กำลังส่ง...
-        </span>
+                                    <span v-if="sending">
+                                        <b-spinner small class="mr-1"></b-spinner> กำลังส่ง...
+                                    </span>
                                         <span v-else>
-            <i class="fa fa-paper-plane"></i> ส่ง
-        </span>
+                                        <i class="fa fa-paper-plane"></i> ส่ง
+                                    </span>
                                     </b-button>
                                 </b-input-group-append>
 
@@ -636,6 +705,206 @@
                 </b-form>
             </b-modal>
 
+            {{-- MODAL: สมัครสมาชิกแทนลูกค้า --}}
+            <b-modal
+                    id="line-oa-register-modal"
+                    ref="registerModal"
+                    title="สมัครสมาชิกแทนลูกค้า"
+                    size="md"
+                    centered
+                    hide-footer
+                    body-class="pt-2 pb-2"
+            >
+                <b-form @submit.prevent="submitRegisterByStaff">
+                    <b-form-group label="เบอร์โทร" label-for="reg_phone">
+                        <b-form-input
+                                id="reg_phone"
+                                v-model="registerModal.phone"
+                                autocomplete="off"
+                        ></b-form-input>
+                    </b-form-group>
+
+                    <b-form-group label="ธนาคาร" label-for="reg_bank">
+                        <b-form-input
+                                id="reg_bank"
+                                v-model="registerModal.bank_code"
+                                autocomplete="off"
+                                placeholder="เช่น KBANK, SCB หรือรหัสธนาคารในระบบ"
+                        ></b-form-input>
+                    </b-form-group>
+
+                    <b-form-group label="เลขบัญชี" label-for="reg_account">
+                        <b-form-input
+                                id="reg_account"
+                                v-model="registerModal.account_no"
+                                autocomplete="off"
+                        ></b-form-input>
+                    </b-form-group>
+
+                    <b-form-group label="ชื่อ" label-for="reg_name">
+                        <b-form-input
+                                id="reg_name"
+                                v-model="registerModal.name"
+                                autocomplete="off"
+                        ></b-form-input>
+                    </b-form-group>
+
+                    <b-form-group label="นามสกุล" label-for="reg_surname">
+                        <b-form-input
+                                id="reg_surname"
+                                v-model="registerModal.surname"
+                                autocomplete="off"
+                        ></b-form-input>
+                    </b-form-group>
+
+                    <b-alert
+                            v-if="registerModal.error"
+                            show
+                            variant="danger"
+                            class="py-1 mb-2"
+                    >
+                        @{{ registerModal.error }}
+                    </b-alert>
+
+                    <div class="text-right">
+                        <b-button size="sm" variant="secondary" @click="$refs.registerModal.hide()">
+                            ปิด
+                        </b-button>
+                        <b-button size="sm" variant="primary" class="ml-1" type="submit"
+                                  :disabled="registerModal.loading">
+                            <b-spinner v-if="registerModal.loading" small class="mr-1"></b-spinner>
+                            <span v-else>สมัคร</span>
+                        </b-button>
+                    </div>
+                </b-form>
+            </b-modal>
+
+            {{-- MODAL: เติมเงิน --}}
+            <b-modal
+                    id="line-oa-topup-modal"
+                    ref="topupModal"
+                    title="เติมเงิน"
+                    size="xl"
+                    centered
+                    hide-footer
+                    body-class="pt-2 pb-2"
+            >
+                <b-row>
+                    <b-col cols="12" md="4" class="border-right">
+                        <h6 class="mb-2">รายการรอเติม</h6>
+                        <div class="small text-muted mb-2">
+                            เลือกรายการที่ต้องการเติม หรือสร้างรายการใหม่ทางฝั่งขวา
+                        </div>
+
+                        <div v-if="!topupModal.pendingItems.length" class="text-muted small">
+                            ยังไม่มีรายการรอเติม
+                        </div>
+                        <b-list-group v-else flush>
+                            <b-list-group-item
+                                    v-for="item in topupModal.pendingItems"
+                                    :key="item.id"
+                                    href="#"
+                                    class="py-1"
+                                    :active="topupModal.selectedItem && topupModal.selectedItem.id === item.id"
+                                    @click.prevent="selectTopupItem(item)"
+                            >
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <div class="font-weight-bold">
+                                            @{{ item.amount }} ฿
+                                        </div>
+                                        <small class="text-muted">
+                                            @{{ item.reference || 'ไม่ระบุอ้างอิง' }}
+                                        </small>
+                                    </div>
+                                    <div class="text-right">
+                                        <small class="d-block text-muted">@{{ item.created_at }}</small>
+                                    </div>
+                                </div>
+                            </b-list-group-item>
+                        </b-list-group>
+                    </b-col>
+                    <b-col cols="12" md="8">
+                        <h6 class="mb-2">ข้อมูลการเติมเงิน</h6>
+
+                        <b-form-group label="ไอดีสมาชิก" label-for="topup_member" label-cols="4" label-class="pt-1">
+                            <b-input-group>
+                                <b-form-input
+                                        id="topup_member"
+                                        v-model="topupModal.memberSearch"
+                                        autocomplete="off"
+                                ></b-form-input>
+                                <b-input-group-append>
+                                    <b-button size="sm" variant="outline-primary" @click="searchTopupMember">
+                                        ค้นหา
+                                    </b-button>
+                                </b-input-group-append>
+                            </b-input-group>
+                            <small class="form-text text-muted">
+                                กรอกไอดีแล้วกดค้นหาเพื่อโหลดข้อมูลสมาชิก
+                            </small>
+                        </b-form-group>
+
+                        <b-card v-if="topupModal.member" class="mb-2" body-class="py-2 px-2">
+                            <div class="small">
+                                <div>ยูส: @{{ topupModal.member.username }}</div>
+                                <div>เบอร์: @{{ topupModal.member.mobile }}</div>
+                                <div>ชื่อ: @{{ topupModal.member.name }}</div>
+                                <div>ธนาคาร: @{{ topupModal.member.bank_name }}</div>
+                                <div>เลขบัญชี: @{{ topupModal.member.acc_no }}</div>
+                            </div>
+                        </b-card>
+
+                        <b-alert
+                                v-if="topupModal.error"
+                                show
+                                variant="danger"
+                                class="py-1 mb-2"
+                        >
+                            @{{ topupModal.error }}
+                        </b-alert>
+
+                        <template v-if="topupModal.selectedItem">
+                            <b-alert show variant="info" class="py-1 mb-2">
+                                กำลังเติมจากรายการที่เลือก:
+                                ยอด @{{ topupModal.selectedItem.amount }} ฿
+                            </b-alert>
+                        </template>
+
+                        <template v-else>
+                            <b-form-group label="ธนาคารที่เติม" label-for="topup_bank" label-cols="4"
+                                          label-class="pt-1">
+                                <b-form-input
+                                        id="topup_bank"
+                                        v-model="topupModal.bank"
+                                        autocomplete="off"
+                                ></b-form-input>
+                            </b-form-group>
+
+                            <b-form-group label="จำนวนเงิน" label-for="topup_amount" label-cols="4" label-class="pt-1">
+                                <b-form-input
+                                        id="topup_amount"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        v-model="topupModal.amount"
+                                ></b-form-input>
+                            </b-form-group>
+                        </template>
+
+                        <div class="text-right mt-3">
+                            <b-button size="sm" variant="secondary" @click="$refs.topupModal.hide()">
+                                ปิด
+                            </b-button>
+                            <b-button size="sm" variant="primary" class="ml-1" type="button" @click="submitTopup"
+                                      :disabled="topupModal.loading">
+                                <b-spinner v-if="topupModal.loading" small class="mr-1"></b-spinner>
+                                <span v-else>เติมเงิน</span>
+                            </b-button>
+                        </div>
+                    </b-col>
+                </b-row>
+            </b-modal>
 
         </b-container>
     </script>
@@ -686,6 +955,29 @@
                         error: '',
                     },
 
+                    // modal สมัครสมาชิกแทนลูกค้า
+                    registerModal: {
+                        phone: '',
+                        bank_code: '',
+                        account_no: '',
+                        name: '',
+                        surname: '',
+                        loading: false,
+                        error: '',
+                    },
+
+                    // modal เติมเงิน
+                    topupModal: {
+                        pendingItems: [],
+                        selectedItem: null,
+                        memberSearch: '',
+                        member: null,
+                        bank: '',
+                        amount: null,
+                        loading: false,
+                        error: '',
+                    },
+
                     // จะ set เป็น function ใน subscribeRealtime()
                     unsubscribeRealtime: null,
                 };
@@ -705,6 +997,39 @@
                 if (typeof this.unsubscribeRealtime === 'function') {
                     this.unsubscribeRealtime();
                 }
+            },
+            computed: {
+                currentEmployeeId() {
+
+                    return window.LineOAEmployee && window.LineOAEmployee.id
+                        ? String(window.LineOAEmployee.id)
+                        : null;
+                },
+
+                canReply() {
+                    const conv = this.selectedConversation;
+                    if (!conv) return false;
+
+                    // ปิดเคสแล้ว ห้ามตอบ
+                    if (conv.status === 'closed') {
+                        return false;
+                    }
+
+                    // ถ้าไม่มี lock → ใครก็พิมพ์ได้
+                    const lockedId = conv.locked_by_employee_id;
+                    if (!lockedId) {
+                        return true;
+                    }
+
+                    const me = this.currentEmployeeId;
+                    if (!me) {
+                        // กันกรณีไม่ได้เซ็ต employee id ไว้
+                        return false;
+                    }
+
+                    // พิมพ์ได้เฉพาะคนที่ล็อกห้อง
+                    return String(lockedId) === String(me);
+                },
             },
             methods: {
                 apiUrl(path) {
@@ -885,6 +1210,13 @@
 
                         // ไม่ reload list ทั้งก้อน เพื่อกันกระพริบ
                     }).catch(err => {
+                        const status = err.response?.status;
+                        const data = err.response?.data || {};
+
+                        if (status === 403) {
+                            alert(data.message || 'ไม่สามารถตอบห้องนี้ได้ เนื่องจากถูกล็อกโดยพนักงานคนอื่น');
+                            return;
+                        }
                         console.error('sendReply error', err);
                         alert('ส่งข้อความไม่สำเร็จ กรุณาลองใหม่');
                     }).finally(() => {
@@ -1097,7 +1429,8 @@
 
                     const playSound = () => {
                         audio.currentTime = 0;
-                        audio.play().catch(() => {});
+                        audio.play().catch(() => {
+                        });
                     };
 
                     playSound();
@@ -1124,9 +1457,8 @@
                             const conv = e.conversation;
                             this.updateOrInsertConversation(conv);
                             if (this.selectedConversation &&
-                                this.selectedConversation.id === conv.id)
-                            {
-                                this.fetchMessages(conv.id, { limit: 50, silent: true });
+                                this.selectedConversation.id === conv.id) {
+                                this.fetchMessages(conv.id, {limit: 50, silent: true});
                             }
                         })
                         .listen('.LineOAConversationAssigned', (e) => {
@@ -1134,6 +1466,9 @@
                         })
                         .listen('.LineOAConversationClosed', (e) => {
                             vm.handleConversationClosed(e);
+                        })
+                        .listen('.LineOAConversationOpen', (e) => {
+                            vm.handleConversationOpen(e);
                         })
                         .listen('.LineOAConversationLocked', (e) => {
                             vm.handleConversationLocked(e);
@@ -1234,6 +1569,16 @@
                 },
 
                 handleConversationClosed(e) {
+                    if (!e || !e.conversation) return;
+                    const conv = e.conversation;
+
+                    this.updateOrInsertConversation(conv);
+
+                    if (this.selectedConversation && this.selectedConversation.id === conv.id) {
+                        this.selectedConversation = Object.assign({}, this.selectedConversation, conv);
+                    }
+                },
+                handleConversationOpen(e) {
                     if (!e || !e.conversation) return;
                     const conv = e.conversation;
 
@@ -1396,6 +1741,7 @@
                             const conv = res.data.data || res.data.conversation || null;
                             if (conv) {
                                 this.selectedConversation = conv;
+                                this.selectedConversation.assigned_employee_name = this.selectedConversation.assigned_employee_name || 'คุณ';
                                 // อัปเดตใน list ซ้ายด้วย (ใช้ method เดิมของโบ๊ท)
                                 this.updateConversationLocal(conv);
                             }
@@ -1474,13 +1820,62 @@
                             const conv = res.data.data || null;
                             if (conv) {
                                 this.selectedConversation = conv;
-
+                                this.selectedConversation.status = 'closed';
                                 // sync list ซ้ายด้วย
                                 this.updateConversationLocal(conv);
                             }
                         })
                         .catch(err => {
                             const msg = err.response?.data?.message || 'ปิดเคสไม่สำเร็จ';
+                            alert(msg);
+                        });
+                },
+                openConversation() {
+                    if (!this.selectedConversation) return;
+
+                    const id = this.selectedConversation.id;
+
+                    if (!confirm('ยืนยันเปิดเคสนี้?')) {
+                        return;
+                    }
+
+                    axios.post(this.apiUrl('conversations/' + id + '/open'))
+                        .then(res => {
+                            const conv = res.data.data || null;
+                            if (conv) {
+                                this.selectedConversation = conv;
+                                this.selectedConversation.status = 'open';
+                                // sync list ซ้ายด้วย
+                                this.updateConversationLocal(conv);
+                            }
+                        })
+                        .catch(err => {
+                            const status = err.response?.status;
+                            const data = err.response?.data || {};
+
+                            // เคส 409 = มีห้องที่เปิดอยู่แล้ว
+                            if (status === 409) {
+                                alert(data.message || 'ลูกค้าคนนี้มีห้องที่เปิดอยู่แล้ว');
+
+                                const cid = data.current_open_conversation;
+                                if (cid) {
+                                    // หาในรายการซ้าย
+                                    const existing = this.conversations.find(c => c.id === cid);
+                                    if (existing) {
+                                        this.selectConversation(existing);
+                                    } else {
+                                        // ถ้าไม่อยู่ในหน้านี้ ให้โหลดใหม่
+                                        this.fetchConversations(1).then(() => {
+                                            const conv2 = this.conversations.find(c => c.id === cid);
+                                            if (conv2) this.selectConversation(conv2);
+                                        });
+                                    }
+                                }
+                                return;
+                            }
+
+                            // fallback เดิม
+                            const msg = data.message || 'เปิดเคสไม่สำเร็จ';
                             alert(msg);
                         });
                 },
@@ -1512,9 +1907,139 @@
                         });
                 },
 
+                // ====== สมัครสมาชิก / ยกเลิกสมัคร / เติมเงิน (UI-only ตอนนี้) ======
+                openRegisterModal() {
+                    if (!this.selectedConversation) return;
+
+                    const c = this.selectedConversation.contact || {};
+
+                    this.registerModal.error = '';
+                    this.registerModal.loading = false;
+                    this.registerModal.phone = c.member_mobile || '';
+                    this.registerModal.bank_code = c.member_bank_code || '';
+                    this.registerModal.account_no = c.member_acc_no || '';
+                    this.registerModal.name = c.member_name || '';
+                    this.registerModal.surname = '';
+
+                    this.$nextTick(() => {
+                        if (this.$refs.registerModal) {
+                            this.$refs.registerModal.show();
+                        }
+                    });
+                },
+
+                cancelRegisterFlow() {
+                    if (!this.selectedConversation) return;
+
+                    if (!confirm('ยืนยันยกเลิกการสมัครกับบอทสำหรับห้องนี้?')) {
+                        return;
+                    }
+
+                    axios.post(this.apiUrl('conversations/' + this.selectedConversation.id + '/cancel-register'))
+                        .then(() => {
+                            this.selectedConversation.is_registering = false;
+                            this.updateConversationLocal(this.selectedConversation);
+                        })
+                        .catch(err => {
+                            console.error('cancelRegisterFlow error', err);
+                            alert(err.response?.data?.message || 'ไม่สามารถยกเลิกการสมัครได้');
+                        });
+                },
+
+                submitRegisterByStaff() {
+                    if (this.registerModal.loading) return;
+
+                    // TODO: ผูก API สมัครสมาชิกจริง ๆ
+                    console.log('[LineOA] submitRegisterByStaff payload', this.registerModal);
+
+                    this.registerModal.loading = true;
+                    setTimeout(() => {
+                        this.registerModal.loading = false;
+                        if (this.$refs.registerModal) {
+                            this.$refs.registerModal.hide();
+                        }
+                    }, 500);
+                },
+
+                openTopupModal() {
+                    if (!this.selectedConversation) return;
+
+                    this.topupModal.error = '';
+                    this.topupModal.loading = false;
+                    this.topupModal.selectedItem = null;
+
+                    const c = this.selectedConversation.contact || {};
+
+                    this.topupModal.memberSearch = c.member_username || '';
+                    this.topupModal.member = c.member_username ? {
+                        username: c.member_username,
+                        mobile: c.member_mobile,
+                        name: c.member_name,
+                        bank_name: c.member_bank_name,
+                        acc_no: c.member_acc_no,
+                    } : null;
+
+                    this.topupModal.bank = '';
+                    this.topupModal.amount = null;
+
+                    this.$nextTick(() => {
+                        if (this.$refs.topupModal) {
+                            this.$refs.topupModal.show();
+                        }
+                    });
+                },
+
+                selectTopupItem(item) {
+                    this.topupModal.selectedItem = item || null;
+                },
+
+                searchTopupMember() {
+                    if (!this.topupModal.memberSearch) {
+                        this.topupModal.error = 'กรุณากรอกไอดีสมาชิกก่อนค้นหา';
+                        return;
+                    }
+                    this.topupModal.error = '';
+                    // TODO: ผูก API ค้นหาสมาชิกจริง ๆ
+                    console.log('[LineOA] searchTopupMember', this.topupModal.memberSearch);
+                },
+
+                submitTopup() {
+                    if (this.topupModal.loading) return;
+
+                    // validation ง่าย ๆ ฝั่ง UI
+                    if (!this.topupModal.member && !this.topupModal.memberSearch) {
+                        this.topupModal.error = 'กรุณาระบุไอดีสมาชิก';
+                        return;
+                    }
+                    if (!this.topupModal.selectedItem) {
+                        if (!this.topupModal.bank) {
+                            this.topupModal.error = 'กรุณากรอกธนาคารที่เติม';
+                            return;
+                        }
+                        if (!this.topupModal.amount || this.topupModal.amount <= 0) {
+                            this.topupModal.error = 'กรุณากรอกจำนวนเงินที่ถูกต้อง';
+                            return;
+                        }
+                    }
+
+                    this.topupModal.error = '';
+                    this.topupModal.loading = true;
+
+                    // TODO: ผูก API สร้าง/ยืนยันรายการเติมเงินจริง ๆ
+                    console.log('[LineOA] submitTopup payload', this.topupModal);
+
+                    setTimeout(() => {
+                        this.topupModal.loading = false;
+                        if (this.$refs.topupModal) {
+                            this.$refs.topupModal.hide();
+                        }
+                    }, 500);
+                },
+
             }
         });
     </script>
+
     <script type="module">
 
         Vue.mixin({
