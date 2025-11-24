@@ -1051,10 +1051,16 @@
             },
             computed: {
                 currentEmployeeId() {
+                    const emp = window.LineOAEmployee || null;
+                    if (!emp) return null;
 
-                    return window.LineOAEmployee && window.LineOAEmployee.id
-                        ? String(window.LineOAEmployee.id)
-                        : null;
+                    if (emp.code) {
+                        return String(emp.code);
+                    }
+                    if (emp.id) {
+                        return String(emp.id);
+                    }
+                    return null;
                 },
                 canReply() {
                     const conv = this.selectedConversation;
@@ -1078,16 +1084,8 @@
                     return String(conv.assigned_employee_id) === String(me);
                 },
                 isTwBank() {
-                    const bank = this.bankOptions.find(
-                        b => b.value === this.registerModal.bank_code
-                    );
-
-                    if (!bank) {
-                        return false;
-                    }
-
-                    // รองรับทั้งกรณี bank.id = 18 หรือ bank.code = 'TW'
-                    return String(bank.id) === '18' || String(bank.code).toUpperCase() === 'TW';
+                    const code = String(this.registerModal.bank_code || '').toUpperCase();
+                    return code === '18' || code === 'TW';
                 },
 
                 phoneStatusClass() {
@@ -1148,10 +1146,8 @@
                 },
                 async fetchBanks() {
                     try {
-                        const { data } = await axios.get(this.apiUrl('register/load-bank')); // แก้เป็น route จริงของคุณ
+                        const { data } = await axios.get(this.apiUrl('register/load-bank')); // route backend
 
-                        // สมมติ backend ส่งมาเป็น array ของ:
-                        // { id: 1, code: 'KBANK', name: 'กสิกรไทย' }
                         this.bankOptions = data.bank;
                     } catch (e) {
                         console.error('โหลดรายการธนาคารไม่สำเร็จ', e);
@@ -1164,7 +1160,7 @@
                     this.registerModal.checkingAccount = false;
                     this.registerModal.error = null;
 
-                    if(this.registerModal.bank_code == '18'){
+                    if (this.registerModal.bank_code == '18') {
                         this.registerModal.account_no = this.registerModal.phone;
                     }
 
@@ -1199,10 +1195,6 @@
                             phone: phoneDigits,
                         });
 
-                        // สมมติ backend (RegisterFlowService) ทำตามที่คุยกัน:
-                        // - ถ้าเบอร์ไม่ถูกต้อง → message != 'success'
-                        // - ถ้าถูกต้อง → message = 'success', bank = true/false
-
                         if (data.message !== 'success') {
                             this.registerModal.phoneStatus = 'invalid';
                             this.registerModal.phoneStatusMessage =
@@ -1234,7 +1226,6 @@
                             phone: phoneDigits,
                         });
 
-                        // แล้วแต่ format ที่ backend คุณใช้
                         if (data.bank) {
                             this.registerModal.error = 'เบอร์นี้สมัครสมาชิกแล้ว';
                         }
@@ -1253,15 +1244,6 @@
                     const accDigits = (this.registerModal.account_no || '').replace(/\D/g, '');
                     this.registerModal.account_no = accDigits;
 
-                    // ถ้าเป็นธนาคาร TW → ใช้ logic เบอร์ + เช็คซ้ำ
-                    // if (this.isTwBank) {
-                    //     if (accDigits.length === 10) {
-                    //         this.checkTwAccount(accDigits);
-                    //     }
-                    //     return;
-                    // }
-
-                    // ธนาคารอื่น: >= 10 หลักแล้วค่อยเช็คกับ API
                     if (this.bankAccountCheckTimer) {
                         clearTimeout(this.bankAccountCheckTimer);
                     }
@@ -1320,7 +1302,6 @@
                     // ต้องมีคนรับเรื่อง (assigned_employee_id)
                     if (!conv.assigned_employee_id) return false;
 
-                    // ถ้า frontend ยังไม่รู้ currentEmployeeId ก็ปล่อยผ่าน (กันเคสยังไม่ได้เซ็ต)
                     if (!this.currentEmployeeId) return false;
 
                     // อนุญาตเฉพาะคนที่เป็นคนรับเรื่อง
@@ -1333,7 +1314,7 @@
 
                 fetchConversations(page = 1, options = {}) {
                     const silent = options.silent === true;
-                    const merge  = options.merge === true; // 👈 เพิ่ม flag ว่าจะ merge หรือ replace list
+                    const merge  = options.merge === true; // merge หรือ replace list
 
                     if (!silent) {
                         this.loadingList = true;
@@ -1351,12 +1332,11 @@
                         const body    = res.data || {};
                         const newList = body.data || [];
 
-                        // อัปเดต pagination ตามเดิม
+                        // อัปเดต pagination
                         this.pagination = Object.assign(this.pagination, body.meta || {});
 
-                        // ===== จัดการ conversations แบบเนียน ๆ =====
+                        // ===== จัดการ conversations =====
                         if (merge && Array.isArray(this.conversations) && this.conversations.length > 0) {
-                            // มี list เดิมอยู่ → merge ตาม id
                             const oldById = {};
                             this.conversations.forEach(conv => {
                                 if (conv && conv.id != null) {
@@ -1364,23 +1344,20 @@
                                 }
                             });
 
-                            // ใช้ order จาก backend (newList) แต่ field ด้านใน merge กับของเดิม
                             const mergedList = newList.map(item => {
                                 if (!item || item.id == null) {
                                     return item;
                                 }
                                 const old = oldById[item.id];
                                 return old
-                                    ? Object.assign({}, old, item) // เก็บ flag / field ฝั่งหน้าบางอย่างที่ backend ไม่รู้
+                                    ? Object.assign({}, old, item)
                                     : item;
                             });
 
                             this.conversations = mergedList;
                         } else {
-                            // โหมดเดิม: replace ทั้งก้อน (ใช้กับเปลี่ยนหน้า/เปลี่ยน filter)
                             this.conversations = newList;
                         }
-                        // =========================================
 
                         // สร้าง accountOptions จาก list ปัจจุบัน
                         if (this.filters.account_id === null) {
@@ -1397,10 +1374,6 @@
                             }));
                         }
 
-                        // // ถ้ายังไม่มีห้องที่เลือกอยู่ แต่มีรายการ → เลือกตัวแรกให้เหมือนเดิม
-                        // if (!this.selectedConversation && this.conversations.length > 0) {
-                        //     this.selectConversation(this.conversations[0]);
-                        // }
                     }).catch(err => {
                         console.error('fetchConversations error', err);
                     }).finally(() => {
@@ -1429,14 +1402,11 @@
                     if (!conv) return;
 
                     const reloadMessages = options.reloadMessages !== false; // default = true
-                    // 🟢 เก็บห้องก่อนหน้า
                     const previousId = this.currentActiveConversationId;
 
-                    // 🟢 อัปเดตห้องที่กำลัง active
                     this.currentActiveConversationId = conv.id;
                     this.selectedConversation = conv;
 
-                    // ถ้าไม่ต้อง reload messages (เช่น กรณีแค่เปลี่ยน status/lock)
                     if (!reloadMessages) {
                         this.$nextTick(() => {
                             this.scrollToBottom();
@@ -1444,7 +1414,6 @@
                         return;
                     }
 
-                    // กรณีปกติ: คลิกจาก list ซ้าย → โหลดข้อความใหม่
                     this.fetchMessages(conv.id, { limit: 50 , previous_id: previousId }).then(() => {
                         this.$nextTick(() => {
                             this.scrollToBottom();
@@ -1473,7 +1442,6 @@
                         params.previous_id = options.previous_id;
                     }
 
-                    // เก็บค่า scroll เดิมไว้ถ้าเป็นเคสโหลดข้อความเก่า
                     let prevScrollHeight = null;
                     let prevScrollTop = null;
                     const containerEl = this.$refs.messageContainer;
@@ -1489,16 +1457,12 @@
                             const messages = body.messages || [];
                             const convFromServer = body.conversation || null;
 
-                            // ===== อัปเดต messages =====
                             if (isLoadOlder) {
-                                // โหลดข้อความเก่าเพิ่มด้านบน
                                 this.messages = messages.concat(this.messages || []);
                             } else {
-                                // โหลดรอบใหม่ / เปลี่ยนห้อง
                                 this.messages = messages;
                             }
 
-                            // ===== อัปเดต selectedConversation แบบ merge =====
                             if (convFromServer) {
                                 if (this.selectedConversation && this.selectedConversation.id === convFromServer.id) {
                                     this.selectedConversation = Object.assign(
@@ -1507,12 +1471,10 @@
                                         convFromServer
                                     );
                                 } else if (!this.selectedConversation || this.selectedConversation.id === conversationId) {
-                                    // กันเคส selected ยังว่าง หรือยังเป็นห้องเดิม
                                     this.selectedConversation = convFromServer;
                                 }
                             }
 
-                            // ===== เคลียร์ตัวเลข unread ฝั่ง list ทันที (เฉพาะโหลดปกติ) =====
                             if (!isLoadOlder &&
                                 this.selectedConversation &&
                                 this.selectedConversation.id === conversationId
@@ -1527,21 +1489,17 @@
                                     this.$set(this.conversations, idx, updated);
                                 }
                             }
-                            // ===========================================================
 
                             this.$nextTick(() => {
-                                // เคสโหลดข้อความเก่า → รักษาตำแหน่ง scroll เดิม
                                 if (isLoadOlder && containerEl && prevScrollHeight !== null && prevScrollTop !== null) {
                                     const newScrollHeight = containerEl.scrollHeight;
                                     containerEl.scrollTop = newScrollHeight - prevScrollHeight + prevScrollTop;
                                     return;
                                 }
 
-                                // เคสโหลดปกติ
                                 if (!silent) {
                                     this.scrollToBottom();
                                 }
-                                // ถ้า silent && !isLoadOlder → ไม่ยุ่ง scroll เลย
                             });
                         })
                         .catch(err => {
@@ -1572,17 +1530,14 @@
                         const msg = res.data && res.data.data ? res.data.data : null;
 
                         if (msg) {
-                            // เพิ่มข้อความฝั่ง agent ทันที
                             this.messages.push(msg);
 
-                            // อัปเดตข้อมูลห้องที่เลือก (last_message / last_message_at / unread_count)
                             if (this.selectedConversation) {
                                 this.selectedConversation.last_message = msg.text || this.selectedConversation.last_message;
                                 this.selectedConversation.last_message_at = msg.sent_at || this.selectedConversation.last_message_at;
                                 this.selectedConversation.unread_count = 0;
                             }
 
-                            // sync กับ list ด้านซ้าย
                             const idx = this.conversations.findIndex(c => c.id === this.selectedConversation.id);
                             if (idx !== -1) {
                                 const conv = this.conversations[idx];
@@ -1601,7 +1556,6 @@
                             this.scrollToBottom();
                         });
 
-                        // ไม่ reload list ทั้งก้อน เพื่อกันกระพริบ
                     }).catch(err => {
                         const status = err.response?.status;
                         const data = err.response?.data || {};
@@ -1627,7 +1581,7 @@
                     if (!dt) return '';
                     const d = new Date(dt);
                     if (isNaN(d.getTime())) {
-                        return dt; // กันเคส string แปลก ๆ
+                        return dt;
                     }
                     const pad = n => String(n).padStart(2, '0');
                     return d.getFullYear() + '-' +
@@ -1667,12 +1621,11 @@
                 startAutoRefresh() {
                     this.stopAutoRefresh();
                     this.autoRefreshTimer = setInterval(() => {
-                        // ใช้ silent เพื่อไม่ให้ list กระพริบ
                         this.fetchConversations(this.pagination.current_page || 1, {silent: true, merge: true });
                         if (this.selectedConversation) {
                             this.fetchMessages(this.selectedConversation.id, {limit: 50, silent: true});
                         }
-                    }, 600000); // ตอนนี้มี realtime แล้ว ใช้แค่ sync ระยะยาว ทุก 60 วิพอ
+                    }, 600000); // ตอนนี้มี realtime แล้ว ใช้ sync ระยะยาว
                 },
 
                 stopAutoRefresh() {
@@ -1686,17 +1639,14 @@
 
                     const id = conv.id;
 
-                    // หา index เดิมจาก list
                     const idx = this.conversations.findIndex(c => c.id === id);
 
                     if (idx !== -1) {
-                        // --- อัปเดตเฉพาะฟิลด์ที่เปลี่ยน ไม่ replace object ทิ้ง ---
                         this.$set(this.conversations, idx, {
                             ...this.conversations[idx],
                             ...conv
                         });
                     } else {
-                        // --- ถ้ายังไม่มี → insert ด้านบนสุดของ list ---
                         this.conversations.unshift(conv);
                     }
                 },
@@ -1707,22 +1657,20 @@
                     }
                     this.searchDelayTimer = setTimeout(() => {
                         this.fetchConversations(1,{ silent: true, merge: false });
-                    }, 500); // 0.5 วิหลังหยุดพิมพ์
+                    }, 500);
                 },
 
                 onSelectImage(e) {
                     const file = e.target.files[0];
                     if (!file) return;
 
-                    // reset input ให้เลือกไฟล์เดิมซ้ำได้
                     this.$refs.imageInput.value = '';
 
-                    // validate ง่าย ๆ ก่อน
                     if (!file.type.startsWith('image/')) {
                         alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
                         return;
                     }
-                    if (file.size > 5 * 1024 * 1024) { // 5 MB
+                    if (file.size > 5 * 1024 * 1024) {
                         alert('ไฟล์ใหญ่เกินไป สูงสุด 5MB');
                         return;
                     }
@@ -1751,10 +1699,8 @@
                     }).then(res => {
                         const msg = res.data && res.data.data ? res.data.data : null;
                         if (msg) {
-                            // เติม message รูปเข้า list ทันที
                             this.messages.push(msg);
 
-                            // อัปเดตข้อมูลห้อง (last_message / last_message_at / unread_count)
                             if (this.selectedConversation) {
                                 this.selectedConversation.last_message =
                                     this.buildPreviewFromMessage(msg) || this.selectedConversation.last_message;
@@ -1815,14 +1761,12 @@
                         return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker_popup.png`;
                     }
 
-                    // fallback
                     return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
                 },
                 playNewMessageSound() {
                     const audio = document.getElementById('line-noti-audio');
                     if (!audio) return;
                     audio.muted = false;
-                    // reset cursor เพื่อให้เล่นซ้ำได้
                     audio.currentTime = 0;
 
                     const playSound = () => {
@@ -1861,15 +1805,12 @@
                                 this.selectedConversation &&
                                 this.selectedConversation.id === conv.id;
 
-                            // ถ้าห้องนี้กำลังเปิดอยู่ ให้ถือว่าอ่านแล้วเสมอ → บังคับ unread_count = 0
                             if (isActive) {
                                 conv.unread_count = 0;
                             }
 
-                            // อัปเดตรายการฝั่งซ้าย
                             this.updateOrInsertConversation(conv);
 
-                            // sync selectedConversation ด้วย
                             if (isActive) {
                                 this.selectedConversation = Object.assign(
                                     {},
@@ -1911,13 +1852,11 @@
                     const newMsg = e.message;
                     const newConvRaw = e.conversation || {};
 
-                    // หาใน list ซ้าย
                     const idx = this.conversations.findIndex(c => c.id === convId);
                     const existing = idx !== -1 ? this.conversations[idx] : null;
 
                     const isActive = this.selectedConversation && this.selectedConversation.id === convId;
 
-                    // ===== last_message / last_message_at =====
                     const lastMessage =
                         newConvRaw.last_message ??
                         newConvRaw.last_message_preview ??
@@ -1931,10 +1870,8 @@
                         (existing && existing.last_message_at) ??
                         null;
 
-                    // ===== unread_count =====
                     let unread;
                     if (isActive) {
-                        // ถ้ากำลังเปิดห้องนี้อยู่ ถือว่าอ่านข้อความใหม่ทันที
                         unread = 0;
                     } else if (newConvRaw.unread_count != null) {
                         unread = newConvRaw.unread_count;
@@ -1943,7 +1880,6 @@
                         unread = oldUnread + 1;
                     }
 
-                    // merge ข้อมูลห้อง
                     const mergedConv = Object.assign(
                         {},
                         existing || {},
@@ -1955,7 +1891,6 @@
                         }
                     );
 
-                    // อัปเดต list ซ้าย
                     if (idx !== -1) {
                         this.$set(this.conversations, idx, mergedConv);
                     } else if (this.filters.status === 'open') {
@@ -1963,7 +1898,6 @@
                         this.pagination.total += 1;
                     }
 
-                    // ถ้ามีเปิดห้องนี้อยู่ → เพิ่มข้อความ + sync selectedConversation
                     if (isActive) {
                         this.messages.push(newMsg);
                         this.selectedConversation = mergedConv;
@@ -2030,7 +1964,6 @@
                         return;
                     }
 
-                    const contact = this.selectedConversation.contact;
                     this.memberModal.error = '';
                     this.memberModal.member = null;
                     this.memberModal.member_id = '';
@@ -2058,7 +1991,6 @@
                     this.memberModal.member = null;
                     this.memberModal.loading = true;
 
-                    // TODO: ปรับ path ให้ตรงกับ backend จริง
                     axios.get(this.apiUrl('members/find'), {
                         params: {
                             member_id: this.memberModal.member_id,
@@ -2095,18 +2027,15 @@
 
                     this.memberModal.saving = true;
 
-                    // TODO: ปรับ path ให้ตรงกับ backend จริง
                     axios.post(this.apiUrl('contacts/' + contactId + '/attach-member'), {
                         member_id: member.id,
                     }).then(res => {
                         const data = res.data || {};
                         const contact = data.data || data.contact || null;
 
-                        // ถ้า backend ส่ง contact กลับมา ใช้ค่าตรงนั้น
                         if (contact) {
                             this.selectedConversation.contact = contact;
                         } else {
-                            // ถ้าไม่ ก็อัปเดตเองจาก member ที่หาได้
                             const c = this.selectedConversation.contact;
                             c.member_id = member.id;
                             c.member_username = member.username || c.member_username;
@@ -2114,7 +2043,6 @@
                             this.selectedConversation.contact = Object.assign({}, c);
                         }
 
-                        // sync กับ list ซ้าย
                         const idx = this.conversations.findIndex(c => c.id === this.selectedConversation.id);
                         if (idx !== -1) {
                             const merged = Object.assign({}, this.conversations[idx], {
@@ -2158,14 +2086,8 @@
                             const conv = res.data.data || res.data.conversation || null;
                             if (!conv) return;
 
-                            // 1) อัปเดตห้องปัจจุบัน + list ซ้าย ให้รู้ว่าห้องนี้ closed แล้ว
                             this.updateConversationLocal(conv);
 
-                            // 2) สลับ filter ไปแท็บ "ห้องปิดแล้ว"
-                            // this.filters.status = 'closed';
-
-                            // 3) โหลด list ใหม่ตามสถานะ closed
-                            // โหลด list ใหม่แบบเนียน (ไม่หมุนทั้ง list, merge ตาม id)
                             this.fetchConversations(1, { silent: true, merge: true })
                                 .then(() => {
                                     const idx = this.conversations.findIndex(c => c.id === conv.id);
@@ -2225,14 +2147,10 @@
                             const conv = res.data.data || null;
                             if (!conv) return;
 
-                            // 1) อัปเดตห้องปัจจุบัน + list ซ้าย ให้รู้ว่าห้องนี้ closed แล้ว
                             this.updateConversationLocal(conv);
 
-                            // 2) สลับ filter ไปแท็บ "ห้องปิดแล้ว"
                             this.filters.status = 'closed';
 
-                            // 3) โหลด list ใหม่ตามสถานะ closed
-                            // โหลด list ใหม่แบบเนียน (ไม่หมุนทั้ง list, merge ตาม id)
                             this.fetchConversations(1, { silent: true, merge: true })
                                 .then(() => {
                                     const idx = this.conversations.findIndex(c => c.id === conv.id);
@@ -2263,11 +2181,8 @@
                             }
                             this.updateConversationLocal(conv);
 
-                            // 2) สลับ filter ไปแท็บ "ห้องปิดแล้ว"
                             this.filters.status = 'open';
 
-                            // 3) โหลด list ใหม่ตามสถานะ closed
-                            // โหลด list ใหม่แบบเนียน (ไม่หมุนทั้ง list, merge ตาม id)
                             this.fetchConversations(1, { silent: true, merge: true })
                                 .then(() => {
                                     const idx = this.conversations.findIndex(c => c.id === conv.id);
@@ -2277,16 +2192,14 @@
                                 });
                         })
                         .catch(err => {
-                            // fallback เดิม
+                            const data = err.response && err.response.data ? err.response.data : {};
                             const msg = data.message || 'เปิดเคสไม่สำเร็จ';
                             alert(msg);
                         });
                 },
-                // ====== สมัครสมาชิก / ยกเลิกสมัคร / เติมเงิน (UI-only ตอนนี้) ======
+                // ====== สมัครสมาชิก / ยกเลิกสมัคร / เติมเงิน ======
                 openRegisterModal() {
                     if (!this.selectedConversation) return;
-
-                    const c = this.selectedConversation.contact || {};
 
                     this.registerModal.error = '';
                     this.registerModal.loading = false;
@@ -2326,7 +2239,6 @@
                         return;
                     }
 
-                    // กันเคส user พยายามยิงแม้ปุ่มถูก disable (เช่น ใช้ devtool กด)
                     if (typeof this.canSubmitRegister !== 'undefined' && !this.canSubmitRegister) {
                         return;
                     }
@@ -2335,7 +2247,6 @@
 
                     const m = this.registerModal;
 
-                    // payload หลักจาก popup
                     const payload = {
                         phone: m.phone,
                         bank_code: m.bank_code,
@@ -2344,7 +2255,6 @@
                         surname: m.surname,
                     };
 
-                    // แนบ context ของห้องแชตปัจจุบันให้ backend ใช้ถ้าต้องการ
                     const conv = this.selectedConversation || null;
                     if (conv) {
                         payload.conversation_id = conv.id || null;
@@ -2368,33 +2278,17 @@
                             const data = response.data || {};
 
                             if (!data.success) {
-                                // สมัครไม่สำเร็จ แสดงข้อความใน popup
                                 this.registerModal.error = data.message || 'สมัครสมาชิกไม่สำเร็จ';
                                 return;
                             }
 
-                            // สมัครสำเร็จ: ถ้ามีข้อมูล member ส่งกลับมา จะเอาไปผูกกับ conversation ก็ทำได้
                             if (conv && data.member) {
-                                // ตัวอย่าง: อัปเดตสถานะห้องว่าลูกค้าสมัครแล้ว
-                                // conv.member = data.member;
-                                // conv.member_id = data.member.id || null;
-                                // conv.is_registering = false;
+                                // ที่นี่ถ้าอยาก sync กับ contact/conversation ต่อได้
                             }
 
-                            // ปิด modal
                             if (this.$refs.registerModal) {
                                 this.$refs.registerModal.hide();
                             }
-
-                            // แจ้งเตือนเล็ก ๆ ถ้าคุณมีระบบ toast อยู่แล้ว (ปล่อยเป็น comment ไว้)
-                            // if (this.$bvToast) {
-                            //     this.$bvToast.toast(data.message || 'สมัครสมาชิกสำเร็จ', {
-                            //         title: 'สำเร็จ',
-                            //         variant: 'success',
-                            //         solid: true,
-                            //         autoHideDelay: 3000,
-                            //     });
-                            // }
                         })
                         .catch((error) => {
                             console.error('[LineOA] submitRegisterByStaff error', error);
@@ -2445,14 +2339,12 @@
                         return;
                     }
                     this.topupModal.error = '';
-                    // TODO: ผูก API ค้นหาสมาชิกจริง ๆ
                     console.log('[LineOA] searchTopupMember', this.topupModal.memberSearch);
                 },
 
                 submitTopup() {
                     if (this.topupModal.loading) return;
 
-                    // validation ง่าย ๆ ฝั่ง UI
                     if (!this.topupModal.member && !this.topupModal.memberSearch) {
                         this.topupModal.error = 'กรุณาระบุไอดีสมาชิก';
                         return;
@@ -2471,7 +2363,6 @@
                     this.topupModal.error = '';
                     this.topupModal.loading = true;
 
-                    // TODO: ผูก API สร้าง/ยืนยันรายการเติมเงินจริง ๆ
                     console.log('[LineOA] submitTopup payload', this.topupModal);
 
                     setTimeout(() => {
@@ -2484,6 +2375,7 @@
 
             }
         });
+
     </script>
 
     <script type="module">
