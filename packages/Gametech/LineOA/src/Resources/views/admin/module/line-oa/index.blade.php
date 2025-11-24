@@ -722,11 +722,25 @@
                     <b-form-group label="เบอร์โทร" label-for="reg_phone">
                         <b-form-input
                                 id="reg_phone"
+                                maxlength="10"
                                 v-model="registerModal.phone"
                                 autocomplete="off"
                                 @input="onPhoneInput"
                         ></b-form-input>
+                        <!-- กำลังตรวจสอบเบอร์ -->
+                        <small v-if="registerModal.checkingPhone"
+                               class="d-block mt-1 text-info">
+                            กำลังตรวจสอบเบอร์โทร...
+                        </small>
+
+                        <!-- สถานะเบอร์: ถูกต้อง/ซ้ำ/ไม่ถูกต้อง -->
+                        <small v-else-if="registerModal.phoneStatusMessage"
+                               class="d-block mt-1"
+                               :class="phoneStatusClass">
+                            @{{ registerModal.phoneStatusMessage }}
+                        </small>
                     </b-form-group>
+
 
                     <b-form-group label="ธนาคาร" label-for="reg_bank">
                         <b-form-select
@@ -743,8 +757,22 @@
                                 id="reg_account"
                                 v-model="registerModal.account_no"
                                 autocomplete="off"
+                                maxlength="15"
                                 @input="onAccountNoInput"
                         ></b-form-input>
+                        <!-- กำลังตรวจสอบกับธนาคาร -->
+                        <small v-if="registerModal.checkingAccount"
+                               class="d-block mt-1 text-info">
+                            กำลังตรวจสอบเลขบัญชีกับธนาคาร...
+                        </small>
+
+                        <!-- สถานะบัญชี: ใช้ได้/ไม่ถูกต้อง -->
+                        <small v-else-if="registerModal.accountStatusMessage"
+                               class="d-block mt-1"
+                               :class="accountStatusClass">
+                            @{{ registerModal.accountStatusMessage }}
+                        </small>
+
                     </b-form-group>
 
                     <b-form-group label="ชื่อ" label-for="reg_name">
@@ -752,6 +780,7 @@
                                 id="reg_name"
                                 v-model="registerModal.name"
                                 autocomplete="off"
+                                maxlength="20"
                         ></b-form-input>
                     </b-form-group>
 
@@ -760,6 +789,7 @@
                                 id="reg_surname"
                                 v-model="registerModal.surname"
                                 autocomplete="off"
+                                maxlength="20"
                         ></b-form-input>
                     </b-form-group>
 
@@ -972,7 +1002,17 @@
                         error: '',
                         checkingDuplicate: false, // เช็คซ้ำเบอร์/บัญชี
                         checkingAccount: false,
+
+                        checkingPhone: false,
+                        phoneStatus: null,          // 'ok' | 'duplicate' | 'invalid' | null
+                        phoneStatusMessage: '',
+
+                        // สถานะการเช็คเลขบัญชี
+                        checkingAccount: false,
+                        accountStatus: null,        // 'ok' | 'invalid' | 'error' | null
+                        accountStatusMessage: '',
                     },
+
                     bankAccountCheckTimer: null,
                     // modal เติมเงิน
                     topupModal: {
@@ -1048,31 +1088,56 @@
                     return String(bank.id) === '18' || String(bank.code).toUpperCase() === 'TW';
                 },
 
-                // เงื่อนไขให้ปุ่มสมัครกดได้
+                phoneStatusClass() {
+                    const s = this.registerModal.phoneStatus;
+                    if (s === 'ok') return 'text-success';
+                    if (s === 'duplicate' || s === 'invalid') return 'text-danger';
+                    return '';
+                },
+
+                accountStatusClass() {
+                    const s = this.registerModal.accountStatus;
+                    if (s === 'ok') return 'text-success';
+                    if (s === 'invalid' || s === 'error') return 'text-danger';
+                    return '';
+                },
+
+                // ของเดิมที่คุณมีอยู่แล้ว ปรับให้คิดสถานะด้วย
                 canSubmitRegister() {
                     const m = this.registerModal;
 
                     const phoneDigits = (m.phone || '').replace(/\D/g, '');
                     const accDigits   = (m.account_no || '').replace(/\D/g, '');
 
-                    const phoneOk = phoneDigits.length === 10;   // เบอร์ 10 หลัก
+                    const phoneOk = phoneDigits.length === 10;
                     const bankOk  = !!m.bank_code;
 
-                    let accountOk = false;
+                    let accountOkLength = false;
                     if (this.isTwBank) {
-                        // TW: เลขบัญชี = เบอร์โทร ต้องครบ 10 หลัก
-                        accountOk = accDigits.length === 10;
+                        accountOkLength = accDigits.length === 10;
                     } else {
-                        // ธนาคารอื่น: เลขบัญชี >= 10 ตัว
-                        accountOk = accDigits.length >= 10;
+                        accountOkLength = accDigits.length >= 10;
                     }
 
-                    const nameOk   = !!m.name;
-                    const snameOk  = !!m.surname;
+                    const nameOk  = !!m.name;
+                    const snameOk = !!m.surname;
 
-                    const noPendingCheck = !m.checkingDuplicate && !m.checkingAccount;
+                    const noPendingCheck = !m.checkingPhone && !m.checkingAccount;
 
-                    return phoneOk && bankOk && accountOk && nameOk && snameOk && noPendingCheck;
+                    // ห้ามสมัครถ้าเบอร์ "ซ้ำ" หรือ "ไม่ถูกต้อง"
+                    const phoneStatusOk = !['duplicate', 'invalid'].includes(m.phoneStatus);
+
+                    // ห้ามสมัครถ้าบัญชีสถานะ invalid/error
+                    const accountStatusOk = !['invalid', 'error'].includes(m.accountStatus);
+
+                    return phoneOk
+                        && bankOk
+                        && accountOkLength
+                        && nameOk
+                        && snameOk
+                        && noPendingCheck
+                        && phoneStatusOk
+                        && accountStatusOk;
                 },
             },
             methods: {
@@ -1097,7 +1162,7 @@
                     this.registerModal.checkingAccount = false;
                     this.registerModal.error = null;
 
-                    if(this.registerModal.bank_code === '18'){
+                    if(this.registerModal.bank_code == '18'){
                         this.registerModal.account_no = this.registerModal.phone;
                     }
 
