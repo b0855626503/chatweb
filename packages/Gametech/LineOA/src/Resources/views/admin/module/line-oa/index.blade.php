@@ -82,6 +82,17 @@
             background-color: #ffc107 !important; /* สี warning */
             color: #212529 !important; /* ดำ */
         }
+        .chat-line-original {
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+
+        .chat-line-translated {
+            white-space: pre-wrap;
+            font-size: 13px;
+            border-left: 3px solid #e0e0e0;
+            padding-left: 4px;
+        }
     </style>
 @endpush
 
@@ -389,12 +400,12 @@
                                                             v-if="canControlRegister()"
                                                             size="sm"
                                                             variant="outline-success"
-                                                            class="mb-1"
+                                                            class="mb-1 mr-3"
                                                             @click="openTopupModal"
                                                     >
                                                         เติมเงิน
                                                     </b-button>
-                                                    &nbsp;&nbsp;
+
                                                     <b-button
                                                             v-if="selectedConversation.status === 'open'"
                                                             size="sm"
@@ -502,7 +513,27 @@
                                                 <div class="whitespace-pre-wrap">
                                                     <!-- TEXT -->
                                                     <template v-if="msg.type === 'text'">
-                                                        @{{ msg.text }}
+                                                        <div class="chat-line-original">
+                                                            <!-- แสดงภาษา (ถ้ามี) เช่น [EN] -->
+                                                            <span v-if="getMessageDisplay(msg).lang"
+                                                                  class="text-primary font-weight-bold mr-1">
+            [@{{ getMessageDisplay(msg).lang.toUpperCase() }}]
+        </span>
+
+                                                            <!-- แสดงข้อความต้นฉบับ -->
+                                                            <span>@{{ getMessageDisplay(msg).original }}</span>
+                                                        </div>
+
+                                                        <!-- บรรทัดแปล -->
+                                                        <div v-if="getMessageDisplay(msg).translated"
+                                                             class="chat-line-translated text-muted mt-1">
+        <span v-if="getMessageDisplay(msg).target"
+              class="text-success font-weight-bold mr-1">
+            [@{{ getMessageDisplay(msg).target.toUpperCase() }}]
+        </span>
+
+                                                            <span>@{{ getMessageDisplay(msg).translated }}</span>
+                                                        </div>
                                                     </template>
 
                                                     <!-- STICKER -->
@@ -590,6 +621,7 @@
                                 </b-input-group-prepend>
 
                                 <b-form-textarea
+                                        ref="replyBox"
                                         v-model="replyText"
                                         rows="1"
                                         max-rows="4"
@@ -639,12 +671,14 @@
                     hide-footer
                     body-class="pt-2 pb-2"
                     @hide="resetMemberModal"
+                    @shown="onMemberModalShown"
             >
                 <b-form @submit.prevent="saveMemberLink">
                     <b-form-group label="Username:" label-for="member_id" label-cols="4" label-class="pt-1">
                         <b-input-group>
                             <b-form-input
                                     id="member_id"
+                                    ref="memberIdInput"
                                     v-model="memberModal.member_id"
                                     placeholder=""
                                     autocomplete="off"
@@ -717,12 +751,15 @@
                     centered
                     hide-footer
                     body-class="pt-2 pb-2"
+                    @shown="onRegisterModalShown"
+                    @hidden="onRegisterModalHidden"
             >
                 <b-form @submit.prevent="submitRegisterByStaff">
                     <b-form-group label="เบอร์โทร" label-for="reg_phone">
                         <b-form-input
                                 id="reg_phone"
                                 type="tel"
+                                ref="registerPhoneInput"
                                 pattern="[0-9]*" inputmode="numeric"
                                 maxlength="10"
                                 v-model="registerModal.phone"
@@ -1107,10 +1144,10 @@
                     const m = this.registerModal;
 
                     const phoneDigits = (m.phone || '').replace(/\D/g, '');
-                    const accDigits   = (m.account_no || '').replace(/\D/g, '');
+                    const accDigits = (m.account_no || '').replace(/\D/g, '');
 
                     const phoneOk = phoneDigits.length === 10;
-                    const bankOk  = !!m.bank_code;
+                    const bankOk = !!m.bank_code;
 
                     let accountOkLength = false;
                     if (this.isTwBank) {
@@ -1119,7 +1156,7 @@
                         accountOkLength = accDigits.length >= 10;
                     }
 
-                    const nameOk  = !!m.name;
+                    const nameOk = !!m.name;
                     const snameOk = !!m.surname;
 
                     const noPendingCheck = !m.checkingPhone && !m.checkingAccount;
@@ -1139,6 +1176,40 @@
                         && phoneStatusOk
                         && accountStatusOk;
                 },
+                getMessageDisplay() {
+                    return (msg) => {
+                        const lines = {
+                            original: msg.text || '',
+                            translated: null,
+                            lang: null,
+                            target: null,
+                        };
+
+                        // === inbound (ลูกค้าพิมมา) ===
+                        if (msg.direction === 'inbound' &&
+                            msg.meta &&
+                            msg.meta.translation_inbound
+                        ) {
+                            const t = msg.meta.translation_inbound;
+                            lines.original = t.original_text || msg.text;
+                            lines.translated = t.translated_text || null;
+                            lines.lang = t.detected_source || t.source_language || null;  // เช่น 'ja'
+                        }
+
+                        // === outbound (พนักงานพิม) ===
+                        if (msg.direction === 'outbound' &&
+                            msg.meta &&
+                            msg.meta.translation_outbound
+                        ) {
+                            const t = msg.meta.translation_outbound;
+                            lines.original = t.original_text || msg.text;         // ไทย
+                            lines.translated = t.translated_text || null;           // ภาษาเป้าหมาย
+                            lines.target = t.target_language || null;           // เช่น 'en'
+                        }
+
+                        return lines;
+                    };
+                },
             },
             methods: {
                 apiUrl(path) {
@@ -1146,7 +1217,7 @@
                 },
                 async fetchBanks() {
                     try {
-                        const { data } = await axios.get(this.apiUrl('register/load-bank')); // route backend
+                        const {data} = await axios.get(this.apiUrl('register/load-bank')); // route backend
 
                         this.bankOptions = data.bank;
                     } catch (e) {
@@ -1191,7 +1262,7 @@
 
                     try {
                         // route นี้ให้ชี้ไปที่ ChatController::checkPhone
-                        const { data } = await axios.post(this.apiUrl('register/check-phone'), {
+                        const {data} = await axios.post(this.apiUrl('register/check-phone'), {
                             phone: phoneDigits,
                         });
 
@@ -1222,7 +1293,7 @@
                     try {
                         this.registerModal.checkingDuplicate = true;
 
-                        const { data } = await axios.post(this.apiUrl('register/check-phone'), {
+                        const {data} = await axios.post(this.apiUrl('register/check-phone'), {
                             phone: phoneDigits,
                         });
 
@@ -1260,7 +1331,7 @@
                     this.registerModal.accountStatusMessage = '';
 
                     try {
-                        const { data } = await axios.post(this.apiUrl('register/check-bank'), {
+                        const {data} = await axios.post(this.apiUrl('register/check-bank'), {
                             bank_code: this.registerModal.bank_code,
                             account_no: accDigits,
                         });
@@ -1314,7 +1385,7 @@
 
                 fetchConversations(page = 1, options = {}) {
                     const silent = options.silent === true;
-                    const merge  = options.merge === true; // merge หรือ replace list
+                    const merge = options.merge === true; // merge หรือ replace list
 
                     if (!silent) {
                         this.loadingList = true;
@@ -1329,7 +1400,7 @@
                             scope: this.filters.scope, // ให้ backend ใช้ filter ได้
                         }
                     }).then(res => {
-                        const body    = res.data || {};
+                        const body = res.data || {};
                         const newList = body.data || [];
 
                         // อัปเดต pagination
@@ -1410,16 +1481,39 @@
                     if (!reloadMessages) {
                         this.$nextTick(() => {
                             this.scrollToBottom();
+                            this.autoFocusRef('replyBox');
                         });
                         return;
                     }
 
-                    this.fetchMessages(conv.id, { limit: 50 , previous_id: previousId }).then(() => {
+                    this.fetchMessages(conv.id, {limit: 50, previous_id: previousId}).then(() => {
                         this.$nextTick(() => {
                             this.scrollToBottom();
+                            this.autoFocusRef('replyBox');
                         });
                     });
                 },
+                autoFocusRef(refName) {
+                    this.$nextTick(() => {
+                        const r = this.$refs[refName];
+                        if (!r) return;
+
+                        if (typeof r.focus === 'function') {
+                            try {
+                                r.focus();
+                                return;
+                            } catch (_) {
+                            }
+                        }
+
+                        const el =
+                            r.$el?.querySelector?.('input,textarea') ||
+                            (r instanceof HTMLElement ? r : null);
+
+                        el?.focus?.();
+                    });
+                },
+
                 fetchMessages(conversationId, options = {}) {
                     if (!conversationId) return Promise.resolve();
 
@@ -1451,7 +1545,7 @@
                         prevScrollTop = containerEl.scrollTop;
                     }
 
-                    return axios.get(this.apiUrl('conversations/' + conversationId), { params })
+                    return axios.get(this.apiUrl('conversations/' + conversationId), {params})
                         .then(res => {
                             const body = res.data || {};
                             const messages = body.messages || [];
@@ -1515,7 +1609,12 @@
                     if (!this.selectedConversation || this.sending) return;
 
                     if (!this.canReply) {
-                        alert('ห้องนี้ยังไม่ได้รับเรื่อง หรือคุณไม่ได้เป็นผู้รับเรื่อง ไม่สามารถตอบลูกค้าได้');
+                        const msg = 'ห้องนี้ยังไม่ได้รับเรื่อง หรือคุณไม่ได้เป็นผู้รับเรื่อง ไม่สามารถตอบลูกค้าได้';
+                        this.showAlert({
+                            success: false,
+                            message: msg
+                        });
+
                         return;
                     }
 
@@ -1561,11 +1660,22 @@
                         const data = err.response?.data || {};
 
                         if (status === 403) {
-                            alert(data.message || 'ไม่สามารถตอบห้องนี้ได้ เนื่องจากถูกล็อกโดยพนักงานคนอื่น');
+
+                            // alert(data.message || 'ไม่สามารถตอบห้องนี้ได้ เนื่องจากถูกล็อกโดยพนักงานคนอื่น');
+                            const msg = data.message || 'ไม่สามารถตอบห้องนี้ได้ เนื่องจากถูกล็อกโดยพนักงานคนอื่น';
+                            this.showAlert({
+                                success: false,
+                                message: msg
+                            });
                             return;
                         }
                         console.error('sendReply error', err);
-                        alert('ส่งข้อความไม่สำเร็จ กรุณาลองใหม่');
+                        const msg = 'ส่งข้อความไม่สำเร็จ กรุณาลองใหม่';
+                        this.showAlert({
+                            success: false,
+                            message: msg
+                        });
+                        // alert('ส่งข้อความไม่สำเร็จ กรุณาลองใหม่');
                     }).finally(() => {
                         this.sending = false;
                     });
@@ -1621,7 +1731,7 @@
                 startAutoRefresh() {
                     this.stopAutoRefresh();
                     this.autoRefreshTimer = setInterval(() => {
-                        this.fetchConversations(this.pagination.current_page || 1, {silent: true, merge: true });
+                        this.fetchConversations(this.pagination.current_page || 1, {silent: true, merge: true});
                         if (this.selectedConversation) {
                             this.fetchMessages(this.selectedConversation.id, {limit: 50, silent: true});
                         }
@@ -1656,7 +1766,7 @@
                         clearTimeout(this.searchDelayTimer);
                     }
                     this.searchDelayTimer = setTimeout(() => {
-                        this.fetchConversations(1,{ silent: true, merge: false });
+                        this.fetchConversations(1, {silent: true, merge: false});
                     }, 500);
                 },
 
@@ -1667,11 +1777,23 @@
                     this.$refs.imageInput.value = '';
 
                     if (!file.type.startsWith('image/')) {
-                        alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+
+                        const msg = 'กรุณาเลือกไฟล์รูปภาพเท่านั้น';
+                        this.showAlert({
+                            success: false,
+                            message: msg
+                        });
+
                         return;
                     }
                     if (file.size > 5 * 1024 * 1024) {
-                        alert('ไฟล์ใหญ่เกินไป สูงสุด 5MB');
+                        const msg = 'ไฟล์ใหญ่เกินไป สูงสุด 5MB';
+
+                        this.showAlert({
+                            success: false,
+                            message: msg
+                        });
+
                         return;
                     }
 
@@ -1723,7 +1845,17 @@
                         }
                     }).catch(err => {
                         console.error('sendImage error', err);
-                        alert('ส่งรูปไม่สำเร็จ กรุณาลองใหม่');
+
+                        const msg =
+                            err?.response?.data?.message ??
+                            err?.response?.data?.msg ??
+                            err?.response?.data?.error ??
+                            'ส่งรูปไม่สำเร็จ กรุณาลองใหม่';
+
+                        this.showAlert({
+                            success: false,
+                            message: msg
+                        });
                     }).finally(() => {
                         this.uploadingImage = false;
                     });
@@ -1955,9 +2087,11 @@
                 changeScope(scope) {
                     if (this.filters.scope === scope) return;
                     this.filters.scope = scope;
-                    this.fetchConversations(1,{ silent: true, merge: false });
+                    this.fetchConversations(1, {silent: true, merge: false});
                 },
-
+                onMemberModalShown() {
+                    this.autoFocusRef('memberIdInput');
+                },
                 // ====== modal: ผูก contact กับ member ======
                 openMemberModal() {
                     if (!this.selectedConversation || !this.selectedConversation.contact) {
@@ -2088,18 +2222,23 @@
 
                             this.updateConversationLocal(conv);
 
-                            this.fetchConversations(1, { silent: true, merge: true })
+                            this.fetchConversations(1, {silent: true, merge: true})
                                 .then(() => {
                                     const idx = this.conversations.findIndex(c => c.id === conv.id);
                                     if (idx !== -1) {
-                                        this.selectConversation(this.conversations[idx], { reloadMessages: false });
+                                        this.selectConversation(this.conversations[idx], {reloadMessages: false});
                                     }
                                 });
                         })
                         .catch(err => {
                             console.error('acceptConversation error', err);
-                            const msg = err.response?.data?.message || 'รับเรื่องไม่สำเร็จ';
-                            alert(msg);
+                            const msg =
+                                err?.response?.data?.message ??
+                                err?.response?.data?.msg ??
+                                err?.response?.data?.error ??
+                                'รับเรื่องไม่สำเร็จ';
+
+                            this.showAlert({success: false, message: msg});
                         });
                 },
                 lockConversation(conv) {
@@ -2114,8 +2253,14 @@
                         })
                         .catch(err => {
                             console.error('lockConversation error', err);
-                            const msg = err.response?.data?.message || 'ไม่สามารถล็อกห้องได้';
-                            alert(msg);
+
+                            const msg =
+                                err?.response?.data?.message ??
+                                err?.response?.data?.msg ??
+                                err?.response?.data?.error ??
+                                'ไม่สามารถล็อกห้องได้';
+
+                            this.showAlert({success: false, message: msg});
                         });
                 },
 
@@ -2133,69 +2278,82 @@
                             console.error('unlockConversation error', err);
                         });
                 },
-                closeConversation() {
+                async closeConversation() {
                     if (!this.selectedConversation) return;
 
                     const id = this.selectedConversation.id;
 
-                    if (!confirm('ยืนยันปิดเคสนี้?')) {
-                        return;
+                    const ok = await this.showConfirm({message: 'ยืนยันปิดเคสนี้ ?'});
+                    if (!ok) return;
+
+                    try {
+                        const {data} = await axios.post(this.apiUrl('conversations/' + id + '/close'));
+                        const conv = data.data || null;
+                        if (!conv) return;
+
+                        // 1) อัปเดตห้องปัจจุบัน + list ซ้าย
+                        this.updateConversationLocal(conv);
+
+                        // 2) เปลี่ยน filter ไปแท็บปิดเคส
+                        this.filters.status = 'closed';
+
+                        // 3) โหลด list ใหม่แบบ merge แล้วเลือกห้องเดิม
+                        await this.fetchConversations(1, {silent: true, merge: true});
+
+                        const idx = this.conversations.findIndex(c => c.id === conv.id);
+                        if (idx !== -1) {
+                            this.selectConversation(this.conversations[idx], {reloadMessages: false});
+                        }
+                    } catch (err) {
+                        const msg =
+                            err?.response?.data?.message ??
+                            err?.response?.data?.msg ??
+                            err?.response?.data?.error ??
+                            'ปิดเคสไม่สำเร็จ';
+
+                        this.showAlert({success: false, message: msg});
+
+                    } finally {
+                        this.autoFocusRef('replyBox');
                     }
-
-                    axios.post(this.apiUrl('conversations/' + id + '/close'))
-                        .then(res => {
-                            const conv = res.data.data || null;
-                            if (!conv) return;
-
-                            this.updateConversationLocal(conv);
-
-                            this.filters.status = 'closed';
-
-                            this.fetchConversations(1, { silent: true, merge: true })
-                                .then(() => {
-                                    const idx = this.conversations.findIndex(c => c.id === conv.id);
-                                    if (idx !== -1) {
-                                        this.selectConversation(this.conversations[idx], { reloadMessages: false });
-                                    }
-                                });
-                        })
-                        .catch(err => {
-                            const msg = err.response?.data?.message || 'ปิดเคสไม่สำเร็จ';
-                            alert(msg);
-                        });
                 },
-                openConversation() {
+
+                async openConversation() {
                     if (!this.selectedConversation) return;
 
                     const id = this.selectedConversation.id;
 
-                    if (!confirm('ยืนยันเปิดเคสนี้?')) {
-                        return;
+                    const ok = await this.showConfirm({message: 'ยืนยันเปิดเคสนี้ ?'});
+                    if (!ok) return;
+
+                    try {
+                        const {data} = await axios.post(this.apiUrl('conversations/' + id + '/open'));
+                        const conv = data.data || null;
+                        if (!conv) return;
+
+                        this.updateConversationLocal(conv);
+                        this.filters.status = 'open';
+
+                        await this.fetchConversations(1, {silent: true, merge: true});
+
+                        const idx = this.conversations.findIndex(c => c.id === conv.id);
+                        if (idx !== -1) {
+                            this.selectConversation(this.conversations[idx], {reloadMessages: false});
+                        }
+                    } catch (err) {
+                        const msg =
+                            err?.response?.data?.message ??
+                            err?.response?.data?.msg ??
+                            err?.response?.data?.error ??
+                            'เปิดเคสไม่สำเร็จ';
+
+                        this.showAlert({success: false, message: msg});
+                    } finally {
+                        this.autoFocusRef('replyBox');
                     }
-
-                    axios.post(this.apiUrl('conversations/' + id + '/open'))
-                        .then(res => {
-                            const conv = res.data.data || null;
-                            if (!conv) {
-                                return;
-                            }
-                            this.updateConversationLocal(conv);
-
-                            this.filters.status = 'open';
-
-                            this.fetchConversations(1, { silent: true, merge: true })
-                                .then(() => {
-                                    const idx = this.conversations.findIndex(c => c.id === conv.id);
-                                    if (idx !== -1) {
-                                        this.selectConversation(this.conversations[idx], { reloadMessages: false });
-                                    }
-                                });
-                        })
-                        .catch(err => {
-                            const data = err.response && err.response.data ? err.response.data : {};
-                            const msg = data.message || 'เปิดเคสไม่สำเร็จ';
-                            alert(msg);
-                        });
+                },
+                onRegisterModalShown() {
+                    this.autoFocusRef('registerPhoneInput');
                 },
                 // ====== สมัครสมาชิก / ยกเลิกสมัคร / เติมเงิน ======
                 openRegisterModal() {
@@ -2206,7 +2364,7 @@
                     this.registerModal.phone = '';
                     this.registerModal.bank_code = '';
                     this.registerModal.account_no = '';
-                    this.registerModal.name =  '';
+                    this.registerModal.name = '';
                     this.registerModal.surname = '';
 
                     this.$nextTick(() => {
@@ -2216,22 +2374,34 @@
                     });
                 },
 
-                cancelRegisterFlow() {
+                async cancelRegisterFlow() {
                     if (!this.selectedConversation) return;
 
-                    if (!confirm('ยืนยันยกเลิกการสมัครกับบอทสำหรับห้องนี้?')) {
-                        return;
-                    }
+                    const ok = await this.showConfirm({
+                        message: 'ยืนยันยกเลิกการสมัครกับบอทสำหรับห้องนี้ ?'
+                    });
+                    if (!ok) return;
 
-                    axios.post(this.apiUrl('conversations/' + this.selectedConversation.id + '/cancel-register'))
-                        .then(() => {
-                            this.selectedConversation.is_registering = false;
-                            this.updateConversationLocal(this.selectedConversation);
-                        })
-                        .catch(err => {
-                            console.error('cancelRegisterFlow error', err);
-                            alert(err.response?.data?.message || 'ไม่สามารถยกเลิกการสมัครได้');
-                        });
+                    try {
+                        await axios.post(
+                            this.apiUrl('conversations/' + this.selectedConversation.id + '/cancel-register')
+                        );
+
+                        this.selectedConversation.is_registering = false;
+                        this.updateConversationLocal(this.selectedConversation);
+
+                    } catch (err) {
+                        const msg =
+                            err?.response?.data?.message ??
+                            err?.response?.data?.msg ??
+                            err?.response?.data?.error ??
+                            'ไม่สามารถยกเลิกการสมัครได้';
+
+                        this.showAlert({success: false, message: msg});
+
+                    } finally {
+                        this.autoFocusRef('replyBox');
+                    }
                 },
 
                 submitRegisterByStaff() {
@@ -2279,8 +2449,10 @@
 
                             if (!data.success) {
                                 this.registerModal.error = data.message || 'สมัครสมาชิกไม่สำเร็จ';
+                                this.showAlert(data);
                                 return;
                             }
+                            this.showAlert(data);
 
                             if (conv && data.member) {
                                 // ที่นี่ถ้าอยาก sync กับ contact/conversation ต่อได้
@@ -2297,10 +2469,15 @@
                         })
                         .finally(() => {
                             this.registerModal.loading = false;
+
                         });
                 },
-
-
+                onRegisterModalHidden() {
+                    // รอ 1 tick ให้ DOM stable
+                    this.$nextTick(() => {
+                        this.autoFocusRef('replyBox');
+                    });
+                },
                 openTopupModal() {
                     if (!this.selectedConversation) return;
 
@@ -2372,7 +2549,62 @@
                         }
                     }, 500);
                 },
+                showAlert(data) {
+                    const hasSuccess = typeof (data?.success) !== 'undefined';
+                    const ok = hasSuccess && data.success === true;
 
+                    const msg = data?.message
+                        ?? data?.msg
+                        ?? (hasSuccess
+                            ? (ok ? 'ทำรายการสำเร็จ' : 'ทำรายการไม่สำเร็จ')
+                            : 'แจ้งเตือนจากระบบ');
+
+                    const variant = hasSuccess
+                        ? (ok ? 'success' : 'danger')
+                        : 'info';
+
+                    this.$bvModal.msgBoxOk(msg, {
+                        title: 'สถานะการทำรายการ',
+                        okVariant: variant,
+                        size: 'sm',
+                        buttonSize: 'sm',
+                        centered: true
+                    });
+                },
+                async showConfirm(data) {
+                    const hasSuccess = typeof (data?.success) !== 'undefined';
+                    const ok = hasSuccess && data.success === true;
+
+                    const msg = data?.message
+                        ?? data?.msg
+                        ?? (hasSuccess
+                            ? (ok ? 'ทำรายการสำเร็จ' : 'ทำรายการไม่สำเร็จ')
+                            : 'ยืนยันดำเนินการต่อหรือไม่');
+
+                    const variant = hasSuccess
+                        ? (ok ? 'success' : 'danger')
+                        : 'info';
+
+                    try {
+                        const confirmed = await this.$bvModal.msgBoxConfirm(msg, {
+                            title: 'ยืนยันการดำเนินการ',
+                            size: 'sm',
+                            buttonSize: 'sm',
+                            okTitle: 'ยืนยัน',
+                            cancelTitle: 'ยกเลิก',
+                            okVariant: variant,
+                            cancelVariant: 'danger',
+                            centered: true,
+                            noCloseOnBackdrop: true,
+                            noCloseOnEsc: true,
+                            returnFocus: true,
+                        });
+
+                        return confirmed === true;
+                    } catch (e) {
+                        return false;
+                    }
+                },
             }
         });
 

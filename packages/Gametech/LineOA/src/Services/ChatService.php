@@ -2,9 +2,8 @@
 
 namespace Gametech\LineOA\Services;
 
-use Gametech\LineOA\Events\LineIncomingMessage;
-use Gametech\LineOA\Events\LineOAChatMessageReceived;
 use Gametech\LineOA\Events\LineOAChatConversationUpdated;
+use Gametech\LineOA\Events\LineOAChatMessageReceived;
 use Gametech\LineOA\Models\LineAccount;
 use Gametech\LineOA\Models\LineContact;
 use Gametech\LineOA\Models\LineConversation;
@@ -22,174 +21,12 @@ class ChatService
      */
     protected LineMessagingClient $messagingClient;
 
-    public function __construct(LineMessagingClient $messagingClient)
+    protected TranslationService $translator;
+
+    public function __construct(LineMessagingClient $messagingClient, TranslationService $translator)
     {
         $this->messagingClient = $messagingClient;
-    }
-
-    /**
-     * เวอร์ชันเก่า (เก็บไว้เผื่ออ้างอิง) - อย่าใช้
-     */
-    public function handleIncomingMessage_(LineAccount $account, array $event, ?LineWebhookLog $log = null): LineMessage
-    {
-        $userId      = Arr::get($event, 'source.userId');       // line userId
-        $messageId   = Arr::get($event, 'message.id');
-        $messageType = Arr::get($event, 'message.type');
-        $text        = Arr::get($event, 'message.text');
-        $sentAt      = Arr::get($event, 'timestamp');
-
-        $sentAtCarbon = \Carbon\Carbon::createFromTimestampMs($sentAt);
-
-        $message = DB::transaction(function () use (
-            $account,
-            $userId,
-            $messageId,
-            $messageType,
-            $text,
-            $sentAtCarbon,
-            $event,
-            $log
-        ) {
-            // 1) หา/สร้าง contact
-            $contact = $this->getOrCreateContact($account, $userId);
-
-            // 2) หา/สร้าง conversation
-            $conversation = $this->getOrCreateConversation($account, $contact);
-
-            // 3) สร้าง message (inbound)
-            /** @var LineMessage $message */
-            $message = LineMessage::create([
-                'line_conversation_id' => $conversation->id,
-                'line_account_id'      => $account->id,
-                'line_contact_id'      => $contact->id,
-                'direction'            => 'inbound',
-                'source'               => 'user',
-                'type'                 => $messageType ?? 'text',
-                'line_message_id'      => $messageId,
-                'text'                 => $messageType === 'text' ? $text : null,
-                'payload'              => $event,
-                'meta'                 => null,
-                'sender_employee_id'   => null,
-                'sender_bot_key'       => null,
-                'sent_at'              => $sentAtCarbon,
-            ]);
-
-            // 4) อัปเดต conversation summary
-            $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at      = $sentAtCarbon;
-            $conversation->unread_count         = $conversation->unread_count + 1;
-            $conversation->status               = 'open';
-            $conversation->save();
-
-            // 5) อัปเดต last_seen_at ของ contact
-            $contact->last_seen_at = $sentAtCarbon;
-            $contact->save();
-
-            // 6) ผูก log (ถ้ามี)
-            if ($log) {
-                $log->line_account_id      = $account->id;
-                $log->line_conversation_id = $conversation->id;
-                $log->line_contact_id      = $contact->id;
-                $log->line_message_id      = $message->id;
-                $log->is_processed         = true;
-                $log->processed_at         = now();
-                $log->save();
-            }
-
-            // 7) preload relation
-            $message->setRelation('conversation', $conversation);
-            $message->setRelation('contact', $contact);
-
-            return $message;
-        });
-
-        // ====== BROADCAST REAL-TIME ไปหน้าแอดมิน (เวอร์ชันเก่า) ======
-        /** @var LineConversation $conversation */
-        $conversation = $message->conversation ?? $message->conversation()->first();
-        event(new LineIncomingMessage($account, $conversation, $message));
-
-        return $message;
-    }
-
-    /**
-     * เวอร์ชันเก่าอีกอัน (เก็บ reference) - อย่าใช้
-     */
-    public function handleIncomingMessage__(LineAccount $account, array $event, ?LineWebhookLog $log = null): LineMessage
-    {
-        $userId      = Arr::get($event, 'source.userId');
-        $messageId   = Arr::get($event, 'message.id');
-        $messageType = Arr::get($event, 'message.type');
-        $text        = Arr::get($event, 'message.text');
-        $sentAt      = Arr::get($event, 'timestamp');
-
-        $sentAtCarbon = $sentAt
-            ? now()->setTimestamp((int) floor($sentAt / 1000))
-            : now();
-
-        return DB::transaction(function () use (
-            $account,
-            $userId,
-            $messageId,
-            $messageType,
-            $text,
-            $sentAtCarbon,
-            $event,
-            $log
-        ) {
-            // 1) contact
-            $contact = $this->getOrCreateContact($account, $userId);
-
-            // 2) conversation
-            $conversation = $this->getOrCreateConversation($account, $contact);
-
-            // 3) message inbound
-            /** @var LineMessage $message */
-            $message = LineMessage::create([
-                'line_conversation_id' => $conversation->id,
-                'line_account_id'      => $account->id,
-                'line_contact_id'      => $contact->id,
-                'direction'            => 'inbound',
-                'source'               => 'user',
-                'type'                 => $messageType ?? 'text',
-                'line_message_id'      => $messageId,
-                'text'                 => $messageType === 'text' ? $text : null,
-                'payload'              => $event,
-                'meta'                 => null,
-                'sender_employee_id'   => null,
-                'sender_bot_key'       => null,
-                'sent_at'              => $sentAtCarbon,
-            ]);
-
-            // 4) update conversation summary
-            $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at      = $sentAtCarbon;
-            $conversation->unread_count         = $conversation->unread_count + 1;
-            $conversation->status               = 'open';
-            $conversation->save();
-
-            // 5) ผูก log (ถ้ามี)
-            if ($log) {
-                $log->line_account_id      = $account->id;
-                $log->line_conversation_id = $conversation->id;
-                $log->line_contact_id      = $contact->id;
-                $log->line_message_id      = $message->id;
-                $log->is_processed         = true;
-                $log->processed_at         = now();
-                $log->save();
-            }
-
-            // 6) broadcast real-time (เวอร์ชันเก่า)
-            DB::afterCommit(function () use ($conversation, $message) {
-                $freshConversation = $conversation->fresh(['contact', 'account']);
-
-                event(new LineOAChatMessageReceived(
-                    $freshConversation ?? $conversation,
-                    $message
-                ));
-            });
-
-            return $message;
-        });
+        $this->translator = $translator;
     }
 
     /**
@@ -198,11 +35,11 @@ class ChatService
      */
     public function handleIncomingMessage(LineAccount $account, array $event, ?LineWebhookLog $log = null): LineMessage
     {
-        $userId      = Arr::get($event, 'source.userId');
-        $messageId   = Arr::get($event, 'message.id');
+        $userId = Arr::get($event, 'source.userId');
+        $messageId = Arr::get($event, 'message.id');
         $messageType = Arr::get($event, 'message.type'); // text | sticker | image ...
-        $text        = Arr::get($event, 'message.text');
-        $sentAt      = Arr::get($event, 'timestamp');
+        $text = Arr::get($event, 'message.text');
+        $sentAt = Arr::get($event, 'timestamp');
 
         // timestamp ms → sec
         $sentAtCarbon = $sentAt
@@ -238,18 +75,18 @@ class ChatService
             /** @var LineMessage $message */
             $message = LineMessage::create([
                 'line_conversation_id' => $conversation->id,
-                'line_account_id'      => $account->id,
-                'line_contact_id'      => $contact->id,
-                'direction'            => 'inbound',
-                'source'               => 'user',
-                'type'                 => $messageType ?? 'text',
-                'line_message_id'      => $messageId,
-                'text'                 => $messageType === 'text' ? $text : null,
-                'payload'              => $event,
-                'meta'                 => null,
-                'sender_employee_id'   => null,
-                'sender_bot_key'       => null,
-                'sent_at'              => $sentAtCarbon,
+                'line_account_id' => $account->id,
+                'line_contact_id' => $contact->id,
+                'direction' => 'inbound',
+                'source' => 'user',
+                'type' => $messageType ?? 'text',
+                'line_message_id' => $messageId,
+                'text' => $messageType === 'text' ? $text : null,
+                'payload' => $event,
+                'meta' => null,
+                'sender_employee_id' => null,
+                'sender_bot_key' => null,
+                'sent_at' => $sentAtCarbon,
             ]);
 
             // 3.1 ถ้าเป็นรูป ให้พยายามดึง binary จาก LINE แล้วแปลงเป็น URL สำหรับ frontend
@@ -257,10 +94,15 @@ class ChatService
                 $this->attachImageContentIfNeeded($account, $message);
             }
 
+            // 3.2 ถ้าเป็นข้อความ text และเปิดใช้ translation → detect language + แปลให้ agent อ่าน
+            if ($messageType === 'text') {
+                $this->handleInboundTextLanguageAndTranslation($conversation, $contact, $message);
+            }
+
             // 4) update conversation summary
             $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at      = $sentAtCarbon;
-            $conversation->unread_count         = $conversation->unread_count + 1;
+            $conversation->last_message_at = $sentAtCarbon;
+            $conversation->unread_count = $conversation->unread_count + 1;
             if ($conversation->status === null) {
                 $conversation->status = 'open';
             }
@@ -272,12 +114,12 @@ class ChatService
 
             // 6) ผูก log (ถ้ามี)
             if ($log) {
-                $log->line_account_id      = $account->id;
+                $log->line_account_id = $account->id;
                 $log->line_conversation_id = $conversation->id;
-                $log->line_contact_id      = $contact->id;
-                $log->line_message_id      = $message->id;
-                $log->is_processed         = true;
-                $log->processed_at         = now();
+                $log->line_contact_id = $contact->id;
+                $log->line_message_id = $message->id;
+                $log->is_processed = true;
+                $log->processed_at = now();
                 $log->save();
             }
 
@@ -312,29 +154,61 @@ class ChatService
         int $employeeId,
         ?array $meta = null
     ): LineMessage {
+        // เตรียมข้อมูลแปล สำหรับข้อความขาออก (แต่ยังไม่เปลี่ยนค่า text เดิม)
+        $targetLang = 'th';
+        $translation = null;
+
+        if ($this->translator->isEnabled()) {
+            $targetLang = $this->translator->resolveTargetLanguage(
+                $conversation->outgoing_language,
+                optional($conversation->contact)->preferred_language,
+                'th'
+            );
+
+            // ถ้าภาษาปลายทางไม่ใช่ไทย → แปลจากไทยไปภาษาลูกค้า
+            if ($targetLang !== 'th') {
+                $translation = $this->translator->translate($text, $targetLang, 'th');
+            }
+        }
+
         $now = now();
 
-        return DB::transaction(function () use ($conversation, $text, $employeeId, $meta, $now) {
+        return DB::transaction(function () use ($conversation, $text, $employeeId, $meta, $now, $translation, $targetLang) {
+            $metaPayload = $meta ?? [];
+            if (! is_array($metaPayload)) {
+                $metaPayload = (array) $metaPayload;
+            }
+
+            if ($translation) {
+                $metaPayload['translation_outbound'] = [
+                    'provider' => $translation['provider'] ?? null,
+                    'original_text' => $translation['original_text'] ?? $text,
+                    'translated_text' => $translation['translated_text'] ?? $text,
+                    'source_language' => $translation['source'] ?? 'th',
+                    'target_language' => $translation['target'] ?? $targetLang,
+                ];
+            }
+
             /** @var LineMessage $message */
             $message = LineMessage::create([
                 'line_conversation_id' => $conversation->id,
-                'line_account_id'      => $conversation->line_account_id,
-                'line_contact_id'      => $conversation->line_contact_id,
-                'direction'            => 'outbound',
-                'source'               => 'agent',
-                'type'                 => 'text',
-                'line_message_id'      => null,
-                'text'                 => $text,
-                'payload'              => null,
-                'meta'                 => $meta,
-                'sender_employee_id'   => $employeeId,
-                'sender_bot_key'       => null,
-                'sent_at'              => $now,
+                'line_account_id' => $conversation->line_account_id,
+                'line_contact_id' => $conversation->line_contact_id,
+                'direction' => 'outbound',
+                'source' => 'agent',
+                'type' => 'text',
+                'line_message_id' => null,
+                'text' => $text, // เก็บข้อความที่ agent พิม (ไทย)
+                'payload' => null,
+                'meta' => $metaPayload,
+                'sender_employee_id' => $employeeId,
+                'sender_bot_key' => null,
+                'sent_at' => $now,
             ]);
 
             $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at      = $now;
-            $conversation->unread_count         = 0;
+            $conversation->last_message_at = $now;
+            $conversation->unread_count = 0;
             $conversation->save();
 
             // broadcast ให้ list ซ้ายของทุกคนอัปเดต
@@ -362,11 +236,11 @@ class ChatService
         return DB::transaction(function () use ($conversation, $file, $employeeId, $meta, $now) {
             // upload รูปไปที่ storage (disk public)
             $path = $file->store('line-oa/images', 'public');
-            $url  = Storage::disk('public')->url($path);
+            $url = Storage::disk('public')->url($path);
 
             $payload = [
                 'message' => [
-                    'type'       => 'image',
+                    'type' => 'image',
                     'contentUrl' => $url,
                     'previewUrl' => $url,
                     'originalContentUrl' => $url,
@@ -377,23 +251,23 @@ class ChatService
             /** @var LineMessage $message */
             $message = LineMessage::create([
                 'line_conversation_id' => $conversation->id,
-                'line_account_id'      => $conversation->line_account_id,
-                'line_contact_id'      => $conversation->line_contact_id,
-                'direction'            => 'outbound',
-                'source'               => 'agent',
-                'type'                 => 'image',
-                'line_message_id'      => null,
-                'text'                 => null,
-                'payload'              => $payload,
-                'meta'                 => $meta,
-                'sender_employee_id'   => $employeeId,
-                'sender_bot_key'       => null,
-                'sent_at'              => $now,
+                'line_account_id' => $conversation->line_account_id,
+                'line_contact_id' => $conversation->line_contact_id,
+                'direction' => 'outbound',
+                'source' => 'agent',
+                'type' => 'image',
+                'line_message_id' => null,
+                'text' => null,
+                'payload' => $payload,
+                'meta' => $meta,
+                'sender_employee_id' => $employeeId,
+                'sender_bot_key' => null,
+                'sent_at' => $now,
             ]);
 
             $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at      = $now;
-            $conversation->unread_count         = 0;
+            $conversation->last_message_at = $now;
+            $conversation->unread_count = 0;
             $conversation->save();
 
             // broadcast ให้ list ซ้ายของทุกคนอัปเดต
@@ -422,10 +296,10 @@ class ChatService
 
         $body = $result['body'] ?? [];
 
-        $contact->display_name   = $body['displayName']   ?? $contact->display_name;
-        $contact->picture_url    = $body['pictureUrl']    ?? $contact->picture_url;
+        $contact->display_name = $body['displayName'] ?? $contact->display_name;
+        $contact->picture_url = $body['pictureUrl'] ?? $contact->picture_url;
         $contact->status_message = $body['statusMessage'] ?? $contact->status_message;
-        $contact->last_seen_at   = $contact->last_seen_at ?? now();
+        $contact->last_seen_at = $contact->last_seen_at ?? now();
         $contact->save();
 
         return $contact;
@@ -444,16 +318,16 @@ class ChatService
         if (! $contact) {
             $contact = LineContact::create([
                 'line_account_id' => $account->id,
-                'line_user_id'    => $lineUserId,
-                'display_name'    => null,
-                'picture_url'     => null,
-                'status_message'  => null,
-                'member_id'       => null,
+                'line_user_id' => $lineUserId,
+                'display_name' => null,
+                'picture_url' => null,
+                'status_message' => null,
+                'member_id' => null,
                 'member_username' => null,
-                'member_mobile'   => null,
-                'tags'            => [],
-                'last_seen_at'    => null,
-                'blocked_at'      => null,
+                'member_mobile' => null,
+                'tags' => [],
+                'last_seen_at' => null,
+                'blocked_at' => null,
             ]);
         }
 
@@ -463,30 +337,6 @@ class ChatService
     /**
      * หา/สร้าง conversation สำหรับ contact นี้ใน OA นี้
      */
-    protected function getOrCreateConversation_(LineAccount $account, LineContact $contact): LineConversation
-    {
-        /** @var LineConversation $conversation */
-        $conversation = LineConversation::where('line_account_id', $account->id)
-            ->where('line_contact_id', $contact->id)
-            ->where('status', 'open')
-            ->first();
-
-        if (! $conversation) {
-            $conversation = LineConversation::create([
-                'line_account_id'        => $account->id,
-                'line_contact_id'        => $contact->id,
-                'status'                 => 'open',
-                'last_message_preview'   => null,
-                'last_message_at'        => null,
-                'unread_count'           => 0,
-                'assigned_employee_id'   => null,
-                'locked_by_employee_id'  => null,
-            ]);
-        }
-
-        return $conversation;
-    }
-
     protected function getOrCreateConversation(LineAccount $account, LineContact $contact): LineConversation
     {
         /** @var LineConversation $conversation */
@@ -502,14 +352,14 @@ class ChatService
 
         if (! $conversation) {
             $conversation = LineConversation::create([
-                'line_account_id'        => $account->id,
-                'line_contact_id'        => $contact->id,
-                'status'                 => 'open',
-                'last_message_preview'   => null,
-                'last_message_at'        => null,
-                'unread_count'           => 0,
-                'assigned_employee_id'   => null,
-                'locked_by_employee_id'  => null,
+                'line_account_id' => $account->id,
+                'line_contact_id' => $contact->id,
+                'status' => 'open',
+                'last_message_preview' => null,
+                'last_message_at' => null,
+                'unread_count' => 0,
+                'assigned_employee_id' => null,
+                'locked_by_employee_id' => null,
             ]);
         }
 
@@ -549,24 +399,26 @@ class ChatService
 
             if (! ($result['success'] ?? false)) {
                 \Log::warning('[LineChat] ดึง content รูปจาก LINE ไม่สำเร็จ', [
-                    'message_id'     => $message->id,
-                    'line_message_id'=> $lineMessageId,
-                    'status'         => $result['status'] ?? null,
+                    'message_id' => $message->id,
+                    'line_message_id' => $lineMessageId,
+                    'status' => $result['status'] ?? null,
                 ]);
+
                 return;
             }
 
             $binary = $result['body'] ?? null;
             if ($binary === null || $binary === '') {
                 \Log::warning('[LineChat] ดึง content รูปจาก LINE ได้ body ว่าง', [
-                    'message_id'     => $message->id,
-                    'line_message_id'=> $lineMessageId,
+                    'message_id' => $message->id,
+                    'line_message_id' => $lineMessageId,
                 ]);
+
                 return;
             }
 
             // เซฟไฟล์ลง disk public
-            $ext  = 'jpg'; // LINE image ส่วนใหญ่เป็น jpeg; ถ้าจะละเอียดค่อยตรวจ header ทีหลังได้
+            $ext = 'jpg'; // LINE image ส่วนใหญ่เป็น jpeg; ถ้าจะละเอียดค่อยตรวจ header ทีหลังได้
             $path = 'line-oa/inbound/'.$lineMessageId.'.'.$ext;
 
             Storage::disk('public')->put($path, $binary);
@@ -579,12 +431,78 @@ class ChatService
             $message->save();
         } catch (\Throwable $e) {
             \Log::error('[LineChat] exception ขณะดึง content รูปจาก LINE', [
-                'message_id'     => $message->id,
-                'line_message_id'=> $message->line_message_id,
-                'error'          => $e->getMessage(),
+                'message_id' => $message->id,
+                'line_message_id' => $message->line_message_id,
+                'error' => $e->getMessage(),
             ]);
         }
     }
+
+    /**
+     * จัดการภาษา/การแปลสำหรับข้อความ inbound แบบ text
+     *
+     * - detect language จากข้อความลูกค้า
+     * - อัปเดต language fields บน contact / conversation
+     * - แปลข้อความให้ agent อ่าน (target = 'th') แล้วเก็บไว้ใน meta.translation_inbound
+     */
+    protected function handleInboundTextLanguageAndTranslation(
+        LineConversation $conversation,
+        LineContact $contact,
+        LineMessage $message
+    ): void {
+        if (! $this->translator->isEnabled()) {
+            return;
+        }
+
+        $text = trim((string) $message->text);
+        if ($text === '') {
+            return;
+        }
+
+        $targetLang = 'th';
+
+        $result = $this->translator->translate($text, $targetLang, null);
+
+        $detected = $result['detected_source'] ?? $result['source'] ?? null;
+
+        // อัปเดต language บน contact/conversation
+        if ($detected) {
+            $contact->last_detected_language = $detected;
+
+            if (empty($contact->preferred_language)) {
+                $contact->preferred_language = $detected;
+            }
+            $contact->save();
+
+            $conversation->incoming_language = $detected;
+
+            // ถ้ายังไม่เคยตั้ง outgoing_language และภาษาลูกค้าไม่ใช่ไทย → default ให้ตามลูกค้า
+            if (empty($conversation->outgoing_language) && $detected !== $targetLang) {
+                $conversation->outgoing_language = $detected;
+            }
+            $conversation->save();
+        }
+
+        // เก็บผลการแปลลง meta.translation_inbound โดยไม่แก้ text เดิม
+        $meta = $message->meta;
+        if (! is_array($meta)) {
+            $meta = $meta ? (array) $meta : [];
+        }
+
+        $meta['translation_inbound'] = [
+            'provider'               => $result['provider'] ?? null,
+            'original_text'          => $result['original_text'] ?? $text,
+            'translated_text'        => $result['translated_text'] ?? $text,
+            'source_language'        => $result['source'] ?? null,
+            'detected_source'        => $detected,
+            'target_language'        => $result['target'] ?? $targetLang,
+            'for_agent_display_lang' => $targetLang,
+        ];
+
+        $message->meta = $meta;
+        $message->save();
+    }
+
 
     /**
      * สร้างข้อความ preview ให้ใช้ใน list conversation
@@ -619,9 +537,9 @@ class ChatService
      */
     public function closeConversation(LineConversation $conversation, ?int $employeeId = null): void
     {
-        $conversation->status       = 'closed';
-        $conversation->closed_at    = now();
-        $conversation->closed_by    = $employeeId;
+        $conversation->status = 'closed';
+        $conversation->closed_at = now();
+        $conversation->closed_by = $employeeId;
         $conversation->unread_count = 0;
         $conversation->save();
 

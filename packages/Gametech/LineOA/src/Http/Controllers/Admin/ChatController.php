@@ -248,6 +248,9 @@ class ChatController extends Controller
                 'closed_by_employee_name' => $conversation->closed_by_employee_name,
                 'closed_at' => optional($conversation->closed_at)->toIso8601String(),
 
+                'incoming_language' => $conversation->incoming_language,
+                'outgoing_language' => $conversation->outgoing_language,
+
                 'line_account' => [
                     'id' => $conversation->account?->id,
                     'name' => $conversation->account?->name,
@@ -265,6 +268,9 @@ class ChatController extends Controller
                     'member_name' => $conversation->contact?->member?->name,
                     'member_bank_name' => $conversation->contact?->member?->bank?->name_th,
                     'member_acc_no' => $conversation->contact?->member?->acc_no,
+
+                    'preferred_language' => $conversation->contact?->preferred_language,
+                    'last_detected_language' => $conversation->contact?->last_detected_language,
                 ],
             ],
             'messages' => $messages->map(function (LineMessage $m) {
