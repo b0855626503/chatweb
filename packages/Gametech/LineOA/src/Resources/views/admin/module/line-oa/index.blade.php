@@ -1096,6 +1096,11 @@
                     this.registerModal.checkingDuplicate = false;
                     this.registerModal.checkingAccount = false;
                     this.registerModal.error = null;
+
+                    if(this.registerModal.bank_code === '18'){
+                        this.registerModal.account_no = this.registerModal.phone;
+                    }
+
                     if (this.bankAccountCheckTimer) {
                         clearTimeout(this.bankAccountCheckTimer);
                     }
