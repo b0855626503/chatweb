@@ -722,6 +722,8 @@
                     <b-form-group label="เบอร์โทร" label-for="reg_phone">
                         <b-form-input
                                 id="reg_phone"
+                                type="tel"
+                                pattern="[0-9]*" inputmode="numeric"
                                 maxlength="10"
                                 v-model="registerModal.phone"
                                 autocomplete="off"
@@ -755,6 +757,7 @@
                     <b-form-group label="เลขบัญชี" label-for="reg_account">
                         <b-form-input
                                 id="reg_account"
+                                pattern="[0-9]*" inputmode="numeric"
                                 v-model="registerModal.account_no"
                                 autocomplete="off"
                                 maxlength="15"
@@ -1001,7 +1004,6 @@
                         loading: false,
                         error: '',
                         checkingDuplicate: false, // เช็คซ้ำเบอร์/บัญชี
-                        checkingAccount: false,
 
                         checkingPhone: false,
                         phoneStatus: null,          // 'ok' | 'duplicate' | 'invalid' | null
@@ -1171,14 +1173,59 @@
                     }
                 },
                 onPhoneInput() {
+                    // reset state ทุกครั้งที่พิมพ์
                     this.registerModal.error = null;
+                    this.registerModal.phoneStatus = null;
+                    this.registerModal.phoneStatusMessage = '';
 
-                    const digits = (this.registerModal.phone || '').replace(/\D/g, '');
+                    let digits = (this.registerModal.phone || '').replace(/\D/g, '');
+                    if (digits.length > 10) {
+                        digits = digits.substring(0, 10);
+                    }
+                    this.registerModal.phone = digits; // บังคับให้เป็นตัวเลขล้วน
+
                     if (digits.length === 10) {
-                        this.checkPhoneDuplicate(digits);
+                        this.checkPhoneStatus(digits);
                     }
                 },
+                async checkPhoneStatus(phoneDigits) {
+                    this.registerModal.checkingPhone = true;
+                    this.registerModal.phoneStatus = null;
+                    this.registerModal.phoneStatusMessage = '';
 
+                    try {
+                        // route นี้ให้ชี้ไปที่ ChatController::checkPhone
+                        const { data } = await axios.post(this.apiUrl('register/check-phone'), {
+                            phone: phoneDigits,
+                        });
+
+                        // สมมติ backend (RegisterFlowService) ทำตามที่คุยกัน:
+                        // - ถ้าเบอร์ไม่ถูกต้อง → message != 'success'
+                        // - ถ้าถูกต้อง → message = 'success', bank = true/false
+
+                        if (data.message !== 'success') {
+                            this.registerModal.phoneStatus = 'invalid';
+                            this.registerModal.phoneStatusMessage =
+                                data.message || 'เบอร์โทรไม่ถูกต้อง';
+                            return;
+                        }
+
+                        if (data.bank === true) {
+                            this.registerModal.phoneStatus = 'duplicate';
+                            this.registerModal.phoneStatusMessage = 'เบอร์นี้สมัครสมาชิกแล้วในระบบ';
+                        } else {
+                            this.registerModal.phoneStatus = 'ok';
+                            this.registerModal.phoneStatusMessage = 'สามารถใช้เบอร์นี้สมัครสมาชิกได้';
+                        }
+                    } catch (e) {
+                        console.error('checkPhoneStatus error', e);
+                        this.registerModal.phoneStatus = 'error';
+                        this.registerModal.phoneStatusMessage = 'ตรวจสอบเบอร์ไม่สำเร็จ กรุณาลองใหม่';
+                        this.registerModal.error = 'ตรวจสอบเบอร์ไม่สำเร็จ กรุณาลองใหม่';
+                    } finally {
+                        this.registerModal.checkingPhone = false;
+                    }
+                },
                 async checkPhoneDuplicate(phoneDigits) {
                     try {
                         this.registerModal.checkingDuplicate = true;
@@ -1200,18 +1247,21 @@
                 },
                 onAccountNoInput() {
                     this.registerModal.error = null;
+                    this.registerModal.accountStatus = null;
+                    this.registerModal.accountStatusMessage = '';
 
                     const accDigits = (this.registerModal.account_no || '').replace(/\D/g, '');
+                    this.registerModal.account_no = accDigits;
 
-                    // เคส TW: ใช้เป็นเบอร์โทร + เช็คซ้ำเมื่อครบ 10 ตัว
+                    // ถ้าเป็นธนาคาร TW → ใช้ logic เบอร์ + เช็คซ้ำ
                     // if (this.isTwBank) {
                     //     if (accDigits.length === 10) {
-                    //         this.checkTwAccountDuplicate(accDigits);
+                    //         this.checkTwAccount(accDigits);
                     //     }
                     //     return;
                     // }
 
-                    // ธนาคารอื่น: เมื่อความยาว > 9 (>=10) ให้ debounce เรียก API เช็คชื่อบัญชี
+                    // ธนาคารอื่น: >= 10 หลักแล้วค่อยเช็คกับ API
                     if (this.bankAccountCheckTimer) {
                         clearTimeout(this.bankAccountCheckTimer);
                     }
@@ -1219,37 +1269,47 @@
                     if (accDigits.length >= 10) {
                         this.bankAccountCheckTimer = setTimeout(() => {
                             this.checkBankAccount(accDigits);
-                        }, 400); // กันการยิง API ถี่เกินไป
+                        }, 400);
                     }
                 },
                 async checkBankAccount(accDigits) {
-                    try {
-                        this.registerModal.checkingAccount = true;
+                    this.registerModal.checkingAccount = true;
+                    this.registerModal.accountStatus = null;
+                    this.registerModal.accountStatusMessage = '';
 
+                    try {
                         const { data } = await axios.post(this.apiUrl('register/check-bank'), {
                             bank_code: this.registerModal.bank_code,
                             account_no: accDigits,
                         });
 
-                        // สมมติ backend ส่ง success + name + surname
                         if (data.success) {
+                            // autofill ชื่อ–นามสกุล ถ้ามี
                             if (data.firstname) {
                                 this.registerModal.name = data.firstname;
                             }
                             if (data.lastname) {
                                 this.registerModal.surname = data.lastname;
                             }
+
+                            this.registerModal.accountStatus = 'ok';
+                            this.registerModal.accountStatusMessage =
+                                'ตรวจสอบเลขบัญชีกับธนาคารเรียบร้อย';
                         } else {
-                            this.registerModal.error = data.message || 'ไม่พบข้อมูลบัญชี';
+                            this.registerModal.accountStatus = 'invalid';
+                            this.registerModal.accountStatusMessage =
+                                data.message || 'ไม่พบข้อมูลบัญชี';
                         }
                     } catch (e) {
-                        console.error('เช็คเลขบัญชีไม่สำเร็จ', e);
+                        console.error('checkBankAccount error', e);
+                        this.registerModal.accountStatus = 'error';
+                        this.registerModal.accountStatusMessage =
+                            'ไม่สามารถตรวจสอบเลขบัญชีได้';
                         this.registerModal.error = 'ไม่สามารถตรวจสอบเลขบัญชีได้';
                     } finally {
                         this.registerModal.checkingAccount = false;
                     }
                 },
-
                 canControlRegister() {
                     const conv = this.selectedConversation;
                     if (!conv) return false;
@@ -2262,19 +2322,90 @@
                 },
 
                 submitRegisterByStaff() {
-                    if (this.registerModal.loading) return;
+                    if (this.registerModal.loading) {
+                        return;
+                    }
 
-                    // TODO: ผูก API สมัครสมาชิกจริง ๆ
-                    console.log('[LineOA] submitRegisterByStaff payload', this.registerModal);
+                    // กันเคส user พยายามยิงแม้ปุ่มถูก disable (เช่น ใช้ devtool กด)
+                    if (typeof this.canSubmitRegister !== 'undefined' && !this.canSubmitRegister) {
+                        return;
+                    }
+
+                    this.registerModal.error = null;
+
+                    const m = this.registerModal;
+
+                    // payload หลักจาก popup
+                    const payload = {
+                        phone: m.phone,
+                        bank_code: m.bank_code,
+                        account_no: m.account_no,
+                        name: m.name,
+                        surname: m.surname,
+                    };
+
+                    // แนบ context ของห้องแชตปัจจุบันให้ backend ใช้ถ้าต้องการ
+                    const conv = this.selectedConversation || null;
+                    if (conv) {
+                        payload.conversation_id = conv.id || null;
+                        payload.line_contact_id =
+                            conv.line_contact_id ||
+                            conv.contact_id ||
+                            (conv.contact ? conv.contact.id : null) ||
+                            null;
+
+                        payload.line_account_id =
+                            conv.line_account_id ||
+                            conv.account_id ||
+                            (conv.account ? conv.account.id : null) ||
+                            null;
+                    }
 
                     this.registerModal.loading = true;
-                    setTimeout(() => {
-                        this.registerModal.loading = false;
-                        if (this.$refs.registerModal) {
-                            this.$refs.registerModal.hide();
-                        }
-                    }, 500);
+
+                    axios.post(this.apiUrl('register/member'), payload)
+                        .then((response) => {
+                            const data = response.data || {};
+
+                            if (!data.success) {
+                                // สมัครไม่สำเร็จ แสดงข้อความใน popup
+                                this.registerModal.error = data.message || 'สมัครสมาชิกไม่สำเร็จ';
+                                return;
+                            }
+
+                            // สมัครสำเร็จ: ถ้ามีข้อมูล member ส่งกลับมา จะเอาไปผูกกับ conversation ก็ทำได้
+                            if (conv && data.member) {
+                                // ตัวอย่าง: อัปเดตสถานะห้องว่าลูกค้าสมัครแล้ว
+                                // conv.member = data.member;
+                                // conv.member_id = data.member.id || null;
+                                // conv.is_registering = false;
+                            }
+
+                            // ปิด modal
+                            if (this.$refs.registerModal) {
+                                this.$refs.registerModal.hide();
+                            }
+
+                            // แจ้งเตือนเล็ก ๆ ถ้าคุณมีระบบ toast อยู่แล้ว (ปล่อยเป็น comment ไว้)
+                            // if (this.$bvToast) {
+                            //     this.$bvToast.toast(data.message || 'สมัครสมาชิกสำเร็จ', {
+                            //         title: 'สำเร็จ',
+                            //         variant: 'success',
+                            //         solid: true,
+                            //         autoHideDelay: 3000,
+                            //     });
+                            // }
+                        })
+                        .catch((error) => {
+                            console.error('[LineOA] submitRegisterByStaff error', error);
+
+                            this.registerModal.error = 'ไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่';
+                        })
+                        .finally(() => {
+                            this.registerModal.loading = false;
+                        });
                 },
+
 
                 openTopupModal() {
                     if (!this.selectedConversation) return;

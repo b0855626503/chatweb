@@ -303,7 +303,7 @@ class ChatController extends Controller
             ], 422);
         }
 
-        // 👇 เพิ่มตรงนี้: กันส่งข้อความในห้องที่ปิดแล้ว
+        // 👇 กันส่งข้อความในห้องที่ปิดแล้ว
         if ($conversation->status === 'closed') {
             return response()->json([
                 'message' => 'เคสนี้ถูกปิดแล้ว ไม่สามารถส่งข้อความได้',
@@ -668,12 +668,12 @@ class ChatController extends Controller
 
         try {
             /** @var \Gametech\LineOA\Services\RegisterFlowService $flow */
-            $flow = app(\Gametech\LineOA\Services\RegisterFlowService::class);
+            $flow = app(RegisterFlowService::class);
 
             // normalize ให้เป็นมาตรฐานเดียวกับ flow สมัครหลัก
             $normalizedAccount = $flow->normalizeAccountNo($account_no);
 
-            if (!$normalizedAccount) {
+            if (! $normalizedAccount) {
                 return response()->json([
                     'message' => 'เลขบัญชีไม่ถูกต้อง',
                     'success' => false,
@@ -681,12 +681,11 @@ class ChatController extends Controller
             }
 
             // ใช้ logic เดียวกับระบบสมัครปกติ
-            if($flow->isBankAccountAlreadyUsed($bankCode,$normalizedAccount)){
+            if ($flow->isBankAccountAlreadyUsed($bankCode, $normalizedAccount)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'เลขบัญชี มีในระบบแล้ว ไม่มาสารถใช้ได้',
                 ]);
-
             }
 
             $apiBankCode = $this->mapBankCodeForExternalApi($bankCode);
@@ -763,7 +762,6 @@ class ChatController extends Controller
 
             return response()->json($result);
 
-
         } catch (\Throwable $e) {
 
             return response()->json([
@@ -808,22 +806,21 @@ class ChatController extends Controller
         }
     }
 
-
     public function checkPhone(Request $request): JsonResponse
     {
         $phone = $request->input('phone');
 
         try {
             /** @var \Gametech\LineOA\Services\RegisterFlowService $flow */
-            $flow = app(\Gametech\LineOA\Services\RegisterFlowService::class);
+            $flow = app(RegisterFlowService::class);
 
             // normalize ให้เป็นมาตรฐานเดียวกับ flow สมัครหลัก
             $normalizedPhone = $flow->normalizePhone($phone);
 
-            if (!$normalizedPhone) {
+            if (! $normalizedPhone) {
                 return response()->json([
                     'message' => 'เบอร์โทรไม่ถูกต้อง',
-                    'bank'    => false,
+                    'bank' => false,
                 ], 200);
             }
 
@@ -832,12 +829,120 @@ class ChatController extends Controller
 
             return response()->json([
                 'message' => 'success',
-                'bank'    => $exists,    // เหมือนของเดิม: bank = true ถ้าซ้ำ
+                'bank' => $exists,    // เหมือนของเดิม: bank = true ถ้าซ้ำ
             ]);
         } catch (\Throwable $e) {
 
             return response()->json([
                 'message' => 'กรุณาลองใหม่',
+            ], 500);
+        }
+    }
+
+    public function registerMember(Request $request): JsonResponse
+    {
+        try {
+            /** @var \Gametech\LineOA\Services\RegisterFlowService $flow */
+            $flow = app(RegisterFlowService::class);
+
+            // 1) รับค่าจาก popup
+            $phone      = $request->input('phone');
+            $bankCode   = trim((string) $request->input('bank_code'));
+            $accountNo  = trim((string) $request->input('account_no'));
+            $name       = trim((string) $request->input('name'));
+            $surname    = trim((string) $request->input('surname'));
+
+            // 2) Normalize เบอร์ก่อน
+            $normalizedPhone = $flow->normalizePhone($phone);
+
+            if (! $normalizedPhone) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'เบอร์โทรไม่ถูกต้อง',
+                ], 200);
+            }
+
+            // 3) เช็คเบอร์ซ้ำด้วย logic เดิมของระบบ
+            if ($flow->isPhoneAlreadyUsed($normalizedPhone)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'เบอร์นี้มีอยู่ในระบบแล้ว',
+                ], 200);
+            }
+
+            // 4) ตรวจสอบข้อมูลให้ครบ
+            if (! $bankCode || ! $accountNo || ! $name || ! $surname) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'กรุณากรอกข้อมูลให้ครบถ้วน',
+                ], 200);
+            }
+
+            // 5) normalize เลขบัญชีให้เหมือน flow สมัครหลัก
+            $normalizedAccount = $flow->normalizeAccountNo($accountNo);
+
+            if (! $normalizedAccount) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'เลขบัญชีไม่ถูกต้อง',
+                ], 200);
+            }
+
+            // 6) เคส TW = account_no = phone
+            $isTw = (strtoupper($bankCode) === 'TW' || (string) $bankCode === '18');
+            if ($isTw) {
+                if ($normalizedAccount !== $normalizedPhone) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'สำหรับธนาคาร TW เลขบัญชีต้องเป็นเบอร์โทรเท่านั้น',
+                    ], 200);
+                }
+            }
+
+            // 7) เช็คซ้ำเลขบัญชีด้วย logic เดียวกับ flow สมัครบอท
+            if ($flow->isBankAccountAlreadyUsed($bankCode, $normalizedAccount)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'เลขบัญชี มีในระบบแล้ว ไม่สามารถใช้ได้',
+                ], 200);
+            }
+
+            // 8) สมัครสมาชิกจริงผ่าน Service กลางของระบบ
+            $payload = [
+                'phone'        => $normalizedPhone,
+                'bank_code'    => $bankCode,
+                'account_no'   => $normalizedAccount,
+                'name'         => $name,
+                'surname'      => $surname,
+                'created_from' => 'line_staff', // ระบุว่ามาจาก Support Staff
+            ];
+
+            $result = $flow->registerFromStaff($payload);
+
+            if (! $result['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'] ?? 'สมัครสมาชิกไม่สำเร็จ',
+                ], 200);
+            }
+
+            // สำเร็จ
+            return response()->json([
+                'success' => true,
+                'message' => 'สมัครสมาชิกสำเร็จ',
+                'member'  => $result['member'] ?? null,
+            ], 200);
+
+        } catch (\Throwable $e) {
+
+            // เก็บ log
+            Log::error('[LineOA] registerMember error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาด กรุณาลองใหม่',
             ], 500);
         }
     }
@@ -1223,7 +1328,7 @@ class ChatController extends Controller
             ]);
         }
 
-        // เซตสถานะเป็น open
+        // เซตสถานะเป็น assigned (เปิดใหม่และถือว่าเราเป็นคนดูแล)
         $conversation->status = 'assigned';
         $conversation->closed_by_employee_id = null;
         $conversation->closed_by_employee_name = null;

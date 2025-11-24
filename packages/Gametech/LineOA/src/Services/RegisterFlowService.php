@@ -624,7 +624,6 @@ class RegisterFlowService
                         'member_username' => $phone,
                     ]);
             }
-
         } catch (\Throwable $e) {
             report($e);
         }
@@ -1036,7 +1035,9 @@ class RegisterFlowService
     {
         // ตอนนี้ bankCode เป็นเลข bank_code ในระบบ
         // เช็คซ้ำจากเลขบัญชีเป็นหลัก
-        $dupMember = Member::where('acc_no', $accountNo)->where('bank_code', $bankCode)->exists();
+        $dupMember = Member::where('acc_no', $accountNo)
+            ->where('bank_code', $bankCode)
+            ->exists();
 
         if ($dupMember) {
             return true;
@@ -1047,6 +1048,111 @@ class RegisterFlowService
             ->exists();
 
         return $existsInBankAccount;
+    }
+
+    /**
+     * สมัครสมาชิกแทนลูกค้า (ใช้จากฝั่งหลังบ้าน / ChatController)
+     *
+     * คาดหวัง payload อย่างน้อย:
+     *  - phone
+     *  - bank_code
+     *  - account_no
+     *  - name
+     *  - surname
+     *
+     * ออปชัน:
+     *  - line_contact_id
+     *  - line_conversation_id
+     *  - line_account_id
+     *  - employee_id
+     *  - created_from
+     */
+    public function registerFromStaff(array $payload): array
+    {
+        $phone      = $payload['phone']      ?? null;
+        $bankCode   = $payload['bank_code']  ?? null;
+        $accountNo  = $payload['account_no'] ?? null;
+        $name       = $payload['name']       ?? null;
+        $surname    = $payload['surname']    ?? null;
+
+        if (! $phone || ! $bankCode || ! $accountNo || ! $name || ! $surname) {
+            return [
+                'success' => false,
+                'message' => 'ข้อมูลไม่ครบถ้วน',
+            ];
+        }
+
+        // เตรียม data ส่งเข้า registerFromLineData ให้สอดคล้องกับ flow เดิม
+        $data = [
+            'phone'      => $phone,
+            'bank_code'  => $bankCode,
+            'account_no' => $accountNo,
+            'name'       => $name,
+            'surname'    => $surname,
+            'created_from' => $payload['created_from'] ?? 'line_staff',
+        ];
+
+        // แนบ context เพิ่มเติมถ้ามี
+        foreach (['line_contact_id', 'line_conversation_id', 'line_account_id', 'employee_id'] as $key) {
+            if (array_key_exists($key, $payload) && $payload[$key] !== null) {
+                $data[$key] = $payload[$key];
+            }
+        }
+
+        try {
+            $result = $this->memberRegistrar->registerFromLineData($data);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return [
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาด กรุณาลองใหม่',
+            ];
+        }
+
+        if (! $result->success) {
+            return [
+                'success' => false,
+                'message' => $result->message ?? 'สมัครสมาชิกไม่สำเร็จ',
+            ];
+        }
+
+        // ผูก LineContact กับ member ถ้า line_contact_id ส่งมา
+        try {
+            $contact = null;
+            if (! empty($payload['line_contact_id'])) {
+                $contact = LineContact::find($payload['line_contact_id']);
+            }
+
+            if ($contact && empty($contact->member_id) && $phone) {
+                LineContact::where('line_user_id', $contact->line_user_id)
+                    ->update([
+                        'member_id'        => $result->memberId,
+                        'member_mobile'    => $phone,
+                        'member_username'  => $phone,
+                    ]);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        // ดึงข้อมูล member กลับไปให้ฝั่งแชตใช้ (ถ้าต้องใช้แสดงผล)
+        $member = null;
+        try {
+            $member = Member::find($result->memberId);
+        } catch (\Throwable $e) {
+            $member = null;
+        }
+
+        return [
+            'success'    => true,
+            'message'    => $result->message ?? 'สมัครสมาชิกสำเร็จ',
+            'member'     => $member,
+            'member_id'  => $result->memberId,
+            'username'   => $result->username ?? null,
+            'password'   => $result->password ?? null,
+            'login_url'  => $result->loginUrl ?? null,
+        ];
     }
 
     /**

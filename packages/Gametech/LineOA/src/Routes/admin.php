@@ -46,6 +46,8 @@ Route::domain(
 
             Route::post('register/check-phone', [ChatController::class, 'checkPhone'])->name('register.check-phone');
 
+            Route::post('register/member', [ChatController::class, 'registerMember'])->name('register.member');
+
             Route::post('contacts/{contact}/attach-member', [ChatController::class, 'attachMember'])
                 ->name('contacts.attach-member');
 
