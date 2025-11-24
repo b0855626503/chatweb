@@ -812,7 +812,7 @@ class RegisterFlowService
         return in_array($text, $keywords, true);
     }
 
-    protected function normalizePhone(string $text): ?string
+    public function normalizePhone(string $text): ?string
     {
         $digits = preg_replace('/\D+/', '', $text);
 
@@ -1001,7 +1001,7 @@ class RegisterFlowService
         return null;
     }
 
-    protected function normalizeAccountNo(string $text): ?string
+    public function normalizeAccountNo(string $text): ?string
     {
         $digits = preg_replace('/\D+/', '', $text);
 
@@ -1012,7 +1012,7 @@ class RegisterFlowService
         return $digits;
     }
 
-    protected function isPhoneAlreadyUsed(string $phone): bool
+    public function isPhoneAlreadyUsed(string $phone): bool
     {
         // 1) members.tel หรือ members.user_name ใช้เบอร์นี้แล้ว
         $existsInMember = Member::where(function ($q) use ($phone) {
@@ -1032,7 +1032,7 @@ class RegisterFlowService
         return $existsInBankAccount;
     }
 
-    protected function isBankAccountAlreadyUsed(?string $bankCode, string $accountNo): bool
+    public function isBankAccountAlreadyUsed(?string $bankCode, string $accountNo): bool
     {
         // ตอนนี้ bankCode เป็นเลข bank_code ในระบบ
         // เช็คซ้ำจากเลขบัญชีเป็นหลัก
@@ -1052,7 +1052,7 @@ class RegisterFlowService
     /**
      * ล้างอักขระมองไม่เห็น และ normalize ช่องว่าง
      */
-    private function cleanInvisibleAndSpaces(string $s): string
+    public function cleanInvisibleAndSpaces(string $s): string
     {
         // ลบอักขระรูปแบบ (General Category: Cf) ที่เจอบ่อยแบบเจาะจง
         $s = preg_replace('/[\x{200B}\x{200C}\x{200D}\x{200E}\x{200F}\x{2060}\x{00A0}\x{202F}\x{FEFF}]/u', '', $s);
@@ -1067,7 +1067,7 @@ class RegisterFlowService
     /**
      * แยก fullname → firstname/lastname และตัดคำนำหน้าออก
      */
-    private function splitNameUniversal(string $fullName): array
+    public function splitNameUniversal(string $fullName): array
     {
         // ล้าง ZWSP/NBSP/BOM ฯลฯ และ normalize ช่องว่าง
         $fullName = $this->cleanInvisibleAndSpaces($fullName);

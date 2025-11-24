@@ -18,8 +18,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
@@ -161,6 +163,7 @@ class ChatController extends Controller
     {
         $limit = (int) $request->get('limit', 50);
         $beforeId = $request->get('before_id');
+        $previousId = $request->get('previous_id');
 
         $conversation->load([
             'contact.member',
@@ -169,6 +172,28 @@ class ChatController extends Controller
                 $q->where('status', 'in_progress');
             },
         ]);
+
+        // ===== เคลียร์ unread ของห้องก่อนหน้า (ถ้ามีส่ง previous_id มา) =====
+        if ($previousId && (int) $previousId !== (int) $conversation->id) {
+            /** @var \Gametech\LineOA\Models\LineConversation|null $prevConv */
+            $prevConv = LineConversation::query()->find($previousId);
+
+            if ($prevConv && $prevConv->unread_count > 0) {
+                $prevConv->unread_count = 0;
+                $prevConv->save();
+
+                DB::afterCommit(function () use ($prevConv) {
+                    $conv = $prevConv->fresh([
+                        'contact.member',
+                        'account',
+                        'registerSessions' => function ($q) {
+                            $q->where('status', 'in_progress');
+                        },
+                    ]) ?? $prevConv;
+                    event(new LineOAChatConversationUpdated($conv));
+                });
+            }
+        }
 
         $messagesQuery = LineMessage::query()
             ->where('line_conversation_id', $conversation->id)
@@ -296,7 +321,7 @@ class ChatController extends Controller
 
         if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
             return response()->json([
-                'message' => 'ห้องนี้ถูกล็อกโดย ' . ($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น') . ' คุณไม่สามารถตอบได้',
+                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
             ], 403);
         }
 
@@ -379,7 +404,7 @@ class ChatController extends Controller
 
         if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
             return response()->json([
-                'message' => 'ห้องนี้ถูกล็อกโดย ' . ($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น') . ' คุณไม่สามารถตอบได้',
+                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
             ], 403);
         }
 
@@ -594,6 +619,229 @@ class ChatController extends Controller
         }
     }
 
+    public function loadBank(Request $request): JsonResponse
+    {
+
+        try {
+            // หมายเหตุ:
+            // - ตรงนี้ปรับให้ตรงระบบจริงของโบ๊ทได้เลย
+            // - ตัวอย่าง: ใช้ repository กลางของ Member
+            /** @var \Prettus\Repository\Contracts\RepositoryInterface $bankRepo */
+            $bankRepo = app('Gametech\Payment\Repositories\BankRepository');
+
+            $default = [
+                'value' => '',
+                'text' => '== เลือกธนาคาร ==',
+            ];
+
+            $banks = $bankRepo->findWhere([
+                'enable' => 'Y',
+                'show_regis' => 'Y',
+            ])->sortBy('name_th')
+                ->map(fn ($item) => [
+                    'value' => $item->code,
+                    'text' => $item->name_th,
+                ])->values()->prepend($default);
+
+            return response()->json([
+                'message' => 'success',
+                'bank' => $banks,
+            ]);
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'message' => 'กรุณาลองใหม่',
+            ], 500);
+        }
+    }
+
+    public function checkBank(Request $request): JsonResponse
+    {
+        $result = [
+            'success' => false,
+            'firstname' => null,
+            'lastname' => null,
+        ];
+
+        $bankCode = $request->input('bank_code');
+        $account_no = $request->input('account_no');
+
+        try {
+            /** @var \Gametech\LineOA\Services\RegisterFlowService $flow */
+            $flow = app(\Gametech\LineOA\Services\RegisterFlowService::class);
+
+            // normalize ให้เป็นมาตรฐานเดียวกับ flow สมัครหลัก
+            $normalizedAccount = $flow->normalizeAccountNo($account_no);
+
+            if (!$normalizedAccount) {
+                return response()->json([
+                    'message' => 'เลขบัญชีไม่ถูกต้อง',
+                    'success' => false,
+                ], 200);
+            }
+
+            // ใช้ logic เดียวกับระบบสมัครปกติ
+            if($flow->isBankAccountAlreadyUsed($bankCode,$normalizedAccount)){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'เลขบัญชี มีในระบบแล้ว ไม่มาสารถใช้ได้',
+                ]);
+
+            }
+
+            $apiBankCode = $this->mapBankCodeForExternalApi($bankCode);
+            if (! $apiBankCode) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ระบบไม่รองรับ ธนาคารดังกล่าว',
+                ]);
+            }
+
+            try {
+                $postData = [
+                    'toBankAccNumber' => $normalizedAccount,
+                    'toBankAccNameCode' => $apiBankCode,
+                ];
+
+                $response = Http::withHeaders([
+                    'x-api-key' => 'af96aa1c-e1f5-4c22-ab96-7f5453704aa9',
+                ])->asJson()->post('https://me2me.biz/getname.php', $postData);
+            } catch (\Throwable $e) {
+                // connect error / timeout → ปล่อยให้ไปถามชื่อเอง
+                return response()->json([
+                    'success' => false,
+                    'message' => 'กรุณาลองใหม่อีกครั้ง',
+                ]);
+            }
+
+            if (! $response->successful()) {
+                // status code != 200 → ปล่อยให้ไปถามชื่อเอง
+                return response()->json([
+                    'success' => false,
+                    'message' => 'กรุณาลองใหม่อีกครั้ง',
+                ]);
+            }
+
+            $json = $response->json();
+
+            $status = (bool) data_get($json, 'status');
+            $msg = (string) (data_get($json, 'msg', '') ?? '');
+
+            if (! $status) {
+                // เคส status=false แยกตามเงื่อนไขที่ต้องการ
+                if (Str::contains($msg, 'ข้อมูลเลขบัญชีปลายทางไม่ถูกต้อง')) {
+                    // ให้ถามเลขบัญชีใหม่
+                    $result['message'] = $msg;
+                } elseif (Str::contains($msg, 'ไม่รองรับ')) {
+                    // เช่น "toBankAccNameCode : LHBT ไม่รองรับ" → ไป step ถัดไป
+                    $result['message'] = $msg;
+                }
+
+                return response()->json($result);
+            }
+
+            // ดึงชื่อ-นามสกุลจาก API และ normalize
+            $rawFullname = (string) data_get($json, 'data.accountName', '');
+            $cleanFullname = $flow->cleanInvisibleAndSpaces($rawFullname);
+
+            if ($cleanFullname === '') {
+                return response()->json($result);
+            }
+
+            $fullname = $flow->splitNameUniversal($cleanFullname);
+
+            $firstname = $fullname['firstname'] ?? '';
+            $lastname = $fullname['lastname'] ?? '';
+
+            if ($firstname === '' || $lastname === '') {
+                return response()->json($result);
+            }
+
+            $result['success'] = true;
+            $result['firstname'] = $firstname;
+            $result['lastname'] = $lastname;
+
+            return response()->json($result);
+
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'message' => 'กรุณาลองใหม่',
+            ], 500);
+        }
+    }
+
+    protected function mapBankCodeForExternalApi(string $bankcode): ?string
+    {
+        switch ((string) $bankcode) {
+            case '1':
+                return 'BBL';
+            case '2':
+                return 'KBANK';
+            case '3':
+                return 'KTB';
+            case '4':
+                return 'SCB';
+            case '5':
+                return 'GHB';
+            case '6':
+                return 'KKP';
+            case '7':
+                return 'CIMB';
+            case '19':
+            case '15':
+            case '10':
+                return 'TTB';
+            case '11':
+                return 'BAY';
+            case '12':
+                return 'UOB';
+            case '13':
+                return 'LHB';
+            case '14':
+                return 'GSB';
+            case '17':
+                return 'BAAC';
+            default:
+                return null;
+        }
+    }
+
+
+    public function checkPhone(Request $request): JsonResponse
+    {
+        $phone = $request->input('phone');
+
+        try {
+            /** @var \Gametech\LineOA\Services\RegisterFlowService $flow */
+            $flow = app(\Gametech\LineOA\Services\RegisterFlowService::class);
+
+            // normalize ให้เป็นมาตรฐานเดียวกับ flow สมัครหลัก
+            $normalizedPhone = $flow->normalizePhone($phone);
+
+            if (!$normalizedPhone) {
+                return response()->json([
+                    'message' => 'เบอร์โทรไม่ถูกต้อง',
+                    'bank'    => false,
+                ], 200);
+            }
+
+            // ใช้ logic เดียวกับระบบสมัครปกติ
+            $exists = $flow->isPhoneAlreadyUsed($normalizedPhone);
+
+            return response()->json([
+                'message' => 'success',
+                'bank'    => $exists,    // เหมือนของเดิม: bank = true ถ้าซ้ำ
+            ]);
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'message' => 'กรุณาลองใหม่',
+            ], 500);
+        }
+    }
+
     public function attachMember(Request $request, LineContact $contact): JsonResponse
     {
         $memberId = trim((string) $request->input('member_id', ''));
@@ -681,40 +929,6 @@ class ChatController extends Controller
                 'member_acc_no' => $memberAccNo,
                 'picture_url' => $contact->picture_url,
             ],
-        ]);
-    }
-
-    /**
-     * fallback เวอร์ชันเก่าที่โบ๊ทเคยใช้
-     */
-    public function replyImage_(Request $request, $conversationId)
-    {
-        /** @var LineConversation $conversation */
-        $conversation = LineConversation::with(['account', 'contact'])
-            ->findOrFail($conversationId);
-
-        $employee = auth('admin')->user();
-        $employeeId = $employee->code ?? $employee->id ?? null;
-
-        $request->validate([
-            'image' => ['required', 'image', 'max:5120'],
-        ]);
-
-        $file = $request->file('image');
-
-        /** @var ChatService $chat */
-        $chat = app(ChatService::class);
-        $message = $chat->createOutboundImageFromAgent(
-            $conversation,
-            $file,
-            $employeeId,
-            [
-                'employee_name' => $employee->user_name ?? null,
-            ]
-        );
-
-        return response()->json([
-            'data' => $message->fresh(),
         ]);
     }
 
@@ -961,21 +1175,30 @@ class ChatController extends Controller
         }
 
         // ===== ป้องกันลูกค้าเดียวกันมี open ซ้อนหลายห้อง =====
-        $contactId  = $conversation->line_contact_id;
-        $accountId  = $conversation->line_account_id;
+        $contactId = $conversation->line_contact_id;
+        $accountId = $conversation->line_account_id;
 
         $existingOpen = LineConversation::query()
             ->where('line_contact_id', $contactId)
             ->where('line_account_id', $accountId)
-            ->whereIn('status', ['open','assigned'])
+            ->whereIn('status', ['open', 'assigned'])
             ->where('id', '!=', $conversation->id)
             ->first();
 
         if ($existingOpen) {
+            $existingOpen->load([
+                'contact.member',
+                'account',
+                'registerSessions' => function ($q) {
+                    $q->where('status', 'in_progress');
+                },
+            ]);
+
+            // ไม่ต้องถือว่า error ให้ frontend พาไปห้องนี้แทน
             return response()->json([
-                'message' => 'ลูกค้าคนนี้มีห้องแชตที่เปิดอยู่แล้ว',
-                'current_open_conversation' => $existingOpen->id,
-            ], 409);
+                'message' => 'มีห้องที่เปิดอยู่สำหรับลูกค้าคนนี้แล้ว ระบบจะพาไปยังห้องนั้น',
+                'data' => $existingOpen,
+            ]);
         }
         // ===============================================
 

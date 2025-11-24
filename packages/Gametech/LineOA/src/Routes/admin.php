@@ -40,6 +40,12 @@ Route::domain(
 
             Route::get('members/find', [ChatController::class, 'findMember'])->name('members.find');
 
+            Route::get('register/load-bank', [ChatController::class, 'loadBank'])->name('register.load-bank');
+
+            Route::post('register/check-bank', [ChatController::class, 'checkBank'])->name('register.check-bank');
+
+            Route::post('register/check-phone', [ChatController::class, 'checkPhone'])->name('register.check-phone');
+
             Route::post('contacts/{contact}/attach-member', [ChatController::class, 'attachMember'])
                 ->name('contacts.attach-member');
 
