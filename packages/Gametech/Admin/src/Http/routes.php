@@ -966,6 +966,28 @@ Route::domain(config('app.admin_url') . '.' . (is_null(config('app.admin_domain_
 
             });
 
+//            $route = ['name' => 'topup', 'controller' => 'TopupController'];
+//            Route::group(['prefix' => $route['name']], function () use ($route) {
+//                Route::get('/', $route['controller'] . '@index')->defaults('_config', [
+//                    'view' => 'admin::module.' . $route['name'] . '.index',
+//                ])->name('admin.' . $route['name'] . '.index');
+//
+//                Route::post('create', $route['controller'] . '@create')->name('admin.' . $route['name'] . '.create');
+//
+//                Route::post('loaddata', $route['controller'] . '@loadData')->name('admin.' . $route['name'] . '.loaddata');
+//
+//                Route::post('edit', $route['controller'] . '@edit')->name('admin.' . $route['name'] . '.edit');
+//
+//                Route::post('clear', $route['controller'] . '@clear')->name('admin.' . $route['name'] . '.clear');
+//
+//                Route::post('update/{id?}', $route['controller'] . '@update')->name('admin.' . $route['name'] . '.update');
+//
+//                Route::post('delete', $route['controller'] . '@destroy')->name('admin.' . $route['name'] . '.delete');
+//
+//                Route::post('approve', $route['controller'] . '@approve')->name('admin.' . $route['name'] . '.approve');
+//
+//            });
+
             $route = ['name' => 'bank_in_old', 'controller' => 'BankinOldController'];
             Route::group(['prefix' => $route['name']], function () use ($route) {
                 Route::get('/', $route['controller'] . '@index')->defaults('_config', [

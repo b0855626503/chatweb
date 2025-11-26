@@ -17,7 +17,7 @@ return [
 
         'argos_cloud' => [
             'enabled' => env('ARGOS_CLOUD_ENABLED', false),
-            'base_uri' => env('ARGOS_CLOUD_BASE_URI', 'https://translate.argosopentech.com'),
+            'base_uri' => env('ARGOS_CLOUD_BASE_URI', 'https://libretranslate.com/translate'),
             'timeout' => env('ARGOS_CLOUD_TIMEOUT', 6),
         ],
     ]

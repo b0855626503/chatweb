@@ -2,6 +2,8 @@
 
 namespace Gametech\LineOA\Http\Controllers\Admin;
 
+use Gametech\Admin\Http\Controllers\AppBaseController;
+use Gametech\LineOA\DataTables\BankinDataTable;
 use Gametech\LineOA\Events\LineOAChatConversationUpdated;
 use Gametech\LineOA\Events\LineOAConversationAssigned;
 use Gametech\LineOA\Events\LineOAConversationClosed;
@@ -23,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class ChatController extends Controller
+class ChatController extends AppBaseController
 {
     protected ChatService $chat;
 
@@ -38,10 +40,16 @@ class ChatController extends Controller
     /**
      * แสดงหน้าแชต (Blade + Vue UI)
      */
-    public function page()
+    public function page(BankinDataTable $bankinDataTable)
     {
-        return view('admin::module.line-oa.index');
+        // ให้ได้ตัว Html\Builder แบบเดียวกับตอนใช้ ->render()
+        $depositTable = $bankinDataTable->html();
+
+        return view('admin::module.line-oa.index', [
+            'depositTable' => $depositTable,
+        ]);
     }
+
 
     /**
      * ดึง list ห้องแชต (sidebar ซ้าย)
@@ -344,11 +352,27 @@ class ChatController extends Controller
         $account = $conversation->account;
         $contact = $conversation->contact;
 
+        // -------------------------
+        // เลือกข้อความที่จะส่งออกไป LINE
+        // ถ้ามี meta.translation_outbound → ใช้ translated_text
+        // ไม่งั้น fallback เป็น $text เดิม
+        // -------------------------
+        $lineText = $text;
+
+        $meta = $message->meta;
+        if (is_array($meta)) {
+            $outboundTrans = $meta['translation_outbound'] ?? null;
+
+            if (is_array($outboundTrans) && ! empty($outboundTrans['translated_text'])) {
+                $lineText = $outboundTrans['translated_text'];
+            }
+        }
+
         if ($account && $contact && $contact->line_user_id) {
             $result = $this->lineMessaging->pushText(
                 $account,
                 $contact->line_user_id,
-                $text
+                $lineText        // ← เปลี่ยนมาใช้ตัวนี้
             );
 
             if (! $result['success']) {
@@ -364,6 +388,7 @@ class ChatController extends Controller
                 'conversation_id' => $conversation->id,
             ]);
         }
+
 
         return response()->json([
             'message' => 'success',

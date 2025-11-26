@@ -5,27 +5,14 @@
     {{ $menu->currentName }}
 @endsection
 
-@section('content')
-    <section class="content text-xs">
-        <div class="card">
-            <div class="card-body">
-                <div id="line-oa-chat-app">
-                    <line-oa-chat></line-oa-chat>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div id="line-oa-chat-overlay" v-if="showLineChat">
-        <div class="lineoa-backdrop" @click="closeLineChat"></div>
-
-        <div class="lineoa-popup">
-            <line-oa-chat :is-overlay="true"></line-oa-chat>
-        </div>
-    </div>
+@section('css')
+    @include('admin::layouts.datatables_css')
 @endsection
 
 @push('styles')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css"
+          integrity="sha512-jU/7UFiaW5UBGODEopEqnbIAHOI8fO6T99m7Tsmqs2gkdujByJfkCbbfPSN4Wlqlb9TGnsuC0YgUgWkRBK7B9A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <style>
         /* ====== รายการห้องแชต (ด้านซ้าย) ====== */
         .list-group-item.gt-conv-active {
@@ -82,6 +69,7 @@
             background-color: #ffc107 !important; /* สี warning */
             color: #212529 !important; /* ดำ */
         }
+
         .chat-line-original {
             white-space: pre-wrap;
             font-size: 14px;
@@ -94,17 +82,809 @@
             padding-left: 4px;
         }
     </style>
+    <style>
+        /* ให้คลิกทะลุข้อความได้แน่ ๆ */
+        .dropzone .dz-message { pointer-events: auto; }
+
+        /* กัน preview ทับพื้นที่คลิก */
+        .dropzone .dz-preview { position: relative; z-index: 1; }
+        .dropzone .dz-message { position: relative; z-index: 2; }
+
+    </style>
 @endpush
 
-@push('scripts')
+@section('content')
+    <section class="content text-xs">
+        <div class="card">
+            <div class="card-body">
+                <div id="line-oa-chat-app">
+                    <line-oa-chat ref="lineOaChat"></line-oa-chat>
+                </div>
 
-    {{-- ชื่อ channel เดียวกับที่ใช้ใน Echo.channel('{{ config('app.name') }}_events') --}}
+                {{-- เอา block นี้ไปวางเพิ่มด้านล่างได้เลย --}}
+                <div id="member-edit-app">
+                    <b-modal
+                            ref="memberEditModal"
+                            id="line-oa-member-edit-modal"
+                            centered
+                            scrollable
+                            size="md"
+                            title="แก้ไขข้อมูลสมาชิก"
+                            :no-close-on-backdrop="true"
+                            :hide-footer="true"
+                            :lazy="true"
+                            @hidden="onMemberEditModalHidden"
+                    >
+                        <b-container class="bv-example-row">
+                            <b-form
+                                    @submit.prevent="memberEditSubmit"
+                                    v-if="memberEditShow"
+                                    id="member-edit-form"
+                                    ref="memberEditFormRef"
+                            >
+                                <input
+                                        type="hidden"
+                                        id="memberEdit_upline_code"
+                                        :value="memberEditForm.upline_code"
+                                >
+
+                                {{-- แถว: ผู้แนะนำ --}}
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-af-group"
+                                                label="เบอร์ ผู้แนะนำ:"
+                                                label-for="memberEdit-af"
+                                                description="ระบุ เบอร์ ผู้แนะนำ"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-af"
+                                                    v-model="memberEditForm.af"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder="เบอร์ ผู้แนะนำ"
+                                                    autocomplete="off"
+                                                    @input="memberEditLoadAF($event)"
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-up_name-group"
+                                                label="ชื่อผู้แนะนำ:"
+                                                label-for="memberEdit-up_name"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-up_name"
+                                                    v-model="memberEditForm.up_name"
+                                                    type="text"
+                                                    size="sm"
+                                                    autocomplete="off"
+                                                    readonly
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                {{-- แถว: ชื่อ / นามสกุล --}}
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-firstname-group"
+                                                label="ชื่อ:"
+                                                label-for="memberEdit-firstname"
+                                                description="ระบุ ชื่อ"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-firstname"
+                                                    v-model="memberEditForm.firstname"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder="ชื่อ"
+                                                    autocomplete="off"
+                                                    required
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-lastname-group"
+                                                label="นามสกุล:"
+                                                label-for="memberEdit-lastname"
+                                                description="ระบุ นามสกุล"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-lastname"
+                                                    v-model="memberEditForm.lastname"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder="นามสกุล"
+                                                    autocomplete="off"
+                                                    required
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                {{-- แถว: User / Password --}}
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-user_name-group"
+                                                label="User ID:"
+                                                label-for="memberEdit-user_name"
+                                                description="เปลี่ยนได้"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-user_name"
+                                                    v-model="memberEditForm.user_name"
+                                                    type="text"
+                                                    size="sm"
+                                                    autocomplete="off"
+                                                    required
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-user_pass-group"
+                                                label="รหัสผ่าน:"
+                                                label-for="memberEdit-user_pass"
+                                                description="ระบุ รหัสผ่าน กรณีต้องการเปลี่ยนเท่านั้น"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-user_pass"
+                                                    v-model="memberEditForm.user_pass"
+                                                    type="text"
+                                                    size="sm"
+                                                    placeholder="รหัสผ่าน"
+                                                    autocomplete="off"
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                {{-- แถว: ธนาคาร / เลขบัญชี --}}
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-bank_code-group"
+                                                label="ธนาคาร:"
+                                                label-for="memberEdit-bank_code"
+                                        >
+                                            <b-form-select
+                                                    id="memberEdit-bank_code"
+                                                    v-model="memberEditForm.bank_code"
+                                                    :options="memberEditOption.bank_code"
+                                                    size="sm"
+                                                    required
+                                            ></b-form-select>
+                                        </b-form-group>
+                                    </b-col>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-acc_no-group"
+                                                label="เลขที่บัญชี:"
+                                                label-for="memberEdit-acc_no"
+                                                description="ระบบไม่ได้เชคซ้ำให้นะ"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-acc_no"
+                                                    v-model="memberEditForm.acc_no"
+                                                    type="text"
+                                                    size="sm"
+                                                    autocomplete="off"
+                                                    required
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                {{-- แถว: Line ID / เบอร์โทร --}}
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-lineid-group"
+                                                label="Line ID:"
+                                                label-for="memberEdit-lineid"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-lineid"
+                                                    v-model="memberEditForm.lineid"
+                                                    type="text"
+                                                    size="sm"
+                                                    autocomplete="off"
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-tel-group"
+                                                label="เบอร์โทร:"
+                                                label-for="memberEdit-tel"
+                                                description="ระบบไม่ได้เชคซ้ำให้นะ"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-tel"
+                                                    v-model="memberEditForm.tel"
+                                                    type="text"
+                                                    size="sm"
+                                                    autocomplete="off"
+                                                    required
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                {{-- แถว: Max withdraw / Refer --}}
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-maxwithdraw_day-group"
+                                                label="ยอดถอนสูงสุด / วัน:"
+                                                label-for="memberEdit-maxwithdraw_day"
+                                                description="ถ้าค่าเป็น 0 = ใช้ค่าถอนสูงสุด / วัน จาก ตั้งค่าพื้นฐานเวบไซต์"
+                                        >
+                                            <b-form-input
+                                                    id="memberEdit-maxwithdraw_day"
+                                                    v-model="memberEditForm.maxwithdraw_day"
+                                                    type="number"
+                                                    size="sm"
+                                                    autocomplete="off"
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                    <b-col>
+                                        <b-form-group
+                                                id="memberEdit-refer_code-group"
+                                                label="Refer:"
+                                                label-for="memberEdit-refer_code"
+                                        >
+                                            <b-form-select
+                                                    id="memberEdit-refer_code"
+                                                    v-model="memberEditForm.refer_code"
+                                                    :options="memberEditOption.refer_code"
+                                                    size="sm"
+                                                    required
+                                            ></b-form-select>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                {{-- แถว: Line ID (สำรอง) + รูป --}}
+                                <b-form-row>
+                                    <b-col>
+
+                                    </b-col>
+                                    <b-col>
+                                        <div class="d-flex align-items-center">
+                                            <img
+                                                    v-if="memberEditPic && memberEditPic.url"
+                                                    :src="memberEditPic.url"
+                                                    style="max-width:120px"
+                                            >
+                                            <small v-else class="text-muted">ยังไม่มีรูป</small>
+                                            <b-button
+                                                    class="ml-3"
+                                                    variant="primary"
+                                                    @click="memberEditOpenUpload"
+                                            >
+                                                อัปโหลด/เปลี่ยนรูป
+                                            </b-button>
+                                        </div>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-button type="submit" variant="primary">
+                                    บันทึก
+                                </b-button>
+                            </b-form>
+                        </b-container>
+                    </b-modal>
+
+                    <b-modal
+                            ref="memberEditUploadModal"
+                            title="อัปโหลดรูป"
+                            @shown="memberEditOnUploadShown"
+                            @hidden="memberEditOnUploadHidden"
+                            hide-footer
+                    >
+                        <div
+                                ref="memberEditDropzoneEl"
+                                class="dropzone border rounded p-4 text-center"
+                        >
+                            <div class="dz-message">
+                                ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์
+                            </div>
+                            <div ref="memberEditDropzonePreviews" class="mt-3"></div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <b-button ref="memberEditPickBtn" size="sm" variant="secondary">
+                                เลือกไฟล์
+                            </b-button>
+                        </div>
+                    </b-modal>
+                </div>
+
+                <div id="member-refill-app">
+
+                    {{-- ฟอร์มเลือกเป้าหมายที่จะเติมให้ (เดิม addedit) --}}
+                    <b-modal
+                            ref="assignTopupTargetModal"
+                            id="assignTopupTargetModal"
+                            centered
+                            size="md"
+                            title="เลือกระบุไอดีที่จะเติมให้"
+                            :no-close-on-backdrop="true"
+                            :hide-footer="true"
+                            :lazy="true"
+                    >
+                        <b-container class="bv-example-row">
+                            <b-form
+                                    v-if="showRefillUI"
+                                    ref="assignTopupTargetFormRef"
+                                    id="assignTopupTargetForm"
+                                    @submit.prevent="submitAssignTopupTarget"
+                            >
+                                <input
+                                        type="hidden"
+                                        id="member_topup"
+                                        :value="assignTopupTargetForm.member_topup"
+                                        required
+                                >
+
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="input-group-user_name"
+                                                label="User ID / Game ID:"
+                                                label-for="user_name"
+                                                description="ระบุ User / Game ID ที่ต้องการเติมให้บิลนี้"
+                                        >
+                                            <b-input-group>
+                                                <b-form-input
+                                                        id="user_name"
+                                                        v-model="assignTopupTargetForm.user_name"
+                                                        type="text"
+                                                        size="md"
+                                                        placeholder="User / Game ID"
+                                                        autocomplete="off"
+                                                ></b-form-input>
+                                                <b-input-group-append>
+                                                    <b-button
+                                                            variant="success"
+                                                            @click="loadUserForAssignTarget"
+                                                    >
+                                                        ค้นหา
+                                                    </b-button>
+                                                </b-input-group-append>
+                                            </b-input-group>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="input-group-name"
+                                                label="ข้อมูลลูกค้า:"
+                                                label-for="name"
+                                        >
+                                            <b-form-textarea
+                                                    id="name"
+                                                    v-model="assignTopupTargetForm.name"
+                                                    size="sm"
+                                                    rows="6"
+                                                    max-rows="6"
+                                                    required
+                                                    plaintext
+                                            ></b-form-textarea>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="input-group-remark_admin"
+                                                label="หมายเหตุ:"
+                                                label-for="remark_admin"
+                                        >
+                                            <b-form-input
+                                                    id="remark_admin"
+                                                    v-model="assignTopupTargetForm.remark_admin"
+                                                    type="text"
+                                                    size="sm"
+                                                    autocomplete="off"
+                                                    placeholder=""
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-button type="submit" variant="primary">
+                                    บันทึก
+                                </b-button>
+                            </b-form>
+                        </b-container>
+                    </b-modal>
+
+                    {{-- ฟอร์มเติมเงิน (เดิม refill) --}}
+                    <b-modal
+                            ref="refillModal"
+                            id="refillModal"
+                            centered
+                            size="md"
+                            title="เติมเงิน"
+                            :no-close-on-backdrop="true"
+                            :hide-footer="true"
+                            :lazy="true"
+                    >
+                        <b-container class="bv-example-row">
+                            <b-form
+                                    v-if="showRefillUI"
+                                    ref="refillFormRef"
+                                    id="refillForm"
+                                    @submit.prevent="submitRefillForm"
+                            >
+                                <input
+                                        type="hidden"
+                                        id="id"
+                                        :value="refillForm.id"
+                                        required
+                                >
+
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="input-group-refill-user"
+                                                label="User ID / Game ID:"
+                                                label-for="refill_user_name"
+                                                description="ระบุ User / Game ID ที่ต้องการเติมเงินรายการนี้"
+                                        >
+                                            <b-input-group>
+                                                <b-form-input
+                                                        id="refill_user_name"
+                                                        v-model="refillForm.user_name"
+                                                        type="text"
+                                                        size="md"
+                                                        placeholder="User / Game ID"
+                                                        autocomplete="off"
+                                                ></b-form-input>
+                                                <b-input-group-append>
+                                                    <b-button
+                                                            variant="success"
+                                                            @click="loadUserForRefill"
+                                                    >
+                                                        ค้นหา
+                                                    </b-button>
+                                                </b-input-group-append>
+                                            </b-input-group>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="input-group-refill-name"
+                                                label="ข้อมูลลูกค้า:"
+                                                label-for="refill_name"
+                                        >
+                                            <b-form-textarea
+                                                    id="refill_name"
+                                                    v-model="refillForm.name"
+                                                    size="sm"
+                                                    rows="6"
+                                                    max-rows="6"
+                                                    required
+                                                    plaintext
+                                            ></b-form-textarea>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="input-group-amount"
+                                                label="จำนวนเงิน:"
+                                                label-for="amount"
+                                                description="ระบุจำนวนเงิน ระหว่าง 1 - 10,000"
+                                        >
+                                            <b-form-input
+                                                    id="amount"
+                                                    v-model="refillForm.amount"
+                                                    type="number"
+                                                    size="sm"
+                                                    placeholder="จำนวนเงิน"
+                                                    min="1"
+                                                    max="10000"
+                                                    autocomplete="off"
+                                                    required
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="input-group-account_code"
+                                                label="ช่องทางที่ฝาก:"
+                                                label-for="account_code"
+                                        >
+                                            <b-form-select
+                                                    id="account_code"
+                                                    v-model="refillForm.account_code"
+                                                    :options="banks"
+                                                    size="sm"
+                                                    required
+                                            ></b-form-select>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-form-row>
+                                    <b-col>
+                                        <b-form-group
+                                                id="input-group-refill-remark"
+                                                label="หมายเหตุ:"
+                                                label-for="refill_remark_admin"
+                                        >
+                                            <b-form-input
+                                                    id="refill_remark_admin"
+                                                    v-model="refillForm.remark_admin"
+                                                    type="text"
+                                                    size="sm"
+                                                    autocomplete="off"
+                                            ></b-form-input>
+                                        </b-form-group>
+                                    </b-col>
+                                </b-form-row>
+
+                                <b-button type="submit" variant="primary">
+                                    บันทึก
+                                </b-button>
+                            </b-form>
+                        </b-container>
+                    </b-modal>
+
+                    {{-- ฟอร์มหมายเหตุยกเลิกรายการ (เดิม clear) --}}
+                    <b-modal
+                            ref="clearRemarkModal"
+                            id="clearRemarkModal"
+                            centered
+                            size="md"
+                            title="โปรดระบุหมายเหตุ ในการทำรายการ"
+                            :no-close-on-backdrop="true"
+                            :hide-footer="true"
+                            :lazy="true"
+                    >
+                        <b-form
+                                v-if="showRefillUI"
+                                ref="clearRemarkFormRef"
+                                id="clearRemarkForm"
+                                @submit.stop.prevent="submitClearRemarkForm"
+                        >
+                            <b-form-group
+                                    id="input-group-clear-remark"
+                                    label="หมายเหตุ:"
+                                    label-for="clear_remark"
+                            >
+                                <b-form-input
+                                        id="clear_remark"
+                                        v-model="clearRemarkForm.remark"
+                                        type="text"
+                                        size="sm"
+                                        placeholder=""
+                                        autocomplete="off"
+                                        required
+                                ></b-form-input>
+                            </b-form-group>
+
+                            <b-button type="submit" variant="primary">
+                                บันทึก
+                            </b-button>
+                        </b-form>
+                    </b-modal>
+
+                </div>
+
+
+            </div>
+        </div>
+    </section>
+
+@endsection
+
+
+@push('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"
+            integrity="sha512-U2WE1ktpMTuRBPoCFDzomoIorbOyUv0sP8B+INA3EzNAhehbzED1rOJg6bCqPf/Tuposxb5ja/MAUnC8THSbLQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    @include('admin::layouts.datatables_js')
+    {{--    {!! $depositTable->scripts() !!}--}}
+    <script>
+        (function () {
+            function findAnyVueRoot() {
+                // 1) พยายามหา element ที่มี __vue__ โดย scanning ทั่วหน้า (เริ่มจาก body)
+                var all = document.querySelectorAll('body, body *');
+                for (var i = 0; i < all.length; i++) {
+                    if (all[i].__vue__) {
+                        return all[i].__vue__;
+                    }
+                }
+                console.warn('ไม่พบ Vue root instance เลย');
+                return null;
+            }
+
+            function findLineOaChatVm(vm) {
+                if (!vm) return null;
+
+                // ถ้าตัวนี้คือ line-oa-chat เอง
+                var name = vm.$options && (vm.$options.name || vm.$options._componentTag);
+                if (name === 'line-oa-chat') {
+                    return vm;
+                }
+
+                // ลองไล่ children
+                if (vm.$children && vm.$children.length) {
+                    for (var i = 0; i < vm.$children.length; i++) {
+                        var found = findLineOaChatVm(vm.$children[i]);
+                        if (found) return found;
+                    }
+                }
+
+                return null;
+            }
+
+            function getLineOaChatComponent() {
+                var rootVm = findAnyVueRoot();
+                if (!rootVm) {
+                    console.warn('ยังหา Vue root ไม่เจอ');
+                    return null;
+                }
+
+                // ถ้ามี ref แบบ lineOaChat ก็ลองก่อน
+                if (rootVm.$refs && rootVm.$refs.lineOaChat) {
+                    return rootVm.$refs.lineOaChat;
+                }
+
+                var comp = findLineOaChatVm(rootVm);
+                if (!comp) {
+                    console.warn('ไม่พบ component line-oa-chat จาก Vue tree');
+                }
+                return comp;
+            }
+
+            window.editModal = function (code) {
+                if (!window.memberRefillApp) {
+                    console.warn('memberRefillApp ยังไม่พร้อมใช้งาน');
+                    return;
+                }
+
+                // 1) หา line-oa-chat เพื่อตรวจว่ามีห้องไหนถูกเลือกอยู่
+                var comp = getLineOaChatComponent();
+                var prefill = null;
+
+                if (comp && comp.selectedConversation && comp.selectedConversation.contact) {
+                    var c = comp.selectedConversation.contact;
+
+                    // สมมติ structure: contact.member_id / contact.member_user
+                    prefill = {
+                        member_id: c.member_id || null,
+                        member_username: c.member_username || null,
+                    };
+                }
+
+                // 2) ส่ง topupId + prefill (ถ้ามี) เข้า memberRefillApp
+                window.memberRefillApp.openAssignTopupTargetModal(code, prefill);
+            };
+
+            window.addModal = function () {
+                if (!window.memberRefillApp) {
+                    console.warn('memberRefillApp ยังไม่พร้อมใช้งาน');
+                    return;
+                }
+
+                // addModal = เลือก target ใหม่ ไม่ผูกบิล (code = null)
+                window.memberRefillApp.openAssignTopupTargetModal(null);
+            };
+
+            window.refill = function () {
+                if (!window.memberRefillApp) {
+                    console.warn('memberRefillApp ยังไม่พร้อมใช้งาน');
+                    return;
+                }
+
+                // 1) พยายามหา line-oa-chat component
+                var comp = getLineOaChatComponent();
+                var prefill = null;
+
+                if (comp && comp.selectedConversation && comp.selectedConversation.contact) {
+                    var c = comp.selectedConversation.contact;
+
+                    prefill = {
+                        member_id: c.member_id || null,
+                        member_username: c.member_username || null,
+                    };
+                }
+
+                // 2) เรียก refillModal โดยส่ง prefill (ถ้าไม่มีจะเป็น null)
+                window.memberRefillApp.openRefillModal(prefill);
+            };
+
+            window.clearModal = function (code) {
+                if (!window.memberRefillApp) {
+                    console.warn('memberRefillApp ยังไม่พร้อมใช้งาน');
+                    return;
+                }
+
+                // clear = modal ระบุหมายเหตุ
+                window.memberRefillApp.openClearRemarkModal(code);
+            };
+
+// เผื่อมีปุ่ม delete
+            window.delModal = function (code) {
+                if (!window.memberRefillApp) {
+                    console.warn('memberRefillApp ยังไม่พร้อมใช้งาน');
+                    return;
+                }
+
+                // ถ้าต้องสร้าง modal ลบ ให้ map จากตรงนี้ได้
+                if (typeof window.memberRefillApp.openDeleteModal === 'function') {
+                    window.memberRefillApp.openDeleteModal(code);
+                } else {
+                    console.warn('memberRefillApp ไม่มี method openDeleteModal');
+                }
+            };
+
+            // สร้าง global helper สำหรับให้ DataTables เรียกใช้
+            window.LineOaChatActions = {
+                edit: function (code) {
+                    var comp = getLineOaChatComponent();
+                    if (!comp || typeof comp.editModal !== 'function') {
+                        console.warn('editModal() ไม่พร้อมใช้งานบน line-oa-chat');
+                        return;
+                    }
+                    comp.editModal(code);
+                },
+                approve: function (code) {
+                    var comp = getLineOaChatComponent();
+                    if (!comp || typeof comp.approveModal !== 'function') {
+                        console.warn('approveModal() ไม่พร้อมใช้งานบน line-oa-chat');
+                        return;
+                    }
+                    comp.approveModal(code);
+                },
+                cancel: function (code) {
+                    var comp = getLineOaChatComponent();
+                    if (!comp || typeof comp.clearModal !== 'function') {
+                        console.warn('clearModal() ไม่พร้อมใช้งานบน line-oa-chat');
+                        return;
+                    }
+                    comp.clearModal(code);
+                },
+                delete: function (code) {
+                    var comp = getLineOaChatComponent();
+                    if (!comp || typeof comp.delModal !== 'function') {
+                        console.warn('delModal() ไม่พร้อมใช้งานบน line-oa-chat');
+                        return;
+                    }
+                    comp.delModal(code);
+                }
+            };
+        })();
+    </script>
     <script>
         window.LineOAEventsChannel = "{{ config('app.name') }}_events";
         window.LineOAEmployee = {
             id: '{{ auth('admin')->user()->code ?? '' }}',
             name: '{{ auth('admin')->user()->user_name ?? '' }}',
         };
+
     </script>
 
     <script type="text/x-template" id="line-oa-chat-template">
@@ -400,10 +1180,20 @@
                                                             v-if="canControlRegister()"
                                                             size="sm"
                                                             variant="outline-success"
-                                                            class="mb-1 mr-3"
+                                                            class="mb-1"
                                                             @click="openTopupModal"
                                                     >
                                                         เติมเงิน
+                                                    </b-button>
+
+                                                    <b-button
+                                                            v-if="canControlRegister()"
+                                                            size="sm"
+                                                            variant="outline-success"
+                                                            class="mb-1 mr-3"
+                                                            @click="openMemberFromConversation"
+                                                    >
+                                                        แก้ไขข้อมูล
                                                     </b-button>
 
                                                     <b-button
@@ -666,21 +1456,28 @@
                     id="line-oa-member-modal"
                     ref="memberModal"
                     title="เชื่อมลูกค้ากับสมาชิก"
-                    size="md"
+                    size="sm"
                     centered
                     hide-footer
+                    no-close-on-backdrop
+                    lazy
                     body-class="pt-2 pb-2"
                     @hide="resetMemberModal"
                     @shown="onMemberModalShown"
+                    @hidden="onMemberModalHidden"
             >
                 <b-form @submit.prevent="saveMemberLink">
-                    <b-form-group label="Username:" label-for="member_id" label-cols="4" label-class="pt-1">
+
+                    <b-form-group label="" label-for="member_id">
                         <b-input-group>
                             <b-form-input
                                     id="member_id"
                                     ref="memberIdInput"
                                     v-model="memberModal.member_id"
                                     placeholder=""
+                                    type="tel"
+                                    maxlength="10"
+                                    inputmode="number"
                                     autocomplete="off"
                                     size="sm"
                             ></b-form-input>
@@ -713,11 +1510,24 @@
                             class="mb-2"
                             body-class="py-2 px-2"
                     >
-                        <div class="small">
+                        <div>
                             <div><strong>ชื่อจริง:</strong> @{{ memberModal.member.name || '-' }}</div>
                             <div><strong>Username:</strong> @{{ memberModal.member.username || '-' }}</div>
                             <div><strong>เบอร์:</strong> @{{ memberModal.member.mobile || '-' }}</div>
                         </div>
+
+                    </b-card>
+
+                    <b-card
+                            v-else
+                            class="mb-2"
+                            body-class="py-2 px-2"
+                    >
+                        <div>
+                            <div class="text-center"><strong>ค้นหาข้อมูลสมาชิก ด้วยเบอร์โทร</strong></div>
+
+                        </div>
+
                     </b-card>
 
                     <div class="d-flex justify-content-end mt-2">
@@ -747,9 +1557,11 @@
                     id="line-oa-register-modal"
                     ref="registerModal"
                     title="สมัครสมาชิกแทนลูกค้า"
-                    size="md"
+                    size="sm"
                     centered
                     hide-footer
+                    no-close-on-backdrop
+                    lazy
                     body-class="pt-2 pb-2"
                     @shown="onRegisterModalShown"
                     @hidden="onRegisterModalHidden"
@@ -856,131 +1668,36 @@
             </b-modal>
 
             {{-- MODAL: เติมเงิน --}}
-            <b-modal
-                    id="line-oa-topup-modal"
-                    ref="topupModal"
-                    title="เติมเงิน"
-                    size="xl"
-                    centered
-                    hide-footer
-                    body-class="pt-2 pb-2"
-            >
-                <b-row>
-                    <b-col cols="12" md="4" class="border-right">
-                        <h6 class="mb-2">รายการรอเติม</h6>
-                        <div class="small text-muted mb-2">
-                            เลือกรายการที่ต้องการเติม หรือสร้างรายการใหม่ทางฝั่งขวา
-                        </div>
-
-                        <div v-if="!topupModal.pendingItems.length" class="text-muted small">
-                            ยังไม่มีรายการรอเติม
-                        </div>
-                        <b-list-group v-else flush>
-                            <b-list-group-item
-                                    v-for="item in topupModal.pendingItems"
-                                    :key="item.id"
-                                    href="#"
-                                    class="py-1"
-                                    :active="topupModal.selectedItem && topupModal.selectedItem.id === item.id"
-                                    @click.prevent="selectTopupItem(item)"
-                            >
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <div class="font-weight-bold">
-                                            @{{ item.amount }} ฿
-                                        </div>
-                                        <small class="text-muted">
-                                            @{{ item.reference || 'ไม่ระบุอ้างอิง' }}
-                                        </small>
-                                    </div>
-                                    <div class="text-right">
-                                        <small class="d-block text-muted">@{{ item.created_at }}</small>
+            <b-modal ref="topupModal" id="line-oa-topup-modal" centered size="xl" title="เพิ่ม รายการฝาก"
+                     :no-close-on-backdrop="true" :hide-footer="true" @shown="onTopupModalShown" @hidden="onTopupModalHidden">
+                <b-container class="bv-example-row">
+                    <b-form @submit.prevent="submitTopup">
+                        <b-form-row>
+                            <b-col>
+                                <div class="row">
+                                    <div class="col text-right">
+                                        <button type="button" class="btn bg-gradient-primary btn-xs" @click="openRefillModal"><i
+                                                    class="fa fa-plus"></i>
+                                            เพิ่มรายการฝาก
+                                        </button>
                                     </div>
                                 </div>
-                            </b-list-group-item>
-                        </b-list-group>
-                    </b-col>
-                    <b-col cols="12" md="8">
-                        <h6 class="mb-2">ข้อมูลการเติมเงิน</h6>
 
-                        <b-form-group label="ไอดีสมาชิก" label-for="topup_member" label-cols="4" label-class="pt-1">
-                            <b-input-group>
-                                <b-form-input
-                                        id="topup_member"
-                                        v-model="topupModal.memberSearch"
-                                        autocomplete="off"
-                                ></b-form-input>
-                                <b-input-group-append>
-                                    <b-button size="sm" variant="outline-primary" @click="searchTopupMember">
-                                        ค้นหา
-                                    </b-button>
-                                </b-input-group-append>
-                            </b-input-group>
-                            <small class="form-text text-muted">
-                                กรอกไอดีแล้วกดค้นหาเพื่อโหลดข้อมูลสมาชิก
-                            </small>
-                        </b-form-group>
 
-                        <b-card v-if="topupModal.member" class="mb-2" body-class="py-2 px-2">
-                            <div class="small">
-                                <div>ยูส: @{{ topupModal.member.username }}</div>
-                                <div>เบอร์: @{{ topupModal.member.mobile }}</div>
-                                <div>ชื่อ: @{{ topupModal.member.name }}</div>
-                                <div>ธนาคาร: @{{ topupModal.member.bank_name }}</div>
-                                <div>เลขบัญชี: @{{ topupModal.member.acc_no }}</div>
-                            </div>
-                        </b-card>
+                                {!! $depositTable->table([
+    'id' => 'deposittable',
+    'width' => '100%',
+    'class' => 'table table-striped table-xs text-xs'
+]) !!}
+                            </b-col>
 
-                        <b-alert
-                                v-if="topupModal.error"
-                                show
-                                variant="danger"
-                                class="py-1 mb-2"
-                        >
-                            @{{ topupModal.error }}
-                        </b-alert>
+                        </b-form-row>
 
-                        <template v-if="topupModal.selectedItem">
-                            <b-alert show variant="info" class="py-1 mb-2">
-                                กำลังเติมจากรายการที่เลือก:
-                                ยอด @{{ topupModal.selectedItem.amount }} ฿
-                            </b-alert>
-                        </template>
 
-                        <template v-else>
-                            <b-form-group label="ธนาคารที่เติม" label-for="topup_bank" label-cols="4"
-                                          label-class="pt-1">
-                                <b-form-input
-                                        id="topup_bank"
-                                        v-model="topupModal.bank"
-                                        autocomplete="off"
-                                ></b-form-input>
-                            </b-form-group>
-
-                            <b-form-group label="จำนวนเงิน" label-for="topup_amount" label-cols="4" label-class="pt-1">
-                                <b-form-input
-                                        id="topup_amount"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        v-model="topupModal.amount"
-                                ></b-form-input>
-                            </b-form-group>
-                        </template>
-
-                        <div class="text-right mt-3">
-                            <b-button size="sm" variant="secondary" @click="$refs.topupModal.hide()">
-                                ปิด
-                            </b-button>
-                            <b-button size="sm" variant="primary" class="ml-1" type="button" @click="submitTopup"
-                                      :disabled="topupModal.loading">
-                                <b-spinner v-if="topupModal.loading" small class="mr-1"></b-spinner>
-                                <span v-else>เติมเงิน</span>
-                            </b-button>
-                        </div>
-                    </b-col>
-                </b-row>
+                    </b-form>
+                </b-container>
             </b-modal>
+
 
         </b-container>
     </script>
@@ -1009,6 +1726,7 @@
                     ],
                     accountOptions: [],
                     bankOptions: [],
+                    depositTable: null,
                     currentActiveConversationId: null,
                     loadingList: false,
                     selectedConversation: null,
@@ -1018,7 +1736,29 @@
                     sending: false,
                     uploadingImage: false,
                     autoRefreshTimer: null,
+                    formatted: '',
+                    selected: '',
+                    fields: [
+                        {key: 'time', label: 'วันที่รายการ'},
+                        {key: 'bank', label: 'ช่องทางฝาก', class: 'text-center'},
+                        {key: 'amount', label: 'จำนวนเงิน', class: 'text-right'},
+                        {key: 'user_id', label: 'ผู้ทำรายการ', class: 'text-center'},
+                        {key: 'status', label: 'สถานะ', class: 'text-center'},
+                    ],
+                    items: [],
+                    caption: null,
+                    isBusy: false,
+                    show: false,
+                    userFound: {addedit: false, deposit: false},
+                    userTimer: null,
 
+                    submittingSearch: false,
+                    submittingAddEdit: false,
+                    submittingDeposit: false,
+                    submittingClear: false,
+
+                    searchingDeposit: false,
+                    searchedDeposit: false,
                     // debounce การค้นหา
                     searchDelayTimer: null,
 
@@ -1060,11 +1800,14 @@
                         memberSearch: '',
                         member: null,
                         bank: '',
+                        account_code: '',
+                        date_bank: '',
+                        time_bank: '',
                         amount: null,
                         loading: false,
                         error: '',
                     },
-
+                    banks: [{value: '', text: '== ธนาคาร =='}],
                     // จะ set เป็น function ใน subscribeRealtime()
                     unsubscribeRealtime: null,
                 };
@@ -1074,6 +1817,7 @@
                 this.startAutoRefresh();
                 this.subscribeRealtime();
                 this.fetchBanks();
+
             },
             beforeDestroy() {
                 this.stopAutoRefresh();
@@ -1212,8 +1956,192 @@
                 },
             },
             methods: {
+                onTopupModalShown() {
+                    this.$nextTick(() => {
+                        // ถ้า init แล้ว → แค่ reload
+                        if (this.depositTable) {
+                            if (this.depositTable.ajax && typeof this.depositTable.ajax.reload === 'function') {
+                                this.depositTable.ajax.reload(null, false);
+                            }
+                            return;
+                        }
+
+                        window.LaravelDataTables = window.LaravelDataTables || {};
+                        window.LaravelDataTables["deposittable"] = $("#deposittable").DataTable({
+                            "serverSide": true,
+                            "processing": true,
+                            "ajax": {
+                                "url": "https:\/\/demo.168csn.com\/bank_in",
+                                "type": "GET",
+                                "data": function (data) {
+                                    for (var i = 0, len = data.columns.length; i < len; i++) {
+                                        if (!data.columns[i].search.value) delete data.columns[i].search;
+                                        if (data.columns[i].searchable === true) delete data.columns[i].searchable;
+                                        if (data.columns[i].orderable === true) delete data.columns[i].orderable;
+                                        if (data.columns[i].data === data.columns[i].name) delete data.columns[i].name;
+                                    }
+                                    delete data.search.regex;
+                                }
+                            },
+                            "columns": [{
+                                "name": "bank_payment.code",
+                                "data": "code",
+                                "title": "#",
+                                "orderable": true,
+                                "searchable": true,
+                                "className": "text-center text-nowrap"
+                            }, {
+                                "name": "bankcode",
+                                "data": "bankcode",
+                                "title": "\u0e18\u0e19\u0e32\u0e04\u0e32\u0e23",
+                                "orderable": false,
+                                "searchable": false,
+                                "className": "text-left text-nowrap"
+                            }, {
+                                "name": "bank_account.acc_no",
+                                "data": "acc_no",
+                                "title": "\u0e40\u0e25\u0e02\u0e1a\u0e31\u0e0d\u0e0a\u0e35",
+                                "orderable": false,
+                                "searchable": true,
+                                "className": "text-center text-nowrap"
+                            }, {
+                                "name": "bank_payment.bank_time",
+                                "data": "bank_time",
+                                "title": "\u0e40\u0e27\u0e25\u0e32\u0e18\u0e19\u0e32\u0e04\u0e32\u0e23",
+                                "orderable": false,
+                                "searchable": true,
+                                "className": "text-center text-nowrap"
+                            }, {
+                                "name": "bank_payment.channel",
+                                "data": "channel",
+                                "title": "\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07",
+                                "orderable": false,
+                                "searchable": true,
+                                "className": "text-center text-nowrap"
+                            }, {
+                                "name": "bank_payment.detail",
+                                "data": "detail",
+                                "title": "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14",
+                                "orderable": false,
+                                "searchable": true,
+                                "className": "text-left text-nowrap"
+                            }, {
+                                "name": "bank_payment.value",
+                                "data": "value",
+                                "title": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e07\u0e34\u0e19",
+                                "orderable": false,
+                                "searchable": true,
+                                "className": "text-right text-nowrap"
+                            }, {
+                                "name": "bank_payment.user_name",
+                                "data": "user_name",
+                                "title": "User ID",
+                                "orderable": false,
+                                "searchable": true,
+                                "className": "text-center text-nowrap"
+                            }, {
+                                "name": "bank_payment.date_update",
+                                "data": "date",
+                                "title": "\u0e40\u0e27\u0e25\u0e32\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a",
+                                "orderable": false,
+                                "searchable": true,
+                                "className": "text-center text-nowrap"
+                            }, {
+                                "name": "confirm",
+                                "data": "confirm",
+                                "title": "\u0e40\u0e15\u0e34\u0e21\u0e40\u0e07\u0e34\u0e19",
+                                "orderable": false,
+                                "searchable": false,
+                                "className": "text-center text-nowrap"
+                            }, {
+                                "name": "cancel",
+                                "data": "cancel",
+                                "title": "\u0e1b\u0e0f\u0e34\u0e40\u0e2a\u0e18",
+                                "orderable": false,
+                                "searchable": false,
+                                "className": "text-center text-nowrap"
+                            }, {
+                                "name": "delete",
+                                "data": "delete",
+                                "title": "\u0e25\u0e1a",
+                                "orderable": false,
+                                "searchable": false,
+                                "className": "text-center text-nowrap"
+                            }],
+                            "dom": "Bfrtip",
+                            "responsive": false,
+                            "stateSave": true,
+                            "scrollX": true,
+                            "paging": false,
+                            "searching": false,
+                            "deferRender": true,
+                            "retrieve": true,
+                            "ordering": true,
+                            "pageLength": 50,
+                            "order": [[0, "desc"]],
+                            "lengthMenu": [[50, 100, 200, 500, 1000], ["50 rows", "100 rows", "200 rows", "500 rows", "1000 rows"]],
+                            "buttons": [],
+                            "columnDefs": [{"targets": "_all", "className": "text-center text-nowrap"}]
+                        });
+
+                        {{--const $table = $('#deposittable');--}}
+
+                        {{--this.depositTable = $table.DataTable({--}}
+                        {{--    processing: true,--}}
+                        {{--    serverSide: true,--}}
+                        {{--    ajax: {--}}
+                        {{--        url: '{{ route('admin.bank_in.index') }}',--}}
+                        {{--        type: 'GET'--}}
+                        {{--    },--}}
+                        {{--    paging: false,--}}
+                        {{--    searching: false,--}}
+                        {{--    ordering: true,--}}
+                        {{--    scrollX: true,--}}
+                        {{--    stateSave: true,--}}
+
+                        {{--    // ✨ สำคัญ: map ให้ตรงกับ getColumns()--}}
+                        {{--    columns: [--}}
+                        {{--        { data: 'code',      name: 'bank_payment.code' },--}}
+                        {{--        { data: 'bankcode',  name: 'bankcode' },--}}
+                        {{--        { data: 'acc_no',    name: 'bank_account.acc_no' },--}}
+                        {{--        { data: 'bank_time', name: 'bank_payment.bank_time' },--}}
+                        {{--        { data: 'channel',   name: 'bank_payment.channel' },--}}
+                        {{--        { data: 'detail',    name: 'bank_payment.detail' },--}}
+                        {{--        { data: 'value',     name: 'bank_payment.value' },--}}
+                        {{--        { data: 'user_name', name: 'bank_payment.user_name' },--}}
+                        {{--        { data: 'date',      name: 'bank_payment.date_update' },--}}
+                        {{--        { data: 'confirm',   name: 'confirm', searchable: false, orderable: false },--}}
+                        {{--        { data: 'cancel',    name: 'cancel',  searchable: false, orderable: false },--}}
+                        {{--        { data: 'delete',    name: 'delete',  searchable: false, orderable: false },--}}
+                        {{--    ],--}}
+
+                        {{--    // กัน column not found กลายเป็น error แดง ๆ--}}
+                        {{--    columnDefs: [--}}
+                        {{--        { targets: '_all', defaultContent: '' , className: 'text-nowrap' }--}}
+                        {{--    ],--}}
+
+                        {{--    order: [[0, 'desc']]--}}
+                        {{--});--}}
+
+                        {{--// ให้สอดคล้องกับ pattern เดิมของนาย--}}
+                        {{--window.LaravelDataTables = window.LaravelDataTables || {};--}}
+                        {{--window.LaravelDataTables['deposittable'] = this.depositTable;--}}
+                    });
+                },
+
+
+                // ถ้าอยากมีปุ่ม reload เฉพาะ ก็เขียนแยกอีกเมธอดได้
+                reloadDepositTable() {
+                    if (this.depositTable && this.depositTable.ajax && typeof this.depositTable.ajax.reload === 'function') {
+                        this.depositTable.ajax.reload(null, false);
+                    }
+                },
+                onContext(ctx) {
+                    this.formatted = ctx.selectedFormatted || '';
+                    this.selected = ctx.selectedYMD || '';
+                },
                 apiUrl(path) {
-                    return '/admin/line-oa/' + path.replace(/^\/+/, '');
+                    return '/line-oa/' + path.replace(/^\/+/, '');
                 },
                 async fetchBanks() {
                     try {
@@ -2092,6 +3020,11 @@
                 onMemberModalShown() {
                     this.autoFocusRef('memberIdInput');
                 },
+                onMemberModalHidden() {
+                    this.$nextTick(() => {
+                        this.autoFocusRef('replyBox');
+                    });
+                },
                 // ====== modal: ผูก contact กับ member ======
                 openMemberModal() {
                     if (!this.selectedConversation || !this.selectedConversation.contact) {
@@ -2478,6 +3411,19 @@
                         this.autoFocusRef('replyBox');
                     });
                 },
+                onTopupModalHidden(){
+                    this.$nextTick(() => {
+                        this.autoFocusRef('replyBox');
+                    });
+                },
+                openMemberFromConversation() {
+                    if (!this.selectedConversation) return;
+                    const conv = this.selectedConversation.contact || {};
+
+                    if (window.memberEditApp && typeof window.memberEditApp.memberEditOpen === 'function') {
+                        window.memberEditApp.memberEditOpen(conv.member_id);
+                    }
+                },
                 openTopupModal() {
                     if (!this.selectedConversation) return;
 
@@ -2605,33 +3551,1001 @@
                         return false;
                     }
                 },
+                openRefillModal() {
+                    if (!this.selectedConversation) return;
+                    const conv = this.selectedConversation.contact || {};
+                    var prefill = null;
+                    prefill = {
+                        member_id: conv.member_id || null,
+                        member_username: conv.member_username || null,
+                    };
+
+                    if (window.memberRefillApp && typeof window.memberRefillApp.openRefillModal === 'function') {
+                        window.memberRefillApp.openRefillModal(prefill);
+                    }
+                },
+
             }
         });
 
     </script>
 
     <script type="module">
+        Dropzone.autoDiscover = false;
 
-        Vue.mixin({
+        window.memberEditApp = new Vue({
+            el: '#member-edit-app',
             data() {
                 return {
-                    showLineChat: false,
-                    lineChatActiveConversationId: null,
+                    csrf: document.head.querySelector('meta[name="csrf-token"]').content,
+
+                    // state หลักของ member edit
+                    memberEditShow: false,
+                    memberEditMode: 'edit',  // 'add' หรือ 'edit'
+                    memberEditCode: null,    // member id ที่กำลังแก้ไข
+
+                    memberEditForm: {
+                        firstname: '',
+                        lastname: '',
+                        bank_code: '',
+                        user_name: '',
+                        user_pass: '',
+                        acc_no: '',
+                        wallet_id: '',
+                        lineid: '',
+                        pic_id: '',
+                        tel: '',
+                        one_time_password: '',
+                        refer_code: 0,
+                        maxwithdraw_day: 0,
+                        af: '',
+                        up_name: '',
+                        upline_code: '',
+                    },
+
+                    // รูปปัจจุบัน
+                    memberEditPic: null,
+
+                    // Dropzone
+                    memberEditDropzone: null,
+                    memberEditSuppressDelete: false,
+
+                    // options select ต่าง ๆ
+                    memberEditOption: {
+                        bank_code: [],
+                        refer_code: [],
+                    },
                 };
             },
-
+            mounted() {
+                this.memberEditLoadBank();
+                this.memberEditLoadRefer();
+            },
             methods: {
-                openLineChat(id = null) {
-                    console.log('openLineChat', id);
-                    this.showLineChat = true;
-                    this.lineChatActiveConversationId = id;
+                /* ============================
+                 *  ส่วน Dropzone / Upload รูป
+                 * ============================ */
+                autoFocusOnLineOA(refName) {
+                    this.$nextTick(() => {
+                        // ===== helper หา Vue root / line-oa-chat ภายในฟังก์ชันนี้เอง =====
+                        function findAnyVueRoot() {
+                            var all = document.querySelectorAll('body, body *');
+                            for (var i = 0; i < all.length; i++) {
+                                if (all[i].__vue__) {
+                                    return all[i].__vue__;
+                                }
+                            }
+                            console.warn('[memberEditApp] ไม่พบ Vue root instance เลย');
+                            return null;
+                        }
+
+                        function findLineOaChatVm(vm) {
+                            if (!vm) return null;
+
+                            var name = vm.$options && (vm.$options.name || vm.$options._componentTag);
+                            if (name === 'line-oa-chat') {
+                                return vm;
+                            }
+
+                            if (vm.$children && vm.$children.length) {
+                                for (var i = 0; i < vm.$children.length; i++) {
+                                    var found = findLineOaChatVm(vm.$children[i]);
+                                    if (found) return found;
+                                }
+                            }
+                            return null;
+                        }
+
+                        function getLineOaChatComponentLocal() {
+                            var rootVm = findAnyVueRoot();
+                            if (!rootVm) return null;
+
+                            if (rootVm.$refs && rootVm.$refs.lineOaChat) {
+                                return rootVm.$refs.lineOaChat;
+                            }
+
+                            var comp = findLineOaChatVm(rootVm);
+                            if (!comp) {
+                                console.warn('[memberEditApp] ไม่พบ component line-oa-chat จาก Vue tree');
+                            }
+                            return comp;
+                        }
+
+                        // ===== ใช้งานจริง =====
+                        const comp = getLineOaChatComponentLocal();
+                        if (!comp) {
+                            return;
+                        }
+
+                        const target = comp.$refs && comp.$refs[refName];
+                        if (!target) {
+                            console.warn(`[memberEditApp] line-oa-chat ไม่มี $refs["${refName}"]`);
+                            return;
+                        }
+
+                        // 1) ถ้า ref เป็น component ที่มี .focus()
+                        if (typeof target.focus === 'function') {
+                            try {
+                                target.focus();
+                                return;
+                            } catch (e) {
+                                console.warn('[memberEditApp] focus() บน component ล้มเหลว', e);
+                            }
+                        }
+
+                        // 2) ถ้า ref เป็น element ตรง ๆ
+                        if (target instanceof HTMLElement) {
+                            target.focus?.();
+                            return;
+                        }
+
+                        // 3) ref เป็น Vue component → หา input/textarea ข้างใน
+                        const el =
+                            target.$el?.querySelector?.('input,textarea,select,[tabindex]') ||
+                            target.$el ||
+                            null;
+
+                        if (el && typeof el.focus === 'function') {
+                            el.focus();
+                        } else {
+                            console.warn('[memberEditApp] ไม่พบ element ที่ focus ได้ใน ref', refName);
+                        }
+                    });
                 },
-                closeLineChat() {
-                    this.showLineChat = false;
-                    this.lineChatActiveConversationId = null;
+
+                autoFocusRef(refName) {
+                    this.$nextTick(() => {
+                        const r = this.$refs[refName];
+                        if (!r) return;
+
+                        if (typeof r.focus === 'function') {
+                            try {
+                                r.focus();
+                                return;
+                            } catch (_) {
+                            }
+                        }
+
+                        const el =
+                            r.$el?.querySelector?.('input,textarea') ||
+                            (r instanceof HTMLElement ? r : null);
+
+                        el?.focus?.();
+                    });
+                },
+                onMemberEditModalHidden(){
+                    this.$nextTick(() => {
+                        this.autoFocusOnLineOA('replyBox');
+                    });
+                },
+                memberEditOpenUpload() {
+                    this.$refs.memberEditUploadModal.show();
+                },
+
+                memberEditEnsureDropzone() {
+                    if (this.memberEditDropzone) return;
+
+                    this.memberEditDropzone = new Dropzone(this.$refs.memberEditDropzoneEl, {
+                        url: "{{ route('admin.upload.pic') }}",
+                        method: 'post',
+                        maxFiles: 1,
+                        acceptedFiles: 'image/*',
+                        addRemoveLinks: true,
+                        dictRemoveFile: 'ลบรูป',
+                        previewsContainer: this.$refs.memberEditDropzonePreviews,
+                        clickable: [this.$refs.memberEditDropzoneEl, this.$refs.memberEditPickBtn],
+                        headers: { 'X-CSRF-TOKEN': this.csrf },
+                    });
+
+                    this.memberEditDropzone.on('sending', (file, xhr, formData) => {
+                        formData.append('id', this.memberEditCode || '');
+                    });
+
+                    this.memberEditDropzone.on('success', (file, resp) => {
+                        file.serverId  = resp.id;
+                        file.deleteUrl = resp.delete_url
+                            || "{{ route('admin.delete.pic', ['id' => ':id']) }}".replace(':id', resp.id);
+
+                        this.memberEditPic = {
+                            id: resp.id,
+                            name: file.name,
+                            size: file.size,
+                            url: resp.url,
+                        };
+
+                        // เก็บ path / url ไว้ในฟอร์มเพื่อนำไปใช้ด้านหลัง
+                        this.memberEditForm.pic_id = resp.path || resp.url || '';
+                    });
+
+                    this.memberEditDropzone.on('maxfilesexceeded', file => {
+                        this.memberEditSuppressDelete = true;
+                        this.memberEditDropzone.removeAllFiles(true);
+                        this.memberEditSuppressDelete = false;
+                        this.memberEditDropzone.addFile(file);
+                    });
+
+                    const onRemovedFile = (file) => {
+                        if (this.memberEditSuppressDelete) return;
+                        if (!file.serverId) return;
+
+                        const url = file.deleteUrl
+                            || "{{ route('admin.delete.pic', ['id' => ':id']) }}".replace(':id', file.serverId);
+
+                        fetch(url, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': this.csrf },
+                        }).then(() => {
+                            if (this.memberEditPic && String(this.memberEditPic.id) === String(file.serverId)) {
+                                this.memberEditPic = null;
+                                this.memberEditForm.pic_id = '';
+                            }
+                        });
+                    };
+
+                    this.memberEditDropzone.on('removedfile', onRemovedFile);
+                },
+
+                memberEditOnUploadShown() {
+                    this.memberEditEnsureDropzone();
+
+                    this.memberEditSuppressDelete = true;
+                    this.memberEditDropzone.removeAllFiles(true);
+                    this.memberEditSuppressDelete = false;
+
+                    const dzEl = this.$refs.memberEditDropzoneEl;
+                    if (dzEl && dzEl.classList) dzEl.classList.remove('dz-started');
+                    const msg = dzEl ? dzEl.querySelector('.dz-message') : null;
+                    if (msg) msg.style.display = '';
+
+                    if (this.memberEditDropzone.hiddenFileInput) {
+                        this.memberEditDropzone.hiddenFileInput.disabled = false;
+                    }
+                    if (typeof this.memberEditDropzone.enable === 'function') {
+                        this.memberEditDropzone.enable();
+                    }
+
+                    // preload รูปเดิม
+                    if (this.memberEditPic && this.memberEditPic.url) {
+                        const f = this.memberEditPic;
+                        const mock = {
+                            name: f.name || 'existing.jpg',
+                            size: f.size || 12345,
+                            serverId: f.id,
+                            isExisting: true,
+                            url: f.url,
+                        };
+                        this.memberEditDropzone.emit('addedfile', mock);
+                        this.memberEditDropzone.emit('thumbnail', mock, f.url);
+                        this.memberEditDropzone.emit('complete', mock);
+                        this.memberEditDropzone.files.push(mock);
+                    }
+                },
+
+                memberEditOnUploadHidden() {
+                    if (this.memberEditDropzone) {
+                        this.memberEditSuppressDelete = true;
+                        this.memberEditDropzone.removeAllFiles(true);
+                        this.memberEditSuppressDelete = false;
+                    }
+                    const dzEl = this.$refs.memberEditDropzoneEl;
+                    if (dzEl && dzEl.classList) dzEl.classList.remove('dz-started');
+                    const msg = dzEl ? dzEl.querySelector('.dz-message') : null;
+                    if (msg) msg.style.display = '';
+                },
+
+                memberEditSetPicFromPath(path) {
+                    if (!path) {
+                        this.memberEditPic = null;
+                        this.memberEditForm.pic_id = '';
+                        return;
+                    }
+                    const fileName = path.split('/').pop();
+                    const url = this.memberEditFileUrl(path);
+                    this.memberEditPic = {
+                        id: this.memberEditCode,
+                        name: fileName,
+                        url,
+                        size: 12345,
+                    };
+                    this.memberEditForm.pic_id = path;
+                },
+
+                memberEditFileUrl(path) {
+                    // ปรับตามที่เก็บไฟล์จริง ถ้าใช้ storage/public
+                    return `{{ url('/storage') }}/${path}`;
+                },
+
+                /* ============================
+                 *  ส่วนเปิด / โหลดข้อมูล member
+                 * ============================ */
+
+                // เรียกใช้จากภายนอก: window.memberEditApp.memberEditOpen(memberId)
+                memberEditOpen(code) {
+                    console.log('memberEditOpen', code);
+                    // ตั้งค่า state เบื้องต้น
+                    this.memberEditCode = code || null;
+                    this.memberEditMode = 'edit';
+
+                    // เคลียร์ฟอร์ม + รูป
+                    this.memberEditResetForm();
+                    this.memberEditPic = null;
+
+                    // เปิด modal ทันที ไม่รอ axios
+                    this.memberEditShow = true;
+                    if (this.$refs.memberEditModal && typeof this.$refs.memberEditModal.show === 'function') {
+                        this.$refs.memberEditModal.show();
+                    } else {
+                        console.error('memberEditModal ref not found');
+                    }
+
+                    // ถ้ามี code → ค่อยยิงโหลดข้อมูล async ตามหลัง
+                    if (code) {
+                        this.memberEditLoadData().catch(err => {
+                            console.error('memberEditLoadData error:', err);
+                        });
+                    }
+                },
+
+                // alias สำหรับ “เพิ่มใหม่” (ใช้ id = null)
+                memberEditNew() {
+                    this.memberEditOpen(null);
+                },
+
+                memberEditResetForm() {
+                    this.memberEditForm = {
+                        firstname: '',
+                        lastname: '',
+                        bank_code: '',
+                        user_name: '',
+                        user_pass: '',
+                        acc_no: '',
+                        wallet_id: '',
+                        lineid: '',
+                        pic_id: '',
+                        tel: '',
+                        one_time_password: '',
+                        refer_code: 0,
+                        maxwithdraw_day: 0,
+                        af: '',
+                        up_name: '',
+                        upline_code: '',
+                    };
+                },
+
+                async memberEditLoadData() {
+                    if (!this.memberEditCode) return;
+
+                    const response = await axios.get("{{ route('admin.member.loaddata') }}", {
+                        params: { id: this.memberEditCode },
+                    });
+
+                    const u = response.data.data;
+
+                    this.memberEditForm = {
+                        firstname: u.firstname,
+                        lastname: u.lastname,
+                        bank_code: u.bank_code,
+                        user_name: u.user_name,
+                        user_pass: '',
+                        acc_no: u.acc_no,
+                        wallet_id: u.wallet_id,
+                        lineid: u.lineid,
+                        pic_id: u.pic_id,
+                        tel: u.tel,
+                        one_time_password: '',
+                        refer_code: u.refer_code,
+                        maxwithdraw_day: u.maxwithdraw_day,
+                        af: u.af || '',
+                        up_name: u.up_name || '',
+                        upline_code: u.upline_code || '',
+                    };
+
+                    if (u.pic_id) {
+                        this.memberEditSetPicFromPath(u.pic_id);
+                    } else {
+                        this.memberEditPic = null;
+                    }
+                },
+
+                async memberEditLoadBank() {
+                    const response = await axios.get("{{ route('admin.member.loadbank') }}");
+                    this.memberEditOption.bank_code = response.data.banks || [];
+                },
+
+                async memberEditLoadRefer() {
+                    const response = await axios.get("{{ route('admin.member.loadrefer') }}");
+                    this.memberEditOption.refer_code = response.data.refers || [];
+                },
+
+                async memberEditLoadAF(afValue) {
+                    const response = await axios.get("{{ route('admin.member.loadaf') }}", {
+                        params: { af: afValue },
+                    });
+
+                    if (response.data.success) {
+                        this.memberEditForm.up_name = response.data.data.name;
+                        this.memberEditForm.upline_code = response.data.data.code;
+                    } else {
+                        this.memberEditForm.up_name = '';
+                        this.memberEditForm.upline_code = 0;
+                    }
+                },
+
+                /* ============================
+                 *  ส่วน submit / error handling
+                 * ============================ */
+
+                memberEditShowError(response) {
+                    let message = response?.data?.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+
+                    if (typeof message === 'object') {
+                        try {
+                            message = Object.values(message).flat().join('\n');
+                        } catch (e) {
+                            message = [].concat(...Object.values(message)).join('\n');
+                        }
+                    }
+                    if (Array.isArray(message)) {
+                        message = message.join('\n');
+                    }
+
+                    this.$bvModal.msgBoxOk(message, {
+                        title: 'ผลการดำเนินการ',
+                        size: 'sm',
+                        buttonSize: 'sm',
+                        okVariant: 'danger',
+                        headerClass: 'p-2 border-bottom-0',
+                        footerClass: 'p-2 border-top-0',
+                        centered: true,
+                    });
+                },
+
+                memberEditSubmit(event) {
+                    event.preventDefault();
+
+                    let url;
+                    if (this.memberEditMode === 'add') {
+                        url = "{{ route('admin.member.create') }}";
+                    } else {
+                        url = "{{ route('admin.member.update') }}/" + this.memberEditCode;
+                    }
+
+                    const payload = {
+                        firstname: this.memberEditForm.firstname,
+                        lastname: this.memberEditForm.lastname,
+                        bank_code: this.memberEditForm.bank_code,
+                        user_name: this.memberEditForm.user_name,
+                        user_pass: this.memberEditForm.user_pass,
+                        acc_no: this.memberEditForm.acc_no,
+                        wallet_id: this.memberEditForm.wallet_id,
+                        lineid: this.memberEditForm.lineid,
+                        pic_id: this.memberEditForm.pic_id,
+                        tel: this.memberEditForm.tel,
+                        one_time_password: this.memberEditForm.one_time_password,
+                        maxwithdraw_day: this.memberEditForm.maxwithdraw_day,
+                        refer_code: this.memberEditForm.refer_code,
+                        upline_code: this.memberEditForm.upline_code,
+                    };
+
+                    const formData = new FormData();
+                    formData.append('data', JSON.stringify(payload));
+
+                    const config = {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    };
+
+                    axios.post(url, formData, config)
+                        .then(response => {
+                            if (response.data.success === true) {
+                                this.$bvModal.msgBoxOk(response.data.message, {
+                                    title: 'ผลการดำเนินการ',
+                                    size: 'sm',
+                                    buttonSize: 'sm',
+                                    okVariant: 'success',
+                                    headerClass: 'p-2 border-bottom-0',
+                                    footerClass: 'p-2 border-top-0',
+                                    centered: true,
+                                });
+
+                                this.$refs.memberEditModal.hide();
+                            } else {
+                                this.memberEditShowError(response);
+                            }
+                        })
+                        .catch(error => {
+                            this.memberEditShowError(error.response || {});
+                        });
                 },
             },
         });
-
     </script>
+
+    <script type="module">
+        window.memberRefillApp = new Vue({
+            el: '#member-refill-app',
+
+            data() {
+                return {
+                    showRefillUI: false,     // ใช้ control v-if ของฟอร์มใน modal
+                    currentTopupId: null,    // code ของบิลแจ้งฝากที่กำลังจัดการ
+                    currentClearId: null,    // code ของรายการที่จะ clear
+
+                    // ฟอร์มสำหรับผูกบิลเติมเงินกับ Member/Game ID
+                    assignTopupTargetForm: {
+                        user_name: '',
+                        name: '',
+                        member_topup: '',
+                        remark_admin: '',
+                    },
+
+                    // ฟอร์มเติมเงินตามปกติ
+                    refillForm: {
+                        id: '',
+                        user_name: '',
+                        name: '',
+                        amount: 0,
+                        account_code: '',
+                        remark_admin: '',
+                        one_time_password: '',
+                    },
+
+                    // ฟอร์มระบุหมายเหตุเวลา clear
+                    clearRemarkForm: {
+                        remark: '',
+                    },
+
+                    // ธนาคารที่ใช้ใน select
+                    banks: [{ value: '', text: '== ธนาคาร ==' }],
+                };
+            },
+
+            created() {
+                // ถ้าหน้านี้ยังใช้ alertsound / autoCnt เดิมอยู่ สามารถเรียกจาก window ตัวอื่นได้
+                // ไม่ผูกกับ memberRefillApp เพื่อลด side-effect
+            },
+
+            mounted() {
+                this.loadBankAccount();
+            },
+
+            methods: {
+                /* -----------------------------------
+                 * เปิด MODAL แบบชื่อใหม่
+                 * ----------------------------------- */
+
+                // เดิมคือ editModal() / addModal() แต่ความหมายคือเลือกเป้าหมายของบิลที่เลือก
+                openAssignTopupTargetModal(topupId = null, prefill = null) {
+                    this.currentTopupId = topupId || null;
+
+                    // reset ฟอร์ม
+                    this.assignTopupTargetForm = {
+                        user_name: '',
+                        name: '',
+                        member_topup: '',
+                        remark_admin: '',
+                    };
+
+                    this.showRefillUI = true;
+
+                    // ถ้ามีข้อมูลจากห้องแชต (prefill)
+                    if (prefill && (prefill.member_username || prefill.member_id)) {
+                        // ให้เอา member_user มาใส่ช่องค้นหาไว้ก่อน
+                        if (prefill.member_username) {
+                            this.assignTopupTargetForm.user_name = prefill.member_username;
+                        }
+
+                        // เปิด modal แล้วค่อย auto ค้นหา
+                        this.$nextTick(async () => {
+                            if (this.$refs.assignTopupTargetModal) {
+                                this.$refs.assignTopupTargetModal.show();
+                            }
+
+                            // ถ้ามี member_user → ให้ยิง loadUserForAssignTarget เลย
+                            if (this.assignTopupTargetForm.user_name) {
+                                try {
+                                    await this.loadUserForAssignTarget();
+                                } catch (e) {
+                                    console.warn('auto loadUserForAssignTarget failed', e);
+                                }
+                            }
+                        });
+                    } else {
+                        // กรณีไม่มี prefill → เปิด modal เฉย ๆ ให้แอดมินกรอกเอง
+                        this.$nextTick(() => {
+                            if (this.$refs.assignTopupTargetModal) {
+                                this.$refs.assignTopupTargetModal.show();
+                            }
+                        });
+                    }
+                },
+
+
+                // เดิม refill()
+                openRefillModal(prefill = null) {
+                    console.log('[memberRefillApp] openRefillModal(prefill =', prefill, ')');
+
+                    this.currentTopupId = null;
+
+                    // reset form ทุกครั้งก่อนเปิด
+                    this.refillForm = {
+                        id: '',
+                        user_name: '',
+                        name: '',
+                        amount: 0,
+                        account_code: '',
+                        remark_admin: '.',
+                        one_time_password: '',
+                    };
+
+                    this.showRefillUI = true;
+
+                    // มีข้อมูลจากห้องแชต
+                    if (prefill && prefill.member_username) {
+                        this.refillForm.user_name = prefill.member_username;
+                        console.warn('[memberRefillApp] refillForm user_name', prefill.member_username);
+                        this.$nextTick(async () => {
+                            if (this.$refs.refillModal) {
+                                this.$refs.refillModal.show();
+                            }
+                            console.warn('[memberRefillApp] refillModal show');
+                            // auto ค้นหา
+                            if (this.refillForm.user_name) {
+                                try {
+                                    console.warn('[memberRefillApp] loadUserForRefill ',this.refillForm.user_name);
+                                    await this.loadUserForRefill();
+                                } catch (e) {
+                                    console.warn('[memberRefillApp] auto loadUserForRefill failed', e);
+                                }
+                            }
+                        });
+                    } else {
+                        // ไม่มี prefill → เปิดเปล่า ๆ ให้กรอกเอง
+                        this.$nextTick(() => {
+                            if (this.$refs.refillModal) {
+                                this.$refs.refillModal.show();
+                            }
+                        });
+                    }
+                },
+
+
+                // เดิม clearModal(code)
+                openClearRemarkModal(code) {
+                    this.currentClearId = code;
+                    this.clearRemarkForm = {
+                        remark: '',
+                    };
+
+                    this.showRefillUI = true;
+                    if (this.$refs.clearRemarkModal) {
+                        this.$refs.clearRemarkModal.show();
+                    }
+                },
+
+                /* -----------------------------------
+                 * LOAD user / bank
+                 * ----------------------------------- */
+
+                async loadUserForAssignTarget() {
+                    const response = await axios.post("{{ route('admin.bank_in.loaddata') }}", {
+                        id: this.assignTopupTargetForm.user_name,
+                    });
+
+                    this.assignTopupTargetForm = {
+                        ...this.assignTopupTargetForm,
+                        name: response.data.data.name,
+                        member_topup: response.data.data.code,
+                    };
+                },
+
+                async loadUserForRefill() {
+                    // ป้องกันกรณีไม่มีค่าอะไรเลย
+                    if (!this.refillForm.user_name) {
+                        console.warn('[memberRefillApp] loadUserForRefill(): ไม่มี user_name ให้ค้นหา');
+                        return;
+                    }
+
+                    console.log('[memberRefillApp] loadUserForRefill(): search', this.refillForm.user_name);
+
+                    try {
+                        const response = await axios.post("{{ route('admin.bank_in.loaddata') }}", {
+                            id: this.refillForm.user_name,
+                        });
+
+                        const data = response.data && response.data.data;
+
+                        if (!data) {
+                            console.warn('[memberRefillApp] loadUserForRefill(): response ไม่มี data', response.data);
+                            return;
+                        }
+
+                        // เซ็ตข้อมูลกลับเข้าฟอร์ม
+                        this.refillForm = {
+                            ...this.refillForm,
+                            name: data.name,
+                            id: data.code,
+                        };
+
+                        console.log('[memberRefillApp] loadUserForRefill(): loaded', this.refillForm);
+                    } catch (e) {
+                        console.error('[memberRefillApp] loadUserForRefill(): error', e);
+                    }
+                },
+
+
+                async loadBankAccount() {
+                    const response = await axios.get("{{ route('admin.member.loadbankaccount') }}");
+                    this.banks = response.data.banks;
+                },
+
+                /* -----------------------------------
+                 * SUBMIT: ผูกบิลกับ Member (เดิม addEditSubmitNew)
+                 * ----------------------------------- */
+
+                submitAssignTopupTarget(event) {
+                    event && event.preventDefault && event.preventDefault();
+
+                    if (typeof this.toggleButtonDisable === 'function') {
+                        this.toggleButtonDisable(true);
+                    }
+
+                    // logic เดิม: ถ้ามี code = update, ถ้าไม่มี = create
+                    let url;
+                    if (!this.currentTopupId) {
+                        url = "{{ route('admin.bank_in.create') }}";
+                    } else {
+                        url = "{{ route('admin.bank_in.update') }}/" + this.currentTopupId;
+                    }
+
+                    const payload = {
+                        member_topup: this.assignTopupTargetForm.member_topup,
+                        remark_admin: this.assignTopupTargetForm.remark_admin,
+                    };
+
+                    const formData = new FormData();
+                    formData.append('data', JSON.stringify(payload));
+
+                    const config = {
+                        headers: {'Content-Type': `multipart/form-data; boundary=${formData._boundary}`},
+                    };
+
+                    axios.post(url, formData, config)
+                        .then(response => {
+                            if (response.data.success === true) {
+                                this.$bvModal.msgBoxOk(response.data.message, {
+                                    title: 'ผลการดำเนินการ',
+                                    size: 'sm',
+                                    buttonSize: 'sm',
+                                    okVariant: 'success',
+                                    headerClass: 'p-2 border-bottom-0',
+                                    footerClass: 'p-2 border-top-0',
+                                    centered: true,
+                                });
+
+                                if (window.LaravelDataTables && window.LaravelDataTables["deposittable"]) {
+                                    window.LaravelDataTables["deposittable"].draw(false);
+                                }
+
+                                this.$refs.assignTopupTargetModal.hide();
+                            } else {
+                                // logic เดิม: mark invalid field ตาม key ใน response.data.message
+                                $.each(response.data.message, function (index) {
+                                    const el = document.getElementById(index);
+                                    el && el.classList.add("is-invalid");
+                                });
+                                $('input').on('focus', (ev) => {
+                                    ev.preventDefault();
+                                    ev.stopPropagation();
+                                    const id = $(ev.target).attr('id');
+                                    const el = document.getElementById(id);
+                                    el && el.classList.remove("is-invalid");
+                                });
+                            }
+                        })
+                        .catch(errors => {
+                            console.log(errors);
+                        });
+                },
+
+                /* -----------------------------------
+                 * SUBMIT: เติมเงิน (เดิม refillSubmit)
+                 * ----------------------------------- */
+
+                submitRefillForm(event) {
+                    event && event.preventDefault && event.preventDefault();
+
+                    if (typeof this.toggleButtonDisable === 'function') {
+                        this.toggleButtonDisable(true);
+                    }
+
+                    this.$http.post("{{ route('admin.member.refill') }}", this.refillForm)
+                        .then(response => {
+                            this.$bvModal.msgBoxOk(response.data.message, {
+                                title: 'ผลการดำเนินการ',
+                                size: 'sm',
+                                buttonSize: 'sm',
+                                okVariant: 'success',
+                                headerClass: 'p-2 border-bottom-0',
+                                footerClass: 'p-2 border-top-0',
+                                centered: true,
+                            });
+
+                            if (window.LaravelDataTables && window.LaravelDataTables["deposittable"]) {
+                                window.LaravelDataTables["deposittable"].draw(false);
+                            }
+                            this.$refs.refillModal.hide();
+
+                        })
+                        .catch(exception => {
+                            console.log('error', exception);
+                            if (typeof this.toggleButtonDisable === 'function') {
+                                this.toggleButtonDisable(false);
+                            }
+                        });
+                },
+
+                /* -----------------------------------
+                 * SUBMIT: clear (เดิม clearSubmit)
+                 * ----------------------------------- */
+
+                submitClearRemarkForm(event) {
+                    event && event.preventDefault && event.preventDefault();
+
+                    if (typeof this.toggleButtonDisable === 'function') {
+                        this.toggleButtonDisable(true);
+                    }
+
+                    this.$http.post("{{ route('admin.bank_in.clear') }}", {
+                        id: this.currentClearId,
+                        remark: this.clearRemarkForm.remark,
+                    })
+                        .then(response => {
+                            this.$bvModal.msgBoxOk(response.data.message, {
+                                title: 'ผลการดำเนินการ',
+                                size: 'sm',
+                                buttonSize: 'sm',
+                                okVariant: 'success',
+                                headerClass: 'p-2 border-bottom-0',
+                                footerClass: 'p-2 border-top-0',
+                                centered: true,
+                            });
+
+                            if (window.LaravelDataTables && window.LaravelDataTables["dataTableBuilder"]) {
+                                window.LaravelDataTables["deposittable"].draw(false);
+                            }
+
+                            this.$refs.clearRemarkModal.hide();
+                        })
+                        .catch(exception => {
+                            console.log('error', exception);
+                            if (typeof this.toggleButtonDisable === 'function') {
+                                this.toggleButtonDisable(false);
+                            }
+                        });
+                },
+
+                openDeleteModal(code) {
+                    // popup confirm
+                    this.$bvModal.msgBoxConfirm(
+                        'คุณต้องการลบรายการนี้ใช่หรือไม่?',
+                        {
+                            title: 'โปรดยืนยันการทำรายการ',
+                            size: 'sm',
+                            okVariant: 'danger',
+                            okTitle: 'ลบรายการ',
+                            cancelTitle: 'ยกเลิก',
+                            footerClass: 'p-2',
+                            centered: true,
+                        }
+                    ).then(value => {
+                        if (!value) {
+                            return;
+                        }
+
+                        // ยิง API ลบรายการ
+                        axios.post("{{ route('admin.bank_in.delete') }}", {
+                            id: code
+                        })
+                            .then(response => {
+                                this.$bvModal.msgBoxOk(response.data.message, {
+                                    title: 'ผลการดำเนินการ',
+                                    size: 'sm',
+                                    buttonSize: 'sm',
+                                    okVariant: 'success',
+                                    headerClass: 'p-2 border-bottom-0',
+                                    footerClass: 'p-2 border-top-0',
+                                    centered: true,
+                                });
+
+                                // refresh datatable ถ้ามี
+                                if (window.LaravelDataTables && window.LaravelDataTables["deposittable"]) {
+                                    window.LaravelDataTables["deposittable"].draw(false);
+                                }
+                            })
+                            .catch(error => {
+                                this.$bvModal.msgBoxOk('เกิดข้อผิดพลาด ไม่สามารถลบรายการได้', {
+                                    title: 'ข้อผิดพลาด',
+                                    size: 'sm',
+                                    buttonSize: 'sm',
+                                    okVariant: 'danger',
+                                    centered: true,
+                                });
+                            });
+                    })
+                        .catch(err => {
+                            console.warn('Cancel delete', err);
+                        });
+                },
+
+                /* -----------------------------------
+                 * ALIAS ชื่อเดิม ให้ของเก่าไม่พัง
+                 * ----------------------------------- */
+
+                // clearModal(code) เดิม → ใช้ชื่อใหม่
+                clearModal(code) {
+                    this.openClearRemarkModal(code);
+                },
+
+                // refill() เดิม
+                refill() {
+                    this.openRefillModal();
+                },
+
+                // addModal() เดิม → เปิด assign modal โดยไม่ผูกกับบิลเดิม
+                addModal() {
+                    this.openAssignTopupTargetModal(null);
+                },
+
+                // editModal(code) เดิม
+                editModal(code) {
+                    this.openAssignTopupTargetModal(code);
+                },
+
+                // refillSubmit() เดิม
+                refillSubmit(event) {
+                    this.submitRefillForm(event);
+                },
+
+                // addEditSubmitNew() เดิม
+                addEditSubmitNew(event) {
+                    this.submitAssignTopupTarget(event);
+                },
+
+                // loadUser() เดิม
+                loadUser() {
+                    this.loadUserForAssignTarget();
+                },
+
+                // loadUserRefill() เดิม
+                loadUserRefill() {
+                    this.loadUserForRefill();
+                },
+            },
+        });
+    </script>
+
+
+
+
+
 @endpush

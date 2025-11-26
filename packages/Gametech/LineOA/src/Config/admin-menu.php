@@ -3,7 +3,7 @@
 return [
     [
         'key' => 'line-oa',
-        'name' => 'Line Chat',
+        'name' => 'Line OA',
         'route' => 'admin.line-oa.chat',
         'sort' => 88,
         'icon-class' => 'fa-gamepad',
@@ -11,4 +11,35 @@ return [
         'badge-color' => 'badge-primary',
         'status' => 1,
     ],
+    [
+        'key' => 'line-oa.chat',
+        'name' => 'Line Chat',
+        'route' => 'admin.line-oa.chat',
+        'sort' => 1,
+        'icon-class' => 'fa-gamepad',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1,
+    ],
+    [
+        'key' => 'line-oa.line_account',
+        'name' => 'ตั้งค่า Line OA',
+        'route' => 'admin.line_account.index',
+        'sort' => 2,
+        'icon-class' => 'fa-gamepad',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1,
+    ],
+    [
+        'key' => 'line-oa.line_template',
+        'name' => 'ตั้งค่า ข้อความตอบกลับ',
+        'route' => 'admin.line_template.index',
+        'sort' => 3,
+        'icon-class' => 'fa-gamepad',
+        'badge' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1,
+    ]
+
 ];

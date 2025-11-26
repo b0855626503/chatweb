@@ -183,7 +183,7 @@
 
     <div class="wrapper">
 
-        @include('admin::layouts.line-header')
+        @include('admin::layouts.header')
 
         @include('admin::layouts.sidebar')
 
