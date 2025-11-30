@@ -3,40 +3,87 @@
          :hide-footer="true">
     <b-form @submit.prevent="addEditSubmit" v-if="show">
 
+        {{-- CATEGORY --}}
         <b-form-group
-            id="input-group-route"
-            label="หน้าเวบที่แสดงข้อความ:"
-            label-for="route"
-            description="">
-
+                id="input-group-category"
+                label="หมวดหมู่ข้อความ:"
+                label-for="category"
+                description="">
             <b-form-select
-                id="route"
-                name="route"
-                v-model="formaddedit.route"
-                :options="option.route"
-                size="sm"
-                required
-
+                    id="category"
+                    name="category"
+                    v-model="formaddedit.category"
+                    :options="option.category"
+                    size="sm"
+                    required
             ></b-form-select>
         </b-form-group>
 
-
+        {{-- KEY --}}
         <b-form-group
-            id="input-group-1"
-            label="ข้อความ:"
-            label-for="message"
-            description="ระบุข้อความที่แสดง">
+                id="input-group-key"
+                label="คีย์:"
+                label-for="key"
+                description="ระบุ key สำหรับนำไปเรียกใช้ข้อความ (เช่น welcome_banner, topup_notice)">
             <b-form-input
-                id="message"
-                v-model="formaddedit.message"
-                type="text"
-                size="sm"
-                placeholder=""
-                autocomplete="off"
-                required
+                    id="key"
+                    v-model="formaddedit.key"
+                    type="text"
+                    size="sm"
+                    autocomplete="off"
+                    required
             ></b-form-input>
         </b-form-group>
 
+        {{-- MESSAGE (TEXTAREA) --}}
+        <b-form-group
+                id="input-group-message"
+                label="ข้อความ:"
+                label-for="message"
+                description="ระบุข้อความที่ต้องการแสดง">
+            <b-form-textarea
+                    id="message"
+                    v-model="formaddedit.message"
+                    size="sm"
+                    rows="3"
+                    max-rows="6"
+                    autocomplete="off"
+                    required
+            ></b-form-textarea>
+        </b-form-group>
+
+        {{-- DESCRIPTION --}}
+        <b-form-group
+                id="input-group-description"
+                label="คำอธิบาย:"
+                label-for="description"
+                description="คำอธิบายเพิ่มเติมสำหรับทีมงาน (ไม่จำเป็นต้องแสดงหน้าเว็บ)">
+            <b-form-textarea
+                    id="description"
+                    v-model="formaddedit.description"
+                    size="sm"
+                    rows="2"
+                    max-rows="4"
+                    autocomplete="off"
+            ></b-form-textarea>
+        </b-form-group>
+
+        {{-- ENABLED CHECKBOX --}}
+        <b-form-group
+                id="input-group-enabled"
+                label="สถานะการใช้งาน:"
+                label-for="enabled"
+                description="">
+            <b-form-checkbox
+                    id="enabled"
+                    v-model="formaddedit.enabled"
+                    name="enabled"
+                    switch
+                    size="lg"
+            >
+                เปิดใช้งานข้อความนี้
+            </b-form-checkbox>
+        </b-form-group>
 
         <b-button type="submit" variant="primary">บันทึก</b-button>
 
@@ -45,38 +92,30 @@
 
 
 @push('scripts')
-
-
     <script type="module">
-
         window.app = new Vue({
             el: '#app',
             data() {
                 return {
                     show: false,
                     formmethod: 'add',
+                    code: null,
                     formaddedit: {
+                        category: '',
+                        key: '',
                         message: '',
-                        route: '',
+                        description: '',
+                        enabled: true,
                     },
                     option: {
-                        route: [
-                            {value: 'customer.home.index', text: 'หน้าแรกสมาชิก'},
-                            {value: 'customer.topup.index', text: 'หน้าเติมเงิน'},
-                            {value: 'customer.profile.index', text: 'หน้าข้อมูลส่วนตัว'},
-                            {value: 'customer.spin.index', text: 'หน้าวงล้อมหาสนุก'},
-                            {value: 'customer.promotion.index', text: 'หน้าโปรโมชั่น'},
-                            {value: 'customer.transfer.game.index', text: 'หน้าโยก Wallet เข้าเกม'},
-                            {value: 'customer.transfer.wallet.index', text: 'หน้าโยก เกม เข้า Wallet'},
-                            {value: 'customer.withdraw.index', text: 'หน้าแจ้งถอน Wallet'},
-                            {value: 'customer.credit.index', text: 'หน้า Cashback'},
-                            {value: 'customer.credit.transfer.game.index', text: 'หน้าโยก Cashback เข้า เกม'},
-                            {value: 'customer.credit.transfer.wallet.index', text: 'หน้าโยก เกม เข้า Cashback'},
-                            {value: 'customer.credit.withdraw.index', text: 'หน้าแจ้งถอน Cashback'}
+                        // เดิมเคยใช้ route เป็น select list
+                        // ปรับชื่อเป็น category แต่ยังใช้ค่าเดิมได้ ถ้ายังผูกกับหน้าเว็บแบบเดิม
+                        category: [
+                            {value: 'register', text: 'ลงทะเบียน'},
+                            {value: 'welcome', text: 'ข้อความต้อนรับ'},
 
                         ]
                     },
-
                 };
             },
             created() {
@@ -87,53 +126,82 @@
                 editModal(code) {
                     this.code = null;
                     this.formaddedit = {
+                        category: '',
+                        key: '',
                         message: '',
-                        route: '',
-                    }
+                        description: '',
+                        enabled: true,
+                    };
 
                     this.formmethod = 'edit';
 
                     this.show = false;
                     this.$nextTick(() => {
-
                         this.code = code;
                         this.loadData();
                         this.$refs.addedit.show();
                         this.show = true;
-
-                    })
+                    });
                 },
+
                 addModal() {
                     this.code = null;
                     this.formaddedit = {
+                        category: '',
+                        key: '',
                         message: '',
-                        route: '',
-                    }
+                        description: '',
+                        enabled: true,
+                    };
+
                     this.formmethod = 'add';
 
                     this.show = false;
                     this.$nextTick(() => {
                         this.$refs.addedit.show();
                         this.show = true;
+                    });
+                },
 
-                    })
-                },
                 async loadData() {
-                    const response = await axios.post("{{ route('admin.'.$menu->currentRoute.'.loaddata') }}", {id: this.code});
-                    this.formaddedit.route = response.data.data.route;
-                    this.formaddedit.message = response.data.data.message;
+                    const response = await axios.post(
+                        "{{ route('admin.'.$menu->currentRoute.'.loaddata') }}",
+                        {id: this.code}
+                    );
+
+                    const data = response.data.data || {};
+
+                    this.formaddedit.category = data.category || '';
+                    this.formaddedit.key = data.key || '';
+                    this.formaddedit.message = data.message || '';
+                    this.formaddedit.description = data.description || '';
+
+                    // รองรับทั้งแบบ boolean, 0/1, 'Y'/'N'
+                    const enabled = data.enabled;
+                    this.formaddedit.enabled =
+                        enabled === true ||
+                        enabled === 1 ||
+                        enabled === '1' ||
+                        enabled === 'Y';
                 },
+
                 addEditSubmit(event) {
                     event.preventDefault();
                     this.toggleButtonDisable(true);
 
-
+                    let url = '';
                     if (this.formmethod === 'add') {
-                        var url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
+                        url = "{{ route('admin.'.$menu->currentRoute.'.create') }}";
                     } else if (this.formmethod === 'edit') {
-                        var url = "{{ route('admin.'.$menu->currentRoute.'.update') }}";
+                        url = "{{ route('admin.'.$menu->currentRoute.'.update') }}";
                     }
-                    this.$http.post(url, {id: this.code, data: this.formaddedit})
+
+                    const payload = Object.assign({}, this.formaddedit, {
+                        // แปลง enabled ให้ backend อ่านง่าย (ปรับเป็น 'Y'/'N' ถ้าหลังบ้านต้องการแบบนั้น)
+                        enabled: this.formaddedit.enabled ? 1 : 0,
+                    });
+
+                    this.$http.post(url, {id: this.code, data: payload})
                         .then(response => {
                             this.$refs.addedit.hide();
 
@@ -146,19 +214,15 @@
                                 footerClass: 'p-2 border-top-0',
                                 centered: true
                             });
+
                             window.LaravelDataTables["dataTableBuilder"].draw(false);
                         })
                         .catch(exception => {
-                            console.log('error');
+                            console.log('error', exception);
                             this.toggleButtonDisable(false);
                         });
-
                 }
-
-
             },
         });
-
     </script>
 @endpush
-

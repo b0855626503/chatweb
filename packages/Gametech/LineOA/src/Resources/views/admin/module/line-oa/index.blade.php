@@ -1187,7 +1187,7 @@
                                                     </b-button>
 
                                                     <b-button
-                                                            v-if="canControlRegister()"
+                                                            v-if="canControlRegister() && selectedConversation.contact.member_id"
                                                             size="sm"
                                                             variant="outline-success"
                                                             class="mb-1 mr-3"
@@ -1851,18 +1851,20 @@
                     if (conv.status === 'closed') return false;
 
                     // ต้องมีคนรับเรื่องก่อน
-                    if (!conv.assigned_employee_id) return false;
+                    if (!conv.assigned_employee_id) return true;
 
                     const me = this.currentEmployeeId;
                     if (!me) return false;
 
                     // ถ้ามีการล็อกห้อง → ให้เฉพาะคนล็อกตอบได้
                     if (conv.locked_by_employee_id) {
-                        return String(conv.locked_by_employee_id) === String(me);
+                        return true;
+                        // return String(conv.locked_by_employee_id) === String(me);
                     }
-
-                    // ถ้าไม่มีการล็อก → ให้เฉพาะผู้รับเรื่องตอบได้
-                    return String(conv.assigned_employee_id) === String(me);
+                    //
+                    // // ถ้าไม่มีการล็อก → ให้เฉพาะผู้รับเรื่องตอบได้
+                    return true;
+                    // return String(conv.assigned_employee_id) === String(me);
                 },
                 isTwBank() {
                     const code = String(this.registerModal.bank_code || '').toUpperCase();
@@ -2296,15 +2298,16 @@
                     if (!conv) return false;
 
                     // ต้องเป็นห้องที่รับเรื่องแล้วเท่านั้น
-                    if (conv.status !== 'assigned') return false;
+                    // if (conv.status !== 'assigned') return false;
 
                     // ต้องมีคนรับเรื่อง (assigned_employee_id)
-                    if (!conv.assigned_employee_id) return false;
+                    // if (!conv.assigned_employee_id) return false;
 
-                    if (!this.currentEmployeeId) return false;
+                    // if (!this.currentEmployeeId) return false;
 
                     // อนุญาตเฉพาะคนที่เป็นคนรับเรื่อง
-                    return String(conv.assigned_employee_id) === String(this.currentEmployeeId);
+                    return true;
+                    // return String(conv.assigned_employee_id) === String(this.currentEmployeeId);
                 },
                 /**
                  * โหลดรายการห้องแชต
@@ -4430,7 +4433,7 @@
                                 centered: true,
                             });
 
-                            if (window.LaravelDataTables && window.LaravelDataTables["dataTableBuilder"]) {
+                            if (window.LaravelDataTables && window.LaravelDataTables["deposittable"]) {
                                 window.LaravelDataTables["deposittable"].draw(false);
                             }
 

@@ -12,11 +12,17 @@ use Illuminate\Support\Facades\Cache;
  *  - ดึงข้อความ template ตาม key ที่กำหนด
  *  - รองรับการแก้ไขข้อความจากหลังบ้าน (ผ่านตาราง line_templates)
  *  - ถ้าไม่เจอใน DB → ใช้ default จาก config/line_oa.php
- *  - แทนค่า {variable} ต่าง ๆ ลงในข้อความ (เช่น {username}, {phone})
+ *  - แทนค่า {variable} / {{variable}} / :variable ต่าง ๆ ลงในข้อความ
  *
  * การใช้งานหลัก:
+ *   // 1) ข้อความล้วน (string)
  *   $text = $templateService->render('register.ask_phone', [
  *       'contact_name' => 'ลูกค้า A',
+ *   ]);
+ *
+ *   // 2) LINE messages (text + image) จาก JSON template
+ *   $messages = $templateService->renderMessages('welcome.default', [
+ *       'display_name' => 'ลูกค้า A',
  *   ]);
  */
 class LineTemplateService
@@ -38,10 +44,10 @@ class LineTemplateService
     }
 
     /**
-     * render ข้อความ template ตาม key
+     * render ข้อความ template ตาม key (string ธรรมดา)
      *
      * @param  string  $key  เช่น 'register.ask_phone'
-     * @param  array  $vars  ตัวแปรสำหรับแทนค่าใน template เช่น ['username' => 'demo01']
+     * @param  array   $vars ตัวแปรสำหรับแทนค่าใน template เช่น ['username' => 'demo01']
      */
     public function render(string $key, array $vars = []): string
     {
@@ -53,6 +59,59 @@ class LineTemplateService
         }
 
         return $this->replaceVariables($template, $vars);
+    }
+
+    /**
+     * render template → LINE messages (ส่งเข้า LINE Messaging API ได้เลย)
+     *
+     * - รองรับทั้งกรณี template เป็น JSON (version + messages)
+     * - และกรณี template เป็นข้อความล้วน (fallback เป็น text message เดียว)
+     *
+     * @param  string  $key   เช่น 'welcome.default'
+     * @param  array   $vars  context สำหรับแทนตัวแปร
+     *
+     * @return array[] โครงสร้าง LINE messages แบบ:
+     *   [
+     *     ['type' => 'text', 'text' => '...'],
+     *     ['type' => 'image', 'originalContentUrl' => '...', 'previewImageUrl' => '...'],
+     *   ]
+     */
+    public function renderMessages(string $key, array $vars = []): array
+    {
+        $raw = $this->getMessage($key);
+
+        if (! is_string($raw) || $raw === '') {
+            return [];
+        }
+
+        // พยายาม decode JSON ก่อน
+        $data = json_decode($raw, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
+            // รองรับทั้งเคสที่มี 'messages' และเคสที่เป็น array ของ message ตรง ๆ
+            if (isset($data['messages']) && is_array($data['messages'])) {
+                return $this->buildLineMessagesFromJsonTemplate($data, $vars);
+            }
+
+            // เผื่ออนาคต: ถ้า config เก็บเป็น array ของ messages เลย
+            if ($this->isArrayOfMessages($data)) {
+                return $this->buildLineMessagesFromJsonTemplate(['messages' => $data], $vars);
+            }
+        }
+
+        // ถ้าไม่ใช่ JSON ที่รู้จัก → ถือว่าเป็น template text ธรรมดา
+        $text = $this->replaceVariables($raw, $vars);
+
+        if (trim($text) === '') {
+            return [];
+        }
+
+        return [
+            [
+                'type' => 'text',
+                'text' => $text,
+            ],
+        ];
     }
 
     /**
@@ -82,6 +141,8 @@ class LineTemplateService
     {
         if ($this->cacheSeconds > 0) {
             Cache::forget($this->cachePrefix.$key);
+            // เผื่อในอนาคตใช้ cache key อื่นสำหรับ messages
+            Cache::forget($this->cachePrefix.'messages_'.$key);
         }
     }
 
@@ -135,7 +196,7 @@ class LineTemplateService
     }
 
     /**
-     * แทนค่า {variable} ต่าง ๆ ใน message
+     * แทนค่า {variable} / {{variable}} / :variable ต่าง ๆ ใน message
      *
      * ตัวอย่าง:
      *   template: "ยินดีต้อนรับ {username} เข้าสู่ {web_name}"
@@ -151,9 +212,12 @@ class LineTemplateService
         // เตรียม map สำหรับ strtr
         $replace = [];
         foreach ($vars as $key => $value) {
-            // รองรับทั้ง {key} และ :key ถ้าอยากใช้แบบ Laravel-ish
-            $replace['{'.$key.'}'] = (string) $value;
-            $replace[':'.$key] = (string) $value;
+            $value = (string) $value;
+
+            // รองรับทั้ง {key}, :key, และ {{key}} (สำหรับ JSON template แบบที่โบ๊ทออกแบบ)
+            $replace['{'.$key.'}']   = $value;
+            $replace[':'.$key]       = $value;
+            $replace['{{'.$key.'}}'] = $value;
         }
 
         return strtr($message, $replace);
@@ -193,10 +257,97 @@ class LineTemplateService
 
         foreach ($items as $item) {
             $result[] = [
-                'key' => $item->key,
+                'key'     => $item->key,
                 'message' => $item->message,
                 'enabled' => (bool) $item->enabled,
             ];
+        }
+
+        return $result;
+    }
+
+    /* =====================================================================
+     *  ส่วน helper สำหรับ JSON template → LINE messages
+     * ===================================================================== */
+
+    /**
+     * ตรวจว่า array นี้หน้าตาเหมือน "array ของ message" ไหม
+     * (เช่น [['kind' => 'text', ...], ['kind' => 'image', ...]])
+     */
+    protected function isArrayOfMessages(array $data): bool
+    {
+        if ($data === []) {
+            return false;
+        }
+
+        // เอา element แรกมาดูโครงสร้าง
+        $first = reset($data);
+        return is_array($first) && array_key_exists('kind', $first);
+    }
+
+    /**
+     * แปลง JSON template (version + messages) ให้กลายเป็น LINE messages
+     *
+     * รูปแบบ JSON ที่รองรับ:
+     *
+     * {
+     *   "version": 1,
+     *   "messages": [
+     *     { "kind": "text", "text": "..." },
+     *     { "kind": "image", "original": "...", "preview": "..." }
+     *   ]
+     * }
+     */
+    protected function buildLineMessagesFromJsonTemplate(array $template, array $vars): array
+    {
+        $messages = $template['messages'] ?? [];
+        if (! is_array($messages) || empty($messages)) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach ($messages as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $kind = $item['kind'] ?? 'text';
+
+            if ($kind === 'text') {
+                $text = (string) ($item['text'] ?? '');
+                $text = $this->replaceVariables($text, $vars);
+
+                if (trim($text) === '') {
+                    continue;
+                }
+
+                $result[] = [
+                    'type' => 'text',
+                    'text' => $text,
+                ];
+            } elseif ($kind === 'image') {
+                $original = (string) ($item['original'] ?? '');
+                $preview  = (string) ($item['preview'] ?? '');
+
+                $original = $this->replaceVariables($original, $vars);
+                $preview  = $this->replaceVariables($preview, $vars);
+
+                if ($original === '') {
+                    continue;
+                }
+
+                $result[] = [
+                    'type'              => 'image',
+                    'contentUrl'=> $original,
+                    'previewUrl'=> $preview,
+                    'originalContentUrl'=> $original,
+                    'previewImageUrl'   => $preview !== '' ? $preview : $original,
+                ];
+            } else {
+                // เผื่ออนาคตจะรองรับ kind อื่น เช่น sticker / flex ฯลฯ
+                continue;
+            }
         }
 
         return $result;

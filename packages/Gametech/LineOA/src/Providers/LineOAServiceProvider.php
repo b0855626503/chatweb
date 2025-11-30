@@ -6,6 +6,7 @@ use Gametech\LineOA\Contracts\LineMemberRegistrar;
 use Gametech\LineOA\Services\DefaultLineMemberRegistrar;
 use Gametech\LineOA\Services\LineTemplateService;
 use Gametech\LineOA\Services\RegisterFlowService;
+use Gametech\LineOA\Support\UrlHelper;
 use Illuminate\Support\ServiceProvider;
 
 class LineOAServiceProvider extends ServiceProvider
@@ -31,6 +32,10 @@ class LineOAServiceProvider extends ServiceProvider
                 $app->make(LineTemplateService::class),
                 $app->make(LineMemberRegistrar::class)
             );
+        });
+
+        $this->app->singleton('lineoa.urlhelper', function () {
+            return new UrlHelper();
         });
     }
 

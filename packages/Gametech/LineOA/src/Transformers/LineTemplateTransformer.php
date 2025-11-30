@@ -2,8 +2,8 @@
 
 namespace Gametech\LineOA\Transformers;
 
-use Gametech\LineOA\Contracts\LineAccount;
 use Gametech\LineOA\Contracts\LineTemplate;
+use Illuminate\Support\Str;
 use League\Fractal\TransformerAbstract;
 
 class LineTemplateTransformer extends TransformerAbstract
@@ -15,7 +15,7 @@ class LineTemplateTransformer extends TransformerAbstract
             'id' => $model->id,
             'category' => $model->category,
             'key' => $model->key,
-            'message' => $model->message,
+            'message' => Str::limit($model->message, 50),
             'description' => $model->description,
             'action' => view('admin::module.line_template.datatables_actions', ['code' => $model->id])->render(),
         ];

@@ -3,6 +3,7 @@
 use Gametech\LineOA\Http\Controllers\Admin\ChatController;
 use Gametech\LineOA\Http\Controllers\Admin\LineAccountController;
 use Gametech\LineOA\Http\Controllers\Admin\LineTemplateController;
+use Gametech\LineOA\Http\Controllers\Admin\TopupController;
 use Illuminate\Support\Facades\Route;
 
 // admin.xxx.com
@@ -93,6 +94,17 @@ Route::domain(
             Route::post('edit', [LineTemplateController::class, 'edit'])->name('admin.line_template.edit');
             Route::post('update/{id?}', [LineTemplateController::class, 'update'])->name('admin.line_template.update');
             Route::post('delete', [LineTemplateController::class, 'destroy'])->name('admin.line_template.delete');
+        });
+
+        Route::prefix('topup')->group(function () {
+            Route::get('/', [TopupController::class, 'index'])->defaults('_config', [
+                'view' => 'admin::module.topup.index',
+            ])->name('admin.topup.index');
+            Route::post('create', [TopupController::class, 'create'])->name('admin.topup.create');
+            Route::post('loaddata', [TopupController::class, 'loadData'])->name('admin.topup.loaddata');
+            Route::post('edit', [TopupController::class, 'edit'])->name('admin.topup.edit');
+            Route::post('update/{id?}', [TopupController::class, 'update'])->name('admin.topup.update');
+            Route::post('delete', [TopupController::class, 'destroy'])->name('admin.topup.delete');
         });
     });
 });

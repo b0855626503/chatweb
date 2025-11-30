@@ -3,6 +3,7 @@
 namespace Gametech\LineOA\Services;
 
 use Gametech\LineOA\Contracts\LineMemberRegistrar;
+use Gametech\LineOA\Events\LineOAChatConversationUpdated;
 use Gametech\LineOA\Models\LineContact;
 use Gametech\LineOA\Models\LineConversation;
 use Gametech\LineOA\Models\LineRegisterSession;
@@ -85,7 +86,7 @@ class RegisterFlowService
 
         // ยกเลิก
         if ($this->isCancelKeyword($text)) {
-            return $this->handleCancel($session);
+            return $this->handleCancel($session,$conversation);
         }
 
         // เลือก handler ตาม step ปัจจุบัน
@@ -124,19 +125,19 @@ class RegisterFlowService
         LineConversation $conversation
     ): RegisterFlowResult {
         // เคยสมัครสำเร็จแล้ว
-//        $existingCompleted = LineRegisterSession::query()
-//            ->where('line_contact_id', $contact->id)
-//            ->where('status', 'completed')
-//            ->first();
-//
-//        if ($existingCompleted) {
-//            return RegisterFlowResult::make()
-//                ->handled(true)
-//                ->finished(true)
-//                ->replyText(
-//                    $this->templates->render('register.already_completed')
-//                );
-//        }
+        //        $existingCompleted = LineRegisterSession::query()
+        //            ->where('line_contact_id', $contact->id)
+        //            ->where('status', 'completed')
+        //            ->first();
+        //
+        //        if ($existingCompleted) {
+        //            return RegisterFlowResult::make()
+        //                ->handled(true)
+        //                ->finished(true)
+        //                ->replyText(
+        //                    $this->templates->render('register.already_completed')
+        //                );
+        //        }
 
         // session ค้างอยู่
         $session = $this->getInProgressSession($contact);
@@ -154,6 +155,28 @@ class RegisterFlowService
             $session->data = [];
             $session->save();
         }
+
+        // 🔹 ตรงนี้คือส่วนที่เพิ่มเข้าไป
+        if (! $conversation->is_registering) {
+
+            $conversation->is_registering = true;
+            $conversation->save();
+
+            //            DB::afterCommit(function () use ($conversation) {
+
+            //            });
+        }
+
+        $conv = $conversation->load([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]);
+
+        // ถ้าโบ๊ทมี event broadcast อัปเดตห้อง อยู่แล้ว ก็ยิงตรงนี้ได้ (ถ้ามี)
+        event(new LineOAChatConversationUpdated($conv));
 
         $reply = $this->templates->render('register.ask_phone', [
             'contact_name' => $contact->display_name ?? '',
@@ -543,12 +566,34 @@ class RegisterFlowService
         return $this->completeRegistrationFromSession($session);
     }
 
-    protected function handleCancel(LineRegisterSession $session): RegisterFlowResult
+    protected function handleCancel(LineRegisterSession $session,LineConversation $conversation): RegisterFlowResult
     {
         $session->status = 'cancelled';
         $session->current_step = self::STEP_FINISHED;
         $session->error_message = null;
         $session->save();
+
+        // 🔹 ตรงนี้คือส่วนที่เพิ่มเข้าไป
+        if ($conversation->is_registering) {
+
+            $conversation->is_registering = false;
+            $conversation->save();
+
+            //            DB::afterCommit(function () use ($conversation) {
+
+            //            });
+        }
+
+        $conv = $conversation->load([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]);
+
+        // ถ้าโบ๊ทมี event broadcast อัปเดตห้อง อยู่แล้ว ก็ยิงตรงนี้ได้ (ถ้ามี)
+        event(new LineOAChatConversationUpdated($conv));
 
         $reply = $this->templates->render('register.cancelled');
 
@@ -1069,11 +1114,11 @@ class RegisterFlowService
      */
     public function registerFromStaff(array $payload): array
     {
-        $phone      = $payload['phone']      ?? null;
-        $bankCode   = $payload['bank_code']  ?? null;
-        $accountNo  = $payload['account_no'] ?? null;
-        $name       = $payload['name']       ?? null;
-        $surname    = $payload['surname']    ?? null;
+        $phone = $payload['phone'] ?? null;
+        $bankCode = $payload['bank_code'] ?? null;
+        $accountNo = $payload['account_no'] ?? null;
+        $name = $payload['name'] ?? null;
+        $surname = $payload['surname'] ?? null;
 
         if (! $phone || ! $bankCode || ! $accountNo || ! $name || ! $surname) {
             return [
@@ -1084,11 +1129,11 @@ class RegisterFlowService
 
         // เตรียม data ส่งเข้า registerFromLineData ให้สอดคล้องกับ flow เดิม
         $data = [
-            'phone'      => $phone,
-            'bank_code'  => $bankCode,
+            'phone' => $phone,
+            'bank_code' => $bankCode,
             'account_no' => $accountNo,
-            'name'       => $name,
-            'surname'    => $surname,
+            'name' => $name,
+            'surname' => $surname,
             'created_from' => $payload['created_from'] ?? 'line_staff',
         ];
 
@@ -1127,9 +1172,9 @@ class RegisterFlowService
             if ($contact && empty($contact->member_id) && $phone) {
                 LineContact::where('line_user_id', $contact->line_user_id)
                     ->update([
-                        'member_id'        => $result->memberId,
-                        'member_mobile'    => $phone,
-                        'member_username'  => $phone,
+                        'member_id' => $result->memberId,
+                        'member_mobile' => $phone,
+                        'member_username' => $phone,
                     ]);
             }
         } catch (\Throwable $e) {
@@ -1145,13 +1190,13 @@ class RegisterFlowService
         }
 
         return [
-            'success'    => true,
-            'message'    => $result->message ?? 'สมัครสมาชิกสำเร็จ',
-            'member'     => $member,
-            'member_id'  => $result->memberId,
-            'username'   => $result->username ?? null,
-            'password'   => $result->password ?? null,
-            'login_url'  => $result->loginUrl ?? null,
+            'success' => true,
+            'message' => $result->message ?? 'สมัครสมาชิกสำเร็จ',
+            'member' => $member,
+            'member_id' => $result->memberId,
+            'username' => $result->username ?? null,
+            'password' => $result->password ?? null,
+            'login_url' => $result->loginUrl ?? null,
         ];
     }
 

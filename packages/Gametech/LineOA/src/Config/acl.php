@@ -73,4 +73,10 @@ return [
         'route' => 'admin.line_template.delete',
         'sort' => 4,
     ],
+    [
+        'key' => 'topup',
+        'name' => 'รายการ เงินเข้า',
+        'route' => 'admin.topup.index',
+        'sort' => 4,
+    ],
 ];

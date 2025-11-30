@@ -3,6 +3,7 @@
 namespace Gametech\LineOA\Services;
 
 use Gametech\LineOA\Models\LineAccount;
+use Gametech\LineOA\Models\LineMessage;
 use Gametech\LineOA\Models\LineWebhookLog;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +29,7 @@ class LineWebhookService
         if (empty($events)) {
             Log::info('[LineWebhook] empty events', [
                 'account_id' => $account->id,
-                'log_id'     => $log?->id,
+                'log_id' => $log?->id,
             ]);
 
             return;
@@ -69,8 +70,8 @@ class LineWebhookService
             } catch (\Throwable $e) {
                 Log::error('[LineWebhook] error on event', [
                     'account_id' => $account->id,
-                    'event'      => $event,
-                    'error'      => $e->getMessage(),
+                    'event' => $event,
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -82,7 +83,7 @@ class LineWebhookService
     protected function handleMessageEvent(LineAccount $account, array $event, ?LineWebhookLog $log = null): void
     {
         $messageType = Arr::get($event, 'message.type');
-        $messageId   = Arr::get($event, 'message.id');
+        $messageId = Arr::get($event, 'message.id');
 
         // log ตาม type เดิม ๆ ไว้ก่อน (ไม่ตัด pattern เดิมทิ้ง)
         if ($messageType === 'text') {
@@ -102,27 +103,53 @@ class LineWebhookService
             ]);
         } else {
             Log::info('[LineWebhook] receive non-text event', [
-                'account_id'   => $account->id,
-                'message_id'   => $messageId,
+                'account_id' => $account->id,
+                'message_id' => $messageId,
                 'message_type' => $messageType,
             ]);
         }
 
         // ไม่ว่า type อะไร ให้เก็บลง DB ผ่าน ChatService.handleIncomingMessage เสมอ
         try {
-            // 1) เก็บ message + contact + conversation ลง DB
-            /** @var \Gametech\LineOA\Models\LineMessage $message */
+            /** @var LineMessage $message */
             $message = $this->chat->handleIncomingMessage($account, $event, $log);
         } catch (\Throwable $e) {
             Log::error('[LineWebhook] handleMessageEvent exception', [
-                'account_id'   => $account->id,
-                'message_id'   => $messageId,
+                'account_id' => $account->id,
+                'message_id' => $messageId,
                 'message_type' => $messageType,
-                'error'        => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
-            // ถ้าต้องการให้ error เด้งต่อออกไปก็ throw ต่อได้
             throw $e;
+        }
+
+        // ------------------------------------------------------------------
+        //  เช็คว่าเป็นข้อความ inbound แรกของห้องหรือไม่ → ส่งข้อความต้อนรับ
+        // ------------------------------------------------------------------
+        try {
+            $contact = $message->contact ?? null;
+            $conversation = $message->conversation ?? null;
+
+            if ($contact && $conversation && $message->direction === 'inbound') {
+                $isFirstInbound = ! LineMessage::query()
+                    ->where('line_conversation_id', $conversation->id)
+                    ->where('direction', 'inbound')
+                    ->where('id', '<', $message->id)
+                    ->exists();
+
+                if ($isFirstInbound) {
+                    $this->handleWelcomeForFirstMessage($account, $event, $message);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('[LineWebhook] welcome flow error', [
+                'account_id' => $account->id,
+                'line_message_id' => $message->line_message_id ?? null,
+                'conversation_id' => $message->line_conversation_id ?? null,
+                'contact_id' => $message->line_contact_id ?? null,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         // เฉพาะ text ถึงโยนเข้า flow เพิ่ม
@@ -133,7 +160,7 @@ class LineWebhookService
             //  ให้ RegisterFlowService ลองจัดการ flow "สมัครสมาชิก"
             // ------------------------------------------------------------------
             try {
-                $contact      = $message->contact ?? null;
+                $contact = $message->contact ?? null;
                 $conversation = $message->conversation ?? null;
 
                 if ($contact && $conversation) {
@@ -147,39 +174,38 @@ class LineWebhookService
                     );
 
                     if ($flowResult && $flowResult->handled && $flowResult->replyText) {
-
                         // เก็บข้อความที่ BOT ตอบกลับในการสมัครสมาชิกลง line_messages
                         try {
-                            \Gametech\LineOA\Models\LineMessage::create([
+                            LineMessage::create([
                                 'line_conversation_id' => $message->line_conversation_id,
-                                'line_account_id'      => $message->line_account_id,
-                                'line_contact_id'      => $message->line_contact_id,
-                                'direction'            => 'outbound',
-                                'source'               => 'bot',
-                                'type'                 => 'text',
-                                'line_message_id'      => null,
-                                'text'                 => $flowResult->replyText,
-                                'payload'              => null,
-                                'meta'                 => null,
-                                'sender_employee_id'   => null,
-                                'sender_bot_key'       => 'register_flow',
-                                'sent_at'              => now(),
+                                'line_account_id' => $message->line_account_id,
+                                'line_contact_id' => $message->line_contact_id,
+                                'direction' => 'outbound',
+                                'source' => 'bot',
+                                'type' => 'text',
+                                'line_message_id' => null,
+                                'text' => $flowResult->replyText,
+                                'payload' => null,
+                                'meta' => null,
+                                'sender_employee_id' => null,
+                                'sender_bot_key' => 'register_flow',
+                                'sent_at' => now(),
                             ]);
                         } catch (\Throwable $e) {
                             Log::error('[LineWebhook] store bot message failed (register flow)', [
-                                'account_id'      => $account->id,
+                                'account_id' => $account->id,
                                 'line_message_id' => $message->line_message_id ?? null,
                                 'conversation_id' => $message->line_conversation_id ?? null,
-                                'contact_id'      => $message->line_contact_id ?? null,
-                                'error'           => $e->getMessage(),
+                                'contact_id' => $message->line_contact_id ?? null,
+                                'error' => $e->getMessage(),
                             ]);
                         }
 
                         $replyToken = Arr::get($event, 'replyToken');
 
                         if ($replyToken) {
-                            /** @var \Gametech\LineOA\Services\LineMessagingClient $messaging */
-                            $messaging = app(\Gametech\LineOA\Services\LineMessagingClient::class);
+                            /** @var LineMessagingClient $messaging */
+                            $messaging = app(LineMessagingClient::class);
 
                             // สร้าง extraPayload สำหรับ quick reply (ถ้ามี)
                             $extraPayload = [];
@@ -189,18 +215,18 @@ class LineWebhookService
 
                                 foreach ($flowResult->quickReply as $option) {
                                     $label = $option['label'] ?? ($option['text'] ?? null);
-                                    $qText = $option['text']  ?? $label;
+                                    $qText = $option['text'] ?? $label;
 
                                     if (! $label || ! $qText) {
                                         continue;
                                     }
 
                                     $items[] = [
-                                        'type'   => 'action',
+                                        'type' => 'action',
                                         'action' => [
-                                            'type'  => 'message',
+                                            'type' => 'message',
                                             'label' => $label,
-                                            'text'  => $qText,
+                                            'text' => $qText,
                                         ],
                                     ];
                                 }
@@ -222,11 +248,11 @@ class LineWebhookService
                                 );
                             } catch (\Throwable $e) {
                                 Log::error('[LineWebhook] replyText failed (register flow)', [
-                                    'account_id'      => $account->id,
+                                    'account_id' => $account->id,
                                     'line_message_id' => $message->line_message_id ?? null,
                                     'conversation_id' => $message->line_conversation_id ?? null,
-                                    'contact_id'      => $message->line_contact_id ?? null,
-                                    'error'           => $e->getMessage(),
+                                    'contact_id' => $message->line_contact_id ?? null,
+                                    'error' => $e->getMessage(),
                                 ]);
                             }
                         }
@@ -235,8 +261,8 @@ class LineWebhookService
             } catch (\Throwable $e) {
                 Log::error('[LineWebhook] register flow error', [
                     'account_id' => $account->id,
-                    'event'      => $event,
-                    'error'      => $e->getMessage(),
+                    'event' => $event,
+                    'error' => $e->getMessage(),
                 ]);
             }
 
@@ -259,9 +285,9 @@ class LineWebhookService
         $contact = $this->chat->updateContactProfile($account, $userId);
 
         Log::info('[LineWebhook] follow event', [
-            'account_id'   => $account->id,
+            'account_id' => $account->id,
             'line_user_id' => $userId,
-            'contact_id'   => $contact->id,
+            'contact_id' => $contact->id,
         ]);
 
         // TODO: จะส่งข้อความต้อนรับก็เรียก LineMessagingClient::pushText / replyText ต่อจากตรงนี้ได้
@@ -275,7 +301,7 @@ class LineWebhookService
         $userId = Arr::get($event, 'source.userId');
 
         Log::info('[LineWebhook] unfollow event', [
-            'account_id'   => $account->id,
+            'account_id' => $account->id,
             'line_user_id' => $userId,
         ]);
 
@@ -289,14 +315,14 @@ class LineWebhookService
     protected function handlePostbackEvent(LineAccount $account, array $event, ?LineWebhookLog $log = null): void
     {
         $userId = Arr::get($event, 'source.userId');
-        $data   = Arr::get($event, 'postback.data');
+        $data = Arr::get($event, 'postback.data');
         $params = Arr::get($event, 'postback.params', []);
 
         Log::info('[LineWebhook] postback event', [
-            'account_id'   => $account->id,
+            'account_id' => $account->id,
             'line_user_id' => $userId,
-            'data'         => $data,
-            'params'       => $params,
+            'data' => $data,
+            'params' => $params,
         ]);
 
         // TODO:
@@ -311,7 +337,7 @@ class LineWebhookService
     {
         Log::info('[LineWebhook] generic event', [
             'account_id' => $account->id,
-            'event'      => $event,
+            'event' => $event,
         ]);
     }
 
@@ -322,8 +348,186 @@ class LineWebhookService
     {
         Log::warning('[LineWebhook] unknown event type', [
             'account_id' => $account->id,
-            'event'      => $event,
+            'event' => $event,
         ]);
+    }
+
+    /**
+     * ส่งข้อความต้อนรับเมื่อเป็นข้อความ inbound แรกของห้อง
+     *
+     * - ดึง template แบบ JSON (version + messages) จาก LineTemplateService
+     * - ให้ LineTemplateService แปลง JSON → LINE messages (text + image)
+     * - ส่งด้วย pushMessages()
+     * - บันทึกทุกข้อความลง line_messages
+     */
+    protected function handleWelcomeForFirstMessage(
+        LineAccount $account,
+        array $event,
+        LineMessage $inbound
+    ): void {
+        $lineUserId = Arr::get($event, 'source.userId');
+        if (! $lineUserId) {
+            return;
+        }
+
+        // ให้แน่ใจว่ามี relation ครบ
+        $inbound->loadMissing('conversation', 'contact');
+
+        $conversation = $inbound->conversation;
+        $contact      = $inbound->contact;
+
+        if (! $conversation || ! $contact) {
+            return;
+        }
+
+        $displayName = $contact->display_name ?: 'ลูกค้า';
+
+        $templateKey  = 'welcome.default';
+        $lineMessages = [];
+
+        try {
+            /** @var LineTemplateService $templates */
+            $templates = app(LineTemplateService::class);
+
+            $lineMessages = $templates->renderMessages($templateKey, [
+                'display_name' => $displayName,
+                'contact'      => $contact,
+                'conversation' => $conversation,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('[LineWebhook] welcome template renderMessages failed', [
+                'account_id' => $account->id,
+                'key'        => $templateKey,
+                'error'      => $e->getMessage(),
+            ]);
+        }
+
+        // ถ้า template ไม่มี หรือเรนเดอร์พัง → fallback เป็นข้อความ text ธรรมดา
+        if (! is_array($lineMessages) || empty($lineMessages)) {
+            $fallback = 'สวัสดีค่ะ ' . $displayName . ' 🎉' . "\n"
+                . 'หากต้องการสอบถามข้อมูลเพิ่มเติม สามารถพิมพ์ถามทีมงานได้เลยนะคะ';
+
+            $lineMessages = [
+                [
+                    'type' => 'text',
+                    'text' => $fallback,
+                ],
+            ];
+        }
+
+        // ------------------------------------------------------------------
+        // ใส่ quick reply "สมัคร" / "ทางเข้าเล่น"
+        //  - สมัคร: ส่งข้อความ "สมัคร"
+        //  - ทางเข้าเล่น: เปิด URL (type = uri)
+        // ------------------------------------------------------------------
+
+        // ดึง URL ทางเข้าเล่นจาก config (ปรับตามโปรเจกต์จริงได้เลย)
+        $playUrl = config('line_oa.play_url')
+            ?? config('app.play_url')
+            ?? config('app.url');
+
+        $quickReplyItems = [];
+
+        // ปุ่ม สมัคร (ส่งข้อความกลับ)
+        $quickReplyItems[] = [
+            'type'   => 'action',
+            'action' => [
+                'type'  => 'message',
+                'label' => 'สมัคร',
+                'text'  => 'สมัคร',
+            ],
+        ];
+
+        // ปุ่ม ทางเข้าเล่น (เปิดเว็บ)
+        if (! empty($playUrl)) {
+            $quickReplyItems[] = [
+                'type'   => 'action',
+                'action' => [
+                    'type'  => 'uri',
+                    'label' => 'ทางเข้าเล่น',
+                    'uri'   => $playUrl,
+                ],
+            ];
+        }
+
+        if (! empty($quickReplyItems)) {
+            foreach ($lineMessages as &$lm) {
+                if (($lm['type'] ?? null) === 'text') {
+                    $lm['quickReply'] = [
+                        'items' => $quickReplyItems,
+                    ];
+                    break;
+                }
+            }
+            unset($lm);
+        }
+
+        /** @var \Gametech\LineOA\Services\LineMessagingClient $messaging */
+        $messaging = app(\Gametech\LineOA\Services\LineMessagingClient::class);
+
+        // ใช้ pushMessages เพื่อรองรับ text + image หลายข้อความ
+        $messaging->pushMessages($account, $lineUserId, $lineMessages);
+
+        // เก็บข้อความต้อนรับลง line_messages เพื่อให้เห็นในประวัติ chat
+        foreach ($lineMessages as $msg) {
+            try {
+                $type = $msg['type'] ?? 'text';
+
+                // เตรียม payload ให้ตรง format ที่หน้า admin ใช้
+                $payload = null;
+
+                if ($type !== 'text') {
+                    if ($type === 'image') {
+                        $orig = $msg['originalContentUrl'] ?? null;
+                        $prev = $msg['previewImageUrl'] ?? $orig;
+
+                        // สร้าง payload.message ตาม format เดิมของระบบ
+                        $payloadMessage = [
+                            'type'              => 'image',
+                            'contentUrl'        => $orig,
+                            'previewUrl'        => $prev,
+                            'originalContentUrl'=> $orig,
+                            'previewImageUrl'   => $prev,
+                        ];
+
+                        // merge ทับด้วย mapping มาตรฐานหาก msg มี field อื่น
+                        $payloadMessage = array_merge($msg, $payloadMessage);
+
+                        $payload = [
+                            'message' => $payloadMessage,
+                        ];
+                    } else {
+                        // type อื่น ๆ ที่ไม่ใช่ text → wrap ใส่ message ตรง ๆ
+                        $payload = [
+                            'message' => $msg,
+                        ];
+                    }
+                }
+
+                LineMessage::create([
+                    'line_conversation_id' => $conversation->id,
+                    'line_account_id'      => $account->id,
+                    'line_contact_id'      => $contact->id,
+                    'direction'            => 'outbound',
+                    'source'               => 'bot',
+                    'type'                 => $type,
+                    'line_message_id'      => null,
+                    'text'                 => $type === 'text' ? ($msg['text'] ?? null) : null,
+                    'payload'              => $payload,
+                    'meta'                 => null,
+                    'sender_employee_id'   => null,
+                    'sender_bot_key'       => 'welcome',
+                    'sent_at'              => now(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('[LineWebhook] store bot message failed (welcome)', [
+                    'account_id'      => $account->id,
+                    'conversation_id' => $conversation->id ?? null,
+                    'contact_id'      => $contact->id ?? null,
+                    'error'           => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**

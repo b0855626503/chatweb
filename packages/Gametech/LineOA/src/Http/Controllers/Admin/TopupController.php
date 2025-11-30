@@ -2,8 +2,8 @@
 
 namespace Gametech\LineOA\Http\Controllers\Admin;
 
-use Gametech\LineOA\DataTables\BankinDataTable;
-use Gametech\LineOA\Http\Controllers\AppBaseController;
+use Gametech\Admin\Http\Controllers\AppBaseController;
+use Gametech\LineOA\DataTables\TopupDataTable;
 use Gametech\Member\Repositories\MemberRepository;
 use Gametech\Payment\Repositories\BankPaymentRepository;
 use Illuminate\Http\Request;
@@ -30,9 +30,9 @@ class TopupController extends AppBaseController
         $this->memberRepository = $memberRepository;
     }
 
-    public function index(BankinDataTable $bankinDataTable)
+    public function index(TopupDataTable $topupDataTable)
     {
-        return $bankinDataTable->render('admin::module.topup.index');
+        return $topupDataTable->render($this->_config['view']);
     }
 
     public function clear(Request $request)
@@ -105,9 +105,9 @@ class TopupController extends AppBaseController
             return $this->sendSuccess('ไม่พบข้อมูลดังกล่าว');
         }
 
-        if ($chk->autocheck == 'W') {
-            return $this->sendSuccess('รายการนี้ กำลัง รอเติมเงินผ่านระบบ Auto อยู่');
-        }
+        //        if($chk->autocheck == 'W'){
+        //            return $this->sendSuccess('รายการนี้ กำลัง รอเติมเงินผ่านระบบ Auto อยู่');
+        //        }
 
         if ($chk->autocheck == 'Y' && $chk->status == 1) {
             return $this->sendSuccess('รายการนี้ เติมสำเร็จไปแล้ว');

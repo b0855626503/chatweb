@@ -72,6 +72,20 @@ class LineTemplateController extends AppBaseController
         if (! $chk) {
             return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
+        // ====== ตรงนี้คือส่วนสำคัญเรื่อง message JSON ======
+        $rawMessage = $data['message'] ?? '';
+
+        $decoded = json_decode($rawMessage, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            // ถือว่าเป็น JSON template
+            $data['message']      = $rawMessage;   // เก็บดิบๆ ใน column message
+            $data['message_type'] = 'json';        // ต้องมี column นี้ใน table
+        } else {
+            // เป็นข้อความธรรมดา
+            $data['message']      = $rawMessage;   // เก็บดิบๆ ใน column message
+            $data['message_type'] = 'text';
+        }
 
         $data['user_update'] = $user;
         $this->repository->update($data, $id);

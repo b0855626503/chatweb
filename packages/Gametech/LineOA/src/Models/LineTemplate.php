@@ -13,6 +13,7 @@ class LineTemplate extends Model implements LineTemplateContract
         'category',
         'key',
         'message',
+        'message_type',
         'description',
         'enabled',
         'created_by',

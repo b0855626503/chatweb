@@ -198,15 +198,25 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
 
     protected function getLoginUrl(): string
     {
-        // ถ้าเว็บใช้ route login อยู่แล้ว เปลี่ยนมาใช้ route() ได้
+        // ดึง URL เดิม
         if (function_exists('route')) {
             try {
-                return route('customer.session.index');
+                $url = route('customer.session.index');
             } catch (\Throwable $e) {
-                // เผื่อไม่มี route ชื่อนี้
+                $url = url('/login');
             }
+        } else {
+            $url = url('/login');
         }
 
-        return url('/login');
+        // parse URL เพื่อตรวจพารามิเตอร์
+        $hasQuery = str_contains($url, '?');
+
+        // ถ้ามี ? แล้ว → ต่อด้วย &
+        // ถ้าไม่มี → ต่อด้วย ?
+        $suffix = $hasQuery ? '&openExternalBrowser=1' : '?openExternalBrowser=1';
+
+        return $url . $suffix;
     }
+
 }

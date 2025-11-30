@@ -40,6 +40,15 @@ return [
         'badge' => 0,
         'badge-color' => 'badge-primary',
         'status' => 1,
-    ]
-
+    ],
+    [
+        'key' => 'topup',
+        'name' => 'รายการ เงินเข้า',
+        'route' => 'admin.topup.index',
+        'sort' => 4,
+        'icon-class' => 'fa-arrow-circle-left',
+        'badge' => 0,
+        'badge-color' => 'badge-warning',
+        'status' => 0,
+    ],
 ];
