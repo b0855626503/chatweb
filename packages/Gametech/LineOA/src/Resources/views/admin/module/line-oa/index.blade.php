@@ -1714,15 +1714,20 @@
                     title="ยอดเงินคงเหลือ"
                     hide-footer
                     centered
+                    size="sm"
             >
                 <div v-if="balanceLoading" class="text-center">
                     กำลังโหลดยอดเงิน...
                 </div>
 
-                <div v-else-if="balanceData">
+                <div v-else-if="balanceData" class="text-md">
                     <p class="mb-1">
-                        สมาชิก:
+                        User ID:
                         <strong v-text="balanceData.member_username || '-'"></strong>
+                    </p>
+                    <p class="mb-1">
+                        Game ID:
+                        <strong v-text="balanceData.member_gameuser || '-'"></strong>
                     </p>
                     <p class="mb-0">
                         ยอดเงินคงเหลือ:
@@ -1828,7 +1833,8 @@
                         accountStatus: null,        // 'ok' | 'invalid' | 'error' | null
                         accountStatusMessage: '',
                     },
-
+                    balanceLoading: false,
+                    balanceData: null,
                     bankAccountCheckTimer: null,
                     // modal เติมเงิน
                     topupModal: {
@@ -3178,7 +3184,7 @@
                     this.balanceData = null;
 
                     try {
-                        const res = await axios.get(this.balanceUrl, {
+                        const res = await axios.get(this.apiUrl('get-balance'), {
                             params: {
                                 conversation_id: this.selectedConversation.id,
                             },

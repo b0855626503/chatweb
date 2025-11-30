@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class ChatController extends AppBaseController
 {
@@ -1426,13 +1427,16 @@ class ChatController extends AppBaseController
         ]);
     }
 
-    public function getBalance(Request $request): JsonResponse
-    {
-        $conversationId = $request->input('conversation_id');
+    public function getBalance(
+        Request $request,
+        MemberRepository $memberRepository,
+        GameUserRepository $gameUserRepository
+    ): JsonResponse {
+        $conversationId = (int) $request->input('conversation_id');
 
         if (! $conversationId) {
             return response()->json([
-                'ok' => false,
+                'ok'      => false,
                 'message' => 'ไม่พบค่า conversation_id',
             ], 422);
         }
@@ -1444,45 +1448,86 @@ class ChatController extends AppBaseController
 
         if (! $conversation) {
             return response()->json([
-                'ok' => false,
+                'ok'      => false,
                 'message' => 'ไม่พบห้องสนทนา',
             ], 404);
         }
 
-        // ตัวอย่าง: ดึง member จาก contact
-        $memberId = $conversation->contact?->member_id;
+        // ดึง member จาก contact
+        $memberId       = $conversation->contact?->member_id;
         $memberUsername = $conversation->contact?->member_username;
 
         if (! $memberId) {
             return response()->json([
-                'ok' => false,
+                'ok'      => false,
                 'message' => 'ห้องนี้ยังไม่ได้ผูกกับสมาชิกในระบบ',
             ], 422);
         }
 
-        // ====== TODO: ใส่ logic ดึงยอดเงินจริงที่นี่ ======
+        $member = $memberRepository->find($memberId);
 
-        // ตรงนี้แล้วแต่ระบบของโบ๊ทว่าดึงจากไหน (wallet / game / ฯลฯ)
-        // ตัวอย่าง pseudo:
-        $game = core()->getGame();
-        $member = app(MemberRepository::class)->find($memberId);
-        $response = app(GameUserRepository::class)->checkBalance($game->id,$member->game_user);
-        if($response['success'] === true){
-            $balance = $response['score'];
-        }else{
-            $balance = 0; // ใส่ค่าจริงเอง
+        if (! $member) {
+            return response()->json([
+                'ok'      => false,
+                'message' => 'ไม่พบข้อมูลสมาชิก (อาจถูกลบออกจากระบบแล้ว)',
+            ], 404);
         }
 
+        $balance = 0.0;
+        $rawResponse = null;
+
+        try {
+            $game = core()->getGame();
+
+            // NOTE: ปรับ parameter ให้ตรงกับ signature จริงของ checkBalance
+            // บางระบบใช้ game_code + user_name, บางที่ใช้ game_id + game_user
+            $rawResponse = $gameUserRepository->checkBalance(
+                $game->id,
+                $member->game_user // ถ้าจริง ๆ เป็น user_name ก็แก้เป็น $member->user_name
+            );
+
+            // กันเคส provider ตอบอะไรแปลก ๆ กลับมา
+            $success = is_array($rawResponse) ? (bool)($rawResponse['success'] ?? false) : false;
+
+            if ($success) {
+                $score   = $rawResponse['score'] ?? 0;
+                $balance = (float) $score;
+            } else {
+                // ดึง message จาก provider ถ้ามี
+                $providerMessage = is_array($rawResponse)
+                    ? ($rawResponse['message'] ?? 'ไม่สามารถดึงยอดเงินจากผู้ให้บริการได้')
+                    : 'ไม่สามารถดึงยอดเงินจากผู้ให้บริการได้';
+
+                return response()->json([
+                    'ok'      => false,
+                    'message' => $providerMessage,
+                ], 502);
+            }
+        } catch (Throwable $e) {
+            // log ไว้เผื่อ debug
+            Log::warning('[LineOA] getBalance error', [
+                'conversation_id' => $conversationId,
+                'member_id'       => $memberId,
+                'response'        => $rawResponse,
+                'error'           => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'ok'      => false,
+                'message' => 'เกิดข้อผิดพลาดระหว่างดึงยอดเงิน',
+            ], 500);
+        }
 
         return response()->json([
-            'ok' => true,
+            'ok'      => true,
             'message' => 'success',
-            'data' => [
-                'member_id' => $memberId,
+            'data'    => [
+                'member_id'       => $memberId,
                 'member_username' => $memberUsername,
-                'balance' => (float) $balance,
-                'balance_text' => number_format($balance, 2),
-                'currency' => 'THB',
+                'member_gameuser' => $member->game_user,
+                'balance'         => $balance,
+                'balance_text'    => number_format($balance, 2),
+                'currency'        => 'THB',
             ],
         ]);
     }
