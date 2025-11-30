@@ -3,9 +3,6 @@
 namespace Gametech\LineOA\Services;
 
 use Gametech\LineOA\Models\LineAccount;
-use Gametech\LineOA\Models\LineContact;
-use Gametech\LineOA\Models\LineConversation;
-use Gametech\LineOA\Models\LineMessage;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -234,6 +231,25 @@ class LineMessagingClient
             $status = $response->status();
             $body = $response->json();
 
+            if ($status >= 200 && $status < 300) {
+                // เพิ่ม log debug เฉพาะ pushMessages (ชั่วคราว)
+                if ($context === 'pushMessages') {
+                    Log::channel('lineoa')->info('[LineMessagingClient] pushMessages success', [
+                        'account_id' => $account->id,
+                        'uri' => $uri,
+                        'payload' => $payload,
+                        'status' => $status,
+                    ]);
+                }
+
+                return [
+                    'success' => true,
+                    'status' => $status,
+                    'body' => $body,
+                    'error' => null,
+                ];
+            }
+
             if (! $success) {
                 $errorBody = $response->body();
 
@@ -284,5 +300,4 @@ class LineMessagingClient
             ];
         }
     }
-    
 }

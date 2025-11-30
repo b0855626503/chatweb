@@ -1190,10 +1190,20 @@
                                                             v-if="canControlRegister() && selectedConversation.contact.member_id"
                                                             size="sm"
                                                             variant="outline-success"
-                                                            class="mb-1 mr-3"
+                                                            class="mb-1"
                                                             @click="openMemberFromConversation"
                                                     >
                                                         แก้ไขข้อมูล
+                                                    </b-button>
+
+                                                    <b-button
+                                                            v-if="canControlRegister()"
+                                                            size="sm"
+                                                            variant="outline-success"
+                                                            class="mb-1 mr-3"
+                                                            @click="openBalanceModal"
+                                                    >
+                                                        ดูยอดเงิน
                                                     </b-button>
 
                                                     <b-button
@@ -1696,6 +1706,33 @@
 
                     </b-form>
                 </b-container>
+            </b-modal>
+
+            <b-modal
+                    id="balance-modal"
+                    ref="balanceModal"
+                    title="ยอดเงินคงเหลือ"
+                    hide-footer
+                    centered
+            >
+                <div v-if="balanceLoading" class="text-center">
+                    กำลังโหลดยอดเงิน...
+                </div>
+
+                <div v-else-if="balanceData">
+                    <p class="mb-1">
+                        สมาชิก:
+                        <strong v-text="balanceData.member_username || '-'"></strong>
+                    </p>
+                    <p class="mb-0">
+                        ยอดเงินคงเหลือ:
+                        <strong v-text="balanceData.balance_text + ' บาท'"></strong>
+                    </p>
+                </div>
+
+                <div v-else class="text-muted">
+                    ยังไม่มีข้อมูลยอดเงิน
+                </div>
             </b-modal>
 
 
@@ -3130,6 +3167,52 @@
                     }).finally(() => {
                         this.memberModal.saving = false;
                     });
+                },
+
+                async openBalanceModal() {
+                    if (!this.selectedConversation) {
+                        return;
+                    }
+
+                    this.balanceLoading = true;
+                    this.balanceData = null;
+
+                    try {
+                        const res = await axios.get(this.balanceUrl, {
+                            params: {
+                                conversation_id: this.selectedConversation.id,
+                            },
+                        });
+
+                        if (!res.data || !res.data.ok) {
+                            const msg = res.data && res.data.message
+                                ? res.data.message
+                                : 'ไม่สามารถดึงยอดเงินได้';
+                            // this.showToastError && this.showToastError(msg);
+                            this.showAlert({success: false, message: msg});
+                            return;
+                        }
+
+                        this.balanceData = res.data.data || null;
+
+                        // แสดง popup แบบง่าย ๆ: ใช้ b-modal
+                        if (this.$refs.balanceModal) {
+                            this.$refs.balanceModal.show();
+                        } else {
+                            // กันไว้ ถ้าไม่มี modal จริง ๆ ก็ alert ไปก่อน
+                            // alert(
+                            //     `ยอดเงินคงเหลือ: ${this.balanceData.balance_text} บาท`
+                            // );
+
+                            this.showAlert({success: true, message: `ยอดเงินคงเหลือ: ${this.balanceData.balance_text} บาท`});
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        this.showAlert({success: false, message: 'เกิดข้อผิดพลาดในการดึงยอดเงิน'});
+                        // this.showToastError && this.showToastError('เกิดข้อผิดพลาดในการดึงยอดเงิน');
+                    } finally {
+                        this.balanceLoading = false;
+                    }
                 },
 
                 // ====== รับเรื่อง / ปิดเคส ======

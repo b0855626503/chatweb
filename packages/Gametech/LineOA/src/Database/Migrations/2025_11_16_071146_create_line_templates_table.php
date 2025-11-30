@@ -16,9 +16,10 @@ class CreateLineTemplatesTable extends Migration
 
             // key เช่น register.ask_phone, register.error_phone_invalid
             $table->string('key', 100)->unique();
+            $table->string('message_type', 10)->default('text')->index();
 
             // ข้อความ template (รองรับ {username}, {password}, {login_url}, ฯลฯ)
-            $table->text('message');
+            $table->longText('message');
 
             // อธิบายว่าใช้ตรงไหนในระบบ (ให้ทีมงานเข้าใจเวลาแก้)
             $table->string('description')->nullable();

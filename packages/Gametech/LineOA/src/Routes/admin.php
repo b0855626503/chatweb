@@ -72,6 +72,9 @@ Route::domain(
 
                 Route::post('conversations/{conversation}/cancel-register', [ChatController::class, 'cancelRegister'])
                     ->name('conversations.cancel-register');
+
+                Route::get('get-balance', [ChatController::class, 'getBalance'])
+                    ->name('getbalance');
             });
 
         Route::prefix('line_account')->group(function () {

@@ -3,7 +3,7 @@
 namespace Gametech\LineOA\Http\Controllers\Admin;
 
 use Gametech\Admin\Http\Controllers\AppBaseController;
-use Gametech\LineOA\DataTables\BankinDataTable;
+use Gametech\Game\Repositories\GameUserRepository;
 use Gametech\LineOA\DataTables\TopupDataTable;
 use Gametech\LineOA\Events\LineOAChatConversationUpdated;
 use Gametech\LineOA\Events\LineOAConversationAssigned;
@@ -17,6 +17,7 @@ use Gametech\LineOA\Models\LineRegisterSession;
 use Gametech\LineOA\Services\ChatService;
 use Gametech\LineOA\Services\LineMessagingClient;
 use Gametech\LineOA\Services\RegisterFlowService;
+use Gametech\Member\Repositories\MemberRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -50,7 +51,6 @@ class ChatController extends AppBaseController
             'depositTable' => $depositTable,
         ]);
     }
-
 
     /**
      * ดึง list ห้องแชต (sidebar ซ้าย)
@@ -389,7 +389,6 @@ class ChatController extends AppBaseController
                 'conversation_id' => $conversation->id,
             ]);
         }
-
 
         return response()->json([
             'message' => 'success',
@@ -878,11 +877,11 @@ class ChatController extends AppBaseController
             $flow = app(RegisterFlowService::class);
 
             // 1) รับค่าจาก popup
-            $phone      = $request->input('phone');
-            $bankCode   = trim((string) $request->input('bank_code'));
-            $accountNo  = trim((string) $request->input('account_no'));
-            $name       = trim((string) $request->input('name'));
-            $surname    = trim((string) $request->input('surname'));
+            $phone = $request->input('phone');
+            $bankCode = trim((string) $request->input('bank_code'));
+            $accountNo = trim((string) $request->input('account_no'));
+            $name = trim((string) $request->input('name'));
+            $surname = trim((string) $request->input('surname'));
 
             // 2) Normalize เบอร์ก่อน
             $normalizedPhone = $flow->normalizePhone($phone);
@@ -941,11 +940,11 @@ class ChatController extends AppBaseController
 
             // 8) สมัครสมาชิกจริงผ่าน Service กลางของระบบ
             $payload = [
-                'phone'        => $normalizedPhone,
-                'bank_code'    => $bankCode,
-                'account_no'   => $normalizedAccount,
-                'name'         => $name,
-                'surname'      => $surname,
+                'phone' => $normalizedPhone,
+                'bank_code' => $bankCode,
+                'account_no' => $normalizedAccount,
+                'name' => $name,
+                'surname' => $surname,
                 'created_from' => 'line_staff', // ระบุว่ามาจาก Support Staff
             ];
 
@@ -962,7 +961,7 @@ class ChatController extends AppBaseController
             return response()->json([
                 'success' => true,
                 'message' => 'สมัครสมาชิกสำเร็จ',
-                'member'  => $result['member'] ?? null,
+                'member' => $result['member'] ?? null,
             ], 200);
 
         } catch (\Throwable $e) {
@@ -1424,6 +1423,67 @@ class ChatController extends AppBaseController
 
         return response()->json([
             'message' => 'success',
+        ]);
+    }
+
+    public function getBalance(Request $request): JsonResponse
+    {
+        $conversationId = $request->input('conversation_id');
+
+        if (! $conversationId) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'ไม่พบค่า conversation_id',
+            ], 422);
+        }
+
+        /** @var LineConversation|null $conversation */
+        $conversation = LineConversation::query()
+            ->with('contact')
+            ->find($conversationId);
+
+        if (! $conversation) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'ไม่พบห้องสนทนา',
+            ], 404);
+        }
+
+        // ตัวอย่าง: ดึง member จาก contact
+        $memberId = $conversation->contact?->member_id;
+        $memberUsername = $conversation->contact?->member_username;
+
+        if (! $memberId) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'ห้องนี้ยังไม่ได้ผูกกับสมาชิกในระบบ',
+            ], 422);
+        }
+
+        // ====== TODO: ใส่ logic ดึงยอดเงินจริงที่นี่ ======
+
+        // ตรงนี้แล้วแต่ระบบของโบ๊ทว่าดึงจากไหน (wallet / game / ฯลฯ)
+        // ตัวอย่าง pseudo:
+        $game = core()->getGame();
+        $member = app(MemberRepository::class)->find($memberId);
+        $response = app(GameUserRepository::class)->checkBalance($game->id,$member->game_user);
+        if($response['success'] === true){
+            $balance = $response['score'];
+        }else{
+            $balance = 0; // ใส่ค่าจริงเอง
+        }
+
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'success',
+            'data' => [
+                'member_id' => $memberId,
+                'member_username' => $memberUsername,
+                'balance' => (float) $balance,
+                'balance_text' => number_format($balance, 2),
+                'currency' => 'THB',
+            ],
         ]);
     }
 }

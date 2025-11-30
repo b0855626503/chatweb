@@ -5,6 +5,7 @@ namespace Gametech\LineOA\Services;
 use Gametech\LineOA\Models\LineAccount;
 use Gametech\LineOA\Models\LineMessage;
 use Gametech\LineOA\Models\LineWebhookLog;
+use Gametech\LineOA\Support\UrlHelper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
@@ -374,7 +375,7 @@ class LineWebhookService
         $inbound->loadMissing('conversation', 'contact');
 
         $conversation = $inbound->conversation;
-        $contact      = $inbound->contact;
+        $contact = $inbound->contact;
 
         if (! $conversation || ! $contact) {
             return;
@@ -382,7 +383,7 @@ class LineWebhookService
 
         $displayName = $contact->display_name ?: 'ลูกค้า';
 
-        $templateKey  = 'welcome.default';
+        $templateKey = 'welcome.default';
         $lineMessages = [];
 
         try {
@@ -391,21 +392,21 @@ class LineWebhookService
 
             $lineMessages = $templates->renderMessages($templateKey, [
                 'display_name' => $displayName,
-                'contact'      => $contact,
+                'contact' => $contact,
                 'conversation' => $conversation,
             ]);
         } catch (\Throwable $e) {
             Log::error('[LineWebhook] welcome template renderMessages failed', [
                 'account_id' => $account->id,
-                'key'        => $templateKey,
-                'error'      => $e->getMessage(),
+                'key' => $templateKey,
+                'error' => $e->getMessage(),
             ]);
         }
 
         // ถ้า template ไม่มี หรือเรนเดอร์พัง → fallback เป็นข้อความ text ธรรมดา
         if (! is_array($lineMessages) || empty($lineMessages)) {
-            $fallback = 'สวัสดีค่ะ ' . $displayName . ' 🎉' . "\n"
-                . 'หากต้องการสอบถามข้อมูลเพิ่มเติม สามารถพิมพ์ถามทีมงานได้เลยนะคะ';
+            $fallback = 'สวัสดีค่ะ '.$displayName.' 🎉'."\n"
+                .'หากต้องการสอบถามข้อมูลเพิ่มเติม สามารถพิมพ์ถามทีมงานได้เลยนะคะ';
 
             $lineMessages = [
                 [
@@ -422,48 +423,49 @@ class LineWebhookService
         // ------------------------------------------------------------------
 
         // ดึง URL ทางเข้าเล่นจาก config (ปรับตามโปรเจกต์จริงได้เลย)
-        $playUrl = config('line_oa.play_url')
-            ?? config('app.play_url')
-            ?? config('app.url');
+        $playUrl = UrlHelper::loginUrl();
 
         $quickReplyItems = [];
 
         // ปุ่ม สมัคร (ส่งข้อความกลับ)
         $quickReplyItems[] = [
-            'type'   => 'action',
+            'type' => 'action',
             'action' => [
-                'type'  => 'message',
+                'type' => 'message',
                 'label' => 'สมัคร',
-                'text'  => 'สมัคร',
+                'text' => 'สมัคร',
             ],
         ];
 
         // ปุ่ม ทางเข้าเล่น (เปิดเว็บ)
         if (! empty($playUrl)) {
             $quickReplyItems[] = [
-                'type'   => 'action',
+                'type' => 'action',
                 'action' => [
-                    'type'  => 'uri',
+                    'type' => 'uri',
                     'label' => 'ทางเข้าเล่น',
-                    'uri'   => $playUrl,
+                    'uri' => $playUrl,
                 ],
             ];
         }
 
         if (! empty($quickReplyItems)) {
-            foreach ($lineMessages as &$lm) {
-                if (($lm['type'] ?? null) === 'text') {
-                    $lm['quickReply'] = [
+            for ($i = count($lineMessages) - 1; $i >= 0; $i--) {
+                $type = $lineMessages[$i]['type'] ?? null;
+
+                // เผื่ออนาคต: เปิดให้หลาย type รองรับ quickReply
+                if (in_array($type, ['text', 'image', 'flex', 'template', 'location', 'sticker'], true)) {
+                    $lineMessages[$i]['quickReply'] = [
                         'items' => $quickReplyItems,
                     ];
                     break;
                 }
             }
-            unset($lm);
         }
 
-        /** @var \Gametech\LineOA\Services\LineMessagingClient $messaging */
-        $messaging = app(\Gametech\LineOA\Services\LineMessagingClient::class);
+
+        /** @var LineMessagingClient $messaging */
+        $messaging = app(LineMessagingClient::class);
 
         // ใช้ pushMessages เพื่อรองรับ text + image หลายข้อความ
         $messaging->pushMessages($account, $lineUserId, $lineMessages);
@@ -483,11 +485,11 @@ class LineWebhookService
 
                         // สร้าง payload.message ตาม format เดิมของระบบ
                         $payloadMessage = [
-                            'type'              => 'image',
-                            'contentUrl'        => $orig,
-                            'previewUrl'        => $prev,
-                            'originalContentUrl'=> $orig,
-                            'previewImageUrl'   => $prev,
+                            'type' => 'image',
+                            'contentUrl' => $orig,
+                            'previewUrl' => $prev,
+                            'originalContentUrl' => $orig,
+                            'previewImageUrl' => $prev,
                         ];
 
                         // merge ทับด้วย mapping มาตรฐานหาก msg มี field อื่น
@@ -506,25 +508,25 @@ class LineWebhookService
 
                 LineMessage::create([
                     'line_conversation_id' => $conversation->id,
-                    'line_account_id'      => $account->id,
-                    'line_contact_id'      => $contact->id,
-                    'direction'            => 'outbound',
-                    'source'               => 'bot',
-                    'type'                 => $type,
-                    'line_message_id'      => null,
-                    'text'                 => $type === 'text' ? ($msg['text'] ?? null) : null,
-                    'payload'              => $payload,
-                    'meta'                 => null,
-                    'sender_employee_id'   => null,
-                    'sender_bot_key'       => 'welcome',
-                    'sent_at'              => now(),
+                    'line_account_id' => $account->id,
+                    'line_contact_id' => $contact->id,
+                    'direction' => 'outbound',
+                    'source' => 'bot',
+                    'type' => $type,
+                    'line_message_id' => null,
+                    'text' => $type === 'text' ? ($msg['text'] ?? null) : null,
+                    'payload' => $payload,
+                    'meta' => null,
+                    'sender_employee_id' => null,
+                    'sender_bot_key' => 'welcome',
+                    'sent_at' => now(),
                 ]);
             } catch (\Throwable $e) {
                 Log::error('[LineWebhook] store bot message failed (welcome)', [
-                    'account_id'      => $account->id,
+                    'account_id' => $account->id,
                     'conversation_id' => $conversation->id ?? null,
-                    'contact_id'      => $contact->id ?? null,
-                    'error'           => $e->getMessage(),
+                    'contact_id' => $contact->id ?? null,
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

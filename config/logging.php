@@ -112,7 +112,12 @@ return [
             'level' => 'info',
         ],
 
-
+        'lineoa' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/lineoa/debug.log'),
+            'level' => 'debug',
+            'days' => 14,
+        ],
 
         'wildpay_deposit_create' => [
             'driver' => 'daily',
