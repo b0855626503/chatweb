@@ -68,7 +68,7 @@ class TopupDataTable extends DataTable
     {
         return $this->builder()
             ->columns($this->getColumns())
-            ->minifiedAjax(route('admin.topup.index'))
+            ->minifiedAjax(route('admin.facebook_topup.index'))
             ->parameters([
                 'dom' => 'Bfrtip',
 

@@ -4,6 +4,7 @@ use Gametech\FacebookOA\Http\Controllers\Admin\ChatController;
 use Gametech\FacebookOA\Http\Controllers\Admin\FacebookAccountController;
 use Gametech\FacebookOA\Http\Controllers\Admin\FacebookQuickReplyController;
 use Gametech\FacebookOA\Http\Controllers\Admin\FacebookTemplateController;
+use Gametech\FacebookOA\Http\Controllers\Admin\TopupController;
 use Illuminate\Support\Facades\Route;
 
 // admin.xxx.com
@@ -114,6 +115,17 @@ Route::domain(
             Route::post('edit', [FacebookQuickReplyController::class, 'edit'])->name('admin.facebook_quick_reply.edit');
             Route::post('update/{id?}', [FacebookQuickReplyController::class, 'update'])->name('admin.facebook_quick_reply.update');
             Route::post('delete', [FacebookQuickReplyController::class, 'destroy'])->name('admin.facebook_quick_reply.delete');
+        });
+
+        Route::prefix('facebook_topup')->group(function () {
+            Route::get('/', [TopupController::class, 'index'])->defaults('_config', [
+                'view' => 'admin::module.facebook_topup.index',
+            ])->name('admin.facebook_topup.index');
+            Route::post('create', [TopupController::class, 'create'])->name('admin.facebook_topup.create');
+            Route::post('loaddata', [TopupController::class, 'loadData'])->name('admin.facebook_topup.loaddata');
+            Route::post('edit', [TopupController::class, 'edit'])->name('admin.facebook_topup.edit');
+            Route::post('update/{id?}', [TopupController::class, 'update'])->name('admin.facebook_topup.update');
+            Route::post('delete', [TopupController::class, 'destroy'])->name('admin.facebook_topup.delete');
         });
 
     });

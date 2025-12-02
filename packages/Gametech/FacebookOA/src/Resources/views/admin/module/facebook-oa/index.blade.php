@@ -1,4 +1,4 @@
-@extends('admin::layouts.line-oa')
+@extends('admin::layouts.facebook-oa')
 
 {{-- page title --}}
 @section('title')
@@ -45,19 +45,19 @@
             color: #084298 !important;
         }
 
-        #line-oa-chat-overlay {
+        #facebook-oa-chat-overlay {
             position: fixed;
             inset: 0;
             z-index: 9998;
         }
 
-        .lineoa-backdrop {
+        .facebookoa-backdrop {
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.55);
         }
 
-        .lineoa-popup {
+        .facebookoa-popup {
             position: fixed;
             inset: 20px;
             background: #ffffff;
@@ -74,12 +74,12 @@
             color: #212529 !important; /* ดำ */
         }
 
-        .chat-line-original {
+        .chat-facebook-original {
             white-space: pre-wrap;
             font-size: 14px;
         }
 
-        .chat-line-translated {
+        .chat-facebook-translated {
             white-space: pre-wrap;
             font-size: 13px;
             border-left: 3px solid #e0e0e0;
@@ -95,12 +95,12 @@
             max-width: 100%; /* หรือกำหนดเป็น px ก็ได้เช่น 220px */
         }
         /* ฝั่ง sidebar ทั้งคอลัมน์ – ไม่ให้เลื่อนซ้ายขวา */
-        .line-oa-sidebar {
+        .facebook-oa-sidebar {
             overflow-x: hidden;
         }
 
         /* ข้อความพรีวิวในแต่ละห้อง */
-        .line-oa-sidebar .conversation-last-message {
+        .facebook-oa-sidebar .conversation-last-message {
             display: block;
             white-space: nowrap;        /* บังคับบรรทัดเดียว */
             overflow: hidden;           /* ซ่อนส่วนเกิน */
@@ -145,15 +145,15 @@
     <section class="content text-xs">
         <div class="card">
             <div class="card-body">
-                <div id="line-oa-chat-app">
-                    <line-oa-chat ref="lineOaChat"></line-oa-chat>
+                <div id="facebook-oa-chat-app">
+                    <facebook-oa-chat ref="facebookOaChat"></facebook-oa-chat>
                 </div>
 
                 {{-- เอา block นี้ไปวางเพิ่มด้านล่างได้เลย --}}
                 <div id="member-edit-app">
                     <b-modal
                             ref="memberEditModal"
-                            id="line-oa-member-edit-modal"
+                            id="facebook-oa-member-edit-modal"
                             centered
                             scrollable
                             size="md"
@@ -1057,19 +1057,19 @@
                 return null;
             }
 
-            function findLineOaChatVm(vm) {
+            function findFacebookOaChatVm(vm) {
                 if (!vm) return null;
 
-                // ถ้าตัวนี้คือ line-oa-chat เอง
+                // ถ้าตัวนี้คือ facebook-oa-chat เอง
                 var name = vm.$options && (vm.$options.name || vm.$options._componentTag);
-                if (name === 'line-oa-chat') {
+                if (name === 'facebook-oa-chat') {
                     return vm;
                 }
 
                 // ลองไล่ children
                 if (vm.$children && vm.$children.length) {
                     for (var i = 0; i < vm.$children.length; i++) {
-                        var found = findLineOaChatVm(vm.$children[i]);
+                        var found = findFacebookOaChatVm(vm.$children[i]);
                         if (found) return found;
                     }
                 }
@@ -1077,21 +1077,21 @@
                 return null;
             }
 
-            function getLineOaChatComponent() {
+            function getFacebookOaChatComponent() {
                 var rootVm = findAnyVueRoot();
                 if (!rootVm) {
                     console.warn('ยังหา Vue root ไม่เจอ');
                     return null;
                 }
 
-                // ถ้ามี ref แบบ lineOaChat ก็ลองก่อน
-                if (rootVm.$refs && rootVm.$refs.lineOaChat) {
-                    return rootVm.$refs.lineOaChat;
+                // ถ้ามี ref แบบ facebookOaChat ก็ลองก่อน
+                if (rootVm.$refs && rootVm.$refs.facebookOaChat) {
+                    return rootVm.$refs.facebookOaChat;
                 }
 
-                var comp = findLineOaChatVm(rootVm);
+                var comp = findFacebookOaChatVm(rootVm);
                 if (!comp) {
-                    console.warn('ไม่พบ component line-oa-chat จาก Vue tree');
+                    console.warn('ไม่พบ component facebook-oa-chat จาก Vue tree');
                 }
                 return comp;
             }
@@ -1102,8 +1102,8 @@
                     return;
                 }
 
-                // 1) หา line-oa-chat เพื่อตรวจว่ามีห้องไหนถูกเลือกอยู่
-                var comp = getLineOaChatComponent();
+                // 1) หา facebook-oa-chat เพื่อตรวจว่ามีห้องไหนถูกเลือกอยู่
+                var comp = getFacebookOaChatComponent();
                 var prefill = null;
 
                 if (comp && comp.selectedConversation && comp.selectedConversation.contact) {
@@ -1136,8 +1136,8 @@
                     return;
                 }
 
-                // 1) พยายามหา line-oa-chat component
-                var comp = getLineOaChatComponent();
+                // 1) พยายามหา facebook-oa-chat component
+                var comp = getFacebookOaChatComponent();
                 var prefill = null;
 
                 if (comp && comp.selectedConversation && comp.selectedConversation.contact) {
@@ -1179,35 +1179,35 @@
             };
 
             // สร้าง global helper สำหรับให้ DataTables เรียกใช้
-            window.LineOaChatActions = {
+            window.FacebookOaChatActions = {
                 edit: function (code) {
-                    var comp = getLineOaChatComponent();
+                    var comp = getFacebookOaChatComponent();
                     if (!comp || typeof comp.editModal !== 'function') {
-                        console.warn('editModal() ไม่พร้อมใช้งานบน line-oa-chat');
+                        console.warn('editModal() ไม่พร้อมใช้งานบน facebook-oa-chat');
                         return;
                     }
                     comp.editModal(code);
                 },
                 approve: function (code) {
-                    var comp = getLineOaChatComponent();
+                    var comp = getFacebookOaChatComponent();
                     if (!comp || typeof comp.approveModal !== 'function') {
-                        console.warn('approveModal() ไม่พร้อมใช้งานบน line-oa-chat');
+                        console.warn('approveModal() ไม่พร้อมใช้งานบน facebook-oa-chat');
                         return;
                     }
                     comp.approveModal(code);
                 },
                 cancel: function (code) {
-                    var comp = getLineOaChatComponent();
+                    var comp = getFacebookOaChatComponent();
                     if (!comp || typeof comp.clearModal !== 'function') {
-                        console.warn('clearModal() ไม่พร้อมใช้งานบน line-oa-chat');
+                        console.warn('clearModal() ไม่พร้อมใช้งานบน facebook-oa-chat');
                         return;
                     }
                     comp.clearModal(code);
                 },
                 delete: function (code) {
-                    var comp = getLineOaChatComponent();
+                    var comp = getFacebookOaChatComponent();
                     if (!comp || typeof comp.delModal !== 'function') {
-                        console.warn('delModal() ไม่พร้อมใช้งานบน line-oa-chat');
+                        console.warn('delModal() ไม่พร้อมใช้งานบน facebook-oa-chat');
                         return;
                     }
                     comp.delModal(code);
@@ -1216,16 +1216,16 @@
         })();
     </script>
     <script>
-        window.LineDefaultAvatar = "{{ asset('storage/img/'.$config->logo) }}";
-        window.LineOAEventsChannel = "{{ config('app.name') }}_events";
-        window.LineOAEmployee = {
+        window.FacebookDefaultAvatar = "{{ asset('storage/img/'.$config->logo) }}";
+        window.FacebookOAEventsChannel = "{{ config('app.name') }}_events";
+        window.FacebookOAEmployee = {
             id: '{{ auth('admin')->user()->code ?? '' }}',
             name: '{{ auth('admin')->user()->user_name ?? '' }}',
         };
 
     </script>
 
-    <script type="text/x-template" id="line-oa-chat-template">
+    <script type="text/x-template" id="facebook-oa-chat-template">
         <b-container fluid class="px-0">
             <b-row no-gutters>
                 {{-- ====== LEFT: CONVERSATION LIST ====== --}}
@@ -1352,8 +1352,8 @@
                                             </div>
                                             <!-- /เพิ่มส่วนนี้ -->
                                             <div class="text-muted no-x-scroll text-truncate fixed-line">
-                                            <span v-if="conv.line_account && conv.line_account.name">
-                                                [@{{ conv.line_account.name }}]
+                                            <span v-if="conv.facebook_account && conv.facebook_account.name">
+                                                [@{{ conv.facebook_account.name }}]
                                             </span>
                                                 @{{ conv.last_message || 'ยังไม่มีข้อความ' }}
                                             </div>
@@ -1471,8 +1471,8 @@
 
                                         </h5>
                                         <div class="text-right">
-                                            <p class="text-muted d-block" v-if="selectedConversation.line_account">
-                                                OA: @{{ selectedConversation.line_account.name }}
+                                            <p class="text-muted d-block" v-if="selectedConversation.facebook_account">
+                                                OA: @{{ selectedConversation.facebook_account.name }}
                                             </p>
 
                                             <div class="mt-1">
@@ -1704,7 +1704,7 @@
                                                 <div class="whitespace-pre-wrap">
                                                     <!-- TEXT -->
                                                     <template v-if="msg.type === 'text'">
-                                                        <div class="chat-line-original">
+                                                        <div class="chat-facebook-original">
                                                             <!-- แสดงภาษา (ถ้ามี) เช่น [EN] -->
                                                             <span v-if="getMessageDisplay(msg).lang"
                                                                   class="text-primary font-weight-bold mr-1">
@@ -1717,7 +1717,7 @@
 
                                                         <!-- บรรทัดแปล -->
                                                         <div v-if="getMessageDisplay(msg).translated"
-                                                             class="chat-line-translated text-muted mt-1">
+                                                             class="chat-facebook-translated text-muted mt-1">
         <span v-if="getMessageDisplay(msg).target"
               class="text-success font-weight-bold mr-1">
             [@{{ getMessageDisplay(msg).target.toUpperCase() }}]
@@ -1971,7 +1971,7 @@
 
             {{-- MODAL: ผูก contact กับ member --}}
             <b-modal
-                    id="line-oa-member-modal"
+                    id="facebook-oa-member-modal"
                     ref="memberModal"
                     title="เชื่อมลูกค้ากับสมาชิก"
                     size="sm"
@@ -2086,7 +2086,7 @@
 
             {{-- MODAL: สมัครสมาชิกแทนลูกค้า --}}
             <b-modal
-                    id="line-oa-register-modal"
+                    id="facebook-oa-register-modal"
                     ref="registerModal"
                     title="สมัครสมาชิกแทนลูกค้า"
                     size="sm"
@@ -2200,7 +2200,7 @@
             </b-modal>
 
             {{-- MODAL: เติมเงิน --}}
-            <b-modal ref="topupModal" id="line-oa-topup-modal" centered size="xl" title="เพิ่ม รายการฝาก"
+            <b-modal ref="topupModal" id="facebook-oa-topup-modal" centered size="xl" title="เพิ่ม รายการฝาก"
                      :no-close-on-backdrop="true" :hide-footer="true" @shown="onTopupModalShown"
                      @hidden="onTopupModalHidden">
                 <b-container class="bv-example-row">
@@ -2283,8 +2283,8 @@
     </script>
 
     <script type="module">
-        Vue.component('line-oa-chat', {
-            template: '#line-oa-chat-template',
+        Vue.component('facebook-oa-chat', {
+            template: '#facebook-oa-chat-template',
             data() {
                 return {
                     conversations: [],
@@ -2436,7 +2436,7 @@
                     });
                 },
                 currentEmployeeId() {
-                    const emp = window.LineOAEmployee || null;
+                    const emp = window.FacebookOAEmployee || null;
                     if (!emp) return null;
 
                     if (emp.code) {
@@ -2528,7 +2528,7 @@
                 },
                 getMessageDisplay() {
                     return (msg) => {
-                        const lines = {
+                        const facebooks = {
                             original: msg.text || '',
                             translated: null,
                             lang: null,
@@ -2541,9 +2541,9 @@
                             msg.meta.translation_inbound
                         ) {
                             const t = msg.meta.translation_inbound;
-                            lines.original = t.original_text || msg.text;
-                            lines.translated = t.translated_text || null;
-                            lines.lang = t.detected_source || t.source_language || null;  // เช่น 'ja'
+                            facebooks.original = t.original_text || msg.text;
+                            facebooks.translated = t.translated_text || null;
+                            facebooks.lang = t.detected_source || t.source_language || null;  // เช่น 'ja'
                         }
 
                         // === outbound (พนักงานพิม) ===
@@ -2552,12 +2552,12 @@
                             msg.meta.translation_outbound
                         ) {
                             const t = msg.meta.translation_outbound;
-                            lines.original = t.original_text || msg.text;         // ไทย
-                            lines.translated = t.translated_text || null;           // ภาษาเป้าหมาย
-                            lines.target = t.target_language || null;           // เช่น 'en'
+                            facebooks.original = t.original_text || msg.text;         // ไทย
+                            facebooks.translated = t.translated_text || null;           // ภาษาเป้าหมาย
+                            facebooks.target = t.target_language || null;           // เช่น 'en'
                         }
 
-                        return lines;
+                        return facebooks;
                     };
                 },
             },
@@ -2603,7 +2603,7 @@
                     try {
                         const convId = this.selectedConversation.id;
 
-                        // ให้ backend ทำ route: GET /line-oa/conversations/{conversation}/quick-replies
+                        // ให้ backend ทำ route: GET /facebook-oa/conversations/{conversation}/quick-replies
                         const res = await axios.get(
                             this.apiUrl('conversations/' + convId + '/quick-replies')
                         );
@@ -2643,7 +2643,7 @@
                             };
                         });
                     } catch (e) {
-                        console.error('[LineOA] fetchQuickReplies error', e);
+                        console.error('[FacebookOA] fetchQuickReplies error', e);
                         this.showAlert({
                             success: false,
                             message: 'โหลดข้อความด่วนไม่สำเร็จ กรุณาลองใหม่'
@@ -2688,7 +2688,7 @@
                                 '',
                         };
 
-                        // ให้ backend ทำ route: POST /line-oa/conversations/{conversation}/reply-template
+                        // ให้ backend ทำ route: POST /facebook-oa/conversations/{conversation}/reply-template
                         const res = await axios.post(
                             this.apiUrl('conversations/' + convId + '/reply-template'),
                             {
@@ -2737,7 +2737,7 @@
                             });
                         }
                     } catch (e) {
-                        console.error('[LineOA] sendQuickReply error', e);
+                        console.error('[FacebookOA] sendQuickReply error', e);
 
                         const msg =
                             e?.response?.data?.message ??
@@ -2754,7 +2754,7 @@
                     }
                 },
                 onProfileImageError(event) {
-                    event.target.src = window.LineDefaultAvatar;
+                    event.target.src = window.FacebookDefaultAvatar;
                     event.target.onerror = null; // กัน loop error
                 },
                 removeFocusFromTrigger() {
@@ -2948,7 +2948,7 @@
                     this.selected = ctx.selectedYMD || '';
                 },
                 apiUrl(path) {
-                    return '/line-oa/' + path.replace(/^\/+/, '');
+                    return '/facebook-oa/' + path.replace(/^\/+/, '');
                 },
                 async fetchBanks() {
                     try {
@@ -3170,9 +3170,9 @@
                         if (this.filters.account_id === null) {
                             const accounts = {};
                             this.conversations.forEach(conv => {
-                                if (conv.line_account && conv.line_account.id) {
-                                    accounts[conv.line_account.id] =
-                                        conv.line_account.name || ('OA #' + conv.line_account.id);
+                                if (conv.facebook_account && conv.facebook_account.id) {
+                                    accounts[conv.facebook_account.id] =
+                                        conv.facebook_account.name || ('OA #' + conv.facebook_account.id);
                                 }
                             });
                             this.accountOptions = Object.keys(accounts).map(id => ({
@@ -3618,7 +3618,7 @@
                     if (!pkg || !sid) return null;
 
                     if (type === 'STATIC') {
-                        return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
+                        return `https://stickershop.facebook-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
                     }
 
                     if (type === 'ANIMATION' || type === 'ANIMATION_SOUND') {
@@ -3632,7 +3632,7 @@
                     return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
                 },
                 playNewMessageSound() {
-                    const audio = document.getElementById('line-noti-audio');
+                    const audio = document.getElementById('facebook-noti-audio');
                     if (!audio) return;
                     audio.muted = false;
                     audio.currentTime = 0;
@@ -3648,22 +3648,22 @@
                 },
                 // ====== Realtime จาก Echo ======
                 subscribeRealtime() {
-                    if (!window.Echo || !window.LineOAEventsChannel) return;
+                    if (!window.Echo || !window.FacebookOAEventsChannel) return;
 
-                    const channelName = window.LineOAEventsChannel;
+                    const channelName = window.FacebookOAEventsChannel;
                     const vm = this;
 
-                    console.log('[LineOA] subscribeRealtime to', channelName);
+                    console.log('[FacebookOA] subscribeRealtime to', channelName);
 
                     window.Echo.channel(channelName)
-                        .listen('.LineOAChatMessageReceived', (e) => {
-                            console.log('[LineOA] รับ event จาก websocket:', e);
+                        .listen('.FacebookOAChatMessageReceived', (e) => {
+                            console.log('[FacebookOA] รับ event จาก websocket:', e);
                             vm.handleRealtimeIncoming(e);
                             if (e.message && e.message.direction === 'inbound') {
                                 vm.playNewMessageSound();
                             }
                         })
-                        .listen('.LineOAChatConversationUpdated', (e) => {
+                        .listen('.FacebookOAChatConversationUpdated', (e) => {
                             const conv = e.conversation || {};
                             if (!conv || !conv.id) {
                                 return;
@@ -3687,20 +3687,20 @@
                                 );
                             }
                         })
-                        .listen('.LineOAConversationAssigned', (e) => {
+                        .listen('.FacebookOAConversationAssigned', (e) => {
                             vm.handleConversationAssigned(e);
                         })
-                        .listen('.LineOAConversationClosed', (e) => {
+                        .listen('.FacebookOAConversationClosed', (e) => {
                             vm.handleConversationClosed(e);
                         })
-                        .listen('.LineOAConversationOpen', (e) => {
+                        .listen('.FacebookOAConversationOpen', (e) => {
                             vm.handleConversationOpen(e);
                         })
-                        .listen('.LineOAConversationLocked', (e) => {
+                        .listen('.FacebookOAConversationLocked', (e) => {
                             vm.handleConversationLocked(e);
                         });
 
-                    console.log('[LineOA] subscribeRealtime ตั้งค่าเรียบร้อย');
+                    console.log('[FacebookOA] subscribeRealtime ตั้งค่าเรียบร้อย');
 
                     this.unsubscribeRealtime = () => {
                         try {
@@ -4234,14 +4234,14 @@
                     const conv = this.selectedConversation || null;
                     if (conv) {
                         payload.conversation_id = conv.id || null;
-                        payload.line_contact_id =
-                            conv.line_contact_id ||
+                        payload.facebook_contact_id =
+                            conv.facebook_contact_id ||
                             conv.contact_id ||
                             (conv.contact ? conv.contact.id : null) ||
                             null;
 
-                        payload.line_account_id =
-                            conv.line_account_id ||
+                        payload.facebook_account_id =
+                            conv.facebook_account_id ||
                             conv.account_id ||
                             (conv.account ? conv.account.id : null) ||
                             null;
@@ -4269,7 +4269,7 @@
                             }
                         })
                         .catch((error) => {
-                            console.error('[LineOA] submitRegisterByStaff error', error);
+                            console.error('[FacebookOA] submitRegisterByStaff error', error);
 
                             this.registerModal.error = 'ไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่';
                         })
@@ -4335,7 +4335,7 @@
                         return;
                     }
                     this.topupModal.error = '';
-                    console.log('[LineOA] searchTopupMember', this.topupModal.memberSearch);
+                    console.log('[FacebookOA] searchTopupMember', this.topupModal.memberSearch);
                 },
 
                 submitTopup() {
@@ -4359,7 +4359,7 @@
                     this.topupModal.error = '';
                     this.topupModal.loading = true;
 
-                    console.log('[LineOA] submitTopup payload', this.topupModal);
+                    console.log('[FacebookOA] submitTopup payload', this.topupModal);
 
                     setTimeout(() => {
                         this.topupModal.loading = false;
@@ -4465,7 +4465,7 @@
                         user_pass: '',
                         acc_no: '',
                         wallet_id: '',
-                        lineid: '',
+                        facebookid: '',
                         pic_id: '',
                         tel: '',
                         one_time_password: '',
@@ -4498,9 +4498,9 @@
                 /* ============================
                  *  ส่วน Dropzone / Upload รูป
                  * ============================ */
-                autoFocusOnLineOA(refName) {
+                autoFocusOnFacebookOA(refName) {
                     this.$nextTick(() => {
-                        // ===== helper หา Vue root / line-oa-chat ภายในฟังก์ชันนี้เอง =====
+                        // ===== helper หา Vue root / facebook-oa-chat ภายในฟังก์ชันนี้เอง =====
                         function findAnyVueRoot() {
                             var all = document.querySelectorAll('body, body *');
                             for (var i = 0; i < all.length; i++) {
@@ -4512,47 +4512,47 @@
                             return null;
                         }
 
-                        function findLineOaChatVm(vm) {
+                        function findFacebookOaChatVm(vm) {
                             if (!vm) return null;
 
                             var name = vm.$options && (vm.$options.name || vm.$options._componentTag);
-                            if (name === 'line-oa-chat') {
+                            if (name === 'facebook-oa-chat') {
                                 return vm;
                             }
 
                             if (vm.$children && vm.$children.length) {
                                 for (var i = 0; i < vm.$children.length; i++) {
-                                    var found = findLineOaChatVm(vm.$children[i]);
+                                    var found = findFacebookOaChatVm(vm.$children[i]);
                                     if (found) return found;
                                 }
                             }
                             return null;
                         }
 
-                        function getLineOaChatComponentLocal() {
+                        function getFacebookOaChatComponentLocal() {
                             var rootVm = findAnyVueRoot();
                             if (!rootVm) return null;
 
-                            if (rootVm.$refs && rootVm.$refs.lineOaChat) {
-                                return rootVm.$refs.lineOaChat;
+                            if (rootVm.$refs && rootVm.$refs.facebookOaChat) {
+                                return rootVm.$refs.facebookOaChat;
                             }
 
-                            var comp = findLineOaChatVm(rootVm);
+                            var comp = findFacebookOaChatVm(rootVm);
                             if (!comp) {
-                                console.warn('[memberEditApp] ไม่พบ component line-oa-chat จาก Vue tree');
+                                console.warn('[memberEditApp] ไม่พบ component facebook-oa-chat จาก Vue tree');
                             }
                             return comp;
                         }
 
                         // ===== ใช้งานจริง =====
-                        const comp = getLineOaChatComponentLocal();
+                        const comp = getFacebookOaChatComponentLocal();
                         if (!comp) {
                             return;
                         }
 
                         const target = comp.$refs && comp.$refs[refName];
                         if (!target) {
-                            console.warn(`[memberEditApp] line-oa-chat ไม่มี $refs["${refName}"]`);
+                            console.warn(`[memberEditApp] facebook-oa-chat ไม่มี $refs["${refName}"]`);
                             return;
                         }
 
@@ -4608,7 +4608,7 @@
                 },
                 onMemberEditModalHidden() {
                     this.$nextTick(() => {
-                        this.autoFocusOnLineOA('replyBox');
+                        this.autoFocusOnFacebookOA('replyBox');
                     });
                 },
                 memberEditOpenUpload() {
@@ -5136,9 +5136,9 @@
                         maximumFractionDigits: 2,
                     });
                 },
-                autoFocusOnLineOA(refName) {
+                autoFocusOnFacebookOA(refName) {
                     this.$nextTick(() => {
-                        // ===== helper หา Vue root / line-oa-chat ภายในฟังก์ชันนี้เอง =====
+                        // ===== helper หา Vue root / facebook-oa-chat ภายในฟังก์ชันนี้เอง =====
                         function findAnyVueRoot() {
                             var all = document.querySelectorAll('body, body *');
                             for (var i = 0; i < all.length; i++) {
@@ -5150,47 +5150,47 @@
                             return null;
                         }
 
-                        function findLineOaChatVm(vm) {
+                        function findFacebookOaChatVm(vm) {
                             if (!vm) return null;
 
                             var name = vm.$options && (vm.$options.name || vm.$options._componentTag);
-                            if (name === 'line-oa-chat') {
+                            if (name === 'facebook-oa-chat') {
                                 return vm;
                             }
 
                             if (vm.$children && vm.$children.length) {
                                 for (var i = 0; i < vm.$children.length; i++) {
-                                    var found = findLineOaChatVm(vm.$children[i]);
+                                    var found = findFacebookOaChatVm(vm.$children[i]);
                                     if (found) return found;
                                 }
                             }
                             return null;
                         }
 
-                        function getLineOaChatComponentLocal() {
+                        function getFacebookOaChatComponentLocal() {
                             var rootVm = findAnyVueRoot();
                             if (!rootVm) return null;
 
-                            if (rootVm.$refs && rootVm.$refs.lineOaChat) {
-                                return rootVm.$refs.lineOaChat;
+                            if (rootVm.$refs && rootVm.$refs.facebookOaChat) {
+                                return rootVm.$refs.facebookOaChat;
                             }
 
-                            var comp = findLineOaChatVm(rootVm);
+                            var comp = findFacebookOaChatVm(rootVm);
                             if (!comp) {
-                                console.warn('[memberEditApp] ไม่พบ component line-oa-chat จาก Vue tree');
+                                console.warn('[memberEditApp] ไม่พบ component facebook-oa-chat จาก Vue tree');
                             }
                             return comp;
                         }
 
                         // ===== ใช้งานจริง =====
-                        const comp = getLineOaChatComponentLocal();
+                        const comp = getFacebookOaChatComponentLocal();
                         if (!comp) {
                             return;
                         }
 
                         const target = comp.$refs && comp.$refs[refName];
                         if (!target) {
-                            console.warn(`[memberEditApp] line-oa-chat ไม่มี $refs["${refName}"]`);
+                            console.warn(`[memberEditApp] facebook-oa-chat ไม่มี $refs["${refName}"]`);
                             return;
                         }
 
@@ -5246,7 +5246,7 @@
                 },
                 onRefillModalHidden() {
                     this.$nextTick(() => {
-                        this.autoFocusOnLineOA('replyBox');
+                        this.autoFocusOnFacebookOA('replyBox');
                     });
                 },
                 /* -----------------------------------
