@@ -111,7 +111,7 @@ class LineMessagingClient
             if (! $success) {
                 $errorBody = $response->body();
 
-                Log::warning('[LineMessagingClient] getProfile failed', [
+                Log::channel('line_oa')->warning('[LineMessagingClient] getProfile failed', [
                     'account_id' => $account->id,
                     'uri' => $uri,
                     'status' => $status,
@@ -126,7 +126,7 @@ class LineMessagingClient
                 ];
             }
 
-            Log::info('[LineMessagingClient] getProfile success', [
+            Log::channel('line_oa')->info('[LineMessagingClient] getProfile success', [
                 'account_id' => $account->id,
                 'uri' => $uri,
                 'status' => $status,
@@ -139,7 +139,7 @@ class LineMessagingClient
                 'error' => null,
             ];
         } catch (\Throwable $e) {
-            Log::error('[LineMessagingClient] getProfile exception', [
+            Log::channel('line_oa')->error('[LineMessagingClient] getProfile exception', [
                 'account_id' => $account->id,
                 'uri' => $uri,
                 'error' => $e->getMessage(),
@@ -179,7 +179,7 @@ class LineMessagingClient
             $body = $response->body(); // binary string
 
             if (! $response->successful()) {
-                Log::warning('[LineMessagingClient] downloadMessageContent failed', [
+                Log::channel('line_oa')->warning('[LineMessagingClient] downloadMessageContent failed', [
                     'account_id' => $account->id,
                     'uri' => $uri,
                     'status' => $status,
@@ -201,7 +201,7 @@ class LineMessagingClient
                 'error' => null,
             ];
         } catch (\Throwable $e) {
-            Log::error('[LineMessagingClient] downloadMessageContent exception', [
+            Log::channel('line_oa')->error('[LineMessagingClient] downloadMessageContent exception', [
                 'account_id' => $account->id,
                 'uri' => $uri,
                 'error' => $e->getMessage(),
@@ -234,7 +234,7 @@ class LineMessagingClient
             if ($status >= 200 && $status < 300) {
                 // เพิ่ม log debug เฉพาะ pushMessages (ชั่วคราว)
                 if ($context === 'pushMessages') {
-                    Log::channel('lineoa')->info('[LineMessagingClient] pushMessages success', [
+                    Log::channel('line_oa')->info('[LineMessagingClient] pushMessages success', [
                         'account_id' => $account->id,
                         'uri' => $uri,
                         'payload' => $payload,
@@ -253,7 +253,7 @@ class LineMessagingClient
             if (! $success) {
                 $errorBody = $response->body();
 
-                Log::warning('[LineMessagingClient] request failed', [
+                Log::channel('line_oa')->warning('[LineMessagingClient] request failed', [
                     'account_id' => $account->id,
                     'context' => $context,
                     'uri' => $uri,
@@ -270,7 +270,7 @@ class LineMessagingClient
                 ];
             }
 
-            Log::info('[LineMessagingClient] request success', [
+            Log::channel('line_oa')->info('[LineMessagingClient] request success', [
                 'account_id' => $account->id,
                 'context' => $context,
                 'uri' => $uri,
@@ -284,7 +284,7 @@ class LineMessagingClient
                 'error' => null,
             ];
         } catch (\Throwable $e) {
-            Log::error('[LineMessagingClient] exception', [
+            Log::channel('line_oa')->error('[LineMessagingClient] exception', [
                 'account_id' => $account->id,
                 'context' => $context,
                 'uri' => $uri,

@@ -28,7 +28,7 @@ class LineWebhookService
         $events = $payload['events'] ?? [];
 
         if (empty($events)) {
-            Log::info('[LineWebhook] empty events', [
+            Log::channel('line_oa')->info('[LineWebhook] empty events', [
                 'account_id' => $account->id,
                 'log_id' => $log?->id,
             ]);
@@ -69,7 +69,7 @@ class LineWebhookService
                         break;
                 }
             } catch (\Throwable $e) {
-                Log::error('[LineWebhook] error on event', [
+                Log::channel('line_oa')->error('[LineWebhook] error on event', [
                     'account_id' => $account->id,
                     'event' => $event,
                     'error' => $e->getMessage(),
@@ -88,22 +88,22 @@ class LineWebhookService
 
         // log ตาม type เดิม ๆ ไว้ก่อน (ไม่ตัด pattern เดิมทิ้ง)
         if ($messageType === 'text') {
-            Log::info('[LineWebhook] receive text message', [
+            Log::channel('line_oa')->info('[LineWebhook] receive text message', [
                 'account_id' => $account->id,
                 'message_id' => $messageId,
             ]);
         } elseif ($messageType === 'sticker') {
-            Log::info('[LineWebhook] receive sticker', [
+            Log::channel('line_oa')->info('[LineWebhook] receive sticker', [
                 'account_id' => $account->id,
                 'message_id' => $messageId,
             ]);
         } elseif ($messageType === 'image') {
-            Log::info('[LineWebhook] receive image', [
+            Log::channel('line_oa')->info('[LineWebhook] receive image', [
                 'account_id' => $account->id,
                 'message_id' => $messageId,
             ]);
         } else {
-            Log::info('[LineWebhook] receive non-text event', [
+            Log::channel('line_oa')->info('[LineWebhook] receive non-text event', [
                 'account_id' => $account->id,
                 'message_id' => $messageId,
                 'message_type' => $messageType,
@@ -115,7 +115,7 @@ class LineWebhookService
             /** @var LineMessage $message */
             $message = $this->chat->handleIncomingMessage($account, $event, $log);
         } catch (\Throwable $e) {
-            Log::error('[LineWebhook] handleMessageEvent exception', [
+            Log::channel('line_oa')->error('[LineWebhook] handleMessageEvent exception', [
                 'account_id' => $account->id,
                 'message_id' => $messageId,
                 'message_type' => $messageType,
@@ -144,7 +144,7 @@ class LineWebhookService
                 }
             }
         } catch (\Throwable $e) {
-            Log::error('[LineWebhook] welcome flow error', [
+            Log::channel('line_oa')->error('[LineWebhook] welcome flow error', [
                 'account_id' => $account->id,
                 'line_message_id' => $message->line_message_id ?? null,
                 'conversation_id' => $message->line_conversation_id ?? null,
@@ -193,7 +193,7 @@ class LineWebhookService
                                 'sent_at' => now(),
                             ]);
                         } catch (\Throwable $e) {
-                            Log::error('[LineWebhook] store bot message failed (register flow)', [
+                            Log::channel('line_oa')->error('[LineWebhook] store bot message failed (register flow)', [
                                 'account_id' => $account->id,
                                 'line_message_id' => $message->line_message_id ?? null,
                                 'conversation_id' => $message->line_conversation_id ?? null,
@@ -248,7 +248,7 @@ class LineWebhookService
                                     $extraPayload
                                 );
                             } catch (\Throwable $e) {
-                                Log::error('[LineWebhook] replyText failed (register flow)', [
+                                Log::channel('line_oa')->error('[LineWebhook] replyText failed (register flow)', [
                                     'account_id' => $account->id,
                                     'line_message_id' => $message->line_message_id ?? null,
                                     'conversation_id' => $message->line_conversation_id ?? null,
@@ -260,7 +260,7 @@ class LineWebhookService
                     }
                 }
             } catch (\Throwable $e) {
-                Log::error('[LineWebhook] register flow error', [
+                Log::channel('line_oa')->error('[LineWebhook] register flow error', [
                     'account_id' => $account->id,
                     'event' => $event,
                     'error' => $e->getMessage(),
@@ -285,7 +285,7 @@ class LineWebhookService
         // upsert contact + ดึง profile จาก LINE มาเก็บ
         $contact = $this->chat->updateContactProfile($account, $userId);
 
-        Log::info('[LineWebhook] follow event', [
+        Log::channel('line_oa')->info('[LineWebhook] follow event', [
             'account_id' => $account->id,
             'line_user_id' => $userId,
             'contact_id' => $contact->id,
@@ -301,7 +301,7 @@ class LineWebhookService
     {
         $userId = Arr::get($event, 'source.userId');
 
-        Log::info('[LineWebhook] unfollow event', [
+        Log::channel('line_oa')->info('[LineWebhook] unfollow event', [
             'account_id' => $account->id,
             'line_user_id' => $userId,
         ]);
@@ -319,7 +319,7 @@ class LineWebhookService
         $data = Arr::get($event, 'postback.data');
         $params = Arr::get($event, 'postback.params', []);
 
-        Log::info('[LineWebhook] postback event', [
+        Log::channel('line_oa')->info('[LineWebhook] postback event', [
             'account_id' => $account->id,
             'line_user_id' => $userId,
             'data' => $data,
@@ -336,7 +336,7 @@ class LineWebhookService
      */
     protected function handleGenericEvent(LineAccount $account, array $event, ?LineWebhookLog $log = null): void
     {
-        Log::info('[LineWebhook] generic event', [
+        Log::channel('line_oa')->info('[LineWebhook] generic event', [
             'account_id' => $account->id,
             'event' => $event,
         ]);
@@ -347,7 +347,7 @@ class LineWebhookService
      */
     protected function handleUnknownEvent(LineAccount $account, array $event, ?LineWebhookLog $log = null): void
     {
-        Log::warning('[LineWebhook] unknown event type', [
+        Log::channel('line_oa')->warning('[LineWebhook] unknown event type', [
             'account_id' => $account->id,
             'event' => $event,
         ]);
@@ -370,6 +370,7 @@ class LineWebhookService
         if (! $lineUserId) {
             return;
         }
+        return;
 
         // ให้แน่ใจว่ามี relation ครบ
         $inbound->loadMissing('conversation', 'contact');
@@ -396,7 +397,7 @@ class LineWebhookService
                 'conversation' => $conversation,
             ]);
         } catch (\Throwable $e) {
-            Log::error('[LineWebhook] welcome template renderMessages failed', [
+            Log::channel('line_oa')->error('[LineWebhook] welcome template renderMessages failed', [
                 'account_id' => $account->id,
                 'key' => $templateKey,
                 'error' => $e->getMessage(),
@@ -522,7 +523,7 @@ class LineWebhookService
                     'sent_at' => now(),
                 ]);
             } catch (\Throwable $e) {
-                Log::error('[LineWebhook] store bot message failed (welcome)', [
+                Log::channel('line_oa')->error('[LineWebhook] store bot message failed (welcome)', [
                     'account_id' => $account->id,
                     'conversation_id' => $conversation->id ?? null,
                     'contact_id' => $contact->id ?? null,

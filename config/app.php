@@ -301,7 +301,9 @@ return [
         Gametech\Promotion\Providers\PromotionServiceProvider::class,
         //        Gametech\TelegramBot\Providers\TelegramBotServiceProvider::class,
         Gametech\Marketing\Providers\MarketingServiceProvider::class,
+        Gametech\CenterOA\Providers\CenterOAServiceProvider::class,
         Gametech\LineOA\Providers\LineOAServiceProvider::class,
+        Gametech\FacebookOA\Providers\FacebookOAServiceProvider::class,
 
     ],
 

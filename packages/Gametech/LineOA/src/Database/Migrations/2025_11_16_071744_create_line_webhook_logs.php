@@ -20,6 +20,9 @@ class CreateLineWebhookLogs extends Migration
 
             // OA ไหน (อาจจะหาได้จาก webhook_token ใน URL)
             $table->unsignedBigInteger('line_account_id')->nullable()->index();
+            $table->unsignedBigInteger('line_conversation_id');
+            $table->unsignedBigInteger('line_contact_id');
+            $table->unsignedBigInteger('line_message_id');
 
             // ประเภท event คร่าว ๆ เช่น message, follow, unfollow, join, leave, postback ฯลฯ
             $table->string('event_type', 100)->nullable()->index();

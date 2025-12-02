@@ -51,7 +51,37 @@ class LineTemplateController extends AppBaseController
     public function create(Request $request)
     {
         $user = $this->user()->name.' '.$this->user()->surname;
-        $data = $request->input('data');
+        $data = $request->input('data', []);
+
+        // ====== prefix key ด้วย category. ======
+        $category = $data['category'] ?? null;
+        if ($category && isset($data['key'])) {
+            $category = trim($category);
+            $rawKey   = trim((string) $data['key']);
+
+            if ($category !== '' && $rawKey !== '') {
+                $prefix = $category.'.';
+                if (strpos($rawKey, $prefix) !== 0) {
+                    $rawKey = $prefix.$rawKey;
+                }
+                $data['key'] = $rawKey;
+            }
+        }
+
+        // ====== ตรวจ message ว่าเป็น JSON template หรือ text ปกติ ======
+        $rawMessage = $data['message'] ?? '';
+
+        $decoded = json_decode($rawMessage, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            // ถือว่าเป็น JSON template
+            $data['message']      = $rawMessage;   // เก็บดิบ ๆ ใน column message
+            $data['message_type'] = 'json';
+        } else {
+            // เป็นข้อความธรรมดา
+            $data['message']      = $rawMessage;
+            $data['message_type'] = 'text';
+        }
 
         $data['user_create'] = $user;
         $data['user_update'] = $user;
@@ -59,20 +89,35 @@ class LineTemplateController extends AppBaseController
         $this->repository->create($data);
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
-
     }
 
     public function update(Request $request)
     {
         $user = $this->user()->name.' '.$this->user()->surname;
-        $id = $request->input('id');
-        $data = $request->input('data');
+        $id   = $request->input('id');
+        $data = $request->input('data', []);
 
         $chk = $this->repository->find($id);
         if (! $chk) {
             return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
-        // ====== ตรงนี้คือส่วนสำคัญเรื่อง message JSON ======
+
+        // ====== prefix key ด้วย category. ======
+        $category = $data['category'] ?? $chk->category ?? null;
+        if ($category && isset($data['key'])) {
+            $category = trim($category);
+            $rawKey   = trim((string) $data['key']);
+
+            if ($category !== '' && $rawKey !== '') {
+                $prefix = $category.'.';
+                if (strpos($rawKey, $prefix) !== 0) {
+                    $rawKey = $prefix.$rawKey;
+                }
+                $data['key'] = $rawKey;
+            }
+        }
+
+        // ====== ส่วนสำคัญเรื่อง message JSON (ที่คุณมีอยู่แล้ว) ======
         $rawMessage = $data['message'] ?? '';
 
         $decoded = json_decode($rawMessage, true);
@@ -91,7 +136,6 @@ class LineTemplateController extends AppBaseController
         $this->repository->update($data, $id);
 
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
-
     }
 
     public function edit(Request $request)

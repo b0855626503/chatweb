@@ -33,7 +33,7 @@ return [
     ],
     [
         'key' => 'line-oa.line_template',
-        'name' => 'ตั้งค่า ข้อความตอบกลับ',
+        'name' => 'ตั้งค่า รูปแบบข้อความทั้งหมด',
         'route' => 'admin.line_template.index',
         'sort' => 3,
         'icon-class' => 'fa-gamepad',
@@ -42,13 +42,13 @@ return [
         'status' => 1,
     ],
     [
-        'key' => 'topup',
-        'name' => 'รายการ เงินเข้า',
-        'route' => 'admin.topup.index',
+        'key' => 'line-oa.line_quick_reply',
+        'name' => 'ตั้งค่า ข้อความส่งด่วน',
+        'route' => 'admin.line_quick_reply.index',
         'sort' => 4,
-        'icon-class' => 'fa-arrow-circle-left',
+        'icon-class' => 'fa-gamepad',
         'badge' => 0,
-        'badge-color' => 'badge-warning',
-        'status' => 0,
+        'badge-color' => 'badge-primary',
+        'status' => 1,
     ],
 ];

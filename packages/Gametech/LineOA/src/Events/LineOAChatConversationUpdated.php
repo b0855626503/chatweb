@@ -28,7 +28,7 @@ class LineOAChatConversationUpdated implements ShouldBroadcastNow
         // ให้ชัวร์ว่ามี relation ที่ต้องใช้เหมือน index/show
         $conversation->loadMissing(['contact.member', 'account']);
 
-        \Log::info('[LineOA] LineOAChatConversationUpdated::__construct', [
+        \Log::channel('line_oa')->info('[LineOA] LineOAChatConversationUpdated::__construct', [
             'conversation_id' => $conversation->id,
             'status'          => $conversation->status,
         ]);

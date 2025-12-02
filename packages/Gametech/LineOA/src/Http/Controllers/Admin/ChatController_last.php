@@ -266,7 +266,7 @@ class ChatController_last extends Controller
             );
 
             if (! $result['success']) {
-                Log::warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
+                Log::channel('line_oa')->warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
                     'contact_id' => $contact->id,
                     'error' => $result['error'] ?? null,
@@ -274,7 +274,7 @@ class ChatController_last extends Controller
                 ]);
             }
         } else {
-            Log::warning('[LineChat] ไม่สามารถส่งข้อความไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
+            Log::channel('line_oa')->warning('[LineChat] ไม่สามารถส่งข้อความไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
                 'conversation_id' => $conversation->id,
             ]);
         }
@@ -355,7 +355,7 @@ class ChatController_last extends Controller
             );
 
             if (! $result['success']) {
-                Log::warning('[LineChat] ส่งรูปไป LINE ไม่สำเร็จ', [
+                Log::channel('line_oa')->warning('[LineChat] ส่งรูปไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
                     'contact_id' => $contact->id,
                     'image_url' => $originalUrl,
@@ -364,7 +364,7 @@ class ChatController_last extends Controller
                 ]);
             }
         } else {
-            Log::warning('[LineChat] ไม่สามารถส่งรูปไป LINE ได้ (ไม่พบ account/contact/line_user_id หรือ url ว่าง)', [
+            Log::channel('line_oa')->warning('[LineChat] ไม่สามารถส่งรูปไป LINE ได้ (ไม่พบ account/contact/line_user_id หรือ url ว่าง)', [
                 'conversation_id' => $conversation->id,
                 'image_url' => $originalUrl,
             ]);
@@ -450,7 +450,7 @@ class ChatController_last extends Controller
                     }
 
                     // ถ้าโหลดไม่ได้ (404 จาก LINE) → log แล้ว 404
-                    Log::warning('[LineChat] ดึง content รูปจาก LINE ไม่สำเร็จ', [
+                    Log::channel('line_oa')->warning('[LineChat] ดึง content รูปจาก LINE ไม่สำเร็จ', [
                         'message_id' => $message->id,
                         'line_message_id' => $message->line_message_id,
                     ]);
@@ -458,14 +458,14 @@ class ChatController_last extends Controller
             }
 
             // 4) สุดท้ายถ้าไม่มีอะไรเลย → 404
-            Log::warning('[LineChat] ไม่พบ content รูปสำหรับ message', [
+            Log::channel('line_oa')->warning('[LineChat] ไม่พบ content รูปสำหรับ message', [
                 'message_id' => $message->id,
                 'line_message_id' => $message->line_message_id,
             ]);
 
             abort(404);
         } catch (\Throwable $e) {
-            Log::error('[LineChat] exception ใน content()', [
+            Log::channel('line_oa')->error('[LineChat] exception ใน content()', [
                 'message_id' => $message->id,
                 'line_message_id' => $message->line_message_id,
                 'error' => $e->getMessage(),
@@ -522,7 +522,7 @@ class ChatController_last extends Controller
                 'data' => $data,
             ]);
         } catch (\Throwable $e) {
-            Log::error('[LineOA] findMember error', [
+            Log::channel('line_oa')->error('[LineOA] findMember error', [
                 'member_id' => $memberId,
                 'error' => $e->getMessage(),
             ]);
@@ -571,7 +571,7 @@ class ChatController_last extends Controller
             }
         } catch (\Throwable $e) {
             // ถ้าดึง member พัง ไม่เป็นไร แค่ log ไว้ แล้วผูกเฉพาะ member_id
-            Log::warning('[LineOA] attachMember: cannot load member detail', [
+            Log::channel('line_oa')->warning('[LineOA] attachMember: cannot load member detail', [
                 'member_id' => $memberId,
                 'error' => $e->getMessage(),
             ]);

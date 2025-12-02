@@ -126,7 +126,7 @@ class LineMessagingClientBk
             if (! $success) {
                 $errorBody = $response->body();
 
-                Log::warning('[LineMessagingClient] getProfile failed', [
+                Log::channel('line_oa')->warning('[LineMessagingClient] getProfile failed', [
                     'account_id' => $account->id,
                     'uri'        => $uri,
                     'status'     => $status,
@@ -141,7 +141,7 @@ class LineMessagingClientBk
                 ];
             }
 
-            Log::info('[LineMessagingClient] getProfile success', [
+            Log::channel('line_oa')->info('[LineMessagingClient] getProfile success', [
                 'account_id' => $account->id,
                 'uri'        => $uri,
                 'status'     => $status,
@@ -154,7 +154,7 @@ class LineMessagingClientBk
                 'error'   => null,
             ];
         } catch (\Throwable $e) {
-            Log::error('[LineMessagingClient] getProfile exception', [
+            Log::channel('line_oa')->error('[LineMessagingClient] getProfile exception', [
                 'account_id' => $account->id,
                 'uri'        => $uri,
                 'error'      => $e->getMessage(),
@@ -187,7 +187,7 @@ class LineMessagingClientBk
             if (! $success) {
                 $errorBody = $response->body();
 
-                Log::warning('[LineMessagingClient] request failed', [
+                Log::channel('line_oa')->warning('[LineMessagingClient] request failed', [
                     'account_id' => $account->id,
                     'context'    => $context,
                     'uri'        => $uri,
@@ -204,7 +204,7 @@ class LineMessagingClientBk
                 ];
             }
 
-            Log::info('[LineMessagingClient] request success', [
+            Log::channel('line_oa')->info('[LineMessagingClient] request success', [
                 'account_id' => $account->id,
                 'context'    => $context,
                 'uri'        => $uri,
@@ -218,7 +218,7 @@ class LineMessagingClientBk
                 'error'   => null,
             ];
         } catch (\Throwable $e) {
-            Log::error('[LineMessagingClient] exception', [
+            Log::channel('line_oa')->error('[LineMessagingClient] exception', [
                 'account_id' => $account->id,
                 'context'    => $context,
                 'uri'        => $uri,

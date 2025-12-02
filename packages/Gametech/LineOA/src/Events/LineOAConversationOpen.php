@@ -21,7 +21,7 @@ class LineOAConversationOpen implements ShouldBroadcastNow
     {
         $conversation->loadMissing(['contact.member', 'account']);
 
-        \Log::info('[LineOA] LineOAConversationClosed::__construct', [
+        \Log::channel('line_oa')->info('[LineOA] LineOAConversationClosed::__construct', [
             'conversation_id'          => $conversation->id,
             'status'                   => $conversation->status,
             'closed_by_employee_id'    => $conversation->closed_by_employee_id,

@@ -21,7 +21,7 @@ class LineOAConversationLocked implements ShouldBroadcastNow
     {
         $conversation->loadMissing(['contact.member', 'account']);
 
-        \Log::info('[LineOA] LineOAConversationLocked::__construct', [
+        \Log::channel('line_oa')->info('[LineOA] LineOAConversationLocked::__construct', [
             'conversation_id'        => $conversation->id,
             'status'                 => $conversation->status,
             'locked_by_employee_id'  => $conversation->locked_by_employee_id,

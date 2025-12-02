@@ -245,7 +245,7 @@ class ChatControllerBk extends Controller
             );
 
             if (! $result['success']) {
-                Log::warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
+                Log::channel('line_oa')->warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
                     'contact_id' => $contact->id,
                     'error' => $result['error'],
@@ -253,7 +253,7 @@ class ChatControllerBk extends Controller
                 ]);
             }
         } else {
-            Log::warning('[LineChat] ไม่สามารถส่งข้อความไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
+            Log::channel('line_oa')->warning('[LineChat] ไม่สามารถส่งข้อความไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
                 'conversation_id' => $conversation->id,
             ]);
         }
@@ -316,7 +316,7 @@ class ChatControllerBk extends Controller
             );
 
             if (! $result['success']) {
-                Log::warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
+                Log::channel('line_oa')->warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
                     'contact_id' => $contact->id,
                     'error' => $result['error'],
@@ -324,7 +324,7 @@ class ChatControllerBk extends Controller
                 ]);
             }
         } else {
-            Log::warning('[LineChat] ไม่สามารถส่งข้อความไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
+            Log::channel('line_oa')->warning('[LineChat] ไม่สามารถส่งข้อความไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
                 'conversation_id' => $conversation->id,
             ]);
         }

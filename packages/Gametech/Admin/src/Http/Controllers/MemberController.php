@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -45,6 +46,8 @@ class MemberController extends AppBaseController
     private $memberDiamondLogRepository;
 
     private $memberRemarkRepository;
+
+    public $method;
 
     /**
      * MemberController constructor.
@@ -91,6 +94,8 @@ class MemberController extends AppBaseController
         $this->memberDiamondLogRepository = $memberDiamondLogRepo;
 
         $this->memberRemarkRepository = $memberRemarkRepo;
+
+        $this->method = ['TOPUP' => Lang::get('app.status.refill') , 'WITHDRAW' => Lang::get('app.status.withdraw') , 'ROLLBACK' => Lang::get('app.status.rollback') , 'SETWALLET' => Lang::get('app.status.setwallet') , 'BONUS' => Lang::get('app.status.bonus')];
     }
 
 
@@ -596,54 +601,67 @@ class MemberController extends AppBaseController
     public function gamedeposit($id)
     {
 
-        $responses = collect($this->memberRepository->loadDeposit($id, '', '')->toArray());
+        $responses = collect($this->memberRepository->loadBillType($id,'TOPUP')->toArray());
         if(!$responses)return [];
         $responses = $responses->map(function ($items) {
             $item = (object)$items;
+            $image = ['N' => 'ic_fail', 'Y' => 'ic_success', 'R' => 'ic_fail'];
+            $status = ['N' => Lang::get('app.status.wait'), 'Y' => Lang::get('app.status.success'), 'R' => Lang::get('app.status.cancel')];
+            $color = ['N' => 'bg-info', 'Y' => 'bg-success', 'R' => 'bg-danger'];
 
             return [
-                'id' => '#DP' . Str::of($item->code)->padLeft(8, 0),
-                'date_create' => core()->formatDate($item->date_create, 'd/m/y H:i'),
-                'amount' => $item->value,
-                'credit_bonus' => $item->pro_amount,
-                'credit_before' => $item->before_credit,
-                'credit_after' => $item->after_credit
+                'id' => '#DP'.Str::of($item->code)->padLeft(8, 0),
+                'date_create' => core()->formatDate($item->date_create, 'd/m/Y H:i'),
+                'amount' => $item->amount,
+                'amount_request' => $item->amount_request,
+                'pro_name' => $item->pro_name,
+                'credit_bonus' => $item->credit_bonus,
+                'credit_before' => $item->credit_before,
+                'credit_after' => $item->credit_after,
+                'status' => $item->complete,
+                'image' => $image[$item->complete],
+                'transfer_type' => ($item->transfer_type == 1 ? '+' : '-'),
+                'method' => $this->method[$item->method],
+                'status_color' => $color[$item->complete],
+                'status_display' => $status[$item->complete],
             ];
 
         });
 
-        return $responses->take(50)->values()->all();
+        return $responses->values()->all();
     }
 
     public function gamewithdraw($id)
     {
-        $config = core()->getConfigData();
-        if ($config->seamless == 'Y') {
-            $responses = collect($this->memberRepository->loadWithdrawSeamless($id, '', '')->toArray());
-
-        } else {
-            $responses = collect($this->memberRepository->loadWithdraw($id, '', '')->toArray());
-
-        }
+        $responses = collect($this->memberRepository->loadBillType($id,'WITHDRAW')->toArray());
 //        $responses = collect($this->memberRepository->loadWithdraw($id, '', '')->toArray());
-
+        if(!$responses)return [];
         $responses = $responses->map(function ($items) {
             $item = (object)$items;
-            $status = ['0' => 'รอโอนเงิน', '1' => 'โอนเงินสำเร็จ', '2' => 'ยกเลิก'];
-
+            $image = ['N' => 'ic_fail', 'Y' => 'ic_success', 'R' => 'ic_fail'];
+            $status = ['N' => Lang::get('app.status.wait'), 'Y' => Lang::get('app.status.success'), 'R' => Lang::get('app.status.cancel')];
+            $color = ['N' => 'bg-info', 'Y' => 'bg-success', 'R' => 'bg-danger'];
 
             return [
-                'id' => '#WD' . Str::of($item->code)->padLeft(8, 0),
+                'id' => '#WD'.Str::of($item->code)->padLeft(8, 0),
                 'date_create' => core()->formatDate($item->date_create, 'd/m/Y H:i'),
                 'amount' => $item->amount,
-                'credit_before' => $item->oldcredit,
-                'credit_after' => $item->aftercredit,
-                'status_display' => $status[$item->status]
+                'amount_request' => $item->amount_request,
+                'pro_name' => $item->pro_name,
+                'credit_bonus' => $item->credit_bonus,
+                'credit_before' => $item->credit_before,
+                'credit_after' => $item->credit_after,
+                'status' => $item->complete,
+                'image' => $image[$item->complete],
+                'transfer_type' => ($item->transfer_type == 1 ? '+' : '-'),
+                'method' => $this->method[$item->method],
+                'status_color' => $color[$item->complete],
+                'status_display' => $status[$item->complete],
             ];
 
         });
 
-        return $responses->take(50)->values()->all();
+        return $responses->values()->all();
     }
 
     public function loadBank()

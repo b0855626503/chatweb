@@ -12,6 +12,36 @@ class LineTemplateRegisterSeeder extends Seeder
         $templates = [
 
             // ----------------------------------------------------
+            // WELCOME: ข้อความต้อนรับลูกค้า (JSON Template)
+            // ----------------------------------------------------
+            [
+                'category'     => 'welcome',
+                'key'          => 'welcome.default',
+                'message_type' => 'json',
+                'message'      => json_encode([
+                    'version'  => 1,
+                    'messages' => [
+                        [
+                            'kind'    => 'text',
+                            'text'    => 'สวัสดีค่ะ {{display_name}} ?' . "\n"
+                                . 'ตอนนี้มีโปรสำหรับลูกค้าใหม่อยู่ สนใจถามรายละเอียดเพิ่มเติมได้เลยนะคะ',
+                            'options' => [
+                                'placeholders' => [
+                                    'display_name' => 'ชื่อที่โชว์ใน LINE',
+                                ],
+                            ],
+                        ],
+                        [
+                            'kind'     => 'image',
+                            'original' => 'https://thegrand789.com/storage/slide_img/Xc4H0Xx1v8.jpg',
+                            'preview'  => 'https://thegrand789.com/storage/slide_img/Xc4H0Xx1v8.jpg',
+                        ],
+                    ],
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT),
+                'description'  => 'ข้อความ ต้อนรับลูกค้า',
+            ],
+
+            // ----------------------------------------------------
             // STEP 1: ขอเบอร์โทร
             // ----------------------------------------------------
             [
@@ -144,12 +174,14 @@ class LineTemplateRegisterSeeder extends Seeder
             LineTemplate::updateOrCreate(
                 ['key' => $item['key']],
                 [
-                    'category'    => $item['category'],
-                    'message'     => $item['message'],
-                    'description' => $item['description'],
-                    'enabled'     => true,
+                    'category'     => $item['category'],
+                    'message_type' => $item['message_type'] ?? 'text',
+                    'message'      => $item['message'],
+                    'description'  => $item['description'],
+                    'enabled'      => true,
                 ]
             );
         }
+
     }
 }

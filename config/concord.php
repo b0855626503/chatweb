@@ -19,6 +19,7 @@ return [
         //        Gametech\TelegramBot\Providers\ModuleServiceProvider::class,
         Gametech\Marketing\Providers\ModuleServiceProvider::class,
         Gametech\LineOA\Providers\ModuleServiceProvider::class,
+        Gametech\FacebookOA\Providers\ModuleServiceProvider::class,
     ],
     'register_route_models' => true,
 ];

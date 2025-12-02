@@ -23,7 +23,7 @@ class LineOAChatMessageReceived implements ShouldBroadcastNow
 
     public function __construct(LineConversation $conversation, LineMessage $message)
     {
-        \Log::info('[LineOA] LineOAChatMessageReceived::__construct', [
+        \Log::channel('line_oa')->info('[LineOA] LineOAChatMessageReceived::__construct', [
             'conversation_id' => $conversation->id,
             'message_id'      => $message->id,
         ]);

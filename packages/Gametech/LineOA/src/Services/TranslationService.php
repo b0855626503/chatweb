@@ -145,7 +145,7 @@ class TranslationService
                     return $this->translateWithArgosLocal($text, $target, $source);
 
                 default:
-                    Log::warning('[Translation] unknown_driver', [
+                    Log::channel('line_oa')->warning('[Translation] unknown_driver', [
                         'driver' => $this->driver,
                     ]);
 
@@ -159,7 +159,7 @@ class TranslationService
                     ];
             }
         } catch (\Throwable $e) {
-            Log::error('[Translation] translate_exception', [
+            Log::channel('line_oa')->error('[Translation] translate_exception', [
                 'driver' => $this->driver,
                 'message' => $e->getMessage(),
             ]);
@@ -255,7 +255,7 @@ class TranslationService
         $timeout = (int) Arr::get($google, 'timeout', $this->timeout);
 
         if (empty($apiKey)) {
-            Log::warning('[Translation] google_api_key_missing');
+            Log::channel('line_oa')->warning('[Translation] google_api_key_missing');
 
             return [
                 'original_text' => $text,
@@ -284,7 +284,7 @@ class TranslationService
             ->post('https://translation.googleapis.com/language/translate/v2', $payload);
 
         if (! $response->successful()) {
-            Log::warning('[Translation] google_translate_failed', [
+            Log::channel('line_oa')->warning('[Translation] google_translate_failed', [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
@@ -338,7 +338,7 @@ class TranslationService
             ->post($baseUri.'/translate', $payload);
 
         if (! $response->successful()) {
-            Log::warning('[Translation] argos_cloud_failed', [
+            Log::channel('line_oa')->warning('[Translation] argos_cloud_failed', [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
@@ -371,7 +371,7 @@ class TranslationService
      */
     protected function translateWithArgosHttp(string $text, string $target, ?string $source = null): array
     {
-        Log::warning('[Translation] argos_http_not_implemented');
+        Log::channel('line_oa')->warning('[Translation] argos_http_not_implemented');
 
         return [
             'original_text' => $text,
@@ -388,7 +388,7 @@ class TranslationService
      */
     protected function translateWithArgosLocal(string $text, string $target, ?string $source = null): array
     {
-        Log::warning('[Translation] argos_local_not_implemented');
+        Log::channel('line_oa')->warning('[Translation] argos_local_not_implemented');
 
         return [
             'original_text' => $text,

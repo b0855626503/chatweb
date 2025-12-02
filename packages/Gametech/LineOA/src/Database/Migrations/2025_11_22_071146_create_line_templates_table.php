@@ -9,6 +9,8 @@ class CreateLineTemplatesTable extends Migration
     public function up()
     {
         Schema::create('line_templates', function (Blueprint $table) {
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_unicode_ci';
             $table->bigIncrements('id');
 
             // หมวด / scope เช่น register, general, error
@@ -18,7 +20,10 @@ class CreateLineTemplatesTable extends Migration
             $table->string('key', 100)->unique();
 
             // ข้อความ template (รองรับ {username}, {password}, {login_url}, ฯลฯ)
-            $table->text('message');
+            $table->string('message_type', 10)->default('text')->index();
+
+            // ข้อความ template (รองรับ {username}, {password}, {login_url}, ฯลฯ)
+            $table->longText('message');
 
             // อธิบายว่าใช้ตรงไหนในระบบ (ให้ทีมงานเข้าใจเวลาแก้)
             $table->string('description')->nullable();

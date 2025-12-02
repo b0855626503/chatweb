@@ -52,6 +52,14 @@ class LineOAServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__.'/../Resources/views/admin', 'admin');
 
+        $this->publishes([
+            __DIR__.'/../Database/Seeders/LineTemplateRegisterSeeder.php' =>
+                database_path('seeders/LineTemplateRegisterSeeder.php'),
+        ], 'line-oa-seeders');
+
+        $this->publishes([
+            __DIR__ . '/../Resources/assets/images' => public_path('vendor/line-oa/images'),
+        ], 'public');
     }
 
     /**

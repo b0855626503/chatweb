@@ -107,7 +107,9 @@
             "Gametech\\LogUser\\": "packages/Gametech/LogUser/src",
             "Gametech\\TelegramBot\\": "packages/Gametech/TelegramBot/src",
             "Gametech\\Marketing\\": "packages/Gametech/Marketing/src",
-            "Gametech\\LineOA\\": "packages/Gametech/LineOA/src"
+            "Gametech\\CenterOA\\": "packages/Gametech/CenterOA/src",
+            "Gametech\\LineOA\\": "packages/Gametech/LineOA/src",
+            "Gametech\\FacebookOA\\": "packages/Gametech/FacebookOA/src"
         },
         "files": [
             "packages/Gametech/Core/src/Http/helpers.php",

@@ -349,7 +349,7 @@
             }
 
 
-            if (e.type === 'up') {
+            if (e.type === 'created') {
                 let count = 0;
                 const intervalId = setInterval(() => {
                     // แสดงแจ้งเตือน

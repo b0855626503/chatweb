@@ -422,22 +422,6 @@
             ></b-form-input>
         </b-form-group>
 
-        {{--        <b-form-group--}}
-        {{--            id="input-group-3"--}}
-        {{--            label="รหัสยืนยัน:"--}}
-        {{--            label-for="one_time_password"--}}
-        {{--            description="รหัสยืนยันจาก Google Auth">--}}
-        {{--            <b-form-input--}}
-        {{--                id="one_time_password"--}}
-        {{--                v-model="formmoney.one_time_password"--}}
-        {{--                type="number"--}}
-        {{--                placeholder="โปรดระบุ"--}}
-        {{--                size="sm"--}}
-        {{--                autocomplete="off"--}}
-        {{--                required--}}
-        {{--            ></b-form-input>--}}
-        {{--        </b-form-group>--}}
-
         <b-button type="submit" variant="primary">บันทึก</b-button>
 
     </b-form>

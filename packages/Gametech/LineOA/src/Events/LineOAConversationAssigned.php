@@ -28,7 +28,7 @@ class LineOAConversationAssigned implements ShouldBroadcastNow
         // ให้ชัวร์ว่ามี relation ที่ต้องใช้เหมือน index/show
         $conversation->loadMissing(['contact.member', 'account']);
 
-        \Log::info('[LineOA] LineOAConversationAssigned::__construct', [
+        \Log::channel('line_oa')->info('[LineOA] LineOAConversationAssigned::__construct', [
             'conversation_id'       => $conversation->id,
             'status'                => $conversation->status,
             'assigned_employee_id'  => $conversation->assigned_employee_id,

@@ -282,6 +282,57 @@ class ChatService
     }
 
     /**
+     * ใช้ตอนฝั่งแอดมินส่ง Quick Reply / Template ออกไป
+     * (ข้อความที่มาจาก LineTemplate + ถูก render แล้ว)
+     */
+    public function createOutboundQuickReplyFromAgent(
+        LineConversation $conversation,
+        string $previewText,
+        int $employeeId,
+        array $payload,
+        ?array $meta = null
+    ): LineMessage {
+        $now = now();
+
+        return DB::transaction(function () use ($conversation, $previewText, $employeeId, $payload, $meta, $now) {
+            $metaPayload = $meta ?? [];
+            if (! is_array($metaPayload)) {
+                $metaPayload = (array) $metaPayload;
+            }
+
+            /** @var LineMessage $message */
+            $message = LineMessage::create([
+                'line_conversation_id' => $conversation->id,
+                'line_account_id'      => $conversation->line_account_id,
+                'line_contact_id'      => $conversation->line_contact_id,
+                'direction'            => 'outbound',
+                'source'               => 'quick_reply',
+                'type'                 => 'text', // ในหลังบ้านให้แสดงเป็น bubble ข้อความ
+                'line_message_id'      => null,
+                'text'                 => $previewText,
+                'payload'              => $payload,
+                'meta'                 => $metaPayload,
+                'sender_employee_id'   => $employeeId,
+                'sender_bot_key'       => null,
+                'sent_at'              => $now,
+            ]);
+
+            $conversation->last_message_preview = $this->buildPreviewText($message);
+            $conversation->last_message_at      = $now;
+            $conversation->unread_count         = 0;
+            $conversation->save();
+
+            DB::afterCommit(function () use ($conversation) {
+                event(new LineOAChatConversationUpdated(
+                    $conversation->fresh(['contact.member', 'account']) ?? $conversation
+                ));
+            });
+
+            return $message;
+        });
+    }
+
+    /**
      * ดึง profile จาก LINE แล้วอัปเดตลง LineContact
      */
     public function updateContactProfile(LineAccount $account, string $lineUserId): LineContact
@@ -398,7 +449,7 @@ class ChatService
             $result = $this->messagingClient->downloadMessageContent($account, $lineMessageId);
 
             if (! ($result['success'] ?? false)) {
-                \Log::warning('[LineChat] ดึง content รูปจาก LINE ไม่สำเร็จ', [
+                \Log::channel('line_oa')->warning('[LineChat] ดึง content รูปจาก LINE ไม่สำเร็จ', [
                     'message_id' => $message->id,
                     'line_message_id' => $lineMessageId,
                     'status' => $result['status'] ?? null,
@@ -409,7 +460,7 @@ class ChatService
 
             $binary = $result['body'] ?? null;
             if ($binary === null || $binary === '') {
-                \Log::warning('[LineChat] ดึง content รูปจาก LINE ได้ body ว่าง', [
+                \Log::channel('line_oa')->warning('[LineChat] ดึง content รูปจาก LINE ได้ body ว่าง', [
                     'message_id' => $message->id,
                     'line_message_id' => $lineMessageId,
                 ]);
@@ -430,7 +481,7 @@ class ChatService
             $message->payload = $payload;
             $message->save();
         } catch (\Throwable $e) {
-            \Log::error('[LineChat] exception ขณะดึง content รูปจาก LINE', [
+            \Log::channel('line_oa')->error('[LineChat] exception ขณะดึง content รูปจาก LINE', [
                 'message_id' => $message->id,
                 'line_message_id' => $message->line_message_id,
                 'error' => $e->getMessage(),
@@ -513,7 +564,7 @@ class ChatService
             $text = $message->text;
 
             // ตัดความยาวไม่ให้ยาวเกินไป
-            return mb_strimwidth($text, 0, 100, '...');
+            return mb_strimwidth($text, 0, 40, '...');
         }
 
         // สำหรับประเภทอื่น ๆ เช่น image/sticker/template

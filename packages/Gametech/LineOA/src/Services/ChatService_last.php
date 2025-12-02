@@ -529,7 +529,7 @@ class ChatService_last
             $result = $this->messagingClient->downloadMessageContent($account, $lineMessageId);
 
             if (! ($result['success'] ?? false)) {
-                \Log::warning('[LineChat] ดึง content รูปจาก LINE ไม่สำเร็จ', [
+                \Log::channel('line_oa')->warning('[LineChat] ดึง content รูปจาก LINE ไม่สำเร็จ', [
                     'message_id'     => $message->id,
                     'line_message_id'=> $lineMessageId,
                     'status'         => $result['status'] ?? null,
@@ -539,7 +539,7 @@ class ChatService_last
 
             $binary = $result['body'] ?? null;
             if ($binary === null || $binary === '') {
-                \Log::warning('[LineChat] ดึง content รูปจาก LINE ได้ body ว่าง', [
+                \Log::channel('line_oa')->warning('[LineChat] ดึง content รูปจาก LINE ได้ body ว่าง', [
                     'message_id'     => $message->id,
                     'line_message_id'=> $lineMessageId,
                 ]);
@@ -559,7 +559,7 @@ class ChatService_last
             $message->payload = $payload;
             $message->save();
         } catch (\Throwable $e) {
-            \Log::error('[LineChat] exception ขณะดึง content รูปจาก LINE', [
+            \Log::channel('line_oa')->error('[LineChat] exception ขณะดึง content รูปจาก LINE', [
                 'message_id'     => $message->id,
                 'line_message_id'=> $message->line_message_id,
                 'error'          => $e->getMessage(),

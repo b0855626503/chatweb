@@ -2,6 +2,7 @@
 
 use Gametech\LineOA\Http\Controllers\Admin\ChatController;
 use Gametech\LineOA\Http\Controllers\Admin\LineAccountController;
+use Gametech\LineOA\Http\Controllers\Admin\LineQuickReplyController;
 use Gametech\LineOA\Http\Controllers\Admin\LineTemplateController;
 use Gametech\LineOA\Http\Controllers\Admin\TopupController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,12 @@ Route::domain(
 
                 Route::get('messages/{message}/content', [ChatController::class, 'content',
                 ])->name('messages.content');
+
+                Route::get('conversations/{conversation}/quick-replies', [ChatController::class, 'quickReplies'])
+                    ->name('conversations.quick-replies');
+
+                Route::post('conversations/{conversation}/reply-template', [ChatController::class, 'replyTemplate'])
+                    ->name('conversations.reply-template');
 
                 Route::get('members/find', [ChatController::class, 'findMember'])->name('members.find');
 
@@ -99,15 +106,26 @@ Route::domain(
             Route::post('delete', [LineTemplateController::class, 'destroy'])->name('admin.line_template.delete');
         });
 
-        Route::prefix('topup')->group(function () {
+        Route::prefix('line_quick_reply')->group(function () {
+            Route::get('/', [LineQuickReplyController::class, 'index'])->defaults('_config', [
+                'view' => 'admin::module.line_quick_reply.index',
+            ])->name('admin.line_quick_reply.index');
+            Route::post('create', [LineQuickReplyController::class, 'create'])->name('admin.line_quick_reply.create');
+            Route::post('loaddata', [LineQuickReplyController::class, 'loadData'])->name('admin.line_quick_reply.loaddata');
+            Route::post('edit', [LineQuickReplyController::class, 'edit'])->name('admin.line_quick_reply.edit');
+            Route::post('update/{id?}', [LineQuickReplyController::class, 'update'])->name('admin.line_quick_reply.update');
+            Route::post('delete', [LineQuickReplyController::class, 'destroy'])->name('admin.line_quick_reply.delete');
+        });
+
+        Route::prefix('line_topup')->group(function () {
             Route::get('/', [TopupController::class, 'index'])->defaults('_config', [
-                'view' => 'admin::module.topup.index',
-            ])->name('admin.topup.index');
-            Route::post('create', [TopupController::class, 'create'])->name('admin.topup.create');
-            Route::post('loaddata', [TopupController::class, 'loadData'])->name('admin.topup.loaddata');
-            Route::post('edit', [TopupController::class, 'edit'])->name('admin.topup.edit');
-            Route::post('update/{id?}', [TopupController::class, 'update'])->name('admin.topup.update');
-            Route::post('delete', [TopupController::class, 'destroy'])->name('admin.topup.delete');
+                'view' => 'admin::module.line_topup.index',
+            ])->name('admin.line_topup.index');
+            Route::post('create', [TopupController::class, 'create'])->name('admin.line_topup.create');
+            Route::post('loaddata', [TopupController::class, 'loadData'])->name('admin.line_topup.loaddata');
+            Route::post('edit', [TopupController::class, 'edit'])->name('admin.line_topup.edit');
+            Route::post('update/{id?}', [TopupController::class, 'update'])->name('admin.line_topup.update');
+            Route::post('delete', [TopupController::class, 'destroy'])->name('admin.line_topup.delete');
         });
     });
 });

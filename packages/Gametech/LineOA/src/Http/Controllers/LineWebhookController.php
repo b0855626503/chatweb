@@ -73,7 +73,7 @@ class LineWebhookController extends Controller
                 'error_message' => $message,
             ]);
 
-            Log::warning('[LineWebhook] invalid webhook token', [
+            Log::channel('line_oa')->warning('[LineWebhook] invalid webhook token', [
                 'token' => $token,
                 'request_id' => $requestId,
             ]);
@@ -105,7 +105,7 @@ class LineWebhookController extends Controller
                 'error_message' => $e->getMessage(),
             ]);
 
-            Log::error('[LineWebhook] error while processing payload', [
+            Log::channel('line_oa')->error('[LineWebhook] error while processing payload', [
                 'account_id' => $account->id,
                 'request_id' => $requestId,
                 'error' => $e->getMessage(),

@@ -7,7 +7,7 @@ use Gametech\LineOA\Events\LineOAChatConversationUpdated;
 use Gametech\LineOA\Models\LineContact;
 use Gametech\LineOA\Models\LineConversation;
 use Gametech\LineOA\Models\LineRegisterSession;
-use Gametech\Marketing\Models\MarketingMember as Member;
+use Gametech\Member\Models\Member;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;

@@ -2,15 +2,21 @@
 
 namespace Gametech\LineOA\Services;
 
+use Gametech\Game\Repositories\GameUserRepository;
 use Gametech\LineOA\Contracts\LineMemberRegistrar;
 use Gametech\LineOA\Contracts\MemberRegistrationResult;
-use Gametech\Marketing\Models\MarketingMember as Member;
+// use Gametech\Marketing\Models\MarketingMember as Member;
+use Gametech\Member\Models\Member;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DefaultLineMemberRegistrar implements LineMemberRegistrar
 {
+    public function __construct(
+        protected GameUserRepository $gameUserRepo,
+    ) {}
+
     /**
      * สมัครสมาชิกจริงจากข้อมูลที่ได้จาก LINE
      *
@@ -48,7 +54,7 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
                 if ($this->isBankAccountExistInMembersOrBankAccount($bankCode, $accountNo)) {
                     return MemberRegistrationResult::failure('BANK_ACCOUNT_ALREADY_EXISTS');
                 }
-
+                $config = core()->getConfigData();
                 $today = now()->toDateString();
                 $datenow = now()->toDateTimeString();
                 $ip = request()?->ip() ?? '0.0.0.0';
@@ -87,7 +93,7 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
                     'confirm' => 'Y',
 
                     // default ตามที่น่าจะปลอดภัย
-                    'freecredit' => 'N',
+                    'freecredit' => $config->freecredit_open,
                     'check_status' => 'N',
                     'promotion' => 'N',
 
@@ -104,14 +110,30 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
                     'remark' => '',
 
                     'gender' => 'M',
-                    'team_id' => null,
-                    'campaign_id' => null,
+                    //                    'team_id' => null,
+                    //                    'campaign_id' => null,
 
                     'otp' => '',
                     'ip' => $ip,
                 ]);
 
                 $memberId = $member->code ?? $member->id; // แล้วแต่ model ของโบ๊ทใช้ pk อะไร
+
+
+                if ($config->seamless === 'Y') {
+                    if ($memberId) {
+                        $this->gameUserRepo->addGameUser(1, $memberId, ['username' => $username, 'password' => $plainPassword, 'name' => $fullname, 'user_create' => $fullname]);
+                    }
+                } else {
+                    if ($config->multigame_open === 'N') {
+
+                        $game = core()->getGame();
+
+                        if ($game && $memberId) {
+                            $this->gameUserRepo->addGameUser($game->code, $memberId, $member);
+                        }
+                    }
+                }
 
                 $loginUrl = $this->getLoginUrl();
 
@@ -122,6 +144,7 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
                     $loginUrl,
                     null
                 );
+
             });
         } catch (\Throwable $e) {
             report($e);
@@ -216,7 +239,6 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
         // ถ้าไม่มี → ต่อด้วย ?
         $suffix = $hasQuery ? '&openExternalBrowser=1' : '?openExternalBrowser=1';
 
-        return $url . $suffix;
+        return $url.$suffix;
     }
-
 }
