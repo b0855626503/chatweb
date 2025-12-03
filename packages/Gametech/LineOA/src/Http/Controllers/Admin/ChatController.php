@@ -221,12 +221,38 @@ class ChatController extends AppBaseController
             ->reverse()
             ->values();
 
+        $markAsReadToken = null;
+        foreach ($messages as $msg) {
+            if ($msg->direction === 'inbound' && $msg->source === 'user') {
+                $meta = $msg->meta ?? [];
+                if (! empty($meta['mark_as_read_token'])) {
+                    // เก็บตัวสุดท้าย (ล่าสุด) ทับไปเรื่อย ๆ
+                    $markAsReadToken = $meta['mark_as_read_token'];
+                }
+            }
+        }
+
         // clear unread
         if ($conversation->unread_count > 0) {
+
+            // 1) ถ้ามี token + account → ยิงไปที่ LINE
+            if ($markAsReadToken && $conversation->account) {
+                $result = $this->lineMessaging->markMessagesAsRead($conversation->account, $markAsReadToken);
+
+                if (! $result['success']) {
+                    Log::warning('[LineChat] markMessagesAsRead ไม่สำเร็จ', [
+                        'conversation_id' => $conversation->id,
+                        'account_id' => $conversation->account?->id,
+                        'error' => $result['error'] ?? null,
+                        'status' => $result['status'] ?? null,
+                    ]);
+                }
+            }
+
+            // 2) ไม่ว่าจะ mark สำเร็จหรือไม่ → ถือว่าฝั่งระบบ “ถูกเปิดอ่านแล้ว”
             $conversation->unread_count = 0;
             $conversation->save();
 
-            // broadcast ให้ agent คนอื่นเห็นว่า unread เคลียร์แล้ว
             DB::afterCommit(function () use ($conversation) {
                 $conv = $conversation->fresh([
                     'contact.member',
@@ -239,6 +265,7 @@ class ChatController extends AppBaseController
                 event(new LineOAChatConversationUpdated($conv));
             });
         }
+
 
         $data = [
             'conversation' => [

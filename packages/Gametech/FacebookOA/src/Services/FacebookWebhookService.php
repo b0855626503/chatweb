@@ -28,6 +28,8 @@ class FacebookWebhookService
      */
     public function handle(FacebookAccount $account, array $payload, ?FacebookWebhookLog $log = null): void
     {
+        Log::channel('facebook_oa')->warning('[FacebookWebhook] unsupported object type');
+
         $object = $payload['object'] ?? null;
 
         if ($object !== 'page') {
@@ -53,7 +55,7 @@ class FacebookWebhookService
 
         foreach ($entries as $entry) {
             $pageId = Arr::get($entry, 'id');
-            $time   = Arr::get($entry, 'time');
+            $time = Arr::get($entry, 'time');
 
             $messagingEvents = Arr::get($entry, 'messaging', []);
 
@@ -132,8 +134,8 @@ class FacebookWebhookService
      */
     protected function handleMessageEvent(FacebookAccount $account, array $event, ?FacebookWebhookLog $log = null): void
     {
-        $isEcho      = (bool) Arr::get($event, 'message.is_echo', false);
-        $text        = Arr::get($event, 'message.text');
+        $isEcho = (bool) Arr::get($event, 'message.is_echo', false);
+        $text = Arr::get($event, 'message.text');
         $attachments = Arr::get($event, 'message.attachments', []);
 
         // mapping type แบบง่าย ๆ:
@@ -144,7 +146,7 @@ class FacebookWebhookService
         if ($text && empty($attachments)) {
             $messageType = 'text';
         } elseif (! empty($attachments)) {
-            $firstType   = Arr::get($attachments, '0.type');
+            $firstType = Arr::get($attachments, '0.type');
             $messageType = $firstType ?: 'attachment';
         }
 
@@ -152,19 +154,19 @@ class FacebookWebhookService
 
         if ($isEcho) {
             Log::channel('facebook_oa')->info('[FacebookWebhook] receive echo message', [
-                'account_id'   => $account->id,
-                'message_mid'  => $mid,
+                'account_id' => $account->id,
+                'message_mid' => $mid,
                 'message_type' => $messageType,
             ]);
         } elseif ($messageType === 'text') {
             Log::channel('facebook_oa')->info('[FacebookWebhook] receive text message', [
-                'account_id'   => $account->id,
-                'message_mid'  => $mid,
+                'account_id' => $account->id,
+                'message_mid' => $mid,
             ]);
         } else {
             Log::channel('facebook_oa')->info('[FacebookWebhook] receive non-text message', [
-                'account_id'   => $account->id,
-                'message_mid'  => $mid,
+                'account_id' => $account->id,
+                'message_mid' => $mid,
                 'message_type' => $messageType,
             ]);
         }
@@ -175,10 +177,10 @@ class FacebookWebhookService
             $message = $this->chat->handleIncomingMessage($account, $event, $log);
         } catch (\Throwable $e) {
             Log::channel('facebook_oa')->error('[FacebookWebhook] handleMessageEvent exception', [
-                'account_id'   => $account->id,
-                'message_mid'  => $mid,
+                'account_id' => $account->id,
+                'message_mid' => $mid,
                 'message_type' => $messageType,
-                'error'        => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -188,7 +190,7 @@ class FacebookWebhookService
         //  เช็คว่าเป็นข้อความ inbound แรกของห้องหรือไม่ → ส่งข้อความต้อนรับ (future)
         // ------------------------------------------------------------------
         try {
-            $contact      = $message->contact ?? null;
+            $contact = $message->contact ?? null;
             $conversation = $message->conversation ?? null;
 
             if ($contact && $conversation && $message->direction === 'inbound') {
@@ -204,11 +206,11 @@ class FacebookWebhookService
             }
         } catch (\Throwable $e) {
             Log::channel('facebook_oa')->error('[FacebookWebhook] welcome flow error', [
-                'account_id'            => $account->id,
-                'facebook_message_id'   => $message->id ?? null,
-                'conversation_id'       => $message->facebook_conversation_id ?? null,
-                'contact_id'            => $message->facebook_contact_id ?? null,
-                'error'                 => $e->getMessage(),
+                'account_id' => $account->id,
+                'facebook_message_id' => $message->id ?? null,
+                'conversation_id' => $message->facebook_conversation_id ?? null,
+                'contact_id' => $message->facebook_contact_id ?? null,
+                'error' => $e->getMessage(),
             ]);
         }
 
@@ -230,17 +232,17 @@ class FacebookWebhookService
      */
     protected function handlePostbackEvent(FacebookAccount $account, array $event, ?FacebookWebhookLog $log = null): void
     {
-        $psid   = Arr::get($event, 'sender.id');
-        $title  = Arr::get($event, 'postback.title');
-        $data   = Arr::get($event, 'postback.payload'); // Facebook ใช้ชื่อ payload
-        $ref    = Arr::get($event, 'postback.referral');
+        $psid = Arr::get($event, 'sender.id');
+        $title = Arr::get($event, 'postback.title');
+        $data = Arr::get($event, 'postback.payload'); // Facebook ใช้ชื่อ payload
+        $ref = Arr::get($event, 'postback.referral');
 
         Log::channel('facebook_oa')->info('[FacebookWebhook] postback event', [
-            'account_id'  => $account->id,
-            'psid'        => $psid,
-            'title'       => $title,
-            'payload'     => $data,
-            'referral'    => $ref,
+            'account_id' => $account->id,
+            'psid' => $psid,
+            'title' => $title,
+            'payload' => $data,
+            'referral' => $ref,
         ]);
 
         // TODO:
@@ -253,15 +255,15 @@ class FacebookWebhookService
      */
     protected function handleReadEvent(FacebookAccount $account, array $event, ?FacebookWebhookLog $log = null): void
     {
-        $psid     = Arr::get($event, 'sender.id');
+        $psid = Arr::get($event, 'sender.id');
         $watermark = Arr::get($event, 'read.watermark');
-        $seq       = Arr::get($event, 'read.seq');
+        $seq = Arr::get($event, 'read.seq');
 
         Log::channel('facebook_oa')->info('[FacebookWebhook] read event', [
             'account_id' => $account->id,
-            'psid'       => $psid,
-            'watermark'  => $watermark,
-            'seq'        => $seq,
+            'psid' => $psid,
+            'watermark' => $watermark,
+            'seq' => $seq,
         ]);
 
         // TODO:
@@ -274,17 +276,17 @@ class FacebookWebhookService
      */
     protected function handleDeliveryEvent(FacebookAccount $account, array $event, ?FacebookWebhookLog $log = null): void
     {
-        $psid       = Arr::get($event, 'sender.id');
-        $mids       = Arr::get($event, 'delivery.mids', []);
-        $watermark  = Arr::get($event, 'delivery.watermark');
-        $seq        = Arr::get($event, 'delivery.seq');
+        $psid = Arr::get($event, 'sender.id');
+        $mids = Arr::get($event, 'delivery.mids', []);
+        $watermark = Arr::get($event, 'delivery.watermark');
+        $seq = Arr::get($event, 'delivery.seq');
 
         Log::channel('facebook_oa')->info('[FacebookWebhook] delivery event', [
             'account_id' => $account->id,
-            'psid'       => $psid,
-            'mids'       => $mids,
-            'watermark'  => $watermark,
-            'seq'        => $seq,
+            'psid' => $psid,
+            'mids' => $mids,
+            'watermark' => $watermark,
+            'seq' => $seq,
         ]);
 
         // TODO:
@@ -299,7 +301,7 @@ class FacebookWebhookService
     {
         Log::channel('facebook_oa')->warning('[FacebookWebhook] unknown messaging event', [
             'account_id' => $account->id,
-            'event'      => $event,
+            'event' => $event,
         ]);
     }
 
@@ -322,7 +324,6 @@ class FacebookWebhookService
         }
 
         // ปิด welcome flow ไว้ก่อน (เหมือนฝั่ง LINE ที่มี return ตัดทิ้ง)
-        return;
 
         // ถ้าในอนาคตจะเปิดใช้งาน:
         // - load relation conversation / contact

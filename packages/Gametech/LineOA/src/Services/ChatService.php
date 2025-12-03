@@ -41,6 +41,8 @@ class ChatService
         $text = Arr::get($event, 'message.text');
         $sentAt = Arr::get($event, 'timestamp');
 
+        $markAsReadToken = Arr::get($event, 'message.markAsReadToken');
+
         // timestamp ms → sec
         $sentAtCarbon = $sentAt
             ? now()->setTimestamp((int) floor($sentAt / 1000))
@@ -54,7 +56,8 @@ class ChatService
             $messageType,
             $text,
             $sentAtCarbon,
-            $log
+            $log,
+            $markAsReadToken
         ) {
             // 1) contact
             $contact = $this->getOrCreateContact($account, $userId);
@@ -71,6 +74,14 @@ class ChatService
             // 2) conversation
             $conversation = $this->getOrCreateConversation($account, $contact);
 
+            // 3) สร้าง message (inbound)
+            $meta = null;
+            if ($markAsReadToken) {
+                $meta = [
+                    'mark_as_read_token' => $markAsReadToken,
+                ];
+            }
+
             // 3) message inbound
             /** @var LineMessage $message */
             $message = LineMessage::create([
@@ -83,7 +94,7 @@ class ChatService
                 'line_message_id' => $messageId,
                 'text' => $messageType === 'text' ? $text : null,
                 'payload' => $event,
-                'meta' => null,
+                'meta' => $meta,
                 'sender_employee_id' => null,
                 'sender_bot_key' => null,
                 'sent_at' => $sentAtCarbon,
@@ -303,23 +314,23 @@ class ChatService
             /** @var LineMessage $message */
             $message = LineMessage::create([
                 'line_conversation_id' => $conversation->id,
-                'line_account_id'      => $conversation->line_account_id,
-                'line_contact_id'      => $conversation->line_contact_id,
-                'direction'            => 'outbound',
-                'source'               => 'quick_reply',
-                'type'                 => 'text', // ในหลังบ้านให้แสดงเป็น bubble ข้อความ
-                'line_message_id'      => null,
-                'text'                 => $previewText,
-                'payload'              => $payload,
-                'meta'                 => $metaPayload,
-                'sender_employee_id'   => $employeeId,
-                'sender_bot_key'       => null,
-                'sent_at'              => $now,
+                'line_account_id' => $conversation->line_account_id,
+                'line_contact_id' => $conversation->line_contact_id,
+                'direction' => 'outbound',
+                'source' => 'quick_reply',
+                'type' => 'text', // ในหลังบ้านให้แสดงเป็น bubble ข้อความ
+                'line_message_id' => null,
+                'text' => $previewText,
+                'payload' => $payload,
+                'meta' => $metaPayload,
+                'sender_employee_id' => $employeeId,
+                'sender_bot_key' => null,
+                'sent_at' => $now,
             ]);
 
             $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at      = $now;
-            $conversation->unread_count         = 0;
+            $conversation->last_message_at = $now;
+            $conversation->unread_count = 0;
             $conversation->save();
 
             DB::afterCommit(function () use ($conversation) {
@@ -541,19 +552,18 @@ class ChatService
         }
 
         $meta['translation_inbound'] = [
-            'provider'               => $result['provider'] ?? null,
-            'original_text'          => $result['original_text'] ?? $text,
-            'translated_text'        => $result['translated_text'] ?? $text,
-            'source_language'        => $result['source'] ?? null,
-            'detected_source'        => $detected,
-            'target_language'        => $result['target'] ?? $targetLang,
+            'provider' => $result['provider'] ?? null,
+            'original_text' => $result['original_text'] ?? $text,
+            'translated_text' => $result['translated_text'] ?? $text,
+            'source_language' => $result['source'] ?? null,
+            'detected_source' => $detected,
+            'target_language' => $result['target'] ?? $targetLang,
             'for_agent_display_lang' => $targetLang,
         ];
 
         $message->meta = $meta;
         $message->save();
     }
-
 
     /**
      * สร้างข้อความ preview ให้ใช้ใน list conversation

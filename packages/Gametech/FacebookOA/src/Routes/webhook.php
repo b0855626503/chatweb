@@ -1,6 +1,6 @@
 <?php
 
-use Gametech\Facebook\Http\Controllers\FacebookWebhookController;
+use Gametech\FacebookOA\Http\Controllers\FacebookWebhookController;
 use Illuminate\Support\Facades\Route;
 
 $apiRoute = config('gametech.api_url') ?? 'api';
@@ -24,7 +24,7 @@ Route::domain(
                 ->as('facebook-oa.')
                 ->group(function () {
 
-                    Route::post('webhook/{token}', [FacebookWebhookController::class, 'handle'])
+                    Route::match(['GET', 'POST'], 'webhook/{token}', [FacebookWebhookController::class, 'handle'])
                         ->name('webhook');
                     // => ชื่อเต็ม: api.line-oa.webhook
 

@@ -23,12 +23,20 @@ class FacebookWebhookLog extends Model implements FacebookWebhookLogContract
         'is_processed',
         'processed_at',
         'error_message',
+
+        // ชุดใหม่
+        'facebook_conversation_id',
+        'facebook_contact_id',
+        'facebook_message_id',
+        'delivery_status',
+        'received_at',
     ];
 
     protected $casts = [
-        'headers' => 'array',
+        'headers'      => 'array',
         'is_processed' => 'boolean',
         'processed_at' => 'datetime',
+        'received_at'  => 'datetime',
     ];
 
     public function account(): BelongsTo

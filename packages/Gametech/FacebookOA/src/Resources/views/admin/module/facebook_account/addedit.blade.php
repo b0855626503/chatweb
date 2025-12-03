@@ -1,4 +1,5 @@
-<b-modal ref="addedit" id="addedit" centered scrollable size="lg" title="เพิ่มข้อมูล Line OA" :no-stacking="true"
+<b-modal ref="addedit" id="addedit" centered scrollable size="lg" title="เพิ่มข้อมูล Facebook OA"
+         :no-stacking="true"
          :no-close-on-backdrop="true"
          :hide-footer="true">
     <b-form @submit.prevent="addEditSubmit" v-if="show">
@@ -8,7 +9,8 @@
                 id="input-group-name"
                 label="ชื่อเรียก OA ในระบบ ใส่ค่านี้เสร็จแล้วกด บันทึกไปก่อน แล้วกดแก้ไขเข้ามา:"
                 label-for="name"
-                description="เช่น ชื่อเวบที่ใช้ หรืออะไรก็ได้ ที่อยากตั้ง">
+                description="เช่น ชื่อเวบที่ใช้ หรืออะไรก็ได้ ที่อยากตั้ง"
+        >
             <b-form-input
                     id="name"
                     v-model="formaddedit.name"
@@ -19,39 +21,36 @@
             ></b-form-input>
         </b-form-group>
 
-        <p>1. <a href="https://manager.line.biz" target="_blank">https://manager.line.biz</a> สำหรับสร้าง Line Official Account ให้กดที่นี่ แล้วสร้าง Line OA ก่อน</p>
-        <p>2. พอสร้างเสร็จแล้ว ให้ เลือก Tab แชท <a href="{{ asset('vendor/line-oa/images/step1.png') }}" target="_blank">ดูภาพประกอบ 1</a></p>
-        <p>3. กด Messaging API แล้วตั้งค่าจนเสร็จ <a href="{{ asset('vendor/line-oa/images/step2.png') }}" target="_blank">ดูภาพประกอบ 2</a> <a href="{{ asset('vendor/line-oa/images/step3.png') }}" target="_blank">ดูภาพประกอบ 3</a> จะได้ Channel ID และ Channel Secret แล้วกด Copy Webhook ไปแปะได้เลย</p>
-        <p>4. กด ตั้งค่าเพิ่มเติมได้ที่ <a href="https://developers.line.biz/console" target="_blank">LINE Developers Console</a></p>
-        <p>5. กดหา Line OA ที่เรา สร้างมา เมื่อสักครู่ แล้ว เลือก Messaging Api <a href="{{ asset('vendor/line-oa/images/step4.png') }}" target="_blank">ดูภาพประกอบ 4</a> แล้วเลื่อนหน้าจอไปล่างสุด จะเจอ Channel access token (long-lived) กด Issue จะได้ Key ให้เอามา ใส่ที่ Channel Access Token</p>
+        {{-- How-to steps for Facebook --}}
+        <p>
+            1. สร้าง Facebook Page ให้เรียบร้อยก่อน
+            (ผ่าน <a href="https://business.facebook.com" target="_blank">Business Manager</a> หรือหน้า Facebook ปกติ)
+        </p>
+        <p>
+            2. เข้า <a href="https://developers.facebook.com/apps" target="_blank">Facebook Developers</a>
+            เพื่อสร้าง Facebook App แล้วเปิดใช้ผลิตภัณฑ์ Messenger
+        </p>
+        <p>
+            3. ผูก Facebook Page เข้ากับ App แล้วจด <strong>App ID</strong> และ <strong>Page ID</strong> ไว้
+        </p>
+        <p>
+            4. ออก <strong>Page Access Token (long-lived)</strong> จากหน้า Messenger Settings
+            และนำค่าไปวางในช่อง Page Access Token ด้านล่าง
+        </p>
+        <p>
+            5. ตั้งค่า Webhook ใน Messenger → Webhooks โดยใช้ค่า Webhook URL และ Verify Token จากหน้านี้
+        </p>
 
-
-        {{-- Channel ID --}}
+        {{-- Page ID --}}
         <b-form-group
-                id="input-group-channel-id"
-                label="Channel ID:"
-                label-for="channel_id"
-                description="ระบุ Channel ID จาก LINE Developers ">
+                id="input-group-page-id"
+                label="Page ID:"
+                label-for="page_id"
+                description="ระบุ Facebook Page ID เช่น 123456789012345"
+        >
             <b-form-input
-                    id="channel_id"
-                    v-model="formaddedit.channel_id"
-                    type="text"
-                    size="sm"
-                    autocomplete="off"
-                    required
-            ></b-form-input>
-
-        </b-form-group>
-
-        {{-- Channel Secret --}}
-        <b-form-group
-                id="input-group-channel-secret"
-                label="Channel Secret:"
-                label-for="channel_secret"
-                description="ระบุ Channel Secret จาก LINE Developers">
-            <b-form-input
-                    id="channel_secret"
-                    v-model="formaddedit.channel_secret"
+                    id="page_id"
+                    v-model="formaddedit.page_id"
                     type="text"
                     size="sm"
                     autocomplete="off"
@@ -59,28 +58,67 @@
             ></b-form-input>
         </b-form-group>
 
-        {{-- Access Token --}}
+        {{-- App ID --}}
         <b-form-group
-                id="input-group-access-token"
-                label="Channel Access Token:"
-                label-for="access_token"
-                description="วาง long-lived access token (Messaging API)">
+                id="input-group-app-id"
+                label="App ID:"
+                label-for="app_id"
+                description="ระบุ Facebook App ID ที่ใช้กับ Messenger"
+        >
+            <b-form-input
+                    id="app_id"
+                    v-model="formaddedit.app_id"
+                    type="text"
+                    size="sm"
+                    autocomplete="off"
+                    required
+            ></b-form-input>
+        </b-form-group>
+
+        {{-- Page Access Token --}}
+        <b-form-group
+                id="input-group-page-access-token"
+                label="Page Access Token:"
+                label-for="page_access_token"
+                description="วาง Page Access Token (long-lived) จาก Messenger Settings"
+        >
             <b-form-textarea
-                    id="access_token"
-                    v-model="formaddedit.access_token"
+                    id="page_access_token"
+                    v-model="formaddedit.page_access_token"
                     rows="3"
                     max-rows="6"
                     size="sm"
                     autocomplete="off"
+                    required
             ></b-form-textarea>
         </b-form-group>
 
-        {{-- Webhook URL (readonly, แสดงเต็มเป็น URL) --}}
+        {{-- Webhook Verify Token --}}
         <b-form-group
-                id="input-group-webhook-token"
+                id="input-group-webhook-verify-token"
+                label="Webhook Verify Token:"
+                label-for="webhook_verify_token"
+                description="กำหนดรหัสลับสำหรับใช้ Verify Webhook (ต้องใช้ค่าตรงกันใน Facebook Developers)"
+        >
+            <b-form-input
+                    id="webhook_verify_token"
+                    v-model="formaddedit.webhook_verify_token"
+                    type="text"
+                    size="sm"
+                    autocomplete="off"
+                    required
+            ></b-form-input>
+            <small class="text-muted">
+                แนะนำให้ตั้งเป็นค่าแบบเดายาก เช่น fb_oa_{{ '{' }}slug_เว็บ{{ '}' }}_verify_2025
+            </small>
+        </b-form-group>
+
+        {{-- Webhook URL (readonly) --}}
+        <b-form-group
+                id="input-group-webhook-url"
                 label="Webhook URL:"
                 label-for="webhook_url"
-                description="">
+        >
             <template v-if="formmethod === 'edit' && formaddedit.webhook_token">
                 <b-input-group size="sm">
                     <b-form-input
@@ -95,23 +133,69 @@
                     </b-input-group-append>
                 </b-input-group>
                 <small class="text-muted">
-                    URL นี้ใช้ตั้งค่าในหน้า LINE Developers (Messaging API &gt; Webhook URL)
+                    URL นี้ใช้ตั้งค่าใน Facebook Developers (Messenger &gt; Webhooks &gt; Callback URL)
                 </small>
             </template>
             <template v-else>
                 <p class="mb-0">
                     <small class="text-muted">
-                        Webhook token จะถูกสร้างอัตโนมัติหลังจากบันทึกข้อมูล OA แล้ว จากนั้นสามารถกลับมาเปิดหน้าจอนี้เพื่อคัดลอก URL ได้
+                        Webhook token จะถูกสร้างอัตโนมัติหลังจากบันทึกข้อมูล OA แล้ว
+                        จากนั้นสามารถกลับมาเปิดหน้าจอนี้เพื่อคัดลอก URL ได้
                     </small>
                 </p>
             </template>
+        </b-form-group>
+
+        {{-- Default Languages --}}
+        <b-form-group
+                id="input-group-default-outgoing-language"
+                label="ภาษาที่ใช้ตอบกลับลูกค้า (Outgoing):"
+                label-for="default_outgoing_language"
+        >
+            <b-form-select
+                    id="default_outgoing_language"
+                    v-model="formaddedit.default_outgoing_language"
+                    :options="languageOptions"
+                    size="sm"
+            ></b-form-select>
+        </b-form-group>
+
+        <b-form-group
+                id="input-group-default-incoming-language"
+                label="ภาษาที่คาดว่าลูกค้าพิมพ์มา (Incoming):"
+                label-for="default_incoming_language"
+        >
+            <b-form-select
+                    id="default_incoming_language"
+                    v-model="formaddedit.default_incoming_language"
+                    :options="languageOptions"
+                    size="sm"
+            ></b-form-select>
+        </b-form-group>
+
+        {{-- Timezone --}}
+        <b-form-group
+                id="input-group-timezone"
+                label="Timezone:"
+                label-for="timezone"
+                description="ระบุ timezone ที่ใช้แสดงเวลา เช่น Asia/Bangkok"
+        >
+            <b-form-input
+                    id="timezone"
+                    v-model="formaddedit.timezone"
+                    type="text"
+                    size="sm"
+                    autocomplete="off"
+                    placeholder="Asia/Bangkok"
+            ></b-form-input>
         </b-form-group>
 
         {{-- Status --}}
         <b-form-group
                 id="input-group-status"
                 label="สถานะ OA:"
-                label-for="status">
+                label-for="status"
+        >
             <b-form-select
                     id="status"
                     v-model="formaddedit.status"
@@ -129,7 +213,8 @@
                 id="input-group-remark"
                 label="หมายเหตุ:"
                 label-for="remark"
-                description="ระบุเพิ่มเติม เช่น ใช้กับเว็บอะไร, กลุ่มลูกค้าไหน">
+                description="ระบุเพิ่มเติม เช่น ใช้กับเว็บอะไร, กลุ่มลูกค้าไหน"
+        >
             <b-form-textarea
                     id="remark"
                     v-model="formaddedit.remark"
@@ -145,13 +230,12 @@
     </b-form>
 </b-modal>
 
-
 @push('scripts')
-
     <script type="module">
-        window.WEBHOOK_BASE = @json(
-            route('api.line-oa.webhook', ['token' => '__TOKEN__'])
+        window.FB_WEBHOOK_BASE = @json(
+            route('api.facebook-oa.webhook', ['token' => '__TOKEN__'])
         );
+
         window.app = new Vue({
             el: '#app',
             data() {
@@ -161,14 +245,23 @@
                     code: null,
 
                     // base URL สำหรับ webhook (ไม่เอา token)
-                    webhookBaseUrl: window.WEBHOOK_BASE,
+                    webhookBaseUrl: window.FB_WEBHOOK_BASE,
+
+                    languageOptions: [
+                        { value: 'th', text: 'Thai (th)' },
+                        { value: 'en', text: 'English (en)' },
+                    ],
 
                     formaddedit: {
                         name: '',
-                        channel_id: '',
-                        channel_secret: '',
-                        access_token: '',
+                        page_id: '',
+                        app_id: '',
+                        page_access_token: '',
                         webhook_token: '',
+                        webhook_verify_token: '',
+                        default_outgoing_language: 'th',
+                        default_incoming_language: 'th',
+                        timezone: 'Asia/Bangkok',
                         status: 'active',
                         remark: '',
                     },
@@ -181,7 +274,6 @@
             computed: {
                 fullWebhookUrl() {
                     if (!this.formaddedit.webhook_token) return '';
-
                     return this.webhookBaseUrl.replace('__TOKEN__', this.formaddedit.webhook_token);
                 }
             },
@@ -215,10 +307,14 @@
                 resetForm() {
                     this.formaddedit = {
                         name: '',
-                        channel_id: '',
-                        channel_secret: '',
-                        access_token: '',
+                        page_id: '',
+                        app_id: '',
+                        page_access_token: '',
                         webhook_token: '',
+                        webhook_verify_token: '',
+                        default_outgoing_language: 'th',
+                        default_incoming_language: 'th',
+                        timezone: 'Asia/Bangkok',
                         status: 'active',
                         remark: '',
                     };
@@ -232,10 +328,14 @@
                     const data = response.data.data || {};
 
                     this.formaddedit.name = data.name || '';
-                    this.formaddedit.channel_id = data.channel_id || '';
-                    this.formaddedit.channel_secret = data.channel_secret || '';
-                    this.formaddedit.access_token = data.access_token || '';
+                    this.formaddedit.page_id = data.page_id || '';
+                    this.formaddedit.app_id = data.app_id || '';
+                    this.formaddedit.page_access_token = data.page_access_token || '';
                     this.formaddedit.webhook_token = data.webhook_token || '';
+                    this.formaddedit.webhook_verify_token = data.webhook_verify_token || '';
+                    this.formaddedit.default_outgoing_language = data.default_outgoing_language || 'th';
+                    this.formaddedit.default_incoming_language = data.default_incoming_language || 'th';
+                    this.formaddedit.timezone = data.timezone || 'Asia/Bangkok';
                     this.formaddedit.status = data.status || 'active';
                     this.formaddedit.remark = data.remark || '';
                 },

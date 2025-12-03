@@ -1045,6 +1045,8 @@
     {{--    {!! $depositTable->scripts() !!}--}}
     <script>
         (function () {
+            $('body').addClass('sidebar-collapse');
+
             function findAnyVueRoot() {
                 // 1) พยายามหา element ที่มี __vue__ โดย scanning ทั่วหน้า (เริ่มจาก body)
                 var all = document.querySelectorAll('body, body *');
@@ -1229,7 +1231,7 @@
         <b-container fluid class="px-0">
             <b-row no-gutters>
                 {{-- ====== LEFT: CONVERSATION LIST ====== --}}
-                <b-col cols="12" md="4" class="border-right" style="height: calc(100vh - 180px);">
+                <b-col cols="12" md="3" class="border-right" style="height: calc(100vh - 180px);">
                     <div class="d-flex flex-column h-100">
 
                         {{-- HEADER + FILTERS --}}
@@ -1417,7 +1419,7 @@
                 </b-col>
 
                 {{-- ====== RIGHT: CHAT WINDOW ====== --}}
-                <b-col cols="12" md="8" style="height: calc(100vh - 180px);">
+                <b-col cols="12" md="7" style="height: calc(100vh - 180px);">
                     <div class="d-flex flex-column h-100">
 
                         {{-- HEADER --}}
@@ -1856,6 +1858,14 @@
                                    accept="image/*"
                                    @change="onSelectImage">
                         </div>
+
+                    </div>
+                </b-col>
+
+                <b-col cols="12" md="2" style="height: calc(100vh - 180px);">
+                    <div class="d-flex flex-column h-100">
+
+
 
                     </div>
                 </b-col>

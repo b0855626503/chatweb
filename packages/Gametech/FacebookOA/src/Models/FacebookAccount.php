@@ -17,6 +17,7 @@ class FacebookAccount extends Model implements FacebookAccountContract
         'app_id',
         'page_access_token',
         'webhook_verify_token',
+        'webhook_token',
         'status',
         'default_outgoing_language',
         'default_incoming_language',

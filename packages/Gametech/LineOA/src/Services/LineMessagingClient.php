@@ -300,4 +300,13 @@ class LineMessagingClient
             ];
         }
     }
+
+    public function markMessagesAsRead(LineAccount $account, string $markAsReadToken): array
+    {
+        $payload = [
+            'markAsReadToken' => $markAsReadToken,
+        ];
+
+        return $this->sendRequest($account, '/v2/bot/chat/markAsRead', $payload, 'markMessagesAsRead');
+    }
 }
