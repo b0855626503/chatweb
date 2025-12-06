@@ -460,6 +460,9 @@ class ChatService
         // ถ้ามีห้องเดิมแล้ว แต่สถานะเป็น closed หรือยังไม่เคย set → reopen เป็น open
         if ($conversation->status === 'closed' || $conversation->status === null) {
             $conversation->status = 'open';
+            $conversation->closed_by_employee_id = null;
+            $conversation->closed_by_employee_name = null;
+            $conversation->closed_at = null;
             $conversation->save();
         }
 
