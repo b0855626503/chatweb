@@ -71,7 +71,7 @@ class ChatService
                 }
             }
 
-            // 2) conversation
+            // 2) conversation (รองรับ reuse ห้องเดิม + auto reopen)
             $conversation = $this->getOrCreateConversation($account, $contact);
 
             // 3) สร้าง message (inbound)
@@ -82,7 +82,6 @@ class ChatService
                 ];
             }
 
-            // 3) message inbound
             /** @var LineMessage $message */
             $message = LineMessage::create([
                 'line_conversation_id' => $conversation->id,
@@ -114,9 +113,12 @@ class ChatService
             $conversation->last_message_preview = $this->buildPreviewText($message);
             $conversation->last_message_at = $sentAtCarbon;
             $conversation->unread_count = $conversation->unread_count + 1;
-            if ($conversation->status === null) {
+
+            // safety guard: ถ้า status ว่างหรือถูกปิดอยู่ ให้กลับเป็น open
+            if ($conversation->status === null || $conversation->status === 'closed') {
                 $conversation->status = 'open';
             }
+
             $conversation->save();
 
             // 5) update contact last_seen
@@ -217,6 +219,11 @@ class ChatService
                 'sent_at' => $now,
             ]);
 
+            // ถ้าห้องปิดอยู่ หรือ status ยังไม่ถูกกำหนด → เปิดห้องอีกครั้ง
+            if ($conversation->status === 'closed' || $conversation->status === null) {
+                $conversation->status = 'open';
+            }
+
             $conversation->last_message_preview = $this->buildPreviewText($message);
             $conversation->last_message_at = $now;
             $conversation->unread_count = 0;
@@ -276,6 +283,11 @@ class ChatService
                 'sent_at' => $now,
             ]);
 
+            // ถ้าห้องปิดอยู่ หรือ status ยังไม่ถูกกำหนด → เปิดห้องอีกครั้ง
+            if ($conversation->status === 'closed' || $conversation->status === null) {
+                $conversation->status = 'open';
+            }
+
             $conversation->last_message_preview = $this->buildPreviewText($message);
             $conversation->last_message_at = $now;
             $conversation->unread_count = 0;
@@ -327,6 +339,11 @@ class ChatService
                 'sender_bot_key' => null,
                 'sent_at' => $now,
             ]);
+
+            // ถ้าห้องปิดอยู่ หรือ status ยังไม่ถูกกำหนด → เปิดห้องอีกครั้ง
+            if ($conversation->status === 'closed' || $conversation->status === null) {
+                $conversation->status = 'open';
+            }
 
             $conversation->last_message_preview = $this->buildPreviewText($message);
             $conversation->last_message_at = $now;
@@ -398,10 +415,14 @@ class ChatService
 
     /**
      * หา/สร้าง conversation สำหรับ contact นี้ใน OA นี้
+     *
+     * - พยายาม reuse ห้องที่ยังไม่ปิดเคส (status = null/open/assigned)
+     * - ถ้าไม่มีเลย → fallback ไปใช้ห้องล่าสุดทุกสถานะ (รวม closed)
+     * - ถ้าเจอห้องที่ closed/null → reopen เป็น open
      */
     protected function getOrCreateConversation(LineAccount $account, LineContact $contact): LineConversation
     {
-        /** @var LineConversation $conversation */
+        /** @var LineConversation|null $conversation */
         $conversation = LineConversation::where('line_account_id', $account->id)
             ->where('line_contact_id', $contact->id)
             ->where(function ($q) {
@@ -412,6 +433,15 @@ class ChatService
             ->orderByDesc('id')
             ->first();
 
+        // ถ้าไม่มีห้องที่เปิดอยู่เลย → ลองเอาห้องล่าสุดทุกสถานะ (รวม closed)
+        if (! $conversation) {
+            $conversation = LineConversation::where('line_account_id', $account->id)
+                ->where('line_contact_id', $contact->id)
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        // ถ้ายังไม่เคยมีห้องเลย → สร้างใหม่
         if (! $conversation) {
             $conversation = LineConversation::create([
                 'line_account_id' => $account->id,
@@ -423,6 +453,14 @@ class ChatService
                 'assigned_employee_id' => null,
                 'locked_by_employee_id' => null,
             ]);
+
+            return $conversation;
+        }
+
+        // ถ้ามีห้องเดิมแล้ว แต่สถานะเป็น closed หรือยังไม่เคย set → reopen เป็น open
+        if ($conversation->status === 'closed' || $conversation->status === null) {
+            $conversation->status = 'open';
+            $conversation->save();
         }
 
         return $conversation;
