@@ -393,6 +393,11 @@
             border-radius: 4px;
         }
 
+        .assignee-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
 
     </style>
 @endpush

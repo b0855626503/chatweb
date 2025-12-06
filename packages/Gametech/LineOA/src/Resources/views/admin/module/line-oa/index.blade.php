@@ -504,15 +504,15 @@
                                                 <i class="fa fa-check-circle"></i>
                                                 ดำเนินการแล้ว
                                             </b-button>
-                                            <b-button
-                                                    v-if="selectedConversation.status === 'closed'"
-                                                    size="sm"
-                                                    variant="outline-danger"
-                                                    class="mr-1 mb-1"
-                                                    @click="openConversation"
-                                            >
-                                                เปิดเคส
-                                            </b-button>
+{{--                                            <b-button--}}
+{{--                                                    v-if="selectedConversation.status === 'closed'"--}}
+{{--                                                    size="sm"--}}
+{{--                                                    variant="outline-danger"--}}
+{{--                                                    class="mr-1 mb-1"--}}
+{{--                                                    @click="openConversation"--}}
+{{--                                            >--}}
+{{--                                                เปิดเคส--}}
+{{--                                            </b-button>--}}
                                         </div>
 
                                         <div
@@ -1070,17 +1070,20 @@
 
                             {{-- STATUS / ASSIGNEE --}}
                             <div class="border-bottom p-2 small">
-                                <div class="mb-1">
-                                    <span class="text-muted">สถานะเคส:</span>
-                                    <span class="font-weight-bold text-uppercase ml-1">
-                                @{{ selectedConversation.status || '-' }}
-                            </span>
-                                </div>
+{{--                                <div class="mb-1">--}}
+{{--                                    <span class="text-muted">สถานะเคส:</span>--}}
+{{--                                    <span class="font-weight-bold text-uppercase ml-1">--}}
+{{--                                @{{ selectedConversation.status || '-' }}--}}
+{{--                            </span>--}}
+{{--                                </div>--}}
                                 <div class="mb-1">
                                     <span class="text-muted">ผู้รับผิดชอบ:</span>
                                     <span class="font-weight-bold ml-1">
-                                @{{ selectedConversation.assigned_employee_name || '-' }}
+                                @{{ selectedConversation.assigned_employee_name || 'ไม่มีผู้รับผิดชอบ' }}
                             </span>
+                                    <a @click="openAssigneeModal" class="icon-only" style="cursor: pointer;">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
                                 </div>
                                 <div v-if="selectedConversation.closed_at">
                                     <span class="text-muted">ปิดเมื่อ:</span>
@@ -1362,6 +1365,13 @@
                     },
                     quickReplySaving: false,
                     quickReplySaveError: null,
+
+                    // สำหรับ modal ผู้รับผิดชอบ
+                    assigneeOptions: [],
+                    assigneeLoading: false,
+                    assigneeSearch: '',
+                    selectedAssigneeId: null,
+                    savingAssignee: false,
                 };
             },
             created() {
@@ -1563,6 +1573,20 @@
                     });
 
                     return out;
+                },
+                filteredAssignees() {
+                    const q = (this.assigneeSearch || '').toLowerCase();
+                    if (!q) {
+                        return this.assigneeOptions;
+                    }
+                    return this.assigneeOptions.filter(emp => {
+                        return (
+                            (emp.display && emp.display.toLowerCase().includes(q)) ||
+                            (emp.sub && emp.sub.toLowerCase().includes(q)) ||
+                            (emp.code && emp.code.toLowerCase().includes(q)) ||
+                            (emp.user_name && emp.user_name.toLowerCase().includes(q))
+                        );
+                    });
                 },
             },
             watch: {
@@ -3657,10 +3681,10 @@
                 async submitQuickReplyForm() {
                     this.quickReplySaveError = null;
 
-                    const key = (this.quickReplyForm.key || '').trim();
+                    const description = (this.quickReplyForm.description || '').trim();
                     const message = (this.quickReplyForm.message || '').trim();
 
-                    if (!key || !message) {
+                    if (!description || !message) {
                         this.quickReplySaveError = 'กรุณากรอกคีย์และข้อความให้ครบถ้วน';
                         return;
                     }
@@ -3706,7 +3730,8 @@
                             this.$refs.quickReplyAddModal.hide();
 
                             // refresh รายการ quick reply ใน popup เดิม
-                            this.loadQuickReplies && this.loadQuickReplies();
+                            // ✅ โหลดลิสต์ข้อความตอบกลับใหม่สำหรับห้องนี้
+                            await this.fetchQuickReplies();
 
                             // แถม: แจ้งเตือนเล็ก ๆ ถ้าอยากใช้ Toast
                             // this.$bvToast.toast(resp.data.message, { variant: 'success', solid: true, autoHideDelay: 2000 });
@@ -3716,6 +3741,108 @@
                         this.quickReplySaveError = 'บันทึกข้อความตอบกลับไม่สำเร็จ กรุณาลองใหม่';
                     } finally {
                         this.quickReplySaving = false;
+                    }
+                },
+
+                canAssignConversation() {
+                    // ถ้ามี logic permission จริงให้มาเช็กที่นี่ เช่น เช็ก role / permission
+                    // ตอนนี้เอาเบา ๆ: มีห้อง และ user login admin อยู่ก็ให้เปลี่ยนได้
+                    return !!this.selectedConversation;
+                },
+
+                openAssigneeModal() {
+                    if (!this.selectedConversation || !this.canAssignConversation()) {
+                        return;
+                    }
+
+                    // preset ค่าเริ่มต้นเป็นคนเดิม (ถ้ามี)
+                    this.selectedAssigneeId = this.selectedConversation.assigned_employee_id || null;
+
+                    this.assigneeSearch = '';
+                    this.assigneeLoading = true;
+
+                    this.loadAssignees()
+                        .then(() => {
+                            this.$refs.assigneeModal.show();
+                        })
+                        .finally(() => {
+                            this.assigneeLoading = false;
+                        });
+                },
+
+                async loadAssignees() {
+                    // แนะนำให้มี route backend ประมาณนี้:
+                    // GET /line-oa/assignees   หรือ   /line-oa/conversations/{conversation}/assignees
+                    // ให้คืน data: [{ id, code, name, user_name, role_name }, ...]
+                    try {
+                        const res = await axios.get(this.apiUrl('assignees'));
+                        const body = res.data || {};
+                        const items = body.data || body.employees || [];
+
+                        this.assigneeOptions = items.map(e => {
+                            const name = e.name || e.full_name || e.user_name || e.code || ('พนักงาน #' + e.id);
+
+                            return {
+                                id: e.id,
+                                code: e.code || '',
+                                user_name: e.user_name || '',
+                                display: name,
+                                sub: e.code
+                                    ? (e.user_name ? `${e.code} • ${e.user_name}` : e.code)
+                                    : (e.user_name || ''),
+                                role: e.role_name || e.role || '',
+                            };
+                        });
+                    } catch (e) {
+                        console.error('[LineOA] loadAssignees error', e);
+                        this.assigneeOptions = [];
+                        this.showAlert && this.showAlert({
+                            success: false,
+                            message: 'โหลดรายชื่อผู้รับผิดชอบไม่สำเร็จ',
+                        });
+                    }
+                },
+
+                async saveAssignee() {
+                    if (!this.selectedConversation || !this.selectedAssigneeId) {
+                        return;
+                    }
+
+                    this.savingAssignee = true;
+
+                    try {
+                        const convId = this.selectedConversation.id;
+                        // แนะนำ route backend:
+                        // POST /line-oa/conversations/{conversation}/assign
+                        const res = await axios.post(
+                            this.apiUrl('conversations/' + convId + '/assign'),
+                            { employee_id: this.selectedAssigneeId }
+                        );
+
+                        const conv = res.data.data || res.data.conversation || null;
+                        if (!conv) return;
+
+                        this.updateConversationLocal(conv);
+
+                        this.fetchConversations(1, {silent: true, merge: true})
+                            .then(() => {
+                                const idx = this.conversations.findIndex(c => c.id === conv.id);
+                                if (idx !== -1) {
+                                    this.selectConversation(this.conversations[idx], {reloadMessages: false});
+                                }
+                            });
+
+
+                        this.$refs.assigneeModal.hide();
+
+                    } catch (e) {
+                        console.error('[LineOA] saveAssignee error', e);
+                        this.showAlert && this.showAlert({
+                            success: false,
+                            message: 'เกิดข้อผิดพลาดระหว่างบันทึกผู้รับผิดชอบ',
+                        });
+                    } finally {
+                        this.savingAssignee = false;
                     }
                 },
 

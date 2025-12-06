@@ -83,6 +83,11 @@ Route::domain(
                 Route::get('get-balance', [ChatController::class, 'getBalance'])
                     ->name('getbalance');
 
+                Route::get('assignees', [ChatController::class, 'assignees'])->name('assignees');
+
+                // กำหนดผู้รับผิดชอบให้ห้อง
+                Route::post('conversations/{conversation}/assign', [ChatController::class, 'assign'])->name('conversations.assign');
+
                 Route::get('conversations/{conversation}/notes', [ChatController::class, 'listNotes'])->name('conversations.list-notes');
                 Route::post('conversations/{conversation}/notes', [ChatController::class, 'storeNote'])->name('conversations.store-notes');
                 Route::patch('conversations/{conversation}/notes/{note}', [ChatController::class, 'updateNote'])->name('conversations.notes.update');

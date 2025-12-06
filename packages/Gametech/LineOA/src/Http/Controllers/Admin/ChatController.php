@@ -3,6 +3,7 @@
 namespace Gametech\LineOA\Http\Controllers\Admin;
 
 use Gametech\Admin\Http\Controllers\AppBaseController;
+use Gametech\Admin\Models\Admin;
 use Gametech\Game\Repositories\GameUserRepository;
 use Gametech\LineOA\Events\LineOAChatConversationUpdated;
 use Gametech\LineOA\Events\LineOAConversationAssigned;
@@ -1649,23 +1650,23 @@ class ChatController extends AppBaseController
         // ห้ามรับเรื่องถ้าปิดเคสแล้ว
         if ($conversation->status === 'closed') {
             return response()->json([
-                'message' => 'แชตดำเนินการเสร็จแล้ว',
+                'message' => 'แชตที่เลือก เสร็จสิ้นไปแล้ว',
             ], 409);
         }
 
         // ถ้ามีคนรับเรื่องไว้แล้ว และไม่ใช่เราเอง
-        if ($conversation->assigned_employee_id &&
-            (int) $conversation->assigned_employee_id !== (int) $employeeId) {
-
-            return response()->json([
-                'message' => 'ห้องนี้ถูกพนักงานคนอื่นรับผิดชอบแล้ว',
-            ], 409);
-        }
+        //        if ($conversation->assigned_employee_id &&
+        //            (int) $conversation->assigned_employee_id !== (int) $employeeId) {
+        //
+        //            return response()->json([
+        //                'message' => 'ห้องนี้ถูกพนักงานคนอื่นรับผิดชอบแล้ว',
+        //            ], 409);
+        //        }
 
         // เซต owner (assigned)
-        //        $conversation->assigned_employee_id = (int) $employeeId;
-        //        $conversation->assigned_employee_name = $employeeName;
-        //        $conversation->assigned_at = now();
+        $conversation->assigned_employee_id = (int) $employeeId;
+        $conversation->assigned_employee_name = $employeeName;
+        $conversation->assigned_at = now();
 
         // สถานะห้อง
         if ($conversation->status !== 'closed') {
@@ -1677,6 +1678,63 @@ class ChatController extends AppBaseController
         $conversation->locked_by_employee_name = $employeeName;
         $conversation->locked_at = now();
 
+        $conversation->save();
+
+        $conversationFresh = $conversation->fresh([
+            'contact.member',
+            'account',
+            'registerSessions' => function ($q) {
+                $q->where('status', 'in_progress');
+            },
+        ]) ?? $conversation;
+
+        DB::afterCommit(function () use ($conversationFresh) {
+            event(new LineOAChatConversationUpdated($conversationFresh));
+            event(new LineOAConversationAssigned($conversationFresh));
+        });
+
+        return response()->json([
+            'message' => 'success',
+            'data' => $conversationFresh,
+        ]);
+    }
+
+    public function assignees(): JsonResponse
+    {
+        // ดึงจากตาราง Admin หรือ Employee ตามโครงของโบ๊ท
+        $items = Admin::query()
+            ->where('enable', 'Y')
+            ->orderBy('user_name')
+            ->get([
+                'code',
+                'user_name',
+                'name',
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $items,
+        ]);
+    }
+
+    public function assign(Request $request, LineConversation $conversation): JsonResponse
+    {
+        $data = $request->validate([
+            'employee_id' => ['required', 'integer'],
+        ]);
+
+        $employee = Admin::find($data['employee_id']);
+
+        if (! $employee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบผู้ใช้งานที่เลือก',
+            ], 404);
+        }
+
+        $conversation->assigned_employee_id = $employee->code; // หรือ id แล้วแต่แบบที่ใช้
+        $conversation->assigned_employee_name = $employee->user_name ?? $employee->name;
+        $conversation->assigned_at = now();
         $conversation->save();
 
         $conversationFresh = $conversation->fresh([

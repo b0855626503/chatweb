@@ -3,7 +3,7 @@
         id="quick-reply-modal"
         ref="quickReplyModal"
         title="เลือกข้อความตอบกลับ"
-        size="lg"
+        size="md"
         centered
         :no-close-on-backdrop="true"
         @hidden="onQuickReplyModalHidden"
@@ -588,3 +588,95 @@
         </b-button>
     </template>
 </b-modal>
+
+<b-modal
+        id="assignee-modal"
+        ref="assigneeModal"
+        title="เลือกผู้รับผิดชอบเคสนี้"
+        size="md"
+        centered
+        :no-close-on-backdrop="true"
+>
+    <!-- Loading -->
+    <div v-if="assigneeLoading" class="text-center my-4">
+        <b-spinner small></b-spinner>
+        <span class="ml-2">กำลังโหลดรายชื่อพนักงาน...</span>
+    </div>
+
+    <!-- Content -->
+    <div v-else>
+        <!-- search -->
+        <div class="mb-2">
+            <b-form-input
+                    v-model="assigneeSearch"
+                    size="sm"
+                    autocomplete="off"
+                    placeholder="ค้นหาชื่อ / รหัสพนักงาน / user_name"
+            ></b-form-input>
+        </div>
+
+        <!-- list -->
+        <div
+                class="list-group assignee-list"
+                v-if="filteredAssignees.length"
+        >
+            <button
+                    v-for="emp in filteredAssignees"
+                    :key="emp.id"
+                    type="button"
+                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                    :class="{ active: selectedAssigneeId === emp.id }"
+                    @click="selectedAssigneeId = emp.id"
+            >
+                <div>
+                    <div class="font-weight-bold">
+                        @{{ emp.display }}
+                    </div>
+                    <div class="small text-muted">
+                        @{{ emp.sub || '' }}
+                    </div>
+                </div>
+
+                <span v-if="selectedAssigneeId === emp.id" class="badge badge-light">
+                    <i class="fa fa-check"></i>
+                </span>
+            </button>
+        </div>
+
+        <div v-else class="text-muted text-center my-4">
+            ไม่พบพนักงานที่สามารถเลือกได้
+        </div>
+    </div>
+
+    <template #modal-footer>
+        <div class="w-100 d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+                เลือกพนักงาน 1 คนเพื่อเป็นผู้รับผิดชอบเคสนี้
+            </div>
+            <div>
+                <b-button
+                        variant="outline-secondary"
+                        size="sm"
+                        @click="$refs.assigneeModal.hide()"
+                >
+                    ยกเลิก
+                </b-button>
+                <b-button
+                        variant="primary"
+                        size="sm"
+                        class="ml-2"
+                        :disabled="!selectedAssigneeId || savingAssignee"
+                        @click="saveAssignee"
+                >
+                    <span v-if="savingAssignee">
+                        <b-spinner small class="mr-1"></b-spinner> กำลังบันทึก...
+                    </span>
+                    <span v-else>
+                        บันทึกผู้รับผิดชอบ
+                    </span>
+                </b-button>
+            </div>
+        </div>
+    </template>
+</b-modal>
+
