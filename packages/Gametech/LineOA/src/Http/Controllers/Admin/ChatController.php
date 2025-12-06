@@ -336,7 +336,7 @@ class ChatController extends AppBaseController
     {
         $data = $request->validate([
             'text' => ['required', 'string'],
-            'reply_to_message_id' => ['nullable', 'integer'], // 👈 เพิ่ม field สำหรับ reply
+            'reply_to_message_id' => ['nullable', 'integer'], // 👈 รองรับ reply
         ]);
 
         $text = trim($data['text']);
@@ -366,14 +366,7 @@ class ChatController extends AppBaseController
             $conversation->save();
         }
 
-        // ถ้าอนาคตจะเปิด lock-check กลับมา ค่อย uncomment ตรงนี้
-        // if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
-        //     return response()->json([
-        //         'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
-        //     ], 403);
-        // }
-
-        // เตรียม meta พื้นฐาน
+        // meta พื้นฐาน
         $meta = [
             'employee_name' => $employee->user_name ?? null,
         ];
@@ -423,26 +416,46 @@ class ChatController extends AppBaseController
 
         $msgMeta = $message->meta;
         if (is_array($msgMeta)) {
+            // ถ้ามี translation_outbound → ใช้ข้อความที่แปลแล้วเป็น base
             $outboundTrans = $msgMeta['translation_outbound'] ?? null;
 
             if (is_array($outboundTrans) && ! empty($outboundTrans['translated_text'])) {
                 $lineText = $outboundTrans['translated_text'];
             }
+
+            // 👇 ถ้ามีข้อมูล reply_to ให้ prepend ข้อความเดิมขึ้นไปบนสุด
+            $replyMeta = $msgMeta['reply_to'] ?? null;
+            if (is_array($replyMeta)) {
+                $replyText = trim((string) ($replyMeta['text'] ?? ''));
+
+                // เอาเฉพาะเคสที่ต้นฉบับเป็น text และมีข้อความจริง ๆ
+                $replyType = $replyMeta['type'] ?? 'text';
+                if ($replyText !== '' && $replyType === 'text') {
+                    // รูปแบบ:
+                    // ตอบกลับ: {ข้อความเดิม...}
+                    // {ข้อความที่ agent พิมพ์หรือแปลแล้ว}
+                    $prefix = "ตอบกลับ: {$replyText}\n";
+                    $lineText = $prefix.$lineText;
+                }
+            }
         }
 
+        // -------------------------
+        // ส่งข้อความไป LINE
+        // -------------------------
         if ($account && $contact && $contact->line_user_id) {
             $result = $this->lineMessaging->pushText(
                 $account,
                 $contact->line_user_id,
-                $lineText        // ← ใช้ตัวนี้เหมือนเดิม
+                $lineText
             );
 
             if (! ($result['success'] ?? false)) {
                 Log::channel('line_oa')->warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
-                    'contact_id' => $contact->id,
-                    'error' => $result['error'] ?? null,
-                    'status' => $result['status'] ?? null,
+                    'contact_id'      => $contact->id,
+                    'error'           => $result['error'] ?? null,
+                    'status'          => $result['status'] ?? null,
                 ]);
             }
         } else {
@@ -458,11 +471,11 @@ class ChatController extends AppBaseController
                 'direction' => $message->direction,
                 'source' => $message->source,
                 'type' => $message->type,
-                'text' => $message->text,
+                'text' => $message->text, // ในระบบเก็บเฉพาะข้อความที่ agent พิมพ์
                 'sent_at' => optional($message->sent_at)->toIso8601String(),
                 'sender_employee_id' => $message->sender_employee_id,
                 'sender_bot_key' => $message->sender_bot_key,
-                'meta' => $message->meta,      // 👈 ตรงนี้จะมี reply_to กลับไปด้วย
+                'meta' => $message->meta,      // มี reply_to ให้ frontend ใช้แสดง quote
                 'payload' => $message->payload,
             ],
         ]);

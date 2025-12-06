@@ -2791,6 +2791,11 @@
                     const form = new FormData();
                     form.append('image', file);
 
+                    // 👇 ถ้าเลือก “ตอบกลับข้อความ” ไว้ ให้ส่ง id ต้นทางไปด้วย
+                    if (this.replyingToMessage && this.replyingToMessage.id) {
+                        form.append('reply_to_message_id', this.replyingToMessage.id);
+                    }
+
                     axios.post(this.apiUrl('conversations/' + convId + '/reply-image'), form, {
                         headers: {
                             'Content-Type': 'multipart/form-data'
@@ -2818,6 +2823,9 @@
                                 this.$set(this.conversations, idx, updated);
                             }
 
+                            // ✅ ส่งรูปเสร็จแล้ว ให้ถือว่าตอบกลับเสร็จ เคลียร์ state
+                            this.replyingToMessage = null;
+
                             this.$nextTick(() => this.scrollToBottom());
                         }
                     }).catch(err => {
@@ -2837,6 +2845,7 @@
                         this.uploadingImage = false;
                     });
                 },
+
 
                 // ====== สร้าง preview จาก message เวลา event ไม่ส่ง last_message มา ======
                 buildPreviewFromMessage(msg) {
