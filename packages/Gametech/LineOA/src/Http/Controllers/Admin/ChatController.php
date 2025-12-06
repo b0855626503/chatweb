@@ -336,6 +336,7 @@ class ChatController extends AppBaseController
     {
         $data = $request->validate([
             'text' => ['required', 'string'],
+            'reply_to_message_id' => ['nullable', 'integer'], // 👈 เพิ่ม field สำหรับ reply
         ]);
 
         $text = trim($data['text']);
@@ -346,6 +347,7 @@ class ChatController extends AppBaseController
             ], 422);
         }
 
+        /** @var \Gametech\Admin\Models\Admin|null $employee */
         $employee = Auth::guard('admin')->user();
         $employeeId = $employee?->code ?? null;
 
@@ -364,19 +366,48 @@ class ChatController extends AppBaseController
             $conversation->save();
         }
 
-        //        if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
-        //            return response()->json([
-        //                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
-        //            ], 403);
-        //        }
+        // ถ้าอนาคตจะเปิด lock-check กลับมา ค่อย uncomment ตรงนี้
+        // if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
+        //     return response()->json([
+        //         'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
+        //     ], 403);
+        // }
 
+        // เตรียม meta พื้นฐาน
+        $meta = [
+            'employee_name' => $employee->user_name ?? null,
+        ];
+
+        // -------------------------
+        // จัดการข้อมูล reply_to (ถ้ามี)
+        // -------------------------
+        $replyToId = $data['reply_to_message_id'] ?? null;
+
+        if ($replyToId) {
+            /** @var \Gametech\LineOA\Models\LineMessage|null $replyTo */
+            $replyTo = LineMessage::query()
+                ->where('line_conversation_id', $conversation->id)
+                ->where('id', $replyToId)
+                ->first();
+
+            if ($replyTo) {
+                $meta['reply_to'] = [
+                    'id'        => $replyTo->id,
+                    'text'      => mb_strimwidth((string) $replyTo->text, 0, 80, '...'),
+                    'direction' => $replyTo->direction,
+                    'source'    => $replyTo->source,
+                    'type'      => $replyTo->type,
+                    'sent_at'   => optional($replyTo->sent_at)->toIso8601String(),
+                ];
+            }
+        }
+
+        // --------- สร้าง message outbound ฝั่งระบบเรา ---------
         $message = $this->chat->createOutboundMessageFromAgent(
             $conversation,
             $text,
             $employeeId,
-            [
-                'employee_name' => $employee->user_name ?? null,
-            ]
+            $meta
         );
 
         $conversation->loadMissing(['account', 'contact.member']);
@@ -390,9 +421,9 @@ class ChatController extends AppBaseController
         // -------------------------
         $lineText = $text;
 
-        $meta = $message->meta;
-        if (is_array($meta)) {
-            $outboundTrans = $meta['translation_outbound'] ?? null;
+        $msgMeta = $message->meta;
+        if (is_array($msgMeta)) {
+            $outboundTrans = $msgMeta['translation_outbound'] ?? null;
 
             if (is_array($outboundTrans) && ! empty($outboundTrans['translated_text'])) {
                 $lineText = $outboundTrans['translated_text'];
@@ -403,10 +434,10 @@ class ChatController extends AppBaseController
             $result = $this->lineMessaging->pushText(
                 $account,
                 $contact->line_user_id,
-                $lineText        // ← เปลี่ยนมาใช้ตัวนี้
+                $lineText        // ← ใช้ตัวนี้เหมือนเดิม
             );
 
-            if (! $result['success']) {
+            if (! ($result['success'] ?? false)) {
                 Log::channel('line_oa')->warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
                     'contact_id' => $contact->id,
@@ -431,7 +462,7 @@ class ChatController extends AppBaseController
                 'sent_at' => optional($message->sent_at)->toIso8601String(),
                 'sender_employee_id' => $message->sender_employee_id,
                 'sender_bot_key' => $message->sender_bot_key,
-                'meta' => $message->meta,
+                'meta' => $message->meta,      // 👈 ตรงนี้จะมี reply_to กลับไปด้วย
                 'payload' => $message->payload,
             ],
         ]);
@@ -795,6 +826,254 @@ class ChatController extends AppBaseController
             'data' => $message,
         ]);
     }
+    public function replyTemplateText(Request $request, LineConversation $conversation): JsonResponse
+    {
+        $data = $request->validate([
+            'template_id'  => ['required', 'integer'],
+            'vars'         => ['array'],
+            'preview_only' => ['sometimes', 'boolean'],
+        ]);
+
+        /** @var \Gametech\Admin\Models\Admin|null $employee */
+        $employee = Auth::guard('admin')->user();
+
+        if (! $employee) {
+            return response()->json([
+                'message' => 'ไม่พบข้อมูลผู้ใช้งาน (admin)',
+            ], 403);
+        }
+
+        $employeeId = $employee->code ?? null;
+        $employeeName = $employee->user_name ?? ($employee->name ?? 'พนักงาน');
+        if (! $employeeId) {
+            return response()->json([
+                'message' => 'ไม่พบรหัสพนักงาน (code)',
+            ], 403);
+        }
+
+        // ===== 1) หา template =====
+        /** @var LineTemplate|null $template */
+        $template = LineTemplate::query()
+            ->where('id', $data['template_id'])
+            ->where(function ($q) {
+                $q->where('enabled', 1)->orWhereNull('enabled');
+            })
+            ->first();
+
+        if (! $template) {
+            return response()->json([
+                'message' => 'ไม่พบข้อความด่วนที่เลือก',
+            ], 404);
+        }
+
+        // ===== 2) เตรียมตัวแปรพื้นฐานไว้แทน placeholder =====
+        $conversation->loadMissing([
+            'contact.member',
+            'contact.member.bank',
+        ]);
+
+        $contact = $conversation->contact;
+        $member = $contact?->member;
+        $bank = $member?->bank;
+
+        $displayName =
+            $contact->display_name
+            ?? $member->name
+            ?? $contact->name
+            ?? $contact->line_name
+            ?? 'ลูกค้า';
+
+        $username =
+            $member->user_name
+            ?? $contact->member_username
+            ?? '';
+
+        $memberId =
+            $member->code
+            ?? $contact->member_id
+            ?? '';
+
+        $phone =
+            $member->mobile
+            ?? $member->tel
+            ?? $contact->member_mobile
+            ?? '';
+
+        $bankName =
+            ($bank->name_th ?? null)
+            ?? ($bank->name ?? null)
+            ?? $member->bank_name
+            ?? $contact->member_bank_name
+            ?? '';
+
+        $bankCode =
+            $member->bank_code
+            ?? $contact->member_bank_code
+            ?? '';
+
+        $accountNo =
+            $member->acc_no
+            ?? $member->account_no
+            ?? $contact->member_acc_no
+            ?? '';
+
+        $baseVars = [
+            'display_name' => $displayName,
+            'username'     => $username,
+            'member_id'    => $memberId,
+            'phone'        => $phone,
+            'bank_name'    => $bankName,
+            'game_user'    => $member->game_user ?? '',
+            'bank_code'    => $bankCode,
+            'account_no'   => $accountNo,
+            'login_url'    => UrlHelper::loginUrl(),
+            'site_name'    => config('app.name', config('app.domain_url')),
+            'support_name' => trim(($employee->name ?? '').' '.($employee->surname ?? '')),
+        ];
+
+        $vars = array_merge($baseVars, $data['vars'] ?? []);
+
+        // ===== 3) แปลง template.message -> โครงสร้าง {version, messages[]} =====
+        $structured = $this->normalizeTemplateMessage($template->message);
+
+        $items = $structured['messages'] ?? [];
+        if (! is_array($items) || ! count($items)) {
+            return response()->json([
+                'message' => 'template นี้ไม่มีข้อความที่ส่งได้',
+            ], 422);
+        }
+
+        // ===== 4) render placeholders + แปลงเป็น LINE messages (text / image) =====
+        $lineMessages = [];
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $kind = $item['kind'] ?? 'text';
+
+            if ($kind === 'text') {
+                $text = (string) ($item['text'] ?? '');
+                $text = $this->applyTemplatePlaceholders($text, $vars);
+
+                if ($text === '') {
+                    continue;
+                }
+
+                $lineMessages[] = [
+                    'type' => 'text',
+                    'text' => $text,
+                ];
+            } elseif ($kind === 'image') {
+                $original = $item['original'] ?? $item['url'] ?? '';
+                $preview = $item['preview'] ?? $original;
+
+                $original = $this->applyTemplatePlaceholders((string) $original, $vars);
+                $preview = $this->applyTemplatePlaceholders((string) $preview, $vars);
+
+                if ($original === '') {
+                    continue;
+                }
+
+                $lineMessages[] = [
+                    'type' => 'image',
+                    'originalContentUrl' => $original,
+                    'previewImageUrl'    => $preview,
+                ];
+            }
+            // future: kind อื่นค่อยเพิ่มตรงนี้
+        }
+
+        if (! count($lineMessages)) {
+            return response()->json([
+                'message' => 'template นี้ไม่มีข้อความที่ส่งได้ หลังแทนตัวแปรแล้ว',
+            ], 422);
+        }
+
+        // ===== 5) เลือกข้อความ text ตัวแรกไว้เป็น preview =====
+        $previewText = null;
+        foreach ($lineMessages as $lm) {
+            if (($lm['type'] ?? null) === 'text' && ! empty($lm['text'])) {
+                $previewText = $lm['text'];
+                break;
+            }
+        }
+
+        if (! $previewText) {
+            $firstType = $lineMessages[0]['type'] ?? 'message';
+            $previewText = '['.$firstType.']';
+        }
+
+        // ===== 5.5) โหมด preview_only: แค่คืนข้อความให้ frontend ไปใส่ textarea =====
+        if ($request->boolean('preview_only')) {
+            return response()->json([
+                'data' => [
+                    'text'          => $previewText,
+                    'line_messages' => $lineMessages,
+                ],
+            ]);
+        }
+
+        // ===== 6) จากนี้คือโหมด "ส่งจริง" เหมือนของเดิม =====
+
+        // ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานส่ง template ใหม่ → เปิดสถานะกลับเป็น open
+        if ($conversation->status === 'closed') {
+            $conversation->status = 'open';
+            $conversation->closed_by_employee_id = null;
+            $conversation->closed_by_employee_name = null;
+            $conversation->closed_at = null;
+            $conversation->save();
+        }
+
+        $message = $this->chat->createOutboundQuickReplyFromAgent(
+            $conversation,
+            $previewText,
+            (int) $employeeId,
+            [
+                'template_id'   => $template->id,
+                'line_messages' => $lineMessages,
+                'vars'          => $vars,
+            ],
+            [
+                'template_key'          => $template->key ?? null,
+                'template_title'        => $template->title ?? $template->description ?? null,
+                'sender_employee_name'  => $employeeName,
+            ]
+        );
+
+        // ===== 7) ส่งไปที่ LINE จริง ๆ =====
+        $account = $conversation->account;
+        $contact = $conversation->contact;
+
+        if ($account && $contact && $contact->line_user_id) {
+            $result = $this->lineMessaging->pushMessages(
+                $account,
+                $contact->line_user_id,
+                $lineMessages
+            );
+
+            if (! ($result['success'] ?? false)) {
+                Log::channel('line_oa')->warning('[LineOA] ส่ง quick reply ไป LINE ไม่สำเร็จ', [
+                    'conversation_id' => $conversation->id,
+                    'contact_id'      => $contact->id ?? null,
+                    'template_id'     => $template->id,
+                    'status'          => $result['status'] ?? null,
+                    'error'           => $result['error'] ?? null,
+                ]);
+            }
+        } else {
+            Log::channel('line_oa')->warning('[LineOA] ไม่สามารถส่ง quick reply ไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
+                'conversation_id' => $conversation->id,
+                'template_id'     => $template->id,
+            ]);
+        }
+
+        return response()->json([
+            'data' => $message,
+        ]);
+    }
+
 
     /**
      * แปลง field message จาก LineTemplate ให้กลายเป็นโครงสร้างมาตรฐาน

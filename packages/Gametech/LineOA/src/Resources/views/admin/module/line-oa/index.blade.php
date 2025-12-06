@@ -519,7 +519,7 @@
                                                 class="mt-1 small text-muted"
                                                 v-if="selectedConversation.status === 'closed' && selectedConversation.closed_at"
                                         >
-                                            ปิดเมื่อ @{{ formatDateTime(selectedConversation.closed_at) }}
+                                            เสร็จสิ้น @{{ formatChatDateTime(selectedConversation.closed_at) }}
                                         </div>
                                     </div>
                                 </div>
@@ -684,7 +684,7 @@
                                                                         <i class="fa fa-ellipsis-h"></i>
                                                                     </template>
 
-                                                                    <b-dropdown-item @click="replyToMessage(item.message)">
+                                                                    <b-dropdown-item @click="startReply(item.message)">
                                                                         ตอบกลับ
                                                                     </b-dropdown-item>
 
@@ -808,7 +808,7 @@
                                                                         <i class="fa fa-ellipsis-h"></i>
                                                                     </template>
 
-                                                                    <b-dropdown-item @click="replyToMessage(item.message)">
+                                                                    <b-dropdown-item @click="startReply(item.message)">
                                                                         ตอบกลับ
                                                                     </b-dropdown-item>
 
@@ -836,6 +836,28 @@
                             {{-- REPLY BOX --}}
                             <div class="border-top p-2 bg-white" v-if="selectedConversation">
 
+                                {{-- แถบ preview เมื่อกำลังตอบกลับข้อความใดข้อความหนึ่ง --}}
+                                <div
+                                        v-if="replyingToMessage"
+                                        class="border-left border-primary pl-2 pr-2 py-1 mb-1 small d-flex justify-content-between align-items-start"
+                                >
+                                    <div class="mr-2">
+                                        <div class="text-muted">
+                                            ตอบกลับ:
+                                        </div>
+                                        <div class="font-italic text-truncate" style="max-width: 260px;">
+                                            @{{ replyingToMessage.text || '[ข้อความเดิม]' }}
+                                        </div>
+                                    </div>
+                                    <b-button
+                                            variant="link"
+                                            size="sm"
+                                            class="p-0 text-muted"
+                                            @click="cancelReply"
+                                    >
+                                        ยกเลิก
+                                    </b-button>
+                                </div>
 
                                 {{-- กล่องพิมพ์ข้อความ --}}
                                 <b-form-textarea
@@ -877,7 +899,7 @@
                                             <i class="fa fa-paperclip"></i>
                                         </b-button>
 
-                                        {{-- ข้อความตอบกลับ --}}
+                                        {{-- ข้อความตอบกลับด่วน (Quick Reply) --}}
                                         <b-button
                                                 size="sm"
                                                 variant="link"
@@ -908,11 +930,13 @@
                                 </div>
 
                                 {{-- input file ซ่อน --}}
-                                <input type="file"
-                                       ref="imageInput"
-                                       class="d-none"
-                                       accept="image/*"
-                                       @change="onSelectImage">
+                                <input
+                                        type="file"
+                                        ref="imageInput"
+                                        class="d-none"
+                                        accept="image/*"
+                                        @change="onSelectImage"
+                                >
                             </div>
 
                         </div>
@@ -1086,9 +1110,9 @@
                                     </a>
                                 </div>
                                 <div v-if="selectedConversation.closed_at">
-                                    <span class="text-muted">ปิดเมื่อ:</span>
+                                    <span class="text-muted">เสร็จสิ้น:</span>
                                     <span class="ml-1">
-                                @{{ formatDateTime(selectedConversation.closed_at) }}
+                                @{{ formatChatDateTime(selectedConversation.closed_at) }}
                             </span>
                                 </div>
                             </div>
@@ -1149,7 +1173,7 @@
                                                     <div class="d-flex align-items-center">
 
             <span v-if="activeNote.created_at" class="mr-2">
-                @{{ formatDateTime(activeNote.created_at) }}
+                @{{ formatChatDateTime(activeNote.created_at) }}
             </span>
 
                                                         <b-button
@@ -1258,6 +1282,7 @@
                     messages: [],
                     loadingMessages: false,
                     replyText: '',
+                    replyingToMessage: null,
                     sending: false,
                     uploadingImage: false,
                     autoRefreshTimer: null,
@@ -1440,10 +1465,10 @@
                     if (!conv) return false;
 
                     // ปิดเคส → ห้ามตอบ
-                    if (conv.status === 'closed') return false;
+                    // if (conv.status === 'closed') return false;
 
                     // ต้องมีคนรับเรื่องก่อน
-                    if (!conv.assigned_employee_id) return true;
+                    // if (!conv.assigned_employee_id) return true;
 
                     const me = this.currentEmployeeId;
                     if (!me) return false;
@@ -1605,10 +1630,6 @@
                 // }, 400),
             },
             methods: {
-                replyToMessage(msg) {
-                    // ไว้ค่อยออกแบบต่อว่าจะ quote ยังไง
-                    console.log('replyToMessage', msg.id);
-                },
                 pinMessage(msg) {
                     console.log('pinMessage', msg.id);
                 },
@@ -1649,6 +1670,23 @@
                         minute: '2-digit',
                     });
                 },
+                formatChatDateTime(dateString) {
+                    if (!dateString) return '';
+                    const d = new Date(dateString);
+
+                    const day = d.getDate();
+                    const monthShort = d.toLocaleDateString('th-TH', { month: 'short' }); // ธ.ค.
+                    const year = d.getFullYear();
+
+                    const time = d.toLocaleTimeString('th-TH', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }).replace(':', '.') + ' น.';
+
+                    return `${day} ${monthShort} ${year} ${time}`;
+                },
+
                 // ===== Notes API (ต้องมี backend: GET/POST /line-oa/conversations/{id}/notes) =====
                 async loadNotes() {
                     if (!this.selectedConversation || !this.selectedConversation.id) {
@@ -2592,81 +2630,6 @@
                             }
                         });
                 },
-                sendReply() {
-                    if (!this.selectedConversation || this.sending) return;
-
-                    if (!this.canReply) {
-                        const msg = 'ห้องนี้ยังไม่ได้รับเรื่อง หรือคุณไม่ได้เป็นผู้รับเรื่อง ไม่สามารถตอบลูกค้าได้';
-                        this.showAlert({
-                            success: false,
-                            message: msg
-                        });
-
-                        return;
-                    }
-
-                    const text = this.replyText.trim();
-                    if (text === '') return;
-
-                    this.sending = true;
-
-                    axios.post(this.apiUrl('conversations/' + this.selectedConversation.id + '/reply'), {
-                        text: text,
-                    }).then(res => {
-                        const msg = res.data && res.data.data ? res.data.data : null;
-
-                        if (msg) {
-                            this.messages.push(msg);
-
-                            if (this.selectedConversation) {
-                                this.selectedConversation.last_message = msg.text || this.selectedConversation.last_message;
-                                this.selectedConversation.last_message_at = msg.sent_at || this.selectedConversation.last_message_at;
-                                this.selectedConversation.unread_count = 0;
-                            }
-
-                            const idx = this.conversations.findIndex(c => c.id === this.selectedConversation.id);
-                            if (idx !== -1) {
-                                const conv = this.conversations[idx];
-                                const updated = Object.assign({}, conv, {
-                                    last_message: this.selectedConversation.last_message,
-                                    last_message_at: this.selectedConversation.last_message_at,
-                                    unread_count: 0,
-                                });
-                                this.$set(this.conversations, idx, updated);
-                            }
-                        }
-
-                        this.replyText = '';
-
-                        this.$nextTick(() => {
-                            this.scrollToBottom();
-                        });
-
-                    }).catch(err => {
-                        const status = err.response?.status;
-                        const data = err.response?.data || {};
-
-                        if (status === 403) {
-
-                            // alert(data.message || 'ไม่สามารถตอบห้องนี้ได้ เนื่องจากถูกล็อกโดยพนักงานคนอื่น');
-                            const msg = data.message || 'ไม่สามารถตอบห้องนี้ได้ เนื่องจากถูกล็อกโดยพนักงานคนอื่น';
-                            this.showAlert({
-                                success: false,
-                                message: msg
-                            });
-                            return;
-                        }
-                        console.error('sendReply error', err);
-                        const msg = 'ส่งข้อความไม่สำเร็จ กรุณาลองใหม่';
-                        this.showAlert({
-                            success: false,
-                            message: msg
-                        });
-                        // alert('ส่งข้อความไม่สำเร็จ กรุณาลองใหม่');
-                    }).finally(() => {
-                        this.sending = false;
-                    });
-                },
 
                 scrollToBottom() {
                     const el = this.$refs.messageContainer;
@@ -3367,8 +3330,8 @@
 
                     const id = this.selectedConversation.id;
 
-                    const ok = await this.showConfirm({message: 'ยืนยันปิดเคสนี้ ?'});
-                    if (!ok) return;
+                    // const ok = await this.showConfirm({message: 'ยืนยันปิดเคสนี้ ?'});
+                    // if (!ok) return;
 
                     try {
                         const {data} = await axios.post(this.apiUrl('conversations/' + id + '/close'));
@@ -3379,15 +3342,15 @@
                         this.updateConversationLocal(conv);
 
                         // 2) เปลี่ยน filter ไปแท็บปิดเคส
-                        this.filters.status = 'closed';
+                        // this.filters.status = 'closed';
 
                         // 3) โหลด list ใหม่แบบ merge แล้วเลือกห้องเดิม
-                        await this.fetchConversations(1, {silent: true, merge: true});
+                        await this.fetchConversations(1, {silent: true, merge: false});
 
-                        const idx = this.conversations.findIndex(c => c.id === conv.id);
-                        if (idx !== -1) {
-                            this.selectConversation(this.conversations[idx], {reloadMessages: false});
-                        }
+                        // const idx = this.conversations.findIndex(c => c.id === conv.id);
+                        // if (idx !== -1) {
+                        //     this.selectConversation(this.conversations[idx], {reloadMessages: false});
+                        // }
                     } catch (err) {
                         const msg =
                             err?.response?.data?.message ??
@@ -3943,6 +3906,115 @@
                         this.savingAssignee = false;
                     }
                 },
+
+                startReply(msg) {
+                    this.replyingToMessage = {
+                        id: msg.id,
+                        text: msg.text || '',
+                        direction: msg.direction,
+                        source: msg.source,
+                    };
+
+                    // โฟกัส textarea เพื่อให้พิมพ์ต่อได้เลย
+                    this.$nextTick(() => {
+                        this.$refs.replyBox && this.$refs.replyBox.focus && this.$refs.replyBox.focus();
+                    });
+                },
+
+                // กดยกเลิกแถบ "กำลังตอบกลับ"
+                cancelReply() {
+                    this.replyingToMessage = null;
+                },
+
+               sendReply() {
+                    if (!this.selectedConversation || this.sending) return;
+
+                    if (!this.canReply) {
+                        const msg = 'ห้องนี้ยังไม่ได้รับเรื่อง หรือคุณไม่ได้เป็นผู้รับเรื่อง ไม่สามารถตอบลูกค้าได้';
+                        this.showAlert({
+                            success: false,
+                            message: msg
+                        });
+
+                        return;
+                    }
+
+                    const text = (this.replyText || '').trim();
+                    if (text === '') return;
+
+                    this.sending = true;
+
+                    // 👇 เปลี่ยนจากส่ง object literal ตรง ๆ มาเป็น payload แยกก่อน
+                    const payload = {
+                        text: text,
+                    };
+
+                    // ถ้ามีข้อความที่เลือกไว้เพื่อตอบกลับ → แนบ id ไปให้ backend
+                    if (this.replyingToMessage && this.replyingToMessage.id) {
+                        payload.reply_to_message_id = this.replyingToMessage.id;
+                    }
+
+                    axios.post(
+                        this.apiUrl('conversations/' + this.selectedConversation.id + '/reply'),
+                        payload
+                    ).then(res => {
+                        const msg = res.data && res.data.data ? res.data.data : null;
+
+                        if (msg) {
+                            // ใส่ message ใหม่เข้า timeline
+                            this.messages.push(msg);
+
+                            if (this.selectedConversation) {
+                                this.selectedConversation.last_message = msg.text || this.selectedConversation.last_message;
+                                this.selectedConversation.last_message_at = msg.sent_at || this.selectedConversation.last_message_at;
+                                this.selectedConversation.unread_count = 0;
+                            }
+
+                            const idx = this.conversations.findIndex(c => c.id === this.selectedConversation.id);
+                            if (idx !== -1) {
+                                const conv = this.conversations[idx];
+                                const updated = Object.assign({}, conv, {
+                                    last_message: this.selectedConversation.last_message,
+                                    last_message_at: this.selectedConversation.last_message_at,
+                                    unread_count: 0,
+                                });
+                                this.$set(this.conversations, idx, updated);
+                            }
+                        }
+
+                        // เคลียร์กล่องพิมพ์ + state การตอบกลับ
+                        this.replyText = '';
+                        this.replyingToMessage = null;
+
+                        this.$nextTick(() => {
+                            this.scrollToBottom();
+                        });
+
+                    }).catch(err => {
+                        const status = err.response?.status;
+                        const data = err.response?.data || {};
+
+                        if (status === 403) {
+                            const msg = data.message || 'ไม่สามารถตอบห้องนี้ได้ เนื่องจากถูกล็อกโดยพนักงานคนอื่น';
+                            this.showAlert({
+                                success: false,
+                                message: msg
+                            });
+                            return;
+                        }
+
+                        console.error('sendReply error', err);
+                        const msg = 'ส่งข้อความไม่สำเร็จ กรุณาลองใหม่';
+                        this.showAlert({
+                            success: false,
+                            message: msg
+                        });
+
+                    }).finally(() => {
+                        this.sending = false;
+                    });
+                },
+
 
             }
         });

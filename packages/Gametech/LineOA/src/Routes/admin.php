@@ -44,7 +44,7 @@ Route::domain(
                 Route::get('conversations/{conversation}/quick-replies', [ChatController::class, 'quickReplies'])
                     ->name('conversations.quick-replies');
 
-                Route::post('conversations/{conversation}/reply-template', [ChatController::class, 'replyTemplate'])
+                Route::post('conversations/{conversation}/reply-template', [ChatController::class, 'replyTemplateText'])
                     ->name('conversations.reply-template');
 
                 Route::get('members/find', [ChatController::class, 'findMember'])->name('members.find');
