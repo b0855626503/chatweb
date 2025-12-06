@@ -5,6 +5,7 @@ namespace Gametech\LineOA\Providers;
 use Gametech\LineOA\Models\LineAccount;
 use Gametech\LineOA\Models\LineContact;
 use Gametech\LineOA\Models\LineConversation;
+use Gametech\LineOA\Models\LineConversationNote;
 use Gametech\LineOA\Models\LineMessage;
 use Gametech\LineOA\Models\LineRegisterSession;
 use Gametech\LineOA\Models\LineTemplate;
@@ -26,5 +27,6 @@ class ModuleServiceProvider extends BaseModuleServiceProvider
         LineTemplate::class,
         LineRegisterSession::class,
         LineWebhookLog::class,
+        LineConversationNote::class,
     ];
 }

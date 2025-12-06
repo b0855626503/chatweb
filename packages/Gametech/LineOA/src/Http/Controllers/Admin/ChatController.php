@@ -12,6 +12,7 @@ use Gametech\LineOA\Events\LineOAConversationLocked;
 use Gametech\LineOA\Events\LineOAConversationOpen;
 use Gametech\LineOA\Models\LineContact;
 use Gametech\LineOA\Models\LineConversation;
+use Gametech\LineOA\Models\LineConversationNote;
 use Gametech\LineOA\Models\LineMessage;
 use Gametech\LineOA\Models\LineRegisterSession;
 use Gametech\LineOA\Models\LineTemplate;
@@ -266,7 +267,6 @@ class ChatController extends AppBaseController
             });
         }
 
-
         $data = [
             'conversation' => [
                 'id' => $conversation->id,
@@ -364,11 +364,11 @@ class ChatController extends AppBaseController
             ], 403);
         }
 
-//        if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
-//            return response()->json([
-//                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
-//            ], 403);
-//        }
+        //        if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
+        //            return response()->json([
+        //                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
+        //            ], 403);
+        //        }
 
         $message = $this->chat->createOutboundMessageFromAgent(
             $conversation,
@@ -463,11 +463,11 @@ class ChatController extends AppBaseController
             ], 403);
         }
 
-//        if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
-//            return response()->json([
-//                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
-//            ], 403);
-//        }
+        //        if ($conversation->locked_by_employee_id && $conversation->locked_by_employee_id != $employeeId) {
+        //            return response()->json([
+        //                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
+        //            ], 403);
+        //        }
 
         $message = $this->chat->createOutboundImageFromAgent(
             $conversation,
@@ -875,7 +875,7 @@ class ChatController extends AppBaseController
     {
         $data = $request->validate([
             'template_id' => ['required', 'integer'],
-            'vars'        => ['array'],
+            'vars' => ['array'],
         ]);
 
         /** @var \Gametech\Admin\Models\Employee|null $employee */
@@ -910,8 +910,8 @@ class ChatController extends AppBaseController
         ]);
 
         $contact = $conversation->contact;
-        $member  = $contact?->member;
-        $bank    = $member?->bank;
+        $member = $contact?->member;
+        $bank = $member?->bank;
 
         $displayName =
             $contact->display_name
@@ -956,15 +956,15 @@ class ChatController extends AppBaseController
 
         $baseVars = [
             'display_name' => $displayName,
-            'username'     => $username,
-            'member_id'    => $memberId,
-            'phone'        => $phone,
-            'bank_name'    => $bankName,
-            'game_user'    => $member->game_user,
-            'bank_code'    => $bankCode,
-            'account_no'   => $accountNo,
+            'username' => $username,
+            'member_id' => $memberId,
+            'phone' => $phone,
+            'bank_name' => $bankName,
+            'game_user' => $member->game_user,
+            'bank_code' => $bankCode,
+            'account_no' => $accountNo,
             'login_url' => UrlHelper::loginUrl(),
-            'site_name'    => config('app.name', config('app.domain_url')),
+            'site_name' => config('app.name', config('app.domain_url')),
             'support_name' => trim(($employee->name ?? '').' '.($employee->surname ?? '')),
         ];
 
@@ -1005,19 +1005,19 @@ class ChatController extends AppBaseController
                 ];
             } elseif ($kind === 'image') {
                 $original = $item['original'] ?? $item['url'] ?? '';
-                $preview  = $item['preview'] ?? $original;
+                $preview = $item['preview'] ?? $original;
 
                 $original = $this->applyTemplatePlaceholders((string) $original, $vars);
-                $preview  = $this->applyTemplatePlaceholders((string) $preview, $vars);
+                $preview = $this->applyTemplatePlaceholders((string) $preview, $vars);
 
                 if ($original === '') {
                     continue;
                 }
 
                 $lineMessages[] = [
-                    'type'              => 'image',
-                    'originalContentUrl'=> $original,
-                    'previewImageUrl'   => $preview,
+                    'type' => 'image',
+                    'originalContentUrl' => $original,
+                    'previewImageUrl' => $preview,
                 ];
             }
             // ถ้าอนาคตมี kind อื่นค่อยเพิ่มตรงนี้
@@ -1039,7 +1039,7 @@ class ChatController extends AppBaseController
         }
 
         if (! $previewText) {
-            $firstType   = $lineMessages[0]['type'] ?? 'message';
+            $firstType = $lineMessages[0]['type'] ?? 'message';
             $previewText = '['.$firstType.']';
         }
 
@@ -1048,32 +1048,32 @@ class ChatController extends AppBaseController
         /** @var LineMessage $message */
         $message = LineMessage::create([
             'line_conversation_id' => $conversation->id,
-            'line_account_id'      => $conversation->line_account_id,
-            'line_contact_id'      => $conversation->line_contact_id,
-            'direction'            => 'outbound',
-            'source'               => 'quick_reply',
-            'type'                 => 'text', // ใช้ text เป็น bubble ในหลังบ้าน
-            'line_message_id'      => null,
-            'text'                 => $previewText,
-            'payload'              => [
-                'template_id'   => $template->id,
+            'line_account_id' => $conversation->line_account_id,
+            'line_contact_id' => $conversation->line_contact_id,
+            'direction' => 'outbound',
+            'source' => 'quick_reply',
+            'type' => 'text', // ใช้ text เป็น bubble ในหลังบ้าน
+            'line_message_id' => null,
+            'text' => $previewText,
+            'payload' => [
+                'template_id' => $template->id,
                 'line_messages' => $lineMessages,
-                'vars'          => $vars,
+                'vars' => $vars,
             ],
-            'meta'                 => [
-                'template_key'   => $template->key ?? null,
+            'meta' => [
+                'template_key' => $template->key ?? null,
                 'template_title' => $template->title ?? $template->description ?? null,
                 'sender_employee_name' => $employee->name ?? null,
             ],
-            'sender_employee_id'   => $employee->id ?? null,
-            'sender_bot_key'       => null,
-            'sent_at'              => $now,
+            'sender_employee_id' => $employee->id ?? null,
+            'sender_bot_key' => null,
+            'sent_at' => $now,
         ]);
 
         // ===== 6) อัปเดตสรุปใน conversation ให้ตรง field จริงที่มีอยู่ =====
-        $conversation->last_message_preview = Str::limit($previewText,30);
-        $conversation->last_message_at      = $now;
-        $conversation->unread_count         = 0;
+        $conversation->last_message_preview = Str::limit($previewText, 30);
+        $conversation->last_message_at = $now;
+        $conversation->unread_count = 0;
         $conversation->save();
 
         // ===== 7) ส่งไปที่ LINE จริง ๆ =====
@@ -1090,16 +1090,16 @@ class ChatController extends AppBaseController
             if (! ($result['success'] ?? false)) {
                 Log::channel('line_oa')->warning('[LineOA] ส่ง quick reply ไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
-                    'contact_id'      => $contact->id ?? null,
-                    'template_id'     => $template->id,
-                    'status'          => $result['status'] ?? null,
-                    'error'           => $result['error'] ?? null,
+                    'contact_id' => $contact->id ?? null,
+                    'template_id' => $template->id,
+                    'status' => $result['status'] ?? null,
+                    'error' => $result['error'] ?? null,
                 ]);
             }
         } else {
             Log::channel('line_oa')->warning('[LineOA] ไม่สามารถส่ง quick reply ไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
                 'conversation_id' => $conversation->id,
-                'template_id'     => $template->id,
+                'template_id' => $template->id,
             ]);
         }
 
@@ -1112,7 +1112,7 @@ class ChatController extends AppBaseController
     {
         $data = $request->validate([
             'template_id' => ['required', 'integer'],
-            'vars'        => ['array'],
+            'vars' => ['array'],
         ]);
 
         /** @var \Gametech\Admin\Models\Employee|null $employee */
@@ -1139,14 +1139,14 @@ class ChatController extends AppBaseController
             ], 409);
         }
 
-//        // เคารพ lock เหมือน reply()/replyImage()
-//        if ($conversation->locked_by_employee_id &&
-//            (int) $conversation->locked_by_employee_id !== (int) $employeeId) {
-//
-//            return response()->json([
-//                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
-//            ], 403);
-//        }
+        //        // เคารพ lock เหมือน reply()/replyImage()
+        //        if ($conversation->locked_by_employee_id &&
+        //            (int) $conversation->locked_by_employee_id !== (int) $employeeId) {
+        //
+        //            return response()->json([
+        //                'message' => 'ห้องนี้ถูกล็อกโดย '.($conversation->locked_by_employee_name ?: 'พนักงานคนอื่น').' คุณไม่สามารถตอบได้',
+        //            ], 403);
+        //        }
 
         // ===== 1) หา template =====
         /** @var LineTemplate|null $template */
@@ -1171,8 +1171,8 @@ class ChatController extends AppBaseController
         ]);
 
         $contact = $conversation->contact;
-        $member  = $contact?->member;
-        $bank    = $member?->bank;
+        $member = $contact?->member;
+        $bank = $member?->bank;
 
         $displayName =
             $contact->display_name
@@ -1217,15 +1217,15 @@ class ChatController extends AppBaseController
 
         $baseVars = [
             'display_name' => $displayName,
-            'username'     => $username,
-            'member_id'    => $memberId,
-            'phone'        => $phone,
-            'bank_name'    => $bankName,
-            'game_user'    => $member->game_user ?? '',
-            'bank_code'    => $bankCode,
-            'account_no'   => $accountNo,
-            'login_url'    => UrlHelper::loginUrl(),
-            'site_name'    => config('app.name', config('app.domain_url')),
+            'username' => $username,
+            'member_id' => $memberId,
+            'phone' => $phone,
+            'bank_name' => $bankName,
+            'game_user' => $member->game_user ?? '',
+            'bank_code' => $bankCode,
+            'account_no' => $accountNo,
+            'login_url' => UrlHelper::loginUrl(),
+            'site_name' => config('app.name', config('app.domain_url')),
             'support_name' => trim(($employee->name ?? '').' '.($employee->surname ?? '')),
         ];
 
@@ -1266,19 +1266,19 @@ class ChatController extends AppBaseController
                 ];
             } elseif ($kind === 'image') {
                 $original = $item['original'] ?? $item['url'] ?? '';
-                $preview  = $item['preview'] ?? $original;
+                $preview = $item['preview'] ?? $original;
 
                 $original = $this->applyTemplatePlaceholders((string) $original, $vars);
-                $preview  = $this->applyTemplatePlaceholders((string) $preview, $vars);
+                $preview = $this->applyTemplatePlaceholders((string) $preview, $vars);
 
                 if ($original === '') {
                     continue;
                 }
 
                 $lineMessages[] = [
-                    'type'              => 'image',
-                    'originalContentUrl'=> $original,
-                    'previewImageUrl'   => $preview,
+                    'type' => 'image',
+                    'originalContentUrl' => $original,
+                    'previewImageUrl' => $preview,
                 ];
             }
             // ถ้าอนาคตมี kind อื่นค่อยเพิ่มตรงนี้
@@ -1300,7 +1300,7 @@ class ChatController extends AppBaseController
         }
 
         if (! $previewText) {
-            $firstType   = $lineMessages[0]['type'] ?? 'message';
+            $firstType = $lineMessages[0]['type'] ?? 'message';
             $previewText = '['.$firstType.']';
         }
 
@@ -1310,14 +1310,14 @@ class ChatController extends AppBaseController
             $previewText,
             (int) $employeeId,
             [
-                'template_id'   => $template->id,
+                'template_id' => $template->id,
                 'line_messages' => $lineMessages,
-                'vars'          => $vars,
+                'vars' => $vars,
             ],
             [
-                'template_key'        => $template->key ?? null,
-                'template_title'      => $template->title ?? $template->description ?? null,
-                'sender_employee_name'=> $employeeName,
+                'template_key' => $template->key ?? null,
+                'template_title' => $template->title ?? $template->description ?? null,
+                'sender_employee_name' => $employeeName,
             ]
         );
 
@@ -1335,16 +1335,16 @@ class ChatController extends AppBaseController
             if (! ($result['success'] ?? false)) {
                 Log::channel('line_oa')->warning('[LineOA] ส่ง quick reply ไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
-                    'contact_id'      => $contact->id ?? null,
-                    'template_id'     => $template->id,
-                    'status'          => $result['status'] ?? null,
-                    'error'           => $result['error'] ?? null,
+                    'contact_id' => $contact->id ?? null,
+                    'template_id' => $template->id,
+                    'status' => $result['status'] ?? null,
+                    'error' => $result['error'] ?? null,
                 ]);
             }
         } else {
             Log::channel('line_oa')->warning('[LineOA] ไม่สามารถส่ง quick reply ไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
                 'conversation_id' => $conversation->id,
-                'template_id'     => $template->id,
+                'template_id' => $template->id,
             ]);
         }
 
@@ -1479,8 +1479,8 @@ class ChatController extends AppBaseController
 
         // ====== เตรียม vars สำหรับแทนตัวแปรใน preview ======
         $contact = $conversation->contact;
-        $member  = $contact?->member;
-        $bank    = $member?->bank;
+        $member = $contact?->member;
+        $bank = $member?->bank;
 
         $displayName =
             $contact->display_name
@@ -1529,15 +1529,15 @@ class ChatController extends AppBaseController
 
         $baseVars = [
             'display_name' => $displayName,
-            'username'     => $username,
-            'member_id'    => $memberId,
-            'phone'        => $phone,
-            'bank_name'    => $bankName,
-            'game_user'    => $member?->game_user ?? '',
-            'bank_code'    => $bankCode,
-            'account_no'   => $accountNo,
-            'login_url'    => UrlHelper::loginUrl(),
-            'site_name'    => config('app.name', config('app.domain_url')),
+            'username' => $username,
+            'member_id' => $memberId,
+            'phone' => $phone,
+            'bank_name' => $bankName,
+            'game_user' => $member?->game_user ?? '',
+            'bank_code' => $bankCode,
+            'account_no' => $accountNo,
+            'login_url' => UrlHelper::loginUrl(),
+            'site_name' => config('app.name', config('app.domain_url')),
             'support_name' => $supportName,
         ];
 
@@ -2754,5 +2754,110 @@ class ChatController extends AppBaseController
                 'currency' => 'THB',
             ],
         ]);
+    }
+
+    /**
+     * แสดงรายการโน้ตของห้องสนทนา
+     *
+     * GET /line-oa/conversations/{conversation}/notes
+     */
+    public function listNotes(LineConversation $conversation): JsonResponse
+    {
+        // ตามหลักควรจะ check สิทธิ์ด้วย (แล้วแต่โบ๊ทใช้ Gate/Policy ไหม)
+        // if (Gate::denies('view', $conversation)) {
+        //     abort(403);
+        // }
+
+        $notes = LineConversationNote::query()
+            ->where('line_conversation_id', $conversation->id)
+            ->orderByDesc('id')
+            ->get([
+                'id',
+                'body',
+                'employee_id',
+                'employee_name',
+                'created_at',
+            ]);
+
+        $data = $notes->map(function (LineConversationNote $note) {
+            return [
+                'id' => $note->id,
+                'body' => $note->body,
+                'employee_id' => $note->employee_id,
+                'employee_name' => $note->employee_name,
+                'created_at' => optional($note->created_at)->toIso8601String(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
+    /**
+     * เพิ่มโน้ตใหม่ให้ห้องสนทนา
+     *
+     * POST /line-oa/conversations/{conversation}/notes
+     *
+     * body: { body: "ข้อความโน้ต" }
+     */
+    public function storeNote(Request $request, LineConversation $conversation): JsonResponse
+    {
+        $data = $request->validate([
+            'body' => ['required', 'string', 'max:2000'],
+        ]);
+
+        /** @var \Gametech\Admin\Models\Admin|null $employee */
+        $employee = Auth::guard('admin')->user();
+
+        if (! $employee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบข้อมูลผู้ใช้งาน (admin)',
+            ], 403);
+        }
+
+        $employeeId = $employee->code ?? null;
+        $employeeName = $employee->user_name ?? ($employee->name ?? 'พนักงาน');
+
+        if (! $employeeId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบรหัสพนักงาน (code)',
+            ], 403);
+        }
+
+        $body = trim($data['body']);
+
+        if ($body === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'ข้อความโน้ตห้ามเว้นว่าง',
+            ], 422);
+        }
+
+        /** @var LineConversationNote $note */
+        $note = LineConversationNote::create([
+            'line_conversation_id' => $conversation->id,
+            'line_account_id' => $conversation->line_account_id,
+            'line_contact_id' => $conversation->line_contact_id,
+            'employee_id' => $employeeId,
+            'employee_name' => $employeeName,
+            'body' => $body,
+        ]);
+
+        $data = [
+            'id' => $note->id,
+            'body' => $note->body,
+            'employee_id' => $note->employee_id,
+            'employee_name' => $note->employee_name,
+            'created_at' => optional($note->created_at)->toIso8601String(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ], 201);
     }
 }

@@ -82,6 +82,9 @@ Route::domain(
 
                 Route::get('get-balance', [ChatController::class, 'getBalance'])
                     ->name('getbalance');
+
+                Route::get('conversations/{conversation}/notes', [ChatController::class, 'listNotes'])->name('conversations.list-notes');
+                Route::post('conversations/{conversation}/notes', [ChatController::class, 'storeNote'])->name('conversations.store-notes');
             });
 
         Route::prefix('line_account')->group(function () {
