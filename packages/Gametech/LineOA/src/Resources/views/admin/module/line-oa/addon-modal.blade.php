@@ -622,11 +622,11 @@
         >
             <button
                     v-for="emp in filteredAssignees"
-                    :key="emp.id"
+                    :key="emp.code"
                     type="button"
                     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                    :class="{ active: selectedAssigneeId === emp.id }"
-                    @click="selectedAssigneeId = emp.id"
+                    :class="{ active: selectedAssigneeId === emp.code }"
+                    @click="selectedAssigneeId = emp.code"
             >
                 <div>
                     <div class="font-weight-bold">
@@ -637,7 +637,7 @@
                     </div>
                 </div>
 
-                <span v-if="selectedAssigneeId === emp.id" class="badge badge-light">
+                <span v-if="selectedAssigneeId === emp.code" class="badge badge-light">
                     <i class="fa fa-check"></i>
                 </span>
             </button>

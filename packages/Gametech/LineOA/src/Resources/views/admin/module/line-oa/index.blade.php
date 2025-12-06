@@ -3780,10 +3780,9 @@
                         const items = body.data || body.employees || [];
 
                         this.assigneeOptions = items.map(e => {
-                            const name = e.name || e.full_name || e.user_name || e.code || ('พนักงาน #' + e.id);
+                            const name = e.name || e.full_name || e.user_name || e.code || ('พนักงาน #' + e.user_name);
 
                             return {
-                                id: e.id,
                                 code: e.code || '',
                                 user_name: e.user_name || '',
                                 display: name,
