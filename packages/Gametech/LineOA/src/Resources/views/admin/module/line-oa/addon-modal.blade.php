@@ -100,13 +100,13 @@
                         size="sm"
                         class="ml-2"
                         :disabled="!selectedQuickReply || sendingQuickReply"
-                        @click="sendQuickReply"
+                        @click="sendQuickReplyToText"
                 >
                     <span v-if="sendingQuickReply">
                         <b-spinner small class="mr-1"></b-spinner> กำลังส่ง...
                     </span>
                     <span v-else>
-                        ส่งข้อความนี้ให้ลูกค้า
+                        เลือก
                     </span>
                 </b-button>
             </div>

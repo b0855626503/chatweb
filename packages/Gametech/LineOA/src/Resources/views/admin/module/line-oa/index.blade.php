@@ -2025,6 +2025,94 @@
                         this.sendingQuickReply = false;
                     }
                 },
+                async sendQuickReplyToText() {
+                    if (!this.selectedConversation || !this.selectedQuickReply) return;
+
+                    if (!this.canReply) {
+                        this.showAlert({
+                            success: false,
+                            message: 'คุณไม่มีสิทธิ์ตอบในห้องสนทนานี้'
+                        });
+                        return;
+                    }
+
+                    if (this.sendingQuickReply) return;
+                    this.sendingQuickReply = true;
+
+                    const convId = this.selectedConversation.id;
+
+                    try {
+                        // เตรียม vars สำหรับแทน placeholder ใน template เช่น {display_name}, {username}
+                        const vars = {
+                            display_name:
+                                (this.selectedConversation.contact &&
+                                    this.selectedConversation.contact.display_name) ||
+                                this.selectedConversation.contact_display_name ||
+                                '',
+                            username:
+                                (this.selectedConversation.contact &&
+                                    this.selectedConversation.contact.member_username) ||
+                                this.selectedConversation.contact_member_username ||
+                                '',
+                        };
+
+                        // เรียก backend ให้ render template (แต่ "ไม่ส่งข้อความออกไป")
+                        const res = await axios.post(
+                            this.apiUrl(`conversations/${convId}/reply-template`),
+                            {
+                                template_id: this.selectedQuickReply.id,
+                                vars: vars,
+                                preview_only: true, // บอก backend ว่าให้ render เฉย ๆ
+                            }
+                        );
+
+                        const body = res.data || {};
+                        const msg = body.data || body.message || null;
+
+                        if (!msg || !msg.text) {
+                            this.showAlert({
+                                success: false,
+                                message: 'โหลดข้อความจากเทมเพลตไม่สำเร็จ'
+                            });
+                            return;
+                        }
+
+                        // ================================================
+                        // ⭐ สิ่งสำคัญ: ใส่ข้อความลง textarea ของ agent ⭐
+                        // ================================================
+                        this.replyText = msg.text;
+
+
+                        // ปิด modal quick reply
+                        if (this.$refs.quickReplyModal) {
+                            this.$refs.quickReplyModal.hide();
+                        }
+
+                        // โฟกัส textarea เพื่อให้ทีมงานพิมพ์ต่อได้ทันที
+                        this.$nextTick(() => {
+                            if (this.$refs.replyInput) {
+                                this.$refs.replyInput.focus();
+                            }
+                        });
+
+                    } catch (e) {
+                        console.error('[LineOA] sendQuickReply error', e);
+
+                        const msg =
+                            e?.response?.data?.message ??
+                            e?.response?.data?.msg ??
+                            e?.response?.data?.error ??
+                            'เกิดข้อผิดพลาดระหว่างโหลดข้อความจากเทมเพลต';
+
+                        this.showAlert({
+                            success: false,
+                            message: msg
+                        });
+                    } finally {
+                        this.sendingQuickReply = false;
+                    }
+                },
+
                 onProfileImageError(event) {
                     event.target.src = window.LineDefaultAvatar;
                     event.target.onerror = null; // กัน loop error
