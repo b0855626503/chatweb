@@ -582,10 +582,7 @@
                                                     <div class="chat-msg-main">
                                                         <div :class="messageBubbleClass(item.message)">
 
-                                                            <!-- ถ้าเป็นบอท -->
-                                                            <div class="small" v-if="item.message.source === 'bot'">
-                                                                <strong>บอท</strong>
-                                                            </div>
+
 
                                                             <div class="whitespace-pre-wrap">
                                                                 <!-- TEXT -->
@@ -706,6 +703,41 @@
                                                 <template v-else>
                                                     <div class="chat-msg-main">
                                                         <div :class="messageBubbleClass(item.message)">
+
+                                                            <!-- === PREVIEW ข้อความที่ถูกตอบกลับ === -->
+                                                            <div
+                                                                    v-if="item.message.meta && item.message.meta.reply_to"
+                                                                    class="chat-reply-preview mb-1"
+                                                            >
+                                                                <!-- แถวบน: avatar + ชื่อ + label -->
+                                                                <div class="d-flex align-items-start mb-1">
+                                                                    <img
+                                                                            v-if="replyToAvatarUrl(item.message)"
+                                                                            :src="replyToAvatarUrl(item.message)"
+                                                                            class="chat-reply-avatar mr-2"
+                                                                            alt="avatar"
+                                                                    >
+                                                                    <div>
+                                                                        <div class="chat-reply-name">
+                                                                            @{{ replyToDisplayName(item.message) }}
+                                                                        </div>
+                                                                        <div class="small text-muted">
+                                                                            ตอบกลับข้อความก่อนหน้า
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- กล่องเทา: ข้อความที่ถูกตอบกลับ -->
+                                                                <div class="chat-reply-quote">
+                                                                    @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                </div>
+                                                            </div>
+                                                            <!-- === END PREVIEW === -->
+
+                                                            <!-- ถ้าเป็นบอท -->
+                                                            <div class="small" v-if="item.message.source === 'bot'">
+                                                                <strong>บอท</strong>
+                                                            </div>
 
                                                             <div class="small" v-if="item.message.meta && item.message.meta.employee_name">
                                                                 <strong>@{{ item.message.meta.employee_name }}</strong>
@@ -4022,6 +4054,70 @@
                     }).finally(() => {
                         this.sending = false;
                     });
+                },
+
+                replyToDisplayName(message) {
+                    const meta = message.meta || {};
+                    const r = meta.reply_to || null;
+                    if (!r) return '';
+
+                    const isCustomer =
+                        r.direction === 'inbound' &&
+                        r.source === 'user';
+
+                    if (isCustomer) {
+                        const c = this.selectedConversation && this.selectedConversation.contact
+                            ? this.selectedConversation.contact
+                            : null;
+
+                        return (
+                            (c && (c.display_name ||
+                                c.member_username ||
+                                c.member_name)) ||
+                            'ลูกค้า'
+                        );
+                    }
+
+                    // ข้อความต้นทางไม่ใช่ของลูกค้า → ถือเป็นฝั่งพนักงาน / ระบบ
+                    return 'พนักงาน';
+                },
+                buildReplyPreviewText(replyMeta) {
+                    if (!replyMeta) return '';
+
+                    if (replyMeta.text) {
+                        return replyMeta.text;
+                    }
+
+                    const type = replyMeta.type || '';
+
+                    if (type === 'image') return '[รูปภาพ]';
+                    if (type === 'sticker') return '[สติ๊กเกอร์]';
+                    if (type === 'video') return '[วิดีโอ]';
+                    if (type === 'audio') return '[เสียง]';
+                    if (type === 'location') return '[ตำแหน่งที่ตั้ง]';
+
+                    return '[' + (type || 'ข้อความ') + ']';
+                },
+                // url รูปที่อยู่หัว (ใช้ของลูกค้าเท่านั้น)
+                replyToAvatarUrl(message) {
+                    const meta = message.meta || {};
+                    const r = meta.reply_to || null;
+                    if (!r) return null;
+
+                    const isCustomer =
+                        r.direction === 'inbound' &&
+                        r.source === 'user';
+
+                    if (!isCustomer) {
+                        // ถ้าตอบข้อความพนักงานเอง → ไม่ต้องมี avatar
+                        return null;
+                    }
+
+                    const c = this.selectedConversation && this.selectedConversation.contact
+                        ? this.selectedConversation.contact
+                        : null;
+
+                    return c && c.picture_url ? c.picture_url : null;
                 },
 
 

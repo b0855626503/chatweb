@@ -35,13 +35,14 @@ class ChatService
      */
     public function handleIncomingMessage(LineAccount $account, array $event, ?LineWebhookLog $log = null): LineMessage
     {
-        $userId = Arr::get($event, 'source.userId');
-        $messageId = Arr::get($event, 'message.id');
+        $userId      = Arr::get($event, 'source.userId');
+        $messageId   = Arr::get($event, 'message.id');
         $messageType = Arr::get($event, 'message.type'); // text | sticker | image ...
-        $text = Arr::get($event, 'message.text');
-        $sentAt = Arr::get($event, 'timestamp');
+        $text        = Arr::get($event, 'message.text');
+        $sentAt      = Arr::get($event, 'timestamp');
 
         $markAsReadToken = Arr::get($event, 'message.markAsReadToken');
+        $quoteToken      = Arr::get($event, 'message.quoteToken');
 
         // timestamp ms → sec
         $sentAtCarbon = $sentAt
@@ -57,7 +58,8 @@ class ChatService
             $text,
             $sentAtCarbon,
             $log,
-            $markAsReadToken
+            $markAsReadToken,
+            $quoteToken
         ) {
             // 1) contact
             $contact = $this->getOrCreateContact($account, $userId);
@@ -74,29 +76,33 @@ class ChatService
             // 2) conversation (รองรับ reuse ห้องเดิม + auto reopen)
             $conversation = $this->getOrCreateConversation($account, $contact);
 
-            // 3) สร้าง message (inbound)
-            $meta = null;
+            // 3) meta เบื้องต้น
+            $meta = [];
+
             if ($markAsReadToken) {
-                $meta = [
-                    'mark_as_read_token' => $markAsReadToken,
-                ];
+                $meta['mark_as_read_token'] = $markAsReadToken;
             }
 
+            if ($quoteToken) {
+                $meta['quote_token'] = $quoteToken;
+            }
+
+            // 3) สร้าง message (inbound)
             /** @var LineMessage $message */
             $message = LineMessage::create([
                 'line_conversation_id' => $conversation->id,
-                'line_account_id' => $account->id,
-                'line_contact_id' => $contact->id,
-                'direction' => 'inbound',
-                'source' => 'user',
-                'type' => $messageType ?? 'text',
-                'line_message_id' => $messageId,
-                'text' => $messageType === 'text' ? $text : null,
-                'payload' => $event,
-                'meta' => $meta,
-                'sender_employee_id' => null,
-                'sender_bot_key' => null,
-                'sent_at' => $sentAtCarbon,
+                'line_account_id'      => $account->id,
+                'line_contact_id'      => $contact->id,
+                'direction'            => 'inbound',
+                'source'               => 'user',
+                'type'                 => $messageType ?? 'text',
+                'line_message_id'      => $messageId,
+                'text'                 => $messageType === 'text' ? $text : null,
+                'payload'              => $event,
+                'meta'                 => $meta ?: null,
+                'sender_employee_id'   => null,
+                'sender_bot_key'       => null,
+                'sent_at'              => $sentAtCarbon,
             ]);
 
             // 3.1 ถ้าเป็นรูป ให้พยายามดึง binary จาก LINE แล้วแปลงเป็น URL สำหรับ frontend
@@ -109,17 +115,54 @@ class ChatService
                 $this->handleInboundTextLanguageAndTranslation($conversation, $contact, $message);
             }
 
+            // 3.3 ถ้ามี quoteToken (ลูกค้ากด "ตอบกลับ" ข้อความ OA)
+            //      → map ไปยังข้อความต้นทางในห้องนี้ แล้วผูก meta.reply_to
+            if ($quoteToken) {
+                try {
+                    /** @var LineMessage|null $quoted */
+                    $quoted = LineMessage::query()
+                        ->where('line_conversation_id', $conversation->id)
+                        ->where('meta->quote_token', $quoteToken)
+                        ->first();
+
+                    if ($quoted) {
+                        $metaCurrent = $message->meta;
+                        if (! is_array($metaCurrent)) {
+                            $metaCurrent = $metaCurrent ? (array) $metaCurrent : [];
+                        }
+
+                        $metaCurrent['reply_to'] = [
+                            'id'        => $quoted->id,
+                            'text'      => mb_strimwidth((string) $quoted->text, 0, 80, '...'),
+                            'direction' => $quoted->direction,
+                            'source'    => $quoted->source,
+                            'type'      => $quoted->type,
+                            'sent_at'   => optional($quoted->sent_at)->toIso8601String(),
+                        ];
+
+                        $message->meta = $metaCurrent;
+                        $message->save();
+                    }
+                } catch (\Throwable $e) {
+                    \Log::channel('line_oa')->warning('[LineChat] attach reply_to by quoteToken failed', [
+                        'message_id'  => $message->id,
+                        'quote_token' => $quoteToken,
+                        'error'       => $e->getMessage(),
+                    ]);
+                }
+            }
+
             // 4) update conversation summary
             $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at = $sentAtCarbon;
-            $conversation->unread_count = $conversation->unread_count + 1;
+            $conversation->last_message_at      = $sentAtCarbon;
+            $conversation->unread_count         = $conversation->unread_count + 1;
 
             // safety guard: ถ้า status ว่างหรือถูกปิดอยู่ ให้กลับเป็น open
             if ($conversation->status === null || $conversation->status === 'closed') {
-                $conversation->status = 'open';
-                $conversation->closed_by_employee_id = null;
+                $conversation->status                  = 'open';
+                $conversation->closed_by_employee_id   = null;
                 $conversation->closed_by_employee_name = null;
-                $conversation->closed_at = null;
+                $conversation->closed_at               = null;
             }
 
             $conversation->save();
@@ -130,12 +173,12 @@ class ChatService
 
             // 6) ผูก log (ถ้ามี)
             if ($log) {
-                $log->line_account_id = $account->id;
+                $log->line_account_id      = $account->id;
                 $log->line_conversation_id = $conversation->id;
-                $log->line_contact_id = $contact->id;
-                $log->line_message_id = $message->id;
-                $log->is_processed = true;
-                $log->processed_at = now();
+                $log->line_contact_id      = $contact->id;
+                $log->line_message_id      = $message->id;
+                $log->is_processed         = true;
+                $log->processed_at         = now();
                 $log->save();
             }
 

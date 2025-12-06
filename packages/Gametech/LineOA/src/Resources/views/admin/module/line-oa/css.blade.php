@@ -398,6 +398,59 @@
             overflow-y: auto;
         }
 
+        .chat-reply-preview {
+            border-left: 3px solid rgba(0,0,0,0.1);
+            padding-left: 6px;
+        }
+
+        .chat-reply-quote {
+            font-size: 12px;
+            color: #555;
+            background: #f5f5f5;
+            border-radius: 4px;
+            padding: 4px 6px;
+            max-width: 260px;
+            word-break: break-word;
+        }
+
+        .chat-reply-preview {
+            border-radius: 10px;
+            padding: 6px 8px;
+            background-color: #ffffff; /* ให้เป็นพื้นขาวบน bubble ฟ้า */
+        }
+
+        .gt-msg-agent .chat-reply-preview {
+            /* ถ้าอยากให้เนียนกับ bubble ฟ้า ปรับ opacity เล็กน้อย */
+            background-color: rgba(255,255,255,0.9);
+        }
+
+        .chat-reply-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px; /* LINE จริงเป็นเหลี่ยมมน ไม่ใช่วงกลม */
+            object-fit: cover;
+        }
+
+        .chat-reply-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .chat-reply-quote {
+            font-size: 12px;
+            color: #555;
+            background: #f5f5f5;
+            border-radius: 6px;
+            padding: 4px 6px;
+            margin-top: 2px;
+            word-break: break-word;
+        }
+
+
+
+
+
+
 
     </style>
 @endpush

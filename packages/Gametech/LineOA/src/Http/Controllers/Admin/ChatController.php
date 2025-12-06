@@ -335,8 +335,8 @@ class ChatController extends AppBaseController
     public function reply(Request $request, LineConversation $conversation): JsonResponse
     {
         $data = $request->validate([
-            'text' => ['required', 'string'],
-            'reply_to_message_id' => ['nullable', 'integer'], // 👈 รองรับ reply
+            'text'                => ['required', 'string'],
+            'reply_to_message_id' => ['nullable', 'integer'],
         ]);
 
         $text = trim($data['text']);
@@ -348,7 +348,7 @@ class ChatController extends AppBaseController
         }
 
         /** @var \Gametech\Admin\Models\Admin|null $employee */
-        $employee = Auth::guard('admin')->user();
+        $employee   = Auth::guard('admin')->user();
         $employeeId = $employee?->code ?? null;
 
         if (! $employeeId) {
@@ -359,10 +359,10 @@ class ChatController extends AppBaseController
 
         // ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานตอบใหม่ → เปิดสถานะกลับเป็น open
         if ($conversation->status === 'closed') {
-            $conversation->status = 'open';
-            $conversation->closed_by_employee_id = null;
+            $conversation->status                  = 'open';
+            $conversation->closed_by_employee_id   = null;
             $conversation->closed_by_employee_name = null;
-            $conversation->closed_at = null;
+            $conversation->closed_at               = null;
             $conversation->save();
         }
 
@@ -372,7 +372,7 @@ class ChatController extends AppBaseController
         ];
 
         // -------------------------
-        // จัดการข้อมูล reply_to (ถ้ามี)
+        // ใส่ข้อมูล reply_to ลงใน meta (ถ้ามี)
         // -------------------------
         $replyToId = $data['reply_to_message_id'] ?? null;
 
@@ -408,55 +408,229 @@ class ChatController extends AppBaseController
         $contact = $conversation->contact;
 
         // -------------------------
-        // เลือกข้อความที่จะส่งออกไป LINE
-        // ถ้ามี meta.translation_outbound → ใช้ translated_text
-        // ไม่งั้น fallback เป็น $text เดิม
+        // เลือกข้อความที่จะใช้เป็น "เนื้อ" การตอบลูกค้า (หลังแปลแล้ว ถ้ามี)
         // -------------------------
         $lineText = $text;
 
         $msgMeta = $message->meta;
         if (is_array($msgMeta)) {
-            // ถ้ามี translation_outbound → ใช้ข้อความที่แปลแล้วเป็น base
             $outboundTrans = $msgMeta['translation_outbound'] ?? null;
 
+            // ถ้ามีข้อความแปล → ใช้ตัวแปลเป็นเนื้อหลักในการคุยกับลูกค้า
             if (is_array($outboundTrans) && ! empty($outboundTrans['translated_text'])) {
                 $lineText = $outboundTrans['translated_text'];
-            }
-
-            // 👇 ถ้ามีข้อมูล reply_to ให้ prepend ข้อความเดิมขึ้นไปบนสุด
-            $replyMeta = $msgMeta['reply_to'] ?? null;
-            if (is_array($replyMeta)) {
-                $replyText = trim((string) ($replyMeta['text'] ?? ''));
-
-                // เอาเฉพาะเคสที่ต้นฉบับเป็น text และมีข้อความจริง ๆ
-                $replyType = $replyMeta['type'] ?? 'text';
-                if ($replyText !== '' && $replyType === 'text') {
-                    // รูปแบบ:
-                    // ตอบกลับ: {ข้อความเดิม...}
-                    // {ข้อความที่ agent พิมพ์หรือแปลแล้ว}
-                    $prefix = "ตอบกลับ: {$replyText}\n";
-                    $lineText = $prefix.$lineText;
-                }
             }
         }
 
         // -------------------------
-        // ส่งข้อความไป LINE
+        // สร้าง payload ที่จะส่งไป LINE
+        // - ถ้ามี reply_to และเป็น text → ใช้ Flex message (แบบ B)
+        // - ถ้าไม่มี reply_to → pushText() ปกติ
         // -------------------------
         if ($account && $contact && $contact->line_user_id) {
-            $result = $this->lineMessaging->pushText(
-                $account,
-                $contact->line_user_id,
-                $lineText
-            );
+            $lineUserId = $contact->line_user_id;
 
-            if (! ($result['success'] ?? false)) {
-                Log::channel('line_oa')->warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
-                    'conversation_id' => $conversation->id,
-                    'contact_id'      => $contact->id,
-                    'error'           => $result['error'] ?? null,
-                    'status'          => $result['status'] ?? null,
-                ]);
+            $replyMeta = is_array($msgMeta) ? ($msgMeta['reply_to'] ?? null) : null;
+            $hasReply  = is_array($replyMeta) && ! empty($replyMeta['text']);
+
+            if ($hasReply && (($replyMeta['type'] ?? 'text') === 'text')) {
+
+                $quoted  = (string) $replyMeta['text'];
+                $altText = "ตอบกลับ: {$quoted}\n".$lineText;
+                $altText = mb_strimwidth($altText, 0, 390, '...', 'UTF-8');
+
+                // -------------------------
+                // เตรียมข้อมูล header: avatar + display name
+                // -------------------------
+                $contactRelation = $conversation->contact;
+                $member          = $contactRelation?->member;
+
+                // ตรวจว่า message ต้นทางเป็นของลูกค้าจริงไหม
+                $isCustomerMessage =
+                    (($replyMeta['direction'] ?? null) === 'inbound') &&
+                    (($replyMeta['source'] ?? null) === 'user');
+
+                if ($isCustomerMessage) {
+                    // เคสตอบกลับข้อความลูกค้า → ใช้ชื่อ + รูปลูกค้า
+                    $headerName =
+                        $contactRelation->display_name
+                        ?? $member->name
+                        ?? $contactRelation->name
+                        ?? $contactRelation->line_name
+                        ?? 'ลูกค้า';
+
+                    $headerAvatarUrl = $contactRelation->picture_url ?? null;
+                } else {
+                    // เคสตอบกลับข้อความของพนักงานเอง หรือ outbound อื่น ๆ
+                    $headerName      = 'พนักงาน';
+                    $headerAvatarUrl = null; // ไม่ต้องมีรูป
+                }
+
+                // -------------------------
+                // สร้าง contents ของ header
+                // -------------------------
+                $headerContents = [];
+
+                if (! empty($headerAvatarUrl)) {
+                    $headerContents[] = [
+                        'type'         => 'image',
+                        'url'          => $headerAvatarUrl,
+                        'size'         => 'xs',
+                        'aspectRatio'  => '1:1',
+                        'aspectMode'   => 'cover',
+                        'gravity'      => 'center',
+                        'flex'         => 0,
+                        'margin'       => 'sm',
+                        'align'        => 'start',
+                        // ❌ ห้ามใช้ cornerRadius กับ image: LINE จะฟ้อง unknown field
+                        // 'cornerRadius' => '100px',
+                    ];
+                }
+
+                $headerContents[] = [
+                    'type'   => 'box',
+                    'layout' => 'vertical',
+                    'spacing'=> 'xs',
+                    'contents' => [
+                        [
+                            'type'  => 'text',
+                            'text'  => $headerName,
+                            'weight'=> 'bold',
+                            'size'  => 'sm',
+                            'wrap'  => true,
+                        ],
+                        [
+                            'type'  => 'text',
+                            'text'  => 'ตอบกลับข้อความก่อนหน้า',
+                            'size'  => 'xs',
+                            'color' => '#888888',
+                        ],
+                    ],
+                ];
+
+                // -------------------------
+                // ประกอบ Flex bubble
+                // -------------------------
+                $flex = [
+                    'type'    => 'flex',
+                    'altText' => $altText,
+                    'contents'=> [
+                        'type'   => 'bubble',
+                        'body'   => [
+                            'type'    => 'box',
+                            'layout'  => 'vertical',
+                            'spacing' => 'sm',
+                            'contents'=> [
+                                // แถวบน: avatar + ชื่อ + label
+                                [
+                                    'type'       => 'box',
+                                    'layout'     => 'horizontal',
+                                    'spacing'    => 'md',
+                                    'alignItems' => 'center',
+                                    'contents'   => $headerContents,
+                                ],
+
+                                // กล่องเทา: ข้อความเดิม (quoted)
+                                [
+                                    'type'            => 'box',
+                                    'layout'          => 'vertical',
+                                    'backgroundColor' => '#F5F5F5',
+                                    'cornerRadius'    => 'md',
+                                    'paddingAll'      => '8px',
+                                    'contents'        => [
+                                        [
+                                            'type'  => 'text',
+                                            'text'  => $quoted,
+                                            'size'  => 'sm',
+                                            'wrap'  => true,
+                                            'color' => '#555555',
+                                        ],
+                                    ],
+                                ],
+
+                                // ข้อความตอบกลับของเรา (หรือข้อความแปล)
+                                [
+                                    'type'  => 'text',
+                                    'text'  => $lineText,
+                                    'wrap'  => true,
+                                    'size'  => 'md',
+                                ],
+                            ],
+                        ],
+                    ],
+                ];
+
+                $result = $this->lineMessaging->pushMessages(
+                    $account,
+                    $lineUserId,
+                    [$flex]
+                );
+
+                // ----- ถ้าส่งไป LINE สำเร็จ → เก็บ quoteToken ไว้กับ message นี้ -----
+                if (($result['success'] ?? false)) {
+                    $body = $result['body'] ?? null;
+
+                    if (is_array($body)) {
+                        $sent = $body['sentMessages'] ?? null;
+
+                        if (is_array($sent) && ! empty($sent[0]['quoteToken'])) {
+                            $quoteToken = $sent[0]['quoteToken'];
+
+                            $metaForMsg = $message->meta;
+                            if (! is_array($metaForMsg)) {
+                                $metaForMsg = $metaForMsg ? (array) $metaForMsg : [];
+                            }
+
+                            $metaForMsg['quote_token'] = $quoteToken;
+
+                            $message->meta = $metaForMsg;
+                            $message->save();
+                        }
+                    }
+                } else {
+                    Log::channel('line_oa')->warning('[LineChat] ส่ง Flex reply ไป LINE ไม่สำเร็จ', [
+                        'conversation_id' => $conversation->id,
+                        'contact_id'      => $contact->id,
+                        'status'          => $result['status'] ?? null,
+                        'error'           => $result['error'] ?? null,
+                    ]);
+                }
+            } else {
+                // ไม่มี reply_to หรือไม่ใช่ text → ส่งเป็นข้อความปกติ
+                $result = $this->lineMessaging->pushText(
+                    $account,
+                    $lineUserId,
+                    $lineText
+                );
+
+                if (($result['success'] ?? false)) {
+                    $body = $result['body'] ?? null;
+
+                    if (is_array($body)) {
+                        $sent = $body['sentMessages'] ?? null;
+
+                        if (is_array($sent) && ! empty($sent[0]['quoteToken'])) {
+                            $quoteToken = $sent[0]['quoteToken'];
+
+                            $metaForMsg = $message->meta;
+                            if (! is_array($metaForMsg)) {
+                                $metaForMsg = $metaForMsg ? (array) $metaForMsg : [];
+                            }
+
+                            $metaForMsg['quote_token'] = $quoteToken;
+
+                            $message->meta = $metaForMsg;
+                            $message->save();
+                        }
+                    }
+                } else {
+                    Log::channel('line_oa')->warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
+                        'conversation_id' => $conversation->id,
+                        'contact_id'      => $contact->id,
+                        'error'           => $result['error'] ?? null,
+                        'status'          => $result['status'] ?? null,
+                    ]);
+                }
             }
         } else {
             Log::channel('line_oa')->warning('[LineChat] ไม่สามารถส่งข้อความไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
@@ -467,16 +641,16 @@ class ChatController extends AppBaseController
         return response()->json([
             'message' => 'success',
             'data' => [
-                'id' => $message->id,
-                'direction' => $message->direction,
-                'source' => $message->source,
-                'type' => $message->type,
-                'text' => $message->text, // ในระบบเก็บเฉพาะข้อความที่ agent พิมพ์
-                'sent_at' => optional($message->sent_at)->toIso8601String(),
+                'id'                 => $message->id,
+                'direction'          => $message->direction,
+                'source'             => $message->source,
+                'type'               => $message->type,
+                'text'               => $message->text, // ในระบบเก็บเฉพาะข้อความที่ agent พิมพ์
+                'sent_at'            => optional($message->sent_at)->toIso8601String(),
                 'sender_employee_id' => $message->sender_employee_id,
-                'sender_bot_key' => $message->sender_bot_key,
-                'meta' => $message->meta,      // มี reply_to ให้ frontend ใช้แสดง quote
-                'payload' => $message->payload,
+                'sender_bot_key'     => $message->sender_bot_key,
+                'meta'               => $message->meta,      // มี reply_to (และ quote_token) ให้หลังบ้านใช้ render
+                'payload'            => $message->payload,
             ],
         ]);
     }
