@@ -117,6 +117,9 @@ class ChatService
             // safety guard: ถ้า status ว่างหรือถูกปิดอยู่ ให้กลับเป็น open
             if ($conversation->status === null || $conversation->status === 'closed') {
                 $conversation->status = 'open';
+                $conversation->closed_by_employee_id = null;
+                $conversation->closed_by_employee_name = null;
+                $conversation->closed_at = null;
             }
 
             $conversation->save();
@@ -222,6 +225,10 @@ class ChatService
             // ถ้าห้องปิดอยู่ หรือ status ยังไม่ถูกกำหนด → เปิดห้องอีกครั้ง
             if ($conversation->status === 'closed' || $conversation->status === null) {
                 $conversation->status = 'open';
+                $conversation->closed_by_employee_id = null;
+                $conversation->closed_by_employee_name = null;
+                $conversation->closed_at = null;
+
             }
 
             $conversation->last_message_preview = $this->buildPreviewText($message);
@@ -286,6 +293,9 @@ class ChatService
             // ถ้าห้องปิดอยู่ หรือ status ยังไม่ถูกกำหนด → เปิดห้องอีกครั้ง
             if ($conversation->status === 'closed' || $conversation->status === null) {
                 $conversation->status = 'open';
+                $conversation->closed_by_employee_id = null;
+                $conversation->closed_by_employee_name = null;
+                $conversation->closed_at = null;
             }
 
             $conversation->last_message_preview = $this->buildPreviewText($message);
@@ -343,6 +353,9 @@ class ChatService
             // ถ้าห้องปิดอยู่ หรือ status ยังไม่ถูกกำหนด → เปิดห้องอีกครั้ง
             if ($conversation->status === 'closed' || $conversation->status === null) {
                 $conversation->status = 'open';
+                $conversation->closed_by_employee_id = null;
+                $conversation->closed_by_employee_name = null;
+                $conversation->closed_at = null;
             }
 
             $conversation->last_message_preview = $this->buildPreviewText($message);
