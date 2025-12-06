@@ -43,7 +43,7 @@ return [
     ],
     [
         'key' => 'line-oa.line_quick_reply',
-        'name' => 'ตั้งค่า ข้อความส่งด่วน',
+        'name' => 'ตั้งค่า ข้อความตอบกลับ',
         'route' => 'admin.line_quick_reply.index',
         'sort' => 4,
         'icon-class' => 'fa-gamepad',

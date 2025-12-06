@@ -19,15 +19,15 @@
             ></b-form-select>
         </b-form-group>
 
-        {{-- KEY --}}
+        {{-- DESCRIPTION (ใช้เป็น "ชื่อ" และ seed สำหรับ gen key) --}}
         <b-form-group
-                id="input-group-key"
-                label="คีย์:"
-                label-for="key"
-                description="ระบุ key สำหรับนำไปเรียกใช้ข้อความ (เช่น welcome_banner, topup_notice)">
+                id="input-group-description"
+                label="ชื่อ:"
+                label-for="description"
+                description="">
             <b-form-input
-                    id="key"
-                    v-model="formaddedit.key"
+                    id="description"
+                    v-model="formaddedit.description"
                     type="text"
                     size="sm"
                     autocomplete="off"
@@ -118,22 +118,6 @@
             </div>
         </b-form-group>
 
-        {{-- DESCRIPTION --}}
-        <b-form-group
-                id="input-group-description"
-                label="คำอธิบาย:"
-                label-for="description"
-                description="คำอธิบายเพิ่มเติมสำหรับทีมงาน (ไม่จำเป็นต้องแสดงหน้าเว็บ)">
-            <b-form-textarea
-                    id="description"
-                    v-model="formaddedit.description"
-                    size="sm"
-                    rows="2"
-                    max-rows="4"
-                    autocomplete="off"
-            ></b-form-textarea>
-        </b-form-group>
-
         {{-- ENABLED CHECKBOX --}}
         <b-form-group
                 id="input-group-enabled"
@@ -168,7 +152,8 @@
                     code: null,
                     formaddedit: {
                         category: 'quick_reply',
-                        key: '',
+                        // key จะไม่ให้กรอก แต่เก็บไว้ใช้ยิง API
+                        key: null,
                         message: '',
                         description: '',
                         enabled: true,
@@ -189,7 +174,7 @@
                     this.code = null;
                     this.formaddedit = {
                         category: 'quick_reply',
-                        key: '',
+                        key: null,
                         message: '',
                         description: '',
                         enabled: true,
@@ -210,7 +195,7 @@
                     this.code = null;
                     this.formaddedit = {
                         category: 'quick_reply',
-                        key: '',
+                        key: null,
                         message: '',
                         description: '',
                         enabled: true,
@@ -233,22 +218,10 @@
 
                     const data = response.data.data || {};
 
-                    this.formaddedit.category = data.category || 'quick_reply';
-
-                    // key ที่อยู่ใน DB เป็นแบบ category.key เช่น quick_reply.hello
-                    // เวลาแสดงให้ user อยากให้เห็นแค่ส่วนหลัง (hello)
-                    const fullKey   = data.key || '';
-                    const category  = this.formaddedit.category || '';
-                    let   shortKey  = fullKey;
-
-                    if (fullKey && category && fullKey.indexOf(category + '.') === 0) {
-                        shortKey = fullKey.substring((category + '.').length);
-                    }
-
-                    this.formaddedit.key = shortKey || '';
-
-                    this.formaddedit.message     = data.message || '';
-                    this.formaddedit.description = data.description || '';
+                    this.formaddedit.category     = data.category || 'quick_reply';
+                    this.formaddedit.key          = data.key || null;          // เก็บ key เดิมไว้ใช้ตอน update
+                    this.formaddedit.message      = data.message || '';
+                    this.formaddedit.description  = data.description || '';
 
                     // รองรับทั้งแบบ boolean, 0/1, 'Y'/'N'
                     const enabled = data.enabled;
@@ -295,6 +268,48 @@
                     });
                 },
 
+                /**
+                 * สร้าง slug จาก description (รองรับไทย + อังกฤษ)
+                 */
+                slugifyQuickReply(text) {
+                    let slug = (text || '').toString().trim();
+
+                    // space -> underscore
+                    slug = slug.replace(/\s+/g, '_');
+
+                    // เก็บเฉพาะ ก-๙ a-z A-Z 0-9 _
+                    slug = slug.replace(/[^ก-๙a-zA-Z0-9_]/g, '');
+
+                    // ลด _ ซ้ำ ๆ
+                    slug = slug.replace(/_+/g, '_');
+
+                    // ตัด _ ต้น–ท้าย
+                    slug = slug.replace(/^_+|_+$/g, '');
+
+                    return slug;
+                },
+
+                /**
+                 * gen key อัตโนมัติ
+                 * ตัวอย่าง: quick_reply.โปรฝากแรก_1733530000000
+                 */
+                generateQuickReplyKey(category, description) {
+                    const cat = (category || 'quick_reply').trim() || 'quick_reply';
+
+                    let slug = this.slugifyQuickReply(description || '');
+
+                    if (!slug) {
+                        slug = 'ข้อความด่วน';
+                    }
+
+                    // ตัดความยาวกันยาวเว่อร์
+                    slug = slug.substring(0, 40);
+
+                    const ts = Date.now(); // millisecond timestamp กันชนกันเบิ้ล
+
+                    return `${cat}.${slug}_${ts}`;
+                },
+
                 addEditSubmit(event) {
                     event.preventDefault();
                     this.toggleButtonDisable(true);
@@ -306,19 +321,31 @@
                         url = "{{ route('admin.'.$menu->currentRoute.'.update') }}";
                     }
 
-                    const category = (this.formaddedit.category || '').trim();
-                    let   rawKey   = (this.formaddedit.key || '').trim();
+                    const category    = (this.formaddedit.category || 'quick_reply').trim() || 'quick_reply';
+                    let   key         = (this.formaddedit.key || '').trim();
+                    const description = (this.formaddedit.description || '').trim();
+                    const message     = (this.formaddedit.message || '').trim();
 
-                    // prefix key ด้วย category. ถ้ายังไม่ได้ prefix
-                    if (category && rawKey) {
-                        const prefix = category + '.';
-                        if (rawKey.indexOf(prefix) !== 0) {
-                            rawKey = prefix + rawKey;
-                        }
+                    // กัน user ลืมใส่ข้อมูลหลัก
+                    if (!description || !message) {
+                        this.toggleButtonDisable(false);
+                        this.$bvModal.msgBoxOk('กรุณากรอกชื่อ และข้อความให้ครบ', {
+                            title: 'ข้อมูลไม่ครบ',
+                            size: 'sm',
+                            buttonSize: 'sm',
+                            okVariant: 'warning',
+                            centered: true,
+                        });
+                        return;
+                    }
+
+                    // ถ้าเป็น add หรือ key ว่าง → gen key ใหม่
+                    if (this.formmethod === 'add' || !key) {
+                        key = this.generateQuickReplyKey(category, description || message);
                     }
 
                     const payload = Object.assign({}, this.formaddedit, {
-                        key: rawKey,
+                        key: key,
                         enabled: this.formaddedit.enabled ? 1 : 0,
                     });
 
@@ -347,4 +374,3 @@
         });
     </script>
 @endpush
-

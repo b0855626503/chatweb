@@ -2,7 +2,7 @@
 <b-modal
         id="quick-reply-modal"
         ref="quickReplyModal"
-        title="เลือกข้อความด่วน"
+        title="เลือกข้อความตอบกลับ"
         size="lg"
         centered
         :no-close-on-backdrop="true"
@@ -10,17 +10,26 @@
 >
     <div v-if="quickRepliesLoading" class="text-center my-4">
         <b-spinner small></b-spinner>
-        <span class="ml-2">กำลังโหลดข้อความด่วน...</span>
+        <span class="ml-2">กำลังโหลดข้อความตอบกลับ...</span>
     </div>
 
     <div v-else>
-        <!-- แถบค้นหา -->
+        <!-- แถบค้นหา + ปุ่มเพิ่มข้อความตอบกลับ -->
         <div class="mb-3 d-flex">
             <b-form-input
                     v-model="quickReplySearch"
-                    placeholder="ค้นหาข้อความด่วน..."
+                    placeholder="ค้นหาข้อความตอบกลับ..."
                     size="sm"
+                    class="flex-grow-1 mr-2"
             ></b-form-input>
+
+            <b-button
+                    variant="outline-primary"
+                    size="sm"
+                    @click="openQuickReplyCreateModal"
+            >
+                <i class="fa fa-plus"></i> เพิ่มข้อความ
+            </b-button>
         </div>
 
         <!-- รายการ Quick Reply -->
@@ -57,7 +66,7 @@
         </div>
 
         <div v-else class="text-muted text-center my-4">
-            ไม่พบข้อความด่วนที่ใช้ได้
+            ไม่พบข้อความตอบกลับที่ใช้ได้
         </div>
 
         <!-- พรีวิวข้อความที่จะส่ง -->
@@ -104,6 +113,162 @@
         </div>
     </template>
 </b-modal>
+
+<!-- MODAL: เพิ่มข้อความตอบกลับใหม่จากหน้าแชต -->
+<b-modal
+        id="quick-reply-add-modal"
+        ref="quickReplyAddModal"
+        title="เพิ่มข้อความตอบกลับ"
+        size="lg"
+        centered
+        hide-footer
+        :no-close-on-backdrop="true"
+        @hidden="resetQuickReplyForm"
+>
+    <b-form @submit.prevent="submitQuickReplyForm">
+        <!-- หมวดหมู่ (fix เป็น quick_reply) -->
+        <b-form-group
+                label="หมวดหมู่ข้อความ:"
+                label-for="qr-category"
+        >
+            <b-form-input
+                    id="qr-category"
+                    value="ข้อความตอบกลับ (quick_reply)"
+                    size="sm"
+                    disabled
+            ></b-form-input>
+        </b-form-group>
+
+        <!-- DESCRIPTION -->
+        <b-form-group
+                label="ชื่อ:"
+                label-for="qr-description"
+        >
+            <b-form-input
+                    id="qr-description"
+                    v-model="quickReplyForm.description"
+                    size="sm"
+                    autocomplete="off"
+            ></b-form-input>
+        </b-form-group>
+
+
+        <!-- MESSAGE -->
+        <b-form-group
+                label="ข้อความ:"
+                label-for="qr-message"
+                description="ข้อความที่ส่งถึงลูกค้า (รองรับตัวแปร {display_name}, {username}, ...)"
+        >
+            <b-form-textarea
+                    id="qr-message"
+                    v-model="quickReplyForm.message"
+                    ref="quickReplyMessageInput"
+                    size="sm"
+                    rows="3"
+                    max-rows="6"
+                    autocomplete="off"
+                    required
+            ></b-form-textarea>
+
+            <!-- ปุ่มใส่ placeholder -->
+            <div class="mt-2">
+                <span class="text-muted mr-2">ตัวแปรที่ใช้ได้:</span>
+                <b-button-group size="sm">
+                    <b-button
+                            variant="outline-secondary"
+                            @click.prevent="insertQuickReplyPlaceholder('{display_name}')"
+                    >
+                        {ชื่อแชตไลน์}
+                    </b-button>
+                    <b-button
+                            variant="outline-secondary"
+                            @click.prevent="insertQuickReplyPlaceholder('{username}')"
+                    >
+                        {ไอดีเข้าเวบ}
+                    </b-button>
+                    <b-button
+                            variant="outline-secondary"
+                            @click.prevent="insertQuickReplyPlaceholder('{phone}')"
+                    >
+                        {เบอร์โทร}
+                    </b-button>
+                    <b-button
+                            variant="outline-secondary"
+                            @click.prevent="insertQuickReplyPlaceholder('{bank_name}')"
+                    >
+                        {ชื่อธนาคาร}
+                    </b-button>
+                    <b-button
+                            variant="outline-secondary"
+                            @click.prevent="insertQuickReplyPlaceholder('{account_no}')"
+                    >
+                        {เลขบัญชี}
+                    </b-button>
+                    <b-button
+                            variant="outline-secondary"
+                            @click.prevent="insertQuickReplyPlaceholder('{game_user}')"
+                    >
+                        {ไอดีเกม}
+                    </b-button>
+                    <b-button
+                            variant="outline-secondary"
+                            @click.prevent="insertQuickReplyPlaceholder('{site_name}')"
+                    >
+                        {ชื่อเวบ}
+                    </b-button>
+                    <b-button
+                            variant="outline-secondary"
+                            @click.prevent="insertQuickReplyPlaceholder('{login_url}')"
+                    >
+                        {ทางเข้าเล่น}
+                    </b-button>
+                </b-button-group>
+            </div>
+        </b-form-group>
+
+
+        <!-- ENABLED -->
+        <b-form-group label="สถานะการใช้งาน:">
+            <b-form-checkbox
+                    v-model="quickReplyForm.enabled"
+                    switch
+                    size="lg"
+            >
+                เปิดใช้งานข้อความนี้
+            </b-form-checkbox>
+        </b-form-group>
+
+        <div v-if="quickReplySaveError" class="text-danger small mb-2">
+            @{{ quickReplySaveError }}
+        </div>
+
+        <div class="text-right">
+            <b-button
+                    type="button"
+                    variant="outline-secondary"
+                    size="sm"
+                    @click="$refs.quickReplyAddModal.hide()"
+            >
+                ยกเลิก
+            </b-button>
+            <b-button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    class="ml-2"
+                    :disabled="quickReplySaving"
+            >
+                <span v-if="quickReplySaving">
+                    <b-spinner small class="mr-1"></b-spinner> กำลังบันทึก...
+                </span>
+                <span v-else>
+                    บันทึกข้อความตอบกลับ
+                </span>
+            </b-button>
+        </div>
+    </b-form>
+</b-modal>
+
 
 {{-- MODAL: ผูก contact กับ member --}}
 <b-modal
@@ -335,39 +500,6 @@
     </b-form>
 </b-modal>
 
-{{-- MODAL: เติมเงิน --}}
-<b-modal ref="topupModal" id="line-oa-topup-modal" centered size="xl" title="เพิ่ม รายการฝาก"
-         :no-close-on-backdrop="true" :hide-footer="true" @shown="onTopupModalShown"
-         @hidden="onTopupModalHidden">
-    <b-container class="bv-example-row">
-        <b-form @submit.prevent="submitTopup">
-            <b-form-row>
-                <b-col>
-                    <div class="row">
-                        <div class="col text-right">
-                            <button type="button" class="btn bg-gradient-primary btn-xs"
-                                    @click="openRefillModal"><i
-                                        class="fa fa-plus"></i>
-                                เพิ่มรายการฝาก
-                            </button>
-                        </div>
-                    </div>
-
-
-                    {!! $depositTable->table([
-'id' => 'deposittable',
-'width' => '100%',
-'class' => 'table table-striped table-xs text-xs'
-]) !!}
-                </b-col>
-
-            </b-form-row>
-
-
-        </b-form>
-    </b-container>
-</b-modal>
-
 {{-- MODAL: ดูยอดเงิน --}}
 <b-modal
         id="balance-modal"
@@ -428,6 +560,7 @@
     <b-form-textarea
             v-model="noteModalText"
             rows="4"
+            class="no-resize"
             max-rows="6"
             placeholder="พิมพ์โน้ตสำหรับเคสนี้..."
     ></b-form-textarea>

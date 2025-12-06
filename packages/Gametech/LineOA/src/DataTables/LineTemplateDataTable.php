@@ -88,10 +88,12 @@ class LineTemplateDataTable extends DataTable
     {
         return [
             ['data' => 'id', 'name' => 'line_templates.id', 'title' => '#', 'orderable' => true, 'searchable' => false, 'className' => 'text-center text-nowrap'],
-            ['data' => 'category', 'name' => 'line_templates.category', 'title' => 'หมวด', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
-            ['data' => 'key', 'name' => 'line_templates.key', 'title' => 'key', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+//            ['data' => 'category', 'name' => 'line_templates.category', 'title' => 'หมวด', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
+//            ['data' => 'key', 'name' => 'line_templates.key', 'title' => 'key', 'orderable' => false, 'searchable' => true, 'className' => 'text-center text-nowrap'],
+            ['data' => 'description', 'name' => 'line_templates.description', 'title' => 'ชื่อ', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+
             ['data' => 'message', 'name' => 'line_templates.message', 'title' => 'ข้อความ', 'orderable' => false, 'searchable' => true, 'className' => 'text-left text-nowrap'],
-            ['data' => 'description', 'name' => 'line_templates.description', 'title' => 'คำอธิบาย', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
+//            ['data' => 'description', 'name' => 'line_templates.description', 'title' => 'คำอธิบาย', 'orderable' => false, 'searchable' => false, 'className' => 'text-left text-nowrap'],
             ['data' => 'action', 'name' => 'action', 'title' => 'Action', 'orderable' => false, 'searchable' => false, 'className' => 'text-center text-nowrap', 'width' => '3%'],
         ];
     }

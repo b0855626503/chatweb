@@ -4,7 +4,6 @@ namespace Gametech\LineOA\Http\Controllers\Admin;
 
 use Gametech\Admin\Http\Controllers\AppBaseController;
 use Gametech\Game\Repositories\GameUserRepository;
-use Gametech\LineOA\DataTables\TopupDataTable;
 use Gametech\LineOA\Events\LineOAChatConversationUpdated;
 use Gametech\LineOA\Events\LineOAConversationAssigned;
 use Gametech\LineOA\Events\LineOAConversationClosed;
@@ -46,14 +45,9 @@ class ChatController extends AppBaseController
     /**
      * แสดงหน้าแชต (Blade + Vue UI)
      */
-    public function page(TopupDataTable $topupDataTable)
+    public function page()
     {
-        // ให้ได้ตัว Html\Builder แบบเดียวกับตอนใช้ ->render()
-        $depositTable = $topupDataTable->html();
-
-        return view('admin::module.line-oa.index', [
-            'depositTable' => $depositTable,
-        ]);
+        return view('admin::module.line-oa.index');
     }
 
     /**

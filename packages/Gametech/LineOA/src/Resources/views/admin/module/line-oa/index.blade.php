@@ -9,216 +9,7 @@
     @include('admin::layouts.datatables_css')
 @endsection
 
-@push('styles')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css"
-          integrity="sha512-jU/7UFiaW5UBGODEopEqnbIAHOI8fO6T99m7Tsmqs2gkdujByJfkCbbfPSN4Wlqlb9TGnsuC0YgUgWkRBK7B9A=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"/>
-    <style>
-        .content-header {
-            display:none !important;
-        }
-        .main-footer {
-            display:block !important;
-            margin-top: 15px;
-        }
-
-        .card-body {
-            flex: 1 1 auto;
-            min-height: 1px;
-             padding: 0 !important;
-        }
-        /* ====== รายการห้องแชต (ด้านซ้าย) ====== */
-        .list-group-item.gt-conv-active {
-            background-color: #e7f1ff; /* ฟ้าอ่อนกว่า primary */
-            border-color: #b6d4fe;
-            color: #0c63e4;
-        }
-
-        .list-group-item.gt-conv-active .text-muted,
-        .list-group-item.gt-conv-active small {
-            color: #0c63e4 !important;
-        }
-
-        .list-group-item.active .text-muted {
-            color: #fff !important;
-        }
-
-        .list-group-item.gt-conv-active .badge {
-            background-color: #0d6efd;
-            color: #fff;
-        }
-
-        /* ====== bubble ฝั่งทีมงาน (outbound) ====== */
-        .gt-msg-agent {
-            background-color: #d1e7ff;
-            color: #084298;
-        }
-
-        .gt-msg-agent .text-muted {
-            color: #084298 !important;
-        }
-
-        #line-oa-chat-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 9998;
-        }
-
-        .lineoa-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.55);
-        }
-
-        .lineoa-popup {
-            position: fixed;
-            inset: 20px;
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-            display: flex;
-            flex-direction: column;
-            z-index: 9999;
-            overflow: hidden;
-        }
-
-        .list-group-item.gt-conv-active .oa-reg-badge {
-            background-color: #ffc107 !important; /* สี warning */
-            color: #212529 !important; /* ดำ */
-        }
-
-        .chat-line-original {
-            white-space: pre-wrap;
-            /*font-size: 14px;*/
-        }
-
-        .chat-line-translated {
-            white-space: pre-wrap;
-            /*font-size: 13px;*/
-            border-left: 3px solid #e0e0e0;
-            padding-left: 4px;
-        }
-
-        .gt-conv-last-message {
-            /*font-size: 12px;*/
-            color: #666;
-            white-space: nowrap; /* ไม่ตัดขึ้นบรรทัดใหม่ */
-            overflow: hidden; /* ถ้ายาวเกิน ก็ตัดส่วนที่ล้นทิ้ง */
-            text-overflow: ellipsis; /* แสดง ... ท้ายบรรทัด */
-            max-width: 100%; /* หรือกำหนดเป็น px ก็ได้เช่น 220px */
-        }
-
-        /* ฝั่ง sidebar ทั้งคอลัมน์ – ไม่ให้เลื่อนซ้ายขวา */
-        .line-oa-sidebar {
-            overflow-x: hidden;
-            font-size: 16px;
-        }
-
-        /* ข้อความพรีวิวในแต่ละห้อง */
-        .line-oa-sidebar .conversation-last-message {
-            display: block;
-            white-space: nowrap; /* บังคับบรรทัดเดียว */
-            overflow: hidden; /* ซ่อนส่วนเกิน */
-            text-overflow: ellipsis; /* ใส่ ... ท้ายประโยค */
-
-        }
-
-        /* ห้ามเลื่อนซ้าย-ขวา */
-        .no-x-scroll {
-            overflow-x: hidden !important;
-        }
-
-        /* บังคับ … ให้ทำงานเสมอ */
-        .fixed-line {
-            display: block;
-            white-space: unset !important;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%; /* สำคัญมาก */
-        }
-
-        .btn-app {
-            background-color: transparent !important;
-            color: inherit !important;
-            padding: 15px 10px 15px !important
-        }
-
-        .color-red {
-            background-color: red !important;
-            color: white !important;
-        }
-
-    </style>
-    <style>
-        /* ให้คลิกทะลุข้อความได้แน่ ๆ */
-        .dropzone .dz-message {
-            pointer-events: auto;
-        }
-
-        /* กัน preview ทับพื้นที่คลิก */
-        .dropzone .dz-preview {
-            position: relative;
-            z-index: 1;
-        }
-
-        .dropzone .dz-message {
-            position: relative;
-            z-index: 2;
-        }
-
-    </style>
-    <style>
-        /* wrapper ทั้งหน้าแชต */
-        .line-chat-font {
-            font-family: system-ui,
-            -apple-system, /* iOS */ BlinkMacSystemFont, /* macOS */ "Segoe UI", /* Windows */ Roboto, /* Android */ "Helvetica Neue",
-            Arial,
-            "Noto Sans Thai",
-            sans-serif;
-            font-size: 18px; /* ขนาดใกล้เคียง LINE */
-            line-height: 1.35; /* ระยะห่างบรรทัดแบบ LINE */
-        }
-
-        .line-oa-chat-page {
-            height: calc(100vh - 0px); /* ปรับเลขนี้ตามความสูง header/footer ของ layout */
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ให้ container + row ขยายเต็ม และยืดลูกทุกคอลัมน์ */
-        .line-oa-chat-page > .container-fluid,
-        .line-oa-chat-page .row.h-100 {
-            flex: 1 1 auto;
-            min-height: 0;
-        }
-
-        .line-oa-chat-page .line-oa-col {
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        /* คอลัมน์กลาง: ไม่ให้ทะลุกรอบ */
-        .line-oa-chat-page .chat-middle-col {
-            height: 100%;
-            overflow: hidden;
-        }
-
-        /* ให้ list ข้อความเป็นตัว scroll เอง */
-        .line-oa-chat-page .chat-middle-col .chat-message-list {
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow-y: auto;
-        }
-
-        .note-nav-btn {
-            min-width: 24px !important;
-            max-width: 24px !important;
-            text-align: center;
-        }
-
-    </style>
-@endpush
+@include('admin::module.line-oa.css')
 
 @section('content')
     <section class="content text-xs">
@@ -227,886 +18,8 @@
                 <div id="line-oa-chat-app" class="line-chat-font">
                     <line-oa-chat ref="lineOaChat"></line-oa-chat>
                 </div>
-
-                {{-- เอา block นี้ไปวางเพิ่มด้านล่างได้เลย --}}
-                <div id="member-edit-app">
-                    <b-modal
-                            ref="memberEditModal"
-                            id="line-oa-member-edit-modal"
-                            centered
-                            scrollable
-                            size="md"
-                            title="แก้ไขข้อมูลสมาชิก"
-                            :no-close-on-backdrop="true"
-                            :hide-footer="true"
-                            :lazy="true"
-                            @hidden="onMemberEditModalHidden"
-                    >
-                        <b-container class="bv-example-row">
-                            <b-form
-                                    @submit.prevent="memberEditSubmit"
-                                    v-if="memberEditShow"
-                                    id="member-edit-form"
-                                    ref="memberEditFormRef"
-                            >
-                                <input
-                                        type="hidden"
-                                        id="memberEdit_upline_code"
-                                        :value="memberEditForm.upline_code"
-                                >
-
-                                {{-- แถว: ผู้แนะนำ --}}
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-af-group"
-                                                label="เบอร์ ผู้แนะนำ:"
-                                                label-for="memberEdit-af"
-                                                description="ระบุ เบอร์ ผู้แนะนำ"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-af"
-                                                    v-model="memberEditForm.af"
-                                                    type="text"
-                                                    size="sm"
-                                                    placeholder="เบอร์ ผู้แนะนำ"
-                                                    autocomplete="off"
-                                                    @input="memberEditLoadAF($event)"
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-up_name-group"
-                                                label="ชื่อผู้แนะนำ:"
-                                                label-for="memberEdit-up_name"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-up_name"
-                                                    v-model="memberEditForm.up_name"
-                                                    type="text"
-                                                    size="sm"
-                                                    autocomplete="off"
-                                                    readonly
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                {{-- แถว: ชื่อ / นามสกุล --}}
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-firstname-group"
-                                                label="ชื่อ:"
-                                                label-for="memberEdit-firstname"
-                                                description="ระบุ ชื่อ"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-firstname"
-                                                    v-model="memberEditForm.firstname"
-                                                    type="text"
-                                                    size="sm"
-                                                    placeholder="ชื่อ"
-                                                    autocomplete="off"
-                                                    required
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-lastname-group"
-                                                label="นามสกุล:"
-                                                label-for="memberEdit-lastname"
-                                                description="ระบุ นามสกุล"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-lastname"
-                                                    v-model="memberEditForm.lastname"
-                                                    type="text"
-                                                    size="sm"
-                                                    placeholder="นามสกุล"
-                                                    autocomplete="off"
-                                                    required
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                {{-- แถว: User / Password --}}
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-user_name-group"
-                                                label="User ID:"
-                                                label-for="memberEdit-user_name"
-                                                description="เปลี่ยนได้"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-user_name"
-                                                    v-model="memberEditForm.user_name"
-                                                    type="text"
-                                                    size="sm"
-                                                    autocomplete="off"
-                                                    required
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-user_pass-group"
-                                                label="รหัสผ่าน:"
-                                                label-for="memberEdit-user_pass"
-                                                description="ระบุ รหัสผ่าน กรณีต้องการเปลี่ยนเท่านั้น"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-user_pass"
-                                                    v-model="memberEditForm.user_pass"
-                                                    type="text"
-                                                    size="sm"
-                                                    placeholder="รหัสผ่าน"
-                                                    autocomplete="off"
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                {{-- แถว: ธนาคาร / เลขบัญชี --}}
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-bank_code-group"
-                                                label="ธนาคาร:"
-                                                label-for="memberEdit-bank_code"
-                                        >
-                                            <b-form-select
-                                                    id="memberEdit-bank_code"
-                                                    v-model="memberEditForm.bank_code"
-                                                    :options="memberEditOption.bank_code"
-                                                    size="sm"
-                                                    required
-                                            ></b-form-select>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-acc_no-group"
-                                                label="เลขที่บัญชี:"
-                                                label-for="memberEdit-acc_no"
-                                                description="ระบบไม่ได้เชคซ้ำให้นะ"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-acc_no"
-                                                    v-model="memberEditForm.acc_no"
-                                                    type="text"
-                                                    size="sm"
-                                                    autocomplete="off"
-                                                    required
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                {{-- แถว: Line ID / เบอร์โทร --}}
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-lineid-group"
-                                                label="Line ID:"
-                                                label-for="memberEdit-lineid"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-lineid"
-                                                    v-model="memberEditForm.lineid"
-                                                    type="text"
-                                                    size="sm"
-                                                    autocomplete="off"
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-tel-group"
-                                                label="เบอร์โทร:"
-                                                label-for="memberEdit-tel"
-                                                description="ระบบไม่ได้เชคซ้ำให้นะ"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-tel"
-                                                    v-model="memberEditForm.tel"
-                                                    type="text"
-                                                    size="sm"
-                                                    autocomplete="off"
-                                                    required
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                {{-- แถว: Max withdraw / Refer --}}
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-maxwithdraw_day-group"
-                                                label="ยอดถอนสูงสุด / วัน:"
-                                                label-for="memberEdit-maxwithdraw_day"
-                                                description="ถ้าค่าเป็น 0 = ใช้ค่าถอนสูงสุด / วัน จาก ตั้งค่าพื้นฐานเวบไซต์"
-                                        >
-                                            <b-form-input
-                                                    id="memberEdit-maxwithdraw_day"
-                                                    v-model="memberEditForm.maxwithdraw_day"
-                                                    type="number"
-                                                    size="sm"
-                                                    autocomplete="off"
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col>
-                                        <b-form-group
-                                                id="memberEdit-refer_code-group"
-                                                label="Refer:"
-                                                label-for="memberEdit-refer_code"
-                                        >
-                                            <b-form-select
-                                                    id="memberEdit-refer_code"
-                                                    v-model="memberEditForm.refer_code"
-                                                    :options="memberEditOption.refer_code"
-                                                    size="sm"
-                                                    required
-                                            ></b-form-select>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                {{-- แถว: Line ID (สำรอง) + รูป --}}
-                                <b-form-row>
-                                    <b-col>
-
-                                    </b-col>
-                                    <b-col>
-                                        <div class="d-flex align-items-center">
-                                            <img
-                                                    v-if="memberEditPic && memberEditPic.url"
-                                                    :src="memberEditPic.url"
-                                                    style="max-width:120px"
-                                            >
-                                            <small v-else class="text-muted">ยังไม่มีรูป</small>
-                                            <b-button
-                                                    class="ml-3"
-                                                    variant="primary"
-                                                    @click="memberEditOpenUpload"
-                                            >
-                                                อัปโหลด/เปลี่ยนรูป
-                                            </b-button>
-                                        </div>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-button type="submit" variant="primary">
-                                    บันทึก
-                                </b-button>
-                            </b-form>
-                        </b-container>
-                    </b-modal>
-
-                    <b-modal
-                            ref="memberEditUploadModal"
-                            title="อัปโหลดรูป"
-                            @shown="memberEditOnUploadShown"
-                            @hidden="memberEditOnUploadHidden"
-                            hide-footer
-                    >
-                        <div
-                                ref="memberEditDropzoneEl"
-                                class="dropzone border rounded p-4 text-center"
-                        >
-                            <div class="dz-message">
-                                ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์
-                            </div>
-                            <div ref="memberEditDropzonePreviews" class="mt-3"></div>
-                        </div>
-                        <div class="text-center mt-2">
-                            <b-button ref="memberEditPickBtn" size="sm" variant="secondary">
-                                เลือกไฟล์
-                            </b-button>
-                        </div>
-                    </b-modal>
-                </div>
-
-                <div id="member-refill-app">
-
-                    {{-- ฟอร์มเลือกเป้าหมายที่จะเติมให้ (เดิม addedit) --}}
-                    <b-modal
-                            ref="assignTopupTargetModal"
-                            id="assignTopupTargetModal"
-                            centered
-                            size="md"
-                            title="เลือกระบุไอดีที่จะเติมให้"
-                            :no-close-on-backdrop="true"
-                            :hide-footer="true"
-                            :lazy="true"
-                            @shown="removeFocusFromTrigger"
-                    >
-                        <b-container class="bv-example-row">
-                            <b-form
-                                    v-if="showRefillUI"
-                                    ref="assignTopupTargetFormRef"
-                                    id="assignTopupTargetForm"
-                                    @submit.prevent="submitAssignTopupTarget"
-                            >
-                                <input
-                                        type="hidden"
-                                        id="member_topup"
-                                        :value="assignTopupTargetForm.member_topup"
-                                        required
-                                >
-
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="input-group-user_name"
-                                                label="User ID / Game ID:"
-                                                label-for="user_name"
-                                                description="ระบุ User / Game ID ที่ต้องการเติมให้บิลนี้"
-                                        >
-                                            <b-input-group>
-                                                <b-form-input
-                                                        id="user_name"
-                                                        v-model="assignTopupTargetForm.user_name"
-                                                        type="text"
-                                                        size="md"
-                                                        placeholder="User / Game ID"
-                                                        autocomplete="off"
-                                                ></b-form-input>
-                                                <b-input-group-append>
-                                                    <b-button
-                                                            variant="success"
-                                                            @click="loadUserForAssignTarget"
-                                                    >
-                                                        ค้นหา
-                                                    </b-button>
-                                                </b-input-group-append>
-                                            </b-input-group>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="input-group-name"
-                                                label="ข้อมูลลูกค้า:"
-                                                label-for="name"
-                                        >
-                                            <b-form-textarea
-                                                    id="name"
-                                                    v-model="assignTopupTargetForm.name"
-                                                    size="sm"
-                                                    rows="6"
-                                                    max-rows="6"
-                                                    required
-                                                    plaintext
-                                            ></b-form-textarea>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="input-group-remark_admin"
-                                                label="หมายเหตุ:"
-                                                label-for="remark_admin"
-                                        >
-                                            <b-form-input
-                                                    id="remark_admin"
-                                                    v-model="assignTopupTargetForm.remark_admin"
-                                                    type="text"
-                                                    size="sm"
-                                                    autocomplete="off"
-                                                    placeholder=""
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-button type="submit" variant="primary">
-                                    บันทึก
-                                </b-button>
-                            </b-form>
-                        </b-container>
-                    </b-modal>
-
-                    {{-- ฟอร์มเติมเงิน (เดิม refill) --}}
-                    <b-modal
-                            ref="refillModal"
-                            id="refillModal"
-                            centered
-                            size="md"
-                            title="เติมเงิน"
-                            :no-close-on-backdrop="true"
-                            :hide-footer="true"
-                            :lazy="true"
-                            @shown="removeFocusFromTrigger"
-                            @hidden="onRefillModalHidden"
-                    >
-                        <b-container class="bv-example-row">
-                            <b-form
-                                    v-if="showRefillUI"
-                                    ref="refillFormRef"
-                                    id="refillForm"
-                                    @submit.prevent="submitRefillForm"
-                            >
-                                <input
-                                        type="hidden"
-                                        id="id"
-                                        :value="refillForm.id"
-                                        required
-                                >
-
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="input-group-refill-user"
-                                                label="User ID / Game ID:"
-                                                label-for="refill_user_name"
-                                                description="ระบุ User / Game ID ที่ต้องการเติมเงินรายการนี้"
-                                        >
-                                            <b-input-group>
-                                                <b-form-input
-                                                        id="refill_user_name"
-                                                        v-model="refillForm.user_name"
-                                                        type="text"
-                                                        size="md"
-                                                        placeholder="User / Game ID"
-                                                        autocomplete="off"
-                                                ></b-form-input>
-                                                <b-input-group-append>
-                                                    <b-button
-                                                            variant="success"
-                                                            @click="loadUserForRefill"
-                                                    >
-                                                        ค้นหา
-                                                    </b-button>
-                                                </b-input-group-append>
-                                            </b-input-group>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="input-group-refill-name"
-                                                label="ข้อมูลลูกค้า:"
-                                                label-for="refill_name"
-                                        >
-                                            <b-form-textarea
-                                                    id="refill_name"
-                                                    v-model="refillForm.name"
-                                                    size="sm"
-                                                    rows="6"
-                                                    max-rows="6"
-                                                    required
-                                                    plaintext
-                                            ></b-form-textarea>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="input-group-amount"
-                                                label="จำนวนเงิน:"
-                                                label-for="amount"
-                                                description="ระบุจำนวนเงิน ระหว่าง 1 - 10,000"
-                                        >
-                                            <b-form-input
-                                                    id="amount"
-                                                    v-model="refillForm.amount"
-                                                    type="number"
-                                                    size="sm"
-                                                    placeholder="จำนวนเงิน"
-                                                    min="1"
-                                                    max="10000"
-                                                    autocomplete="off"
-                                                    required
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="input-group-account_code"
-                                                label="ช่องทางที่ฝาก:"
-                                                label-for="account_code"
-                                        >
-                                            <b-form-select
-                                                    id="account_code"
-                                                    v-model="refillForm.account_code"
-                                                    :options="banks"
-                                                    size="sm"
-                                                    required
-                                            ></b-form-select>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-form-row>
-                                    <b-col>
-                                        <b-form-group
-                                                id="input-group-refill-remark"
-                                                label="หมายเหตุ:"
-                                                label-for="refill_remark_admin"
-                                        >
-                                            <b-form-input
-                                                    id="refill_remark_admin"
-                                                    v-model="refillForm.remark_admin"
-                                                    type="text"
-                                                    size="sm"
-                                                    autocomplete="off"
-                                            ></b-form-input>
-                                        </b-form-group>
-                                    </b-col>
-                                </b-form-row>
-
-                                <b-button type="submit" variant="primary">
-                                    บันทึก
-                                </b-button>
-                            </b-form>
-                        </b-container>
-                    </b-modal>
-
-                    {{-- ฟอร์มหมายเหตุยกเลิกรายการ (เดิม clear) --}}
-                    <b-modal
-                            ref="clearRemarkModal"
-                            id="clearRemarkModal"
-                            centered
-                            size="md"
-                            title="โปรดระบุหมายเหตุ ในการทำรายการ"
-                            :no-close-on-backdrop="true"
-                            :hide-footer="true"
-                            :lazy="true"
-                            @shown="removeFocusFromTrigger"
-                    >
-                        <b-form
-                                v-if="showRefillUI"
-                                ref="clearRemarkFormRef"
-                                id="clearRemarkForm"
-                                @submit.stop.prevent="submitClearRemarkForm"
-                        >
-                            <b-form-group
-                                    id="input-group-clear-remark"
-                                    label="หมายเหตุ:"
-                                    label-for="clear_remark"
-                            >
-                                <b-form-input
-                                        id="clear_remark"
-                                        v-model="clearRemarkForm.remark"
-                                        type="text"
-                                        size="sm"
-                                        placeholder=""
-                                        autocomplete="off"
-                                        required
-                                ></b-form-input>
-                            </b-form-group>
-
-                            <b-button type="submit" variant="primary">
-                                บันทึก
-                            </b-button>
-                        </b-form>
-                    </b-modal>
-
-                    {{-- NEW: ฟอร์มเพิ่ม - ลด ยอดเงิน --}}
-                    <b-modal
-                            ref="money"
-                            id="money"
-                            centered
-                            size="sm"
-                            title="เพิ่ม - ลด ยอดเงิน"
-                            :no-stacking="true"
-                            :no-close-on-backdrop="true"
-                            :hide-footer="true"
-                            @shown="removeFocusFromTrigger"
-                    >
-                        <b-form @submit.prevent.once="moneySubmit" v-if="showRefillUI">
-                            <b-form-group
-                                    id="input-group-money-type"
-                                    label="ประเภทรายการ:"
-                                    label-for="money_type"
-                            >
-                                <b-form-select
-                                        id="money_type"
-                                        v-model="formmoney.type"
-                                        :options="typesmoney"
-                                        size="sm"
-                                        required
-                                ></b-form-select>
-                            </b-form-group>
-
-                            <b-form-group
-                                    id="input-group-money-amount"
-                                    label="จำนวนเงิน:"
-                                    label-for="money_amount"
-                                    description="ระบุจำนวนเงิน ต่ำสุดคือ 1"
-                            >
-                                <b-form-input
-                                        id="money_amount"
-                                        v-model="formmoney.amount"
-                                        type="number"
-                                        size="sm"
-                                        placeholder="จำนวนเงิน"
-                                        min="1"
-                                        step="0.01"
-                                        autocomplete="off"
-                                        required
-                                ></b-form-input>
-                            </b-form-group>
-
-                            <b-form-group
-                                    id="input-group-money-remark"
-                                    label="หมายเหตุ:"
-                                    label-for="money_remark"
-                                    description="ระบุสาเหตุที่ทำรายการ"
-                            >
-                                <b-form-input
-                                        id="money_remark"
-                                        v-model="formmoney.remark"
-                                        type="text"
-                                        placeholder="โปรดระบุ"
-                                        size="sm"
-                                        autocomplete="off"
-                                        required
-                                ></b-form-input>
-                            </b-form-group>
-
-                            <b-button type="submit" variant="primary">บันทึก</b-button>
-                        </b-form>
-                    </b-modal>
-
-                    {{-- NEW: ฟอร์มเพิ่ม - ลด Point --}}
-                    <b-modal
-                            ref="point"
-                            id="point"
-                            centered
-                            size="sm"
-                            title="เพิ่ม - ลด Point"
-                            :no-stacking="true"
-                            :no-close-on-backdrop="true"
-                            :hide-footer="true"
-                            @shown="removeFocusFromTrigger"
-                    >
-                        <b-form @submit.prevent.once="pointSubmit" v-if="showRefillUI">
-                            <b-form-group
-                                    id="input-group-point-type"
-                                    label="ประเภทรายการ:"
-                                    label-for="point_type"
-                            >
-                                <b-form-select
-                                        id="point_type"
-                                        v-model="formpoint.type"
-                                        :options="typespoint"
-                                        size="sm"
-                                        required
-                                ></b-form-select>
-                            </b-form-group>
-
-                            <b-form-group
-                                    id="input-group-point-amount"
-                                    label="จำนวน:"
-                                    label-for="point_amount"
-                                    description="ระบุจำนวน ระหว่าง 0 - 10,000"
-                            >
-                                <b-form-input
-                                        id="point_amount"
-                                        v-model="formpoint.amount"
-                                        type="number"
-                                        size="sm"
-                                        placeholder="จำนวน"
-                                        min="1"
-                                        max="10000"
-                                        autocomplete="off"
-                                        required
-                                ></b-form-input>
-                            </b-form-group>
-
-                            <b-form-group
-                                    id="input-group-point-remark"
-                                    label="หมายเหตุ:"
-                                    label-for="point_remark"
-                                    description="ระบุสาเหตุที่ทำรายการ"
-                            >
-                                <b-form-input
-                                        id="point_remark"
-                                        v-model="formpoint.remark"
-                                        type="text"
-                                        placeholder="โปรดระบุ"
-                                        size="sm"
-                                        autocomplete="off"
-                                        required
-                                ></b-form-input>
-                            </b-form-group>
-
-                            <b-button type="submit" variant="primary">บันทึก</b-button>
-                        </b-form>
-                    </b-modal>
-
-                    {{-- NEW: ฟอร์มเพิ่ม - ลด Diamond --}}
-                    <b-modal
-                            ref="diamond"
-                            id="diamond"
-                            centered
-                            size="sm"
-                            title="เพิ่ม - ลด Diamond"
-                            :no-stacking="true"
-                            :no-close-on-backdrop="true"
-                            :hide-footer="true"
-                            @shown="removeFocusFromTrigger"
-                    >
-                        <b-form @submit.prevent.once="diamondSubmit" v-if="showRefillUI">
-                            <b-form-group
-                                    id="input-group-diamond-type"
-                                    label="ประเภทรายการ:"
-                                    label-for="diamond_type"
-                            >
-                                <b-form-select
-                                        id="diamond_type"
-                                        v-model="formdiamond.type"
-                                        :options="typesdiamond"
-                                        size="sm"
-                                        required
-                                ></b-form-select>
-                            </b-form-group>
-
-                            <b-form-group
-                                    id="input-group-diamond-amount"
-                                    label="จำนวน:"
-                                    label-for="diamond_amount"
-                                    description="ระบุจำนวนเงิน ระหว่าง 1 - 10,000"
-                            >
-                                <b-form-input
-                                        id="diamond_amount"
-                                        v-model="formdiamond.amount"
-                                        type="number"
-                                        size="sm"
-                                        placeholder="จำนวนเงิน"
-                                        min="1"
-                                        max="10000"
-                                        autocomplete="off"
-                                        required
-                                ></b-form-input>
-                            </b-form-group>
-
-                            <b-form-group
-                                    id="input-group-diamond-remark"
-                                    label="หมายเหตุ:"
-                                    label-for="diamond_remark"
-                                    description="ระบุสาเหตุที่ทำรายการ"
-                            >
-                                <b-form-input
-                                        id="diamond_remark"
-                                        v-model="formdiamond.remark"
-                                        type="text"
-                                        placeholder="โปรดระบุ"
-                                        size="sm"
-                                        autocomplete="off"
-                                        required
-                                ></b-form-input>
-                            </b-form-group>
-
-                            <b-button type="submit" variant="primary">บันทึก</b-button>
-                        </b-form>
-                    </b-modal>
-
-                    {{-- NEW: ประวัติ ฝาก - ถอน --}}
-                    <b-modal
-                            ref="gamelog"
-                            id="gamelog"
-                            centered
-                            size="lg"
-                            :title="caption"
-                            :no-stacking="false"
-                            :no-close-on-backdrop="true"
-                            :ok-only="true"
-                            :lazy="true"
-                            @shown="removeFocusFromTrigger"
-                    >
-                        <b-table
-                                striped
-                                hover
-                                small
-                                outlined
-                                sticky-header
-                                show-empty
-                                :items="items"
-                                :fields="fields"
-                                :busy="isBusy"
-                                ref="tbdatalog"
-                                v-if="showRefillUI"
-                        >
-                            <template #table-busy>
-                                <div class="text-center text-danger my-2">
-                                    <b-spinner class="align-middle"></b-spinner>
-                                    <strong>Loading...</strong>
-                                </div>
-                            </template>
-
-                            <!-- รหัสรายการ -->
-                            <template #cell(id)="{ item }">
-                                <span v-text="item.id"></span>
-                            </template>
-
-                            <!-- เวลา -->
-                            <template #cell(date_create)="{ item }">
-                                <span v-text="item.date_create"></span>
-                            </template>
-
-                            <!-- ช่องทาง เช่น AUTO / แอดมิน / คิวอาร์ -->
-                            <template #cell(method)="{ item }">
-                                <span v-text="item.method"></span>
-                            </template>
-
-                            <!-- ยอดที่ลูกค้าแจ้ง (ฝาก/ถอน) -->
-                            <template #cell(amount_request)="{ item }">
-                                <span v-text="intToMoney(item.amount_request)"></span>
-                            </template>
-
-                            <!-- โบนัส / โปร (ถ้ามี) -->
-                            <template #cell(credit_bonus)="{ item }">
-                                <span v-if="item.credit_bonus" v-text="intToMoney(item.credit_bonus)"></span>
-                                <span v-else class="text-muted">-</span>
-                            </template>
-
-                            <!-- ยอดสุทธิหลังดำเนินการ -->
-                            <template #cell(amount)="{ item }">
-                                <span v-text="intToMoney(item.amount)"></span>
-                            </template>
-
-                            <!-- เครดิตก่อน/หลัง -->
-                            <template #cell(credit_before)="{ item }">
-                                <span v-text="intToMoney(item.credit_before)"></span>
-                            </template>
-
-                            <template #cell(credit_after)="{ item }">
-                                <span v-text="intToMoney(item.credit_after)"></span>
-                            </template>
-
-                            <!-- สถานะ -->
-                            <template #cell(status)="{ item }">
-            <span
-                    class="badge"
-                    :class="'bg-' + (item.status_color || 'secondary')"
-                    v-text="item.status_display"
-            ></span>
-                            </template>
-                        </b-table>
-                    </b-modal>
-
-                </div>
-
+                @include('admin::module.line-oa.member-edt-app')
+                @include('admin::module.line-oa.member-refill-app')
 
             </div>
         </div>
@@ -1120,8 +33,7 @@
             integrity="sha512-U2WE1ktpMTuRBPoCFDzomoIorbOyUv0sP8B+INA3EzNAhehbzED1rOJg6bCqPf/Tuposxb5ja/MAUnC8THSbLQ=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    @include('admin::layouts.datatables_js')
-    {{--    {!! $depositTable->scripts() !!}--}}
+
     <script>
         (function () {
             $('body').addClass('sidebar-collapse');
@@ -1370,14 +282,14 @@
                                             :options="statusOptions"
                                             size="sm"
                                             class="mr-2"
-                                            @change="fetchConversations(1,{ silent : true})"
+{{--                                            @change="fetchConversations(1,{ silent : true})"--}}
                                     ></b-form-select>
 
                                     <b-form-select
                                             v-model="filters.account_id"
                                             :options="accountOptions"
                                             size="sm"
-                                            @change="fetchConversations(1,{ silent : true})"
+{{--                                            @change="fetchConversations(1,{ silent : true})"--}}
                                     >
                                         <template #first>
                                             <option :value="null">ทุก OA</option>
@@ -1387,13 +299,18 @@
                             </div>
 
                             {{-- LIST --}}
-                            <div class="flex-fill overflow-auto">
-                                <div v-if="loadingList" class="text-center text-muted py-3">
-                                    <b-spinner small class="mr-2"></b-spinner>
-                                    กำลังโหลดรายการแชต...
+                            <div
+                                    class="flex-fill overflow-auto"
+                                    ref="conversationList"
+                                    @scroll="onConversationListScroll">
+
+                                <!-- loading รอบแรก -->
+                                <div v-if="loadingList && !conversations.length" class="text-center my-3 text-muted">
+                                    <b-spinner small class="mr-1"></b-spinner> กำลังโหลดห้องแชต...
                                 </div>
 
-                                <div v-else-if="conversations.length === 0" class="text-center text-muted py-3">
+                                <!-- ไม่มีรายการ -->
+                                <div v-else-if="!conversations.length" class="text-center text-muted my-3 small">
                                     ไม่พบห้องแชต
                                 </div>
 
@@ -1428,7 +345,7 @@
                                                         conv.contact.member_username)) || 'ไม่ทราบชื่อ' }}
                                                     </strong>
                                                     <small class="text-muted" v-if="conv.last_message_at">
-                                                        @{{ formatDateTime(conv.last_message_at) }}
+                                                        @{{ formatMessageDate(conv.last_message_at) }}
                                                     </small>
                                                 </div>
                                                 <!-- แสดงสถานะสมัครกับบอท -->
@@ -1487,26 +404,20 @@
                                         </div>
                                     </b-list-group-item>
                                 </b-list-group>
+
                             </div>
 
-                            {{-- PAGINATION --}}
-                            <div class="border-top p-1 d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    หน้า @{{ pagination.current_page }} / @{{ pagination.last_page }} (รวม @{{
-                                    pagination.total }} ห้อง)
-                                </small>
-                                <div>
-                                    <b-button size="sm" variant="outline-secondary"
-                                              :disabled="pagination.current_page <= 1 || loadingList"
-                                              @click="fetchConversations(pagination.current_page - 1)">
-                                        <i class="fa fa-chevron-left"></i>
-                                    </b-button>
-                                    <b-button size="sm" variant="outline-secondary"
-                                              :disabled="pagination.current_page >= pagination.last_page || loadingList"
-                                              @click="fetchConversations(pagination.current_page + 1)">
-                                        <i class="fa fa-chevron-right"></i>
-                                    </b-button>
-                                </div>
+                            <!-- loading เพิ่มตอนเลื่อนลง -->
+                            <div v-if="loadingMore" class="text-center my-2 text-muted small">
+                                <b-spinner small class="mr-1"></b-spinner> กำลังโหลดเพิ่ม...
+                            </div>
+
+                            <!-- ข้อความท้ายสุดเมื่อโหลดครบทุกหน้าแล้ว -->
+                            <div
+                                    v-if="!loadingMore && !loadingList && pagination.current_page >= pagination.last_page && conversations.length"
+                                    class="text-center text-muted tiny my-2"
+                            >
+                                แสดงครบ @{{ conversations.length }} ห้องแล้ว
                             </div>
                         </div>
                     </b-col>
@@ -1514,7 +425,7 @@
                     {{-- ====== MIDDLE: CHAT WINDOW ====== --}}
                     <b-col cols="12" md="6" class="chat-middle-col line-oa-col">
 
-                        <div class="d-flex flex-column h-100">
+                        <div class="d-flex flex-column h-85">
 
                             {{-- HEADER (ย่อให้คล้าย LINE OA) --}}
                             <div class="p-2 border-bottom bg-light" v-if="selectedConversation">
@@ -1637,166 +548,364 @@
                                     </div>
 
                                     <div v-else>
-                                        <div v-for="msg in messages" :key="msg.id" class="mb-2">
-                                            <div :class="messageWrapperClass(msg)">
-                                                <div :class="messageBubbleClass(msg)">
-                                                    <div class="small" v-if="msg.direction === 'outbound'">
-                                                        <strong>พนักงาน</strong>
-                                                        <strong v-if="msg.meta && msg.meta.employee_name">
-                                                            - @{{ msg.meta.employee_name }}
-                                                        </strong>
-                                                    </div>
-                                                    <div class="small" v-else-if="msg.source === 'bot'">
-                                                        <strong>บอท</strong>
+
+                                        <div v-for="item in messagesWithSeparators"
+                                             :key="item.kind === 'date' ? ('d-' + item.dateKey) : ('m-' + item.message.id)"
+                                             class="mb-2">
+
+                                            <!-- ========== หัวข้อวันที่คั่นกลาง (05 ธ.ค. / 06 ธ.ค. ฯลฯ) ========== -->
+                                            <div v-if="item.kind === 'date'" class="chat-day-separator text-center my-2">
+        <span class="badge badge-light px-3 py-1">
+            @{{ formatChatDay(item.date) }}
+        </span>
+                                            </div>
+
+                                            <!-- ========== บับเบิลข้อความ + avatar แบบ LINE ========== -->
+                                            <div v-else
+                                                 :class="[
+            'chat-msg-row',
+            item.message.direction === 'inbound' ? 'chat-msg-in' : 'chat-msg-out'
+         ]">
+
+                                                <!-- ================= INBOUND (ลูกค้า) ================= -->
+                                                <template v-if="item.message.direction === 'inbound'">
+                                                    <!-- avatar ลูกค้า -->
+                                                    <div class="chat-avatar mr-2">
+                                                        <img
+                                                                :src="(selectedConversation.contact && selectedConversation.contact.picture_url) || '/images/default-avatar.png'"
+                                                                class="chat-avatar-img"
+                                                                alt="avatar"
+                                                        >
                                                     </div>
 
-                                                    <div class="whitespace-pre-wrap">
-                                                        <!-- TEXT -->
-                                                        <template v-if="msg.type === 'text'">
-                                                            <div class="chat-line-original">
-                                                                <!-- แสดงภาษา (ถ้ามี) เช่น [EN] -->
-                                                                <span v-if="getMessageDisplay(msg).lang"
-                                                                      class="text-primary font-weight-bold mr-1">
-                                                            [@{{ getMessageDisplay(msg).lang.toUpperCase() }}]
-                                                        </span>
+                                                    <!-- ส่วนข้อความ -->
+                                                    <div class="chat-msg-main">
+                                                        <div :class="messageBubbleClass(item.message)">
 
-                                                                <!-- แสดงข้อความต้นฉบับ -->
-                                                                <span>@{{ getMessageDisplay(msg).original }}</span>
+                                                            <!-- ถ้าเป็นบอท -->
+                                                            <div class="small" v-if="item.message.source === 'bot'">
+                                                                <strong>บอท</strong>
                                                             </div>
 
-                                                            <!-- บรรทัดแปล -->
-                                                            <div v-if="getMessageDisplay(msg).translated"
-                                                                 class="chat-line-translated text-muted mt-1">
-                                                        <span v-if="getMessageDisplay(msg).target"
-                                                              class="text-success font-weight-bold mr-1">
-                                                            [@{{ getMessageDisplay(msg).target.toUpperCase() }}]
-                                                        </span>
+                                                            <div class="whitespace-pre-wrap">
+                                                                <!-- TEXT -->
+                                                                <template v-if="item.message.type === 'text'">
+                                                                    <div class="chat-line-original">
+                                <span v-if="getMessageDisplay(item.message).lang"
+                                      class="text-primary font-weight-bold mr-1">
+                                    [@{{ getMessageDisplay(item.message).lang.toUpperCase() }}]
+                                </span>
+                                                                        <span>@{{ getMessageDisplay(item.message).original }}</span>
+                                                                    </div>
 
-                                                                <span>@{{ getMessageDisplay(msg).translated }}</span>
+                                                                    <div v-if="getMessageDisplay(item.message).translated"
+                                                                         class="chat-line-translated text-muted mt-1">
+                                <span v-if="getMessageDisplay(item.message).target"
+                                      class="text-success font-weight-bold mr-1">
+                                    [@{{ getMessageDisplay(item.message).target.toUpperCase() }}]
+                                </span>
+                                                                        <span>@{{ getMessageDisplay(item.message).translated }}</span>
+                                                                    </div>
+                                                                </template>
+
+                                                                <!-- STICKER -->
+                                                                <template v-else-if="item.message.type === 'sticker'">
+                                                                    <img
+                                                                            :src="stickerUrl(item.message)"
+                                                                            class="img-fluid"
+                                                                            style="max-width:130px;"
+                                                                            alt="[Sticker]"
+                                                                    >
+                                                                </template>
+
+                                                                <!-- IMAGE -->
+                                                                <template v-else-if="item.message.type === 'image'">
+                                                                    <img
+                                                                            :src="item.message.payload?.message?.contentUrl || item.message.payload?.message?.previewUrl"
+                                                                            class="img-fluid rounded"
+                                                                            style="max-width:240px;"
+                                                                            alt="[Image]"
+                                                                    >
+                                                                </template>
+
+                                                                <!-- VIDEO -->
+                                                                <template v-else-if="item.message.type === 'video'">
+                                                                    <video
+                                                                            controls
+                                                                            class="img-fluid rounded"
+                                                                            style="max-width:260px;"
+                                                                            :poster="item.message.payload?.message?.previewUrl"
+                                                                    >
+                                                                        <source :src="item.message.payload?.message?.contentUrl">
+                                                                    </video>
+                                                                </template>
+
+                                                                <!-- AUDIO -->
+                                                                <template v-else-if="item.message.type === 'audio'">
+                                                                    <audio controls :src="item.message.payload?.message?.contentUrl"></audio>
+                                                                </template>
+
+                                                                <!-- LOCATION -->
+                                                                <template v-else-if="item.message.type === 'location'
+                                             && item.message.payload
+                                             && item.message.payload.message">
+                                                                    <div>
+                                                                        <strong>@{{ item.message.payload.message.title || 'ตำแหน่ง' }}</strong><br>
+                                                                        @{{ item.message.payload.message.address }}<br>
+                                                                        <a :href="'https://maps.google.com/?q='
+                                          + item.message.payload.message.latitude
+                                          + ',' + item.message.payload.message.longitude"
+                                                                           target="_blank">
+                                                                            เปิดแผนที่
+                                                                        </a>
+                                                                    </div>
+                                                                </template>
+
+                                                                <!-- UNSUPPORTED -->
+                                                                <template v-else>
+                                                                    [@{{ item.message.type }}]
+                                                                </template>
                                                             </div>
-                                                        </template>
 
-                                                        <!-- STICKER -->
-                                                        <template v-else-if="msg.type === 'sticker'">
-                                                            <img
-                                                                    :src="stickerUrl(msg)"
-                                                                    class="img-fluid"
-                                                                    style="max-width:130px;"
-                                                                    alt="[Sticker]"
-                                                            >
-                                                        </template>
+                                                            <!-- เวลา + ปุ่ม ... -->
+                                                            <div class="chat-time-wrapper d-flex align-items-center mt-1">
+                        <span class="chat-msg-time text-muted small mr-1">
+                            @{{ formatChatTime(item.message.sent_at) }}
+                        </span>
 
-                                                        <!-- IMAGE -->
-                                                        <template v-else-if="msg.type === 'image'">
-                                                            <img
-                                                                    :src="msg.payload?.message?.contentUrl || msg.payload?.message?.previewUrl"
-                                                                    class="img-fluid rounded"
-                                                                    style="max-width:240px;"
-                                                                    alt="[Image]"
-                                                            >
-                                                        </template>
-
-                                                        <!-- VIDEO -->
-                                                        <template v-else-if="msg.type === 'video'">
-                                                            <video
-                                                                    controls
-                                                                    class="img-fluid rounded"
-                                                                    style="max-width:260px;"
-                                                                    :poster="msg.payload?.message?.previewUrl"
-                                                            >
-                                                                <source :src="msg.payload?.message?.contentUrl">
-                                                            </video>
-                                                        </template>
-
-                                                        <!-- AUDIO -->
-                                                        <template v-else-if="msg.type === 'audio'">
-                                                            <audio controls
-                                                                   :src="msg.payload?.message?.contentUrl"></audio>
-                                                        </template>
-
-                                                        <!-- LOCATION -->
-                                                        <template
-                                                                v-else-if="msg.type === 'location' && msg.payload && msg.payload.message">
-                                                            <div>
-                                                                <strong>@{{ msg.payload.message.title || 'ตำแหน่ง'
-                                                                    }}</strong><br>
-                                                                @{{ msg.payload.message.address }}
-                                                                <br>
-                                                                <a
-                                                                        :href="'https://maps.google.com/?q=' + msg.payload.message.latitude + ',' + msg.payload.message.longitude"
-                                                                        target="_blank"
+                                                                <b-dropdown
+                                                                        right
+                                                                        size="sm"
+                                                                        variant="link"
+                                                                        no-caret
+                                                                        toggle-class="p-0 chat-msg-menu-toggle"
                                                                 >
-                                                                    เปิดแผนที่
-                                                                </a>
+                                                                    <template #button-content>
+                                                                        <i class="fa fa-ellipsis-h"></i>
+                                                                    </template>
+
+                                                                    <b-dropdown-item @click="replyToMessage(item.message)">
+                                                                        ตอบกลับ
+                                                                    </b-dropdown-item>
+
+                                                                    <b-dropdown-item @click="pinMessage(item.message)">
+                                                                        ปักหมุด
+                                                                    </b-dropdown-item>
+
+                                                                    <b-dropdown-item v-if="item.message.is_pinned"
+                                                                                     @click="unpinMessage(item.message)">
+                                                                        เลิกปักหมุด
+                                                                    </b-dropdown-item>
+                                                                </b-dropdown>
                                                             </div>
-                                                        </template>
-
-                                                        <!-- UNSUPPORTED -->
-                                                        <template v-else>
-                                                            [@{{ msg.type }}]
-                                                        </template>
+                                                        </div>
                                                     </div>
+                                                </template>
 
-                                                    <div class="text-right text-muted small mt-1">
-                                                        @{{ formatDateTime(msg.sent_at) }}
+                                                <!-- ================= OUTBOUND (พนักงาน) ================= -->
+                                                <template v-else>
+                                                    <div class="chat-msg-main">
+                                                        <div :class="messageBubbleClass(item.message)">
+
+                                                            <div class="small" v-if="item.message.meta && item.message.meta.employee_name">
+                                                                <strong>@{{ item.message.meta.employee_name }}</strong>
+                                                            </div>
+
+                                                            <div class="whitespace-pre-wrap">
+                                                                <!-- TEXT -->
+                                                                <template v-if="item.message.type === 'text'">
+                                                                    <div class="chat-line-original">
+                                <span v-if="getMessageDisplay(item.message).lang"
+                                      class="text-primary font-weight-bold mr-1">
+                                    [@{{ getMessageDisplay(item.message).lang.toUpperCase() }}]
+                                </span>
+                                                                        <span>@{{ getMessageDisplay(item.message).original }}</span>
+                                                                    </div>
+
+                                                                    <div v-if="getMessageDisplay(item.message).translated"
+                                                                         class="chat-line-translated text-muted mt-1">
+                                <span v-if="getMessageDisplay(item.message).target"
+                                      class="text-success font-weight-bold mr-1">
+                                    [@{{ getMessageDisplay(item.message).target.toUpperCase() }}]
+                                </span>
+                                                                        <span>@{{ getMessageDisplay(item.message).translated }}</span>
+                                                                    </div>
+                                                                </template>
+
+                                                                <!-- STICKER -->
+                                                                <template v-else-if="item.message.type === 'sticker'">
+                                                                    <img
+                                                                            :src="stickerUrl(item.message)"
+                                                                            class="img-fluid"
+                                                                            style="max-width:130px;"
+                                                                            alt="[Sticker]"
+                                                                    >
+                                                                </template>
+
+                                                                <!-- IMAGE -->
+                                                                <template v-else-if="item.message.type === 'image'">
+                                                                    <img
+                                                                            :src="item.message.payload?.message?.contentUrl || item.message.payload?.message?.previewUrl"
+                                                                            class="img-fluid rounded"
+                                                                            style="max-width:240px;"
+                                                                            alt="[Image]"
+                                                                    >
+                                                                </template>
+
+                                                                <!-- VIDEO -->
+                                                                <template v-else-if="item.message.type === 'video'">
+                                                                    <video
+                                                                            controls
+                                                                            class="img-fluid rounded"
+                                                                            style="max-width:260px;"
+                                                                            :poster="item.message.payload?.message?.previewUrl"
+                                                                    >
+                                                                        <source :src="item.message.payload?.message?.contentUrl">
+                                                                    </video>
+                                                                </template>
+
+                                                                <!-- AUDIO -->
+                                                                <template v-else-if="item.message.type === 'audio'">
+                                                                    <audio controls :src="item.message.payload?.message?.contentUrl"></audio>
+                                                                </template>
+
+                                                                <!-- LOCATION -->
+                                                                <template v-else-if="item.message.type === 'location'
+                                             && item.message.payload
+                                             && item.message.payload.message">
+                                                                    <div>
+                                                                        <strong>@{{ item.message.payload.message.title || 'ตำแหน่ง' }}</strong><br>
+                                                                        @{{ item.message.payload.message.address }}<br>
+                                                                        <a :href="'https://maps.google.com/?q='
+                                          + item.message.payload.message.latitude
+                                          + ',' + item.message.payload.message.longitude"
+                                                                           target="_blank">
+                                                                            เปิดแผนที่
+                                                                        </a>
+                                                                    </div>
+                                                                </template>
+
+                                                                <!-- UNSUPPORTED -->
+                                                                <template v-else>
+                                                                    [@{{ item.message.type }}]
+                                                                </template>
+                                                            </div>
+
+                                                            <!-- เวลา + ปุ่ม ... -->
+                                                            <div class="chat-time-wrapper d-flex align-items-center mt-1">
+                        <span class="chat-msg-time text-muted small mr-1">
+                            @{{ formatChatTime(item.message.sent_at) }}
+                        </span>
+
+                                                                <b-dropdown
+                                                                        right
+                                                                        size="sm"
+                                                                        variant="link"
+                                                                        no-caret
+                                                                        toggle-class="p-0 chat-msg-menu-toggle"
+                                                                >
+                                                                    <template #button-content>
+                                                                        <i class="fa fa-ellipsis-h"></i>
+                                                                    </template>
+
+                                                                    <b-dropdown-item @click="replyToMessage(item.message)">
+                                                                        ตอบกลับ
+                                                                    </b-dropdown-item>
+
+                                                                    <b-dropdown-item @click="pinMessage(item.message)">
+                                                                        ปักหมุด
+                                                                    </b-dropdown-item>
+
+                                                                    <b-dropdown-item v-if="item.message.is_pinned"
+                                                                                     @click="unpinMessage(item.message)">
+                                                                        เลิกปักหมุด
+                                                                    </b-dropdown-item>
+                                                                </b-dropdown>
+                                                            </div>
+
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </template>
                                             </div>
                                         </div>
+
                                     </div>
                                 </template>
                             </div>
 
                             {{-- REPLY BOX --}}
                             <div class="border-top p-2 bg-white" v-if="selectedConversation">
-                                <b-input-group>
 
-                                    {{-- ปุ่มแนบรูป --}}
-                                    <b-input-group-prepend>
-                                        <b-button variant="outline-secondary" size="sm"
-                                                  @click="$refs.imageInput.click()"
-                                                  :disabled="!canReply">
+
+                                {{-- กล่องพิมพ์ข้อความ --}}
+                                <b-form-textarea
+                                        ref="replyBox"
+                                        v-model="replyText"
+                                        rows="1"
+                                        max-rows="4"
+                                        class="no-resize chat-reply-textarea"
+                                        placeholder="Enter: ส่ง, Shift + Enter: ขึ้นบรรทัดใหม่..."
+                                        :disabled="!canReply"
+                                        @keydown.enter.exact.prevent="canReply && sendReply()"
+                                ></b-form-textarea>
+
+                                {{-- แถวล่าง: ไอคอน + ปุ่มส่ง --}}
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+
+                                    {{-- ไอคอนด้านซ้าย --}}
+                                    <div class="d-flex align-items-center">
+
+                                        {{-- emoji (เผื่ออนาคตจะเปิด picker) --}}
+                                        <b-button
+                                                size="sm"
+                                                variant="link"
+                                                class="chat-tool-btn px-1"
+                                                :disabled="!canReply"
+                                                @click="openEmojiPicker && openEmojiPicker()"
+                                        >
+                                            <i class="far fa-smile"></i>
+                                        </b-button>
+
+                                        {{-- แนบรูป --}}
+                                        <b-button
+                                                size="sm"
+                                                variant="link"
+                                                class="chat-tool-btn px-1"
+                                                :disabled="!canReply"
+                                                @click="$refs.imageInput.click()"
+                                        >
                                             <i class="fa fa-paperclip"></i>
                                         </b-button>
-                                    </b-input-group-prepend>
 
-                                    {{-- ปุ่มข้อความด่วน --}}
-                                    <b-input-group-prepend>
-                                        <b-button variant="outline-secondary" size="sm"
-                                                  @click="openQuickReplyModal"
-                                                  :disabled="!canReply">
+                                        {{-- ข้อความตอบกลับ --}}
+                                        <b-button
+                                                size="sm"
+                                                variant="link"
+                                                class="chat-tool-btn px-1"
+                                                :disabled="!canReply"
+                                                @click="openQuickReplyModal"
+                                        >
                                             <i class="fas fa-comment-dots"></i>
                                         </b-button>
-                                    </b-input-group-prepend>
+                                    </div>
 
-                                    <b-form-textarea
-                                            ref="replyBox"
-                                            v-model="replyText"
-                                            rows="1"
-                                            max-rows="2"
-                                            :placeholder="selectedConversation && selectedConversation.status === 'closed'
-                                    ? 'เคสนี้ถูกปิดแล้ว ไม่สามารถส่งข้อความได้'
-                                    : 'พิมพ์ข้อความเพื่อตอบลูกค้า แล้วกด Enter หรือปุ่ม ส่ง'"
-                                            :disabled="!canReply"
-                                            @keydown.enter.exact.prevent="canReply && sendReply()"
-                                    ></b-form-textarea>
-
-                                    <b-input-group-append>
-                                        <b-button variant="primary"
-                                                  :disabled="sending
-                                              || replyText.trim() === ''
-                                              || !canReply"
-                                                  @click="sendReply">
-                                    <span v-if="sending">
-                                        <b-spinner small class="mr-1"></b-spinner> กำลังส่ง...
-                                    </span>
+                                    {{-- ปุ่มส่ง ด้านขวา --}}
+                                    <div>
+                                        <b-button
+                                                variant="success"
+                                                class="chat-send-btn"
+                                                :disabled="sending || replyText.trim() === '' || !canReply"
+                                                @click="sendReply"
+                                        >
+                <span v-if="sending">
+                    <b-spinner small class="mr-1"></b-spinner> กำลังส่ง...
+                </span>
                                             <span v-else>
-                                        <i class="fa fa-paper-plane"></i> ส่ง
-                                    </span>
+                    ส่ง
+                </span>
                                         </b-button>
-                                    </b-input-group-append>
-
-                                </b-input-group>
+                                    </div>
+                                </div>
 
                                 {{-- input file ซ่อน --}}
                                 <input type="file"
@@ -1897,17 +1006,7 @@
                                                 @click="openRegisterModal"
                                                 class="btn-app"
                                         >
-                                            <i class="fa fa-user-circle"></i> สมัคร
-                                        </b-button>
-                                    </div>
-
-                                    <div v-if="canControlRegister()">
-                                        <b-button
-                                                variant="outline-success"
-                                                @click="openRefillModal"
-                                                class="btn-app"
-                                        >
-                                            <i class="fa fa-money-check"></i> เพิ่มฝาก
+                                            <i class="fa fa-user-plus"></i> สมัคร
                                         </b-button>
                                     </div>
 
@@ -1927,7 +1026,41 @@
                                                 @click="openBalanceModal"
                                                 class="btn-app"
                                         >
-                                            <i class="fa fa-money-bill"></i> ดูยอดเงิน
+                                            <i class="fa fa-dollar"></i> ดูยอดเงิน
+                                        </b-button>
+                                    </div>
+
+                                    <div v-if="canControlRegister()">
+                                        <b-button
+                                                variant="outline-success"
+                                                @click="openRefillModal"
+                                                class="btn-app"
+                                        >
+                                            <i class="fa fa-money-check"></i> เพิ่มฝาก
+                                        </b-button>
+                                    </div>
+
+                                    <div v-if="canControlRegister()">
+                                        <b-button
+                                                variant="outline-success"
+                                                @click="openRefillModal"
+                                                class="btn-app"
+                                        >
+                                            <div class="btn-icon-group">
+                                                <i class="fa fa-plus"></i>
+                                                <i class="fa fa-minus"></i>
+                                            </div>
+                                            ยอดเงิน
+                                        </b-button>
+                                    </div>
+
+                                    <div v-if="canControlRegister()">
+                                        <b-button
+                                                variant="outline-success"
+                                                @click="openRefillModal"
+                                                class="btn-app"
+                                        >
+                                            <i class="fa fa-history"></i> ประวัติ
                                         </b-button>
                                     </div>
 
@@ -1961,14 +1094,15 @@
                             <div class="flex-fill d-flex flex-column p-2">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div class="d-flex align-items-center">
-                                        <h6 class="mb-0 mr-2">โน้ต</h6>
-                                        <span v-if="notesCount" class="badge badge-secondary">
+                                        <small class="mb-0 mr-2">โน้ต</small>
+                                        <small v-if="notesCount">
                 @{{ activeNotePosition }}
-            </span>
+            </small>
                                     </div>
 
                                     <b-button
                                             size="sm"
+                                            class="note-icon-btn btn-icon"
                                             variant="outline-success"
                                             @click="openNoteCreateModal"
                                     >
@@ -1994,46 +1128,48 @@
 
                                         <div v-else class="d-flex flex-column h-100">
 
-                                            <!-- เนื้อหาโน้ตปัจจุบัน -->
-                                            <div class="flex-fill">
-                                                <div class="small">
+                                            <!-- NOTE CONTENT BOX -->
+                                            <div class="note-box mb-2 p-3">
+                                                <div class="note-text">
                                                     @{{ activeNote.body || activeNote.text || '' }}
                                                 </div>
-                                            </div>
 
-                                            <!-- แถวล่าง: คนเขียน + วันที่ + ปุ่มแก้ไข/ลบ อยู่ฝั่งขวา -->
-                                            <div class="text-muted tiny d-flex justify-content-between align-items-center mt-2 small">
-                <span>
-                    @{{ activeNote.employee_name || activeNote.created_by_name || 'พนักงาน' }}
-                </span>
+                                                <!-- footer: writer + date + edit/delete -->
+                                                <div class="note-footer d-flex justify-content-between align-items-center mt-2 small text-muted">
 
-                                                <div class="d-flex align-items-center">
-                    <span v-if="activeNote.created_at" class="mr-2">
-                        @{{ formatDateTime(activeNote.created_at) }}
-                    </span>
+                                                    <!-- left: name -->
+                                                    <span>
+            @{{ activeNote.employee_name || activeNote.created_by_name || 'พนักงาน' }}
+        </span>
 
-                                                    <b-button
-                                                            v-if="activeNote.id"
-                                                            size="sm"
-                                                            variant="link"
-                                                            class="px-1"
-                                                            @click="openNoteEditModal(activeNote)"
-                                                    >
-                                                        <i class="fa fa-edit"></i>
-                                                    </b-button>
+                                                    <!-- right: date + buttons -->
+                                                    <div class="d-flex align-items-center">
 
-                                                    <b-button
-                                                            v-if="activeNote.id"
-                                                            size="sm"
-                                                            variant="link"
-                                                            class="text-danger px-1"
-                                                            @click="confirmDeleteNote(activeNote)"
-                                                    >
-                                                        <i class="fa fa-trash"></i>
-                                                    </b-button>
+            <span v-if="activeNote.created_at" class="mr-2">
+                @{{ formatDateTime(activeNote.created_at) }}
+            </span>
+
+                                                        <b-button
+                                                                v-if="activeNote.id"
+                                                                size="sm"
+                                                                class="note-icon-btn btn-icon"
+                                                                @click="openNoteEditModal(activeNote)"
+                                                        >
+                                                            <i class="fa fa-edit text-muted"></i>
+                                                        </b-button>
+
+                                                        <b-button
+                                                                v-if="activeNote.id"
+                                                                size="sm"
+                                                                class="note-icon-btn btn-icon"
+                                                                @click="confirmDeleteNote(activeNote)"
+                                                        >
+                                                            <i class="fa fa-trash text-muted"></i>
+                                                        </b-button>
+                                                    </div>
+
                                                 </div>
                                             </div>
-
                                             <!-- ปุ่มสไลด์ซ้าย/ขวา แคบ ๆ ตรงกลางล่าง -->
                                             <div class="mt-2 d-flex justify-content-center align-items-center">
                                                 <b-button
@@ -2064,6 +1200,9 @@
                                         </div>
                                     </div>
                                 </div>
+
+
+
                             </div>
 
                         </div>
@@ -2091,7 +1230,7 @@
                     pagination: {
                         current_page: 1,
                         last_page: 1,
-                        per_page: 20,
+                        per_page: 10,
                         total: 0,
                     },
                     filters: {
@@ -2111,6 +1250,7 @@
                     depositTable: null,
                     currentActiveConversationId: null,
                     loadingList: false,
+                    loadingMore: false,
                     selectedConversation: null,
                     messages: [],
                     loadingMessages: false,
@@ -2214,6 +1354,14 @@
                     noteModalText: '',
                     noteModalSaving: false,
                     noteEditingId: null,
+
+                    quickReplyForm: {
+                        message: '',
+                        description: '',
+                        enabled: true,
+                    },
+                    quickReplySaving: false,
+                    quickReplySaveError: null,
                 };
             },
             created() {
@@ -2390,8 +1538,93 @@
                         return lines;
                     };
                 },
+                messagesWithSeparators() {
+                    const out = [];
+                    let lastDateKey = null;
+
+                    (this.messages || []).forEach(msg => {
+                        if (!msg || !msg.sent_at) return;
+
+                        const key = this.dateKey(msg.sent_at);
+
+                        if (key !== lastDateKey) {
+                            out.push({
+                                kind: 'date',
+                                dateKey: key,
+                                date: msg.sent_at,
+                            });
+                            lastDateKey = key;
+                        }
+
+                        out.push({
+                            kind: 'msg',
+                            message: msg,
+                        });
+                    });
+
+                    return out;
+                },
+            },
+            watch: {
+                'filters.status': function () {
+                    this.reloadConversations();
+                },
+                // 'filters.scope': function () {
+                //     this.reloadConversations();
+                // },
+                'filters.account_id': function () {
+                    this.reloadConversations();
+                },
+                // search ให้ debounce หน่อย
+                // 'filters.q': _.debounce(function () {
+                //     this.reloadConversations();
+                // }, 400),
             },
             methods: {
+                replyToMessage(msg) {
+                    // ไว้ค่อยออกแบบต่อว่าจะ quote ยังไง
+                    console.log('replyToMessage', msg.id);
+                },
+                pinMessage(msg) {
+                    console.log('pinMessage', msg.id);
+                },
+                unpinMessage(msg) {
+                    console.log('unpinMessage', msg.id);
+                },
+                dateKey(dateString) {
+                    if (!dateString) return null;
+                    const d = new Date(dateString);
+
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+
+                    // ใช้เป็น key สำหรับเปรียบเทียบวันเดียวกัน
+                    return `${y}-${m}-${day}`;
+                },
+
+                formatChatDay(dateString) {
+                    if (!dateString) return '';
+
+                    const d = new Date(dateString);
+
+                    return d.toLocaleDateString('th-TH', {
+                        day: '2-digit',
+                        month: 'short',
+                        // ถ้าอยากให้ขึ้นปีเมื่อข้ามปี:
+                        // year: (d.getFullYear() !== new Date().getFullYear()) ? '2-digit' : undefined,
+                    });
+                },
+
+                formatChatTime(dateString) {
+                    if (!dateString) return '';
+                    const d = new Date(dateString);
+
+                    return d.toLocaleTimeString('th-TH', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    });
+                },
                 // ===== Notes API (ต้องมี backend: GET/POST /line-oa/conversations/{id}/notes) =====
                 async loadNotes() {
                     if (!this.selectedConversation || !this.selectedConversation.id) {
@@ -2421,6 +1654,134 @@
                         this.notesLoading = false;
                     }
                 },
+                openNoteCreateModal() {
+                    if (!this.selectedConversation || !this.selectedConversation.id) {
+                        this.notesError = 'กรุณาเลือกห้องก่อน';
+                        return;
+                    }
+                    this.noteModalMode = 'create';
+                    this.noteModalText = '';
+                    this.noteEditingId = null;
+                    this.notesError = '';
+                    this.$refs.noteModal && this.$refs.noteModal.show();
+                },
+
+                openNoteEditModal(note) {
+                    if (!note || !note.id) {
+                        return;
+                    }
+                    this.noteModalMode = 'edit';
+                    this.noteEditingId = note.id;
+                    this.noteModalText = note.body || note.text || '';
+                    this.notesError = '';
+                    this.$refs.noteModal && this.$refs.noteModal.show();
+                },
+                async saveNoteModal() {
+                    const body = (this.noteModalText || '').trim();
+                    if (!body) {
+                        this.notesError = 'ข้อความโน้ตห้ามเว้นว่าง';
+                        return;
+                    }
+
+                    if (!this.selectedConversation || !this.selectedConversation.id) {
+                        this.notesError = 'ไม่พบห้องสนทนา';
+                        return;
+                    }
+
+                    this.noteModalSaving = true;
+                    this.notesError = '';
+
+                    try {
+                        let resp;
+
+                        if (this.noteModalMode === 'create') {
+                            const url = this.apiUrl(`conversations/${this.selectedConversation.id}/notes`);
+                            resp = await axios.post(url, { body });
+                        } else {
+                            const noteId = this.noteEditingId;
+                            if (!noteId) {
+                                throw new Error('ไม่พบโน้ตที่จะแก้ไข');
+                            }
+                            const url = this.apiUrl(`conversations/${this.selectedConversation.id}/notes/${noteId}`);
+                            resp = await axios.patch(url, { body });
+                        }
+
+                        const ok = resp.data && resp.data.success;
+                        if (!ok) {
+                            this.notesError = resp.data.message || 'บันทึกโน้ตไม่สำเร็จ';
+                            return;
+                        }
+
+                        const note = resp.data.data;
+
+                        if (this.noteModalMode === 'create') {
+                            // จะให้ล่าสุดไปอยู่หน้าสุดหรือท้ายสุดก็ได้
+                            this.notes.unshift(note);
+                            this.activeNoteIndex = 0;
+                        } else {
+                            const idx = this.notes.findIndex(n => n.id === note.id);
+                            if (idx !== -1) {
+                                this.$set(this.notes, idx, note);
+                                this.activeNoteIndex = idx;
+                            }
+                        }
+
+                        this.$refs.noteModal && this.$refs.noteModal.hide();
+                    } catch (e) {
+                        this.notesError = 'บันทึกโน้ตไม่สำเร็จ กรุณาลองใหม่';
+                    } finally {
+                        this.noteModalSaving = false;
+                    }
+                },
+                async confirmDeleteNote(note) {
+                    if (!note || !note.id) {
+                        return;
+                    }
+
+                    if (!this.selectedConversation || !this.selectedConversation.id) {
+                        this.notesError = 'ไม่พบห้องสนทนา';
+                        return;
+                    }
+
+                    if (!window.confirm('ยืนยันการลบโน้ตนี้หรือไม่?')) {
+                        return;
+                    }
+
+                    this.notesError = '';
+
+                    try {
+                        const url = this.apiUrl(`conversations/${this.selectedConversation.id}/notes/${note.id}`);
+                        const resp = await axios.delete(url);
+
+                        if (!resp.data || !resp.data.success) {
+                            this.notesError = resp.data?.message || 'ลบโน้ตไม่สำเร็จ';
+                            return;
+                        }
+
+                        const idx = this.notes.findIndex(n => n.id === note.id);
+                        if (idx !== -1) {
+                            this.notes.splice(idx, 1);
+
+                            if (this.activeNoteIndex >= this.notes.length) {
+                                this.activeNoteIndex = this.notes.length ? this.notes.length - 1 : 0;
+                            }
+                        }
+                    } catch (e) {
+                        this.notesError = 'ลบโน้ตไม่สำเร็จ กรุณาลองใหม่';
+                    }
+                },
+                prevNote() {
+                    if (this.activeNoteIndex > 0) {
+                        this.activeNoteIndex--;
+                    }
+                },
+
+                nextNote() {
+                    if (this.activeNoteIndex < this.notesCount - 1) {
+                        this.activeNoteIndex++;
+                    }
+                },
+
                 async fetchNotes(conversationId) {
                     if (!conversationId) return;
 
@@ -2447,79 +1808,7 @@
                         this.notesLoading = false;
                     }
                 },
-                openNoteModal() {
-                    this.notesError = '';
-                    this.newNoteText = '';
-                    this.$nextTick(() => {
-                        this.$refs.noteModal && this.$refs.noteModal.show();
-                    });
-                },
 
-                // โฟกัส textarea ตอน modal โผล่
-                focusNoteInput() {
-                    this.$nextTick(() => {
-                        this.$refs.noteTextarea && this.$refs.noteTextarea.focus();
-                    });
-                },
-
-                // เพิ่มโน้ต (ยิง API เหมือนเดิม แค่ย้ายจากปุ่มเก่า)
-                async addNote() {
-                    const text = (this.newNoteText || '').trim();
-                    if (!text) {
-                        this.notesError = 'กรุณากรอกข้อความโน้ต';
-                        return;
-                    }
-
-                    this.savingNote = true;
-                    this.notesError = '';
-
-                    try {
-                        // ตัวอย่างเรียก API – ปรับ url ให้ตรงของโบ๊ท
-                        const url = this.apiUrl(
-                            `conversations/${this.selectedConversation.id}/notes`
-                        );
-
-                        const resp = await axios.post(url, { body: text });
-
-                        if (resp.data && resp.data.success) {
-                            const note = resp.data.data;
-
-                            // เติมเข้า array
-                            this.notes.unshift(note); // ถ้าอยากให้ note ใหม่อยู่บนสุด
-                            this.activeNoteIndex = 0; // โชว์โน้ตที่เพิ่งเพิ่ม
-
-                            this.newNoteText = '';
-                            this.$refs.noteModal && this.$refs.noteModal.hide();
-                        } else {
-                            this.notesError =
-                                resp.data.message || 'บันทึกโน้ตไม่สำเร็จ';
-                        }
-                    } catch (e) {
-                        this.notesError = 'เกิดข้อผิดพลาดในการบันทึกโน้ต';
-                    } finally {
-                        this.savingNote = false;
-                    }
-                },
-
-                // เลื่อนไป note ก่อนหน้า
-                prevNote() {
-                    if (this.activeNoteIndex > 0) {
-                        this.activeNoteIndex--;
-                    }
-                },
-
-                // เลื่อนไป note ถัดไป
-                nextNote() {
-                    if (this.activeNoteIndex < this.notes.length - 1) {
-                        this.activeNoteIndex++;
-                    }
-                },
-
-                // เวลาโหลด notes จาก backend แล้ว (ถ้ามีฟังก์ชัน loadNotes อยู่แล้ว)
-                setNotes(list) {
-                    this.notes = Array.isArray(list) ? list : [];
-                    this.activeNoteIndex = this.notes.length ? 0 : 0;
-                },
 
 // ===== Quick Reply =====
                 openQuickReplyModal() {
@@ -2605,7 +1894,7 @@
                         console.error('[LineOA] fetchQuickReplies error', e);
                         this.showAlert({
                             success: false,
-                            message: 'โหลดข้อความด่วนไม่สำเร็จ กรุณาลองใหม่'
+                            message: 'โหลดข้อความตอบกลับไม่สำเร็จ กรุณาลองใหม่'
                         });
                     } finally {
                         this.quickRepliesLoading = false;
@@ -2692,7 +1981,7 @@
                         } else {
                             this.showAlert({
                                 success: false,
-                                message: 'ส่งข้อความด่วนไม่สำเร็จ (ไม่พบข้อมูลข้อความจากเซิร์ฟเวอร์)'
+                                message: 'ส่งข้อความตอบกลับไม่สำเร็จ (ไม่พบข้อมูลข้อความจากเซิร์ฟเวอร์)'
                             });
                         }
                     } catch (e) {
@@ -2702,7 +1991,7 @@
                             e?.response?.data?.message ??
                             e?.response?.data?.msg ??
                             e?.response?.data?.error ??
-                            'ส่งข้อความด่วนไม่สำเร็จ กรุณาลองใหม่';
+                            'ส่งข้อความตอบกลับไม่สำเร็จ กรุณาลองใหม่';
 
                         this.showAlert({
                             success: false,
@@ -2722,186 +2011,7 @@
                         document.activeElement.blur();
                     }
                 },
-                onTopupModalShown() {
-                    this.$nextTick(() => {
-                        // ถ้า init แล้ว → แค่ reload
-                        if (this.depositTable) {
-                            if (this.depositTable.ajax && typeof this.depositTable.ajax.reload === 'function') {
-                                this.depositTable.ajax.reload(null, false);
-                            }
-                            return;
-                        }
 
-                        window.LaravelDataTables = window.LaravelDataTables || {};
-                        window.LaravelDataTables["deposittable"] = $("#deposittable").DataTable({
-                            "serverSide": true,
-                            "processing": true,
-                            "ajax": {
-                                "url": "https:\/\/demo.168csn.com\/bank_in",
-                                "type": "GET",
-                                "data": function (data) {
-                                    for (var i = 0, len = data.columns.length; i < len; i++) {
-                                        if (!data.columns[i].search.value) delete data.columns[i].search;
-                                        if (data.columns[i].searchable === true) delete data.columns[i].searchable;
-                                        if (data.columns[i].orderable === true) delete data.columns[i].orderable;
-                                        if (data.columns[i].data === data.columns[i].name) delete data.columns[i].name;
-                                    }
-                                    delete data.search.regex;
-                                }
-                            },
-                            "columns": [{
-                                "name": "bank_payment.code",
-                                "data": "code",
-                                "title": "#",
-                                "orderable": true,
-                                "searchable": true,
-                                "className": "text-center text-nowrap"
-                            }, {
-                                "name": "bankcode",
-                                "data": "bankcode",
-                                "title": "\u0e18\u0e19\u0e32\u0e04\u0e32\u0e23",
-                                "orderable": false,
-                                "searchable": false,
-                                "className": "text-left text-nowrap"
-                            }, {
-                                "name": "bank_account.acc_no",
-                                "data": "acc_no",
-                                "title": "\u0e40\u0e25\u0e02\u0e1a\u0e31\u0e0d\u0e0a\u0e35",
-                                "orderable": false,
-                                "searchable": true,
-                                "className": "text-center text-nowrap"
-                            }, {
-                                "name": "bank_payment.bank_time",
-                                "data": "bank_time",
-                                "title": "\u0e40\u0e27\u0e25\u0e32\u0e18\u0e19\u0e32\u0e04\u0e32\u0e23",
-                                "orderable": false,
-                                "searchable": true,
-                                "className": "text-center text-nowrap"
-                            }, {
-                                "name": "bank_payment.channel",
-                                "data": "channel",
-                                "title": "\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07",
-                                "orderable": false,
-                                "searchable": true,
-                                "className": "text-center text-nowrap"
-                            }, {
-                                "name": "bank_payment.detail",
-                                "data": "detail",
-                                "title": "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14",
-                                "orderable": false,
-                                "searchable": true,
-                                "className": "text-left text-nowrap"
-                            }, {
-                                "name": "bank_payment.value",
-                                "data": "value",
-                                "title": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e07\u0e34\u0e19",
-                                "orderable": false,
-                                "searchable": true,
-                                "className": "text-right text-nowrap"
-                            }, {
-                                "name": "bank_payment.user_name",
-                                "data": "user_name",
-                                "title": "User ID",
-                                "orderable": false,
-                                "searchable": true,
-                                "className": "text-center text-nowrap"
-                            }, {
-                                "name": "bank_payment.date_update",
-                                "data": "date",
-                                "title": "\u0e40\u0e27\u0e25\u0e32\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a",
-                                "orderable": false,
-                                "searchable": true,
-                                "className": "text-center text-nowrap"
-                            }, {
-                                "name": "confirm",
-                                "data": "confirm",
-                                "title": "\u0e40\u0e15\u0e34\u0e21\u0e40\u0e07\u0e34\u0e19",
-                                "orderable": false,
-                                "searchable": false,
-                                "className": "text-center text-nowrap"
-                            }, {
-                                "name": "cancel",
-                                "data": "cancel",
-                                "title": "\u0e1b\u0e0f\u0e34\u0e40\u0e2a\u0e18",
-                                "orderable": false,
-                                "searchable": false,
-                                "className": "text-center text-nowrap"
-                            }, {
-                                "name": "delete",
-                                "data": "delete",
-                                "title": "\u0e25\u0e1a",
-                                "orderable": false,
-                                "searchable": false,
-                                "className": "text-center text-nowrap"
-                            }],
-                            "dom": "Bfrtip",
-                            "responsive": false,
-                            "stateSave": true,
-                            "scrollX": true,
-                            "paging": false,
-                            "searching": false,
-                            "deferRender": true,
-                            "retrieve": true,
-                            "ordering": true,
-                            "pageLength": 50,
-                            "order": [[0, "desc"]],
-                            "lengthMenu": [[50, 100, 200, 500, 1000], ["50 rows", "100 rows", "200 rows", "500 rows", "1000 rows"]],
-                            "buttons": [],
-                            "columnDefs": [{"targets": "_all", "className": "text-center text-nowrap"}]
-                        });
-
-                        {{--const $table = $('#deposittable');--}}
-
-                        {{--this.depositTable = $table.DataTable({--}}
-                        {{--    processing: true,--}}
-                        {{--    serverSide: true,--}}
-                        {{--    ajax: {--}}
-                        {{--        url: '{{ route('admin.bank_in.index') }}',--}}
-                        {{--        type: 'GET'--}}
-                        {{--    },--}}
-                        {{--    paging: false,--}}
-                        {{--    searching: false,--}}
-                        {{--    ordering: true,--}}
-                        {{--    scrollX: true,--}}
-                        {{--    stateSave: true,--}}
-
-                        {{--    // ✨ สำคัญ: map ให้ตรงกับ getColumns()--}}
-                        {{--    columns: [--}}
-                        {{--        { data: 'code',      name: 'bank_payment.code' },--}}
-                        {{--        { data: 'bankcode',  name: 'bankcode' },--}}
-                        {{--        { data: 'acc_no',    name: 'bank_account.acc_no' },--}}
-                        {{--        { data: 'bank_time', name: 'bank_payment.bank_time' },--}}
-                        {{--        { data: 'channel',   name: 'bank_payment.channel' },--}}
-                        {{--        { data: 'detail',    name: 'bank_payment.detail' },--}}
-                        {{--        { data: 'value',     name: 'bank_payment.value' },--}}
-                        {{--        { data: 'user_name', name: 'bank_payment.user_name' },--}}
-                        {{--        { data: 'date',      name: 'bank_payment.date_update' },--}}
-                        {{--        { data: 'confirm',   name: 'confirm', searchable: false, orderable: false },--}}
-                        {{--        { data: 'cancel',    name: 'cancel',  searchable: false, orderable: false },--}}
-                        {{--        { data: 'delete',    name: 'delete',  searchable: false, orderable: false },--}}
-                        {{--    ],--}}
-
-                        {{--    // กัน column not found กลายเป็น error แดง ๆ--}}
-                        {{--    columnDefs: [--}}
-                        {{--        { targets: '_all', defaultContent: '' , className: 'text-nowrap' }--}}
-                        {{--    ],--}}
-
-                        {{--    order: [[0, 'desc']]--}}
-                        {{--});--}}
-
-                        {{--// ให้สอดคล้องกับ pattern เดิมของนาย--}}
-                        {{--window.LaravelDataTables = window.LaravelDataTables || {};--}}
-                        {{--window.LaravelDataTables['deposittable'] = this.depositTable;--}}
-                    });
-                },
-
-
-                // ถ้าอยากมีปุ่ม reload เฉพาะ ก็เขียนแยกอีกเมธอดได้
-                reloadDepositTable() {
-                    if (this.depositTable && this.depositTable.ajax && typeof this.depositTable.ajax.reload === 'function') {
-                        this.depositTable.ajax.reload(null, false);
-                    }
-                },
                 onContext(ctx) {
                     this.formatted = ctx.selectedFormatted || '';
                     this.selected = ctx.selectedYMD || '';
@@ -3080,7 +2190,8 @@
 
                 fetchConversations(page = 1, options = {}) {
                     const silent = options.silent === true;
-                    const merge = options.merge === true; // merge หรือ replace list
+                    const merge  = options.merge === true;   // อัปเดต list เดิมตาม id
+                    const append = options.append === true;  // โหลดเพิ่มต่อท้าย list เดิม
 
                     if (!silent) {
                         this.loadingList = true;
@@ -3093,16 +2204,38 @@
                             q: this.filters.q,
                             account_id: this.filters.account_id,
                             scope: this.filters.scope, // ให้ backend ใช้ filter ได้
+                            per_page: this.pagination?.per_page || 20, // เผื่อกำหนด per_page เอง
                         }
                     }).then(res => {
-                        const body = res.data || {};
+                        const body    = res.data || {};
                         const newList = body.data || [];
 
-                        // อัปเดต pagination
+                        // ===== อัปเดต pagination =====
                         this.pagination = Object.assign(this.pagination, body.meta || {});
 
                         // ===== จัดการ conversations =====
-                        if (merge && Array.isArray(this.conversations) && this.conversations.length > 0) {
+                        if (append && Array.isArray(this.conversations)) {
+                            // โหมดโหลดเพิ่ม: เอาของเดิม + หน้าใหม่ ต่อท้ายกัน
+                            const existing = this.conversations.slice();
+                            const existingIds = new Set(
+                                existing
+                                    .filter(c => c && c.id != null)
+                                    .map(c => c.id)
+                            );
+
+                            newList.forEach(item => {
+                                if (!item || item.id == null) {
+                                    return;
+                                }
+                                if (!existingIds.has(item.id)) {
+                                    existing.push(item);
+                                }
+                            });
+
+                            this.conversations = existing;
+
+                        } else if (merge && Array.isArray(this.conversations) && this.conversations.length > 0) {
+                            // โหมด merge เดิมของโบ๊ท: ใช้ id เดิม แล้วอัปเดตค่าใหม่ทับ
                             const oldById = {};
                             this.conversations.forEach(conv => {
                                 if (conv && conv.id != null) {
@@ -3122,10 +2255,11 @@
 
                             this.conversations = mergedList;
                         } else {
+                            // โหมดปกติ: แทนที่ทั้ง list (เช่น เปลี่ยน filter / ค้นหาใหม่)
                             this.conversations = newList;
                         }
 
-                        // สร้าง accountOptions จาก list ปัจจุบัน
+                        // ===== สร้าง accountOptions จาก list ปัจจุบัน (เฉพาะตอนยังไม่ได้เลือก OA) =====
                         if (this.filters.account_id === null) {
                             const accounts = {};
                             this.conversations.forEach(conv => {
@@ -3148,6 +2282,40 @@
                         }
                     });
                 },
+
+                /**
+                 * เวลาเปลี่ยน filter เช่น status / scope / account / ค้นหา
+                 * ให้รีโหลดหน้า 1 ใหม่
+                 */
+                async reloadConversations() {
+                    this.pagination.current_page = 1;
+                    this.conversations = [];           // เคลียร์ list เดิม (กันรู้สึกว่าข้อมูลเก่าแปะค้าง)
+                    await this.fetchConversations(1);  // โหลดหน้าแรกใหม่
+                },
+
+                /**
+                 * handler เวลา scroll list ซ้าย
+                 */
+                onConversationListScroll(event) {
+                    const el = event.target;
+
+                    // ยังโหลดอยู่ → หยุดก่อนกัน double load
+                    if (this.loadingList) return;
+
+                    // ถ้ายังไม่ถึงหน้าสุดท้าย → เลื่อนโหลดเพิ่ม
+                    if (this.pagination.current_page < this.pagination.last_page) {
+
+                        // ถ้าเลื่อนถึงเกือบล่าง
+                        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+
+                            this.fetchConversations(this.pagination.current_page + 1, {
+                                silent: true,
+                                append: true,
+                            });
+                        }
+                    }
+                },
+
                 // ใช้สำหรับกรณี backend ต้องดึง content เอง (ตอนนี้ template ใช้ payload อยู่แล้ว)
                 imageUrl(msg) {
                     const payloadMsg = msg.payload && msg.payload.message ? msg.payload.message : null;
@@ -3173,9 +2341,15 @@
                     this.currentActiveConversationId = conv.id;
                     this.selectedConversation = conv;
 
+                    // รีเซ็ต state ของโน้ตทุกครั้งที่เปลี่ยนห้อง
+                    this.notes = [];
+                    this.activeNote = {};
+                    this.activeNoteIndex = 0;
+                    this.notesError = null;
+
+                    // ถ้าไม่ต้องโหลดข้อความใหม่ (เช่น แค่ refresh header)
                     if (!reloadMessages) {
-                        // โหลดโน้ตทุกครั้งที่เปลี่ยนห้อง
-                        this.fetchNotes(conv.id);
+                        this.loadNotes(); // ← ใช้เมทอดเดียวกับฝั่งอื่น
                         this.$nextTick(() => {
                             this.scrollToBottom();
                             this.autoFocusRef('replyBox');
@@ -3183,15 +2357,17 @@
                         return;
                     }
 
-                    this.fetchMessages(conv.id, {limit: 50, previous_id: previousId}).then(() => {
-                        // โหลดโน้ตหลังจากโหลดข้อความเสร็จ
-                        this.fetchNotes(conv.id);
-                        this.$nextTick(() => {
-                            this.scrollToBottom();
-                            this.autoFocusRef('replyBox');
+                    // โหลดข้อความ + แล้วค่อยโหลดโน้ต
+                    this.fetchMessages(conv.id, { limit: 50, previous_id: previousId })
+                        .then(() => {
+                            this.loadNotes(); // ← ดึงโน้ตของห้องนี้
+                            this.$nextTick(() => {
+                                this.scrollToBottom();
+                                this.autoFocusRef('replyBox');
+                            });
                         });
-                    });
                 },
+
                 autoFocusRef(refName) {
                     this.$nextTick(() => {
                         const r = this.$refs[refName];
@@ -3400,6 +2576,33 @@
                         pad(d.getMinutes()) + ':' +
                         pad(d.getSeconds());
                 },
+
+                formatMessageDate(dateString) {
+                    if (!dateString) return '';
+
+                    const date = new Date(dateString);
+                    const now = new Date();
+
+                    const isToday =
+                        date.getDate() === now.getDate() &&
+                        date.getMonth() === now.getMonth() &&
+                        date.getFullYear() === now.getFullYear();
+
+                    if (isToday) {
+                        // HH:mm
+                        return date.toLocaleTimeString('th-TH', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        });
+                    }
+
+                    // แสดง 05 ธ.ค
+                    return date.toLocaleDateString('th-TH', {
+                        day: '2-digit',
+                        month: 'short'
+                    });
+                },
+
 
                 messageWrapperClass(msg) {
                     if (msg.direction === 'outbound') {
@@ -4400,6 +3603,121 @@
                         window.memberRefillApp.openRefillModal(prefill);
                     }
                 },
+                openQuickReplyCreateModal() {
+                    // reset form ทุกครั้งก่อนเปิด
+                    this.resetQuickReplyForm();
+                    this.$nextTick(() => {
+                        this.$refs.quickReplyAddModal && this.$refs.quickReplyAddModal.show();
+                    });
+                },
+
+                resetQuickReplyForm() {
+                    this.quickReplyForm = {
+                        key: '',
+                        message: '',
+                        description: '',
+                        enabled: true,
+                    };
+                    this.quickReplySaving = false;
+                    this.quickReplySaveError = null;
+                },
+
+                /**
+                 * ใส่ placeholder ลงใน textarea quick reply (ตำแหน่งเคอร์เซอร์)
+                 */
+                insertQuickReplyPlaceholder(token) {
+                    const current = this.quickReplyForm.message || '';
+
+                    let el = this.$refs.quickReplyMessageInput;
+                    if (el && el.$el) {
+                        el = el.$el;
+                    }
+
+                    if (!el || !el.tagName || el.tagName.toLowerCase() !== 'textarea') {
+                        this.quickReplyForm.message = current + token;
+                        return;
+                    }
+
+                    const start = el.selectionStart != null ? el.selectionStart : current.length;
+                    const end   = el.selectionEnd   != null ? el.selectionEnd   : current.length;
+
+                    const before = current.substring(0, start);
+                    const after  = current.substring(end);
+
+                    this.quickReplyForm.message = before + token + after;
+
+                    this.$nextTick(() => {
+                        el.focus();
+                        const pos = start + token.length;
+                        el.selectionStart = pos;
+                        el.selectionEnd   = pos;
+                    });
+                },
+
+                async submitQuickReplyForm() {
+                    this.quickReplySaveError = null;
+
+                    const key = (this.quickReplyForm.key || '').trim();
+                    const message = (this.quickReplyForm.message || '').trim();
+
+                    if (!key || !message) {
+                        this.quickReplySaveError = 'กรุณากรอกคีย์และข้อความให้ครบถ้วน';
+                        return;
+                    }
+
+                    // prefix key ด้วย quick_reply.
+                    const category = 'quick_reply';
+
+                    // ใช้ description หรือ message มาเป็น seed ทำ slug
+                    const base = (this.quickReplyForm.description || this.quickReplyForm.message || '').trim();
+
+                    let slug = base
+                        .trim()
+                        .replace(/\s+/g, '_')                 // แทนช่องว่างด้วย _
+                        .replace(/[^ก-๙a-zA-Z0-9_]/g, '');    // อนุญาต: ไทย อังกฤษ ตัวเลข _
+
+// fallback กัน slug ว่าง เช่น ข้อความเป็น emoji ล้วน
+                    if (!slug) {
+                        slug = 'ข้อความด่วน';
+                    }
+
+                    const ts = Date.now();
+                    const rawKey = `quick_reply.${slug}_${ts}`;
+
+
+                    const payload = {
+                        category: category,
+                        key: rawKey,
+                        message: message,
+                        description: this.quickReplyForm.description || '',
+                        enabled: this.quickReplyForm.enabled ? 1 : 0,
+                    };
+
+                    this.quickReplySaving = true;
+
+                    try {
+                        // TODO: ปรับ route ให้ตรงกับ Controller ของข้อความตอบกลับที่โบ๊ทใช้จริง
+                        const url = "{{ route('admin.line_quick_reply.create') }}"; // แก้ชื่อ route ตามของโบ๊ท
+                        const resp = await axios.post(url, { data: payload });
+
+                        // สมมติ response ส่ง success กลับมาเหมือนหน้าเมนูข้อความตอบกลับ
+                        if (resp.data && resp.data.message) {
+                            // ปิด modal
+                            this.$refs.quickReplyAddModal.hide();
+
+                            // refresh รายการ quick reply ใน popup เดิม
+                            this.loadQuickReplies && this.loadQuickReplies();
+
+                            // แถม: แจ้งเตือนเล็ก ๆ ถ้าอยากใช้ Toast
+                            // this.$bvToast.toast(resp.data.message, { variant: 'success', solid: true, autoHideDelay: 2000 });
+                        }
+                    } catch (e) {
+                        console.error('submitQuickReplyForm error', e);
+                        this.quickReplySaveError = 'บันทึกข้อความตอบกลับไม่สำเร็จ กรุณาลองใหม่';
+                    } finally {
+                        this.quickReplySaving = false;
+                    }
+                },
 
             }
         });
@@ -5004,7 +4322,7 @@
 
             created() {
                 this.audio = document.getElementById('alertsound');
-                this.autoCnt(false);
+                // this.autoCnt(false);
                 // ถ้าหน้านี้ยังใช้ alertsound / autoCnt เดิมอยู่ สามารถเรียกจาก window ตัวอื่นได้
                 // ไม่ผูกกับ memberRefillApp เพื่อลด side-effect
             },
@@ -5483,10 +4801,6 @@
                                     centered: true,
                                 });
 
-                                if (window.LaravelDataTables && window.LaravelDataTables["deposittable"]) {
-                                    window.LaravelDataTables["deposittable"].draw(false);
-                                }
-
                                 this.$refs.assignTopupTargetModal.hide();
                             } else {
                                 // logic เดิม: mark invalid field ตาม key ใน response.data.message
@@ -5531,9 +4845,7 @@
                                 centered: true,
                             });
 
-                            if (window.LaravelDataTables && window.LaravelDataTables["deposittable"]) {
-                                window.LaravelDataTables["deposittable"].draw(false);
-                            }
+
                             this.$refs.refillModal.hide();
 
                         })
@@ -5571,9 +4883,6 @@
                                 centered: true,
                             });
 
-                            if (window.LaravelDataTables && window.LaravelDataTables["deposittable"]) {
-                                window.LaravelDataTables["deposittable"].draw(false);
-                            }
 
                             this.$refs.clearRemarkModal.hide();
                         })
@@ -5603,9 +4912,6 @@
                                 centered: true
                             });
 
-                            if (window.LaravelDataTables && window.LaravelDataTables["dataTableBuilder"]) {
-                                window.LaravelDataTables["dataTableBuilder"].draw(false);
-                            }
 
                             this.$refs.money && this.$refs.money.hide();
                         })
@@ -5635,9 +4941,6 @@
                                 centered: true
                             });
 
-                            if (window.LaravelDataTables && window.LaravelDataTables["dataTableBuilder"]) {
-                                window.LaravelDataTables["dataTableBuilder"].draw(false);
-                            }
 
                             this.$refs.point && this.$refs.point.hide();
                         })
@@ -5667,9 +4970,6 @@
                                 centered: true
                             });
 
-                            if (window.LaravelDataTables && window.LaravelDataTables["dataTableBuilder"]) {
-                                window.LaravelDataTables["dataTableBuilder"].draw(false);
-                            }
 
                             this.$refs.diamond && this.$refs.diamond.hide();
                         })
@@ -5714,10 +5014,6 @@
                                     centered: true,
                                 });
 
-                                // refresh datatable ถ้ามี
-                                if (window.LaravelDataTables && window.LaravelDataTables["deposittable"]) {
-                                    window.LaravelDataTables["deposittable"].draw(false);
-                                }
                             })
                             .catch(error => {
                                 this.$bvModal.msgBoxOk('เกิดข้อผิดพลาด ไม่สามารถลบรายการได้', {
