@@ -99,6 +99,9 @@ class ChatController extends AppBaseController
         if ($status === 'closed') {
             // เคสที่ปิดแล้วเท่านั้น
             $query->where('status', 'closed');
+        } elseif ($status === 'assigned') {
+            // เคสที่ปิดแล้วเท่านั้น
+            $query->where('status', 'assigned');
 
         } else {
             // “ยังไม่ปิดเคส”
@@ -568,7 +571,7 @@ class ChatController extends AppBaseController
             ], 403);
         }
 
-// ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานส่ง template ใหม่ → เปิดสถานะกลับเป็น open
+        // ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานส่ง template ใหม่ → เปิดสถานะกลับเป็น open
         if ($conversation->status === 'closed') {
             $conversation->status = 'open';
             $conversation->closed_by_employee_id = null;
@@ -578,11 +581,11 @@ class ChatController extends AppBaseController
         }
 
         // กันส่ง template ในห้องที่ปิดแล้ว
-//        if ($conversation->status === 'closed') {
-//            return response()->json([
-//                'message' => 'เคสนี้ถูกปิดแล้ว ไม่สามารถส่งข้อความได้',
-//            ], 409);
-//        }
+        //        if ($conversation->status === 'closed') {
+        //            return response()->json([
+        //                'message' => 'เคสนี้ถูกปิดแล้ว ไม่สามารถส่งข้อความได้',
+        //            ], 409);
+        //        }
 
         //        // เคารพ lock เหมือน reply()/replyImage()
         //        if ($conversation->locked_by_employee_id &&
@@ -1666,9 +1669,9 @@ class ChatController extends AppBaseController
         }
 
         // เซต owner (assigned)
-        $conversation->assigned_employee_id = (int) $employeeId;
-        $conversation->assigned_employee_name = $employeeName;
-        $conversation->assigned_at = now();
+        //        $conversation->assigned_employee_id = (int) $employeeId;
+        //        $conversation->assigned_employee_name = $employeeName;
+        //        $conversation->assigned_at = now();
 
         // สถานะห้อง
         if ($conversation->status !== 'closed') {
@@ -2304,5 +2307,103 @@ class ChatController extends AppBaseController
             'success' => true,
             'data' => $data,
         ], 201);
+    }
+
+    public function updateNote(
+        Request $request,
+        LineConversation $conversation,
+        LineConversationNote $note
+    ): JsonResponse {
+        // ตรวจว่า note นี้อยู่ในห้องเดียวกันจริงไหม กันยิง cross-conversation
+        if ((int) $note->line_conversation_id !== (int) $conversation->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'โน้ตนี้ไม่ได้อยู่ในห้องสนทนานี้',
+            ], 403);
+        }
+
+        $data = $request->validate([
+            'body' => ['required', 'string', 'max:2000'],
+        ]);
+
+        /** @var \Gametech\Admin\Models\Admin|null $employee */
+        $employee = Auth::guard('admin')->user();
+
+        if (! $employee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบข้อมูลผู้ใช้งาน (admin)',
+            ], 403);
+        }
+
+        $employeeId = $employee->code ?? null;
+        $employeeName = $employee->user_name ?? ($employee->name ?? 'พนักงาน');
+
+        if (! $employeeId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบรหัสพนักงาน (code)',
+            ], 403);
+        }
+
+        $body = trim($data['body']);
+
+        if ($body === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'ข้อความโน้ตห้ามเว้นว่าง',
+            ], 422);
+        }
+
+        // อัปเดตโน้ต
+        $note->body = $body;
+        $note->employee_id = $employeeId;
+        $note->employee_name = $employeeName;
+        $note->save();
+
+        $resp = [
+            'id' => $note->id,
+            'body' => $note->body,
+            'employee_id' => $note->employee_id,
+            'employee_name' => $note->employee_name,
+            'created_at' => optional($note->created_at)->toIso8601String(),
+            // เผื่ออนาคต frontend อยากแสดงว่าแก้ไขเมื่อไหร่
+            'updated_at' => optional($note->updated_at)->toIso8601String(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $resp,
+        ]);
+    }
+
+    public function destroyNote(
+        LineConversation $conversation,
+        LineConversationNote $note
+    ): JsonResponse {
+        /** @var \Gametech\Admin\Models\Admin|null $employee */
+        $employee = Auth::guard('admin')->user();
+
+        if (! $employee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบข้อมูลผู้ใช้งาน (admin)',
+            ], 403);
+        }
+
+        // กันยิงลบโน้ตข้ามห้อง
+        if ((int) $note->line_conversation_id !== (int) $conversation->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'โน้ตนี้ไม่ได้อยู่ในห้องสนทนานี้',
+            ], 403);
+        }
+
+        $note->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ลบโน้ตสำเร็จ',
+        ]);
     }
 }

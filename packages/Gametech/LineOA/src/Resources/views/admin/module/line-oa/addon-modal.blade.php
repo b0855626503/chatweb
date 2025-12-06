@@ -105,7 +105,6 @@
     </template>
 </b-modal>
 
-
 {{-- MODAL: ผูก contact กับ member --}}
 <b-modal
         id="line-oa-member-modal"
@@ -369,6 +368,7 @@
     </b-container>
 </b-modal>
 
+{{-- MODAL: ดูยอดเงิน --}}
 <b-modal
         id="balance-modal"
         ref="balanceModal"
@@ -413,4 +413,45 @@
     <div v-else class="text-muted">
         ยังไม่มีข้อมูลยอดเงิน
     </div>
+</b-modal>
+
+{{-- MODAL: Note --}}
+<b-modal
+        id="note-modal"
+        ref="noteModal"
+        :title="noteModalMode === 'create' ? 'เพิ่มโน้ต' : 'แก้ไขโน้ต'"
+        centered
+        size="md"
+        :no-close-on-backdrop="noteModalSaving"
+        :hide-header-close="noteModalSaving"
+>
+    <b-form-textarea
+            v-model="noteModalText"
+            rows="4"
+            max-rows="6"
+            placeholder="พิมพ์โน้ตสำหรับเคสนี้..."
+    ></b-form-textarea>
+
+    <template #modal-footer="{ ok, cancel }">
+        <b-button
+                variant="secondary"
+                @click="noteModalSaving ? null : cancel()"
+                :disabled="noteModalSaving"
+        >
+            ยกเลิก
+        </b-button>
+
+        <b-button
+                variant="primary"
+                @click="saveNoteModal"
+                :disabled="noteModalSaving || !noteModalText.trim()"
+        >
+            <b-spinner
+                    v-if="noteModalSaving"
+                    small
+                    class="mr-1"
+            ></b-spinner>
+            บันทึก
+        </b-button>
+    </template>
 </b-modal>

@@ -14,6 +14,19 @@
           integrity="sha512-jU/7UFiaW5UBGODEopEqnbIAHOI8fO6T99m7Tsmqs2gkdujByJfkCbbfPSN4Wlqlb9TGnsuC0YgUgWkRBK7B9A=="
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <style>
+        .content-header {
+            display:none !important;
+        }
+        .main-footer {
+            display:block !important;
+            margin-top: 15px;
+        }
+
+        .card-body {
+            flex: 1 1 auto;
+            min-height: 1px;
+             padding: 0 !important;
+        }
         /* ====== รายการห้องแชต (ด้านซ้าย) ====== */
         .list-group-item.gt-conv-active {
             background-color: #e7f1ff; /* ฟ้าอ่อนกว่า primary */
@@ -157,21 +170,17 @@
     <style>
         /* wrapper ทั้งหน้าแชต */
         .line-chat-font {
-            font-family:
-                    system-ui,
-                    -apple-system,        /* iOS */
-                    BlinkMacSystemFont,   /* macOS */
-                    "Segoe UI",           /* Windows */
-                    Roboto,               /* Android */
-                    "Helvetica Neue",
-                    Arial,
-                    "Noto Sans Thai",
-                    sans-serif;
-            font-size: 18px;     /* ขนาดใกล้เคียง LINE */
-            line-height: 1.35;   /* ระยะห่างบรรทัดแบบ LINE */
+            font-family: system-ui,
+            -apple-system, /* iOS */ BlinkMacSystemFont, /* macOS */ "Segoe UI", /* Windows */ Roboto, /* Android */ "Helvetica Neue",
+            Arial,
+            "Noto Sans Thai",
+            sans-serif;
+            font-size: 18px; /* ขนาดใกล้เคียง LINE */
+            line-height: 1.35; /* ระยะห่างบรรทัดแบบ LINE */
         }
+
         .line-oa-chat-page {
-            height: calc(100vh - 140px);  /* ปรับเลขนี้ตามความสูง header/footer ของ layout */
+            height: calc(100vh - 0px); /* ปรับเลขนี้ตามความสูง header/footer ของ layout */
             display: flex;
             flex-direction: column;
         }
@@ -200,6 +209,12 @@
             flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
+        }
+
+        .note-nav-btn {
+            min-width: 24px !important;
+            max-width: 24px !important;
+            text-align: center;
         }
 
     </style>
@@ -1311,9 +1326,11 @@
                                     </h5>
                                     <div class="text-right">
                                         <div>
-                                            <b-badge variant="primary" v-if="filters.status === 'open'">เปิดอยู่
+                                            <b-badge variant="primary" v-if="filters.status === 'open'">ทั้งหมด
                                             </b-badge>
-                                            <b-badge variant="secondary" v-else>ปิดแล้ว</b-badge>
+                                            <b-badge variant="info" v-else-if="filters.status === 'assigned'">ดำเนินการ
+                                            </b-badge>
+                                            <b-badge variant="secondary" v-else>เสร็จสิ้น</b-badge>
                                         </div>
                                     </div>
                                 </div>
@@ -1330,7 +1347,7 @@
                                             :active="filters.scope === 'mine'"
                                             @click="changeScope('mine')"
                                     >
-                                        ที่รับเรื่อง
+                                        ที่รับผิดชอบ
                                     </b-nav-item>
                                 </b-nav>
 
@@ -1436,23 +1453,30 @@
                                                         </p>
 
                                                         {{-- แสดงชื่อคนปิด + เวลา ถ้าห้องปิดแล้ว --}}
-                                                        <div
-                                                                v-if="conv.status === 'closed'"
-                                                                class="text-muted small"
-                                                        >
-                                                            ปิดโดย @{{ conv.closed_by_employee_name || 'พนักงาน' }}
-                                                            <span v-if="conv.closed_at">
-                                                        เมื่อ @{{ formatDateTime(conv.closed_at) }}
-                                                    </span>
-                                                        </div>
+                                                        {{--                                                        <div--}}
+                                                        {{--                                                                v-if="conv.status === 'closed'"--}}
+                                                        {{--                                                                class="text-muted small"--}}
+                                                        {{--                                                        >--}}
+                                                        {{--                                                            ปิดโดย @{{ conv.closed_by_employee_name || 'พนักงาน' }}--}}
+                                                        {{--                                                            <span v-if="conv.closed_at">--}}
+                                                        {{--                                                        เมื่อ @{{ formatDateTime(conv.closed_at) }}--}}
+                                                        {{--                                                    </span>--}}
+                                                        {{--                                                        </div>--}}
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <b-badge
-                                                                v-if="conv.assigned_employee_name && conv.status !== 'closed'"
+                                                                v-if="conv.status === 'assigned'"
                                                                 variant="info"
                                                                 class="mr-1"
                                                         >
-                                                            รับเรื่องโดย @{{ conv.assigned_employee_name }}
+                                                            ดำเนินการ
+                                                        </b-badge>
+                                                        <b-badge
+                                                                v-if="conv.status === 'closed'"
+                                                                variant="success"
+                                                                class="mr-1"
+                                                        >
+                                                            เสร็จสิ้น
                                                         </b-badge>
                                                         <b-badge v-if="conv.unread_count > 0" variant="danger">
                                                             @{{ conv.unread_count }}
@@ -1490,7 +1514,7 @@
                     {{-- ====== MIDDLE: CHAT WINDOW ====== --}}
                     <b-col cols="12" md="6" class="chat-middle-col line-oa-col">
 
-                    <div class="d-flex flex-column h-100">
+                        <div class="d-flex flex-column h-100">
 
                             {{-- HEADER (ย่อให้คล้าย LINE OA) --}}
                             <div class="p-2 border-bottom bg-light" v-if="selectedConversation">
@@ -1532,22 +1556,22 @@
                                     </div>
                                     <div class="text-right ml-3">
 
-{{--                                        <div class="mb-1">--}}
-{{--                                            <b-badge--}}
-{{--                                                    v-if="selectedConversation.status === 'closed'"--}}
-{{--                                                    variant="secondary"--}}
-{{--                                                    class="mr-1"--}}
-{{--                                            >--}}
-{{--                                                ปิดโดย @{{ selectedConversation.closed_by_employee_name || 'พนักงาน' }}--}}
-{{--                                            </b-badge>--}}
-{{--                                            <b-badge--}}
-{{--                                                    v-else-if="selectedConversation.assigned_employee_name"--}}
-{{--                                                    variant="info"--}}
-{{--                                                    class="mr-1"--}}
-{{--                                            >--}}
-{{--                                                รับเรื่องโดย @{{ selectedConversation.assigned_employee_name }}--}}
-{{--                                            </b-badge>--}}
-{{--                                        </div>--}}
+                                        {{--                                        <div class="mb-1">--}}
+                                        {{--                                            <b-badge--}}
+                                        {{--                                                    v-if="selectedConversation.status === 'closed'"--}}
+                                        {{--                                                    variant="secondary"--}}
+                                        {{--                                                    class="mr-1"--}}
+                                        {{--                                            >--}}
+                                        {{--                                                ปิดโดย @{{ selectedConversation.closed_by_employee_name || 'พนักงาน' }}--}}
+                                        {{--                                            </b-badge>--}}
+                                        {{--                                            <b-badge--}}
+                                        {{--                                                    v-else-if="selectedConversation.assigned_employee_name"--}}
+                                        {{--                                                    variant="info"--}}
+                                        {{--                                                    class="mr-1"--}}
+                                        {{--                                            >--}}
+                                        {{--                                                รับเรื่องโดย @{{ selectedConversation.assigned_employee_name }}--}}
+                                        {{--                                            </b-badge>--}}
+                                        {{--                                        </div>--}}
 
                                         <div class="d-flex justify-content-end flex-wrap">
                                             <b-button
@@ -1595,9 +1619,9 @@
                             </div>
 
                             {{-- MESSAGE LIST --}}
-                        <div class="flex-fill overflow-auto px-2 py-2 chat-message-list" ref="messageContainer">
+                            <div class="flex-fill overflow-auto px-2 py-2 chat-message-list" ref="messageContainer">
 
-                        <div v-if="!selectedConversation"
+                                <div v-if="!selectedConversation"
                                      class="h-100 d-flex align-items-center justify-content-center text-muted">
                                     ยังไม่ได้เลือกห้องแชต
                                 </div>
@@ -1788,7 +1812,7 @@
                     {{-- ====== RIGHT: PROFILE + ACTIONS + NOTES ====== --}}
                     <b-col cols="12" md="3" class="border-left line-oa-col">
 
-                    <div class="d-flex flex-column h-100" v-if="selectedConversation">
+                        <div class="d-flex flex-column h-100" v-if="selectedConversation">
                             {{-- PROFILE --}}
                             <div class="border-bottom p-3 text-center">
                                 <div class="d-flex justify-content-center">
@@ -1805,11 +1829,17 @@
                                         <i class="far fa-user fa-lg"></i>
                                     </div>
                                 </div>
-                                <h4 class="mt-2 mb-1">
-                                    @{{ (selectedConversation.contact &&
-                                    (selectedConversation.contact.display_name ||
-                                    selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
-                                </h4>
+                                <div class="text-center d-flex align-items-center justify-content-center">
+                                    <h4 class="mt-2 mb-1 mb-0 mr-1">
+                                        @{{ (selectedConversation.contact &&
+                                        (selectedConversation.contact.display_name ||
+                                        selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
+                                    </h4>
+
+                                    <a @click="openMemberModal" class="icon-only" style="cursor: pointer;">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                </div>
                                 <div class="small text-muted" v-if="selectedConversation.contact.member_username">
                                     ยูส: @{{ selectedConversation.contact &&
                                     selectedConversation.contact.member_username ||
@@ -1849,109 +1879,61 @@
 
                             {{-- ACTION BUTTONS --}}
                             <div class="border-bottom p-2">
-                                <div v-if="selectedConversation.is_registering && canControlRegister()" class="mb-1">
-                                    <b-button
-                                            block
-                                            size="sm"
-                                            variant="outline-danger"
-                                            @click="cancelRegisterFlow"
-                                    >
-                                        ยกเลิกสมัคร (บอท)
-                                    </b-button>
-                                    <small class="text-success d-block mt-1">
-                                        กำลังสมัครสมาชิกผ่านบอทอยู่ ทีมงานสามารถกด "ยกเลิกสมัคร" เพื่อดูแลต่อเอง
-                                    </small>
-                                </div>
-                                <div v-else-if="canControlRegister()" class="mb-2">
-                                    <b-button
-                                            block
-                                            size="sm"
-                                            variant="success"
-                                            @click="openRegisterModal"
-                                    >
-                                        สมัครสมาชิกแทนลูกค้า
-                                    </b-button>
-                                </div>
+                                <div class="d-flex flex-wrap gap-2">   <!-- เพิ่ม flex-wrap ให้แตกบรรทัดได้ -->
 
-                                <div class="mb-2" v-if="canControlRegister()">
-                                    <b-button
-                                            block
-                                            size="sm"
-                                            variant="outline-success"
-                                            @click="openRefillModal"
-                                    >
-                                        เพิ่มรายการฝาก
-                                    </b-button>
-                                </div>
+                                    <div v-if="selectedConversation.is_registering && canControlRegister()">
+                                        <b-button
+                                                class="btn-app"
+                                                variant="outline-danger"
+                                                @click="cancelRegisterFlow"
+                                        >
+                                            <i class="fa fa-times"></i> ยกเลิกสมัคร (บอท)
+                                        </b-button>
+                                    </div>
 
-                                <div class="mb-2" v-if="canControlRegister() && selectedConversation.contact.member_id">
-                                    <b-button-group size="sm" class="w-100 mb-1">
-                                        <b-dropdown
-                                                size="sm"
-                                                right
-                                                text="เพิ่ม/ลด"
+                                    <div v-else-if="canControlRegister()">
+                                        <b-button
+                                                variant="success"
+                                                @click="openRegisterModal"
+                                                class="btn-app"
+                                        >
+                                            <i class="fa fa-user-circle"></i> สมัคร
+                                        </b-button>
+                                    </div>
+
+                                    <div v-if="canControlRegister()">
+                                        <b-button
                                                 variant="outline-success"
-                                                class="flex-fill"
+                                                @click="openRefillModal"
+                                                class="btn-app"
                                         >
-                                            <b-dropdown-item
-                                                    @click="window.memberRefillApp.money({ member_id: selectedConversation.contact.member_id })">
-                                                เพิ่ม/ลด ยอดเงิน
-                                            </b-dropdown-item>
+                                            <i class="fa fa-money-check"></i> เพิ่มฝาก
+                                        </b-button>
+                                    </div>
 
-                                            <b-dropdown-item
-                                                    @click="window.memberRefillApp.point({ member_id: selectedConversation.contact.member_id })">
-                                                เพิ่ม/ลด Points
-                                            </b-dropdown-item>
-
-                                            <b-dropdown-item
-                                                    @click="window.memberRefillApp.diamond({ member_id: selectedConversation.contact.member_id })">
-                                                เพิ่ม/ลด Diamond
-                                            </b-dropdown-item>
-                                        </b-dropdown>
-                                    </b-button-group>
-
-                                    <b-button-group size="sm" class="w-100 mb-1">
-                                        <b-dropdown
-                                                size="sm"
-                                                right
-                                                text="ประวัติ"
-                                                variant="outline-info"
-                                                class="flex-fill"
+                                    <div v-if="canControlRegister() && selectedConversation.contact.member_id">
+                                        <b-button
+                                                variant="outline-primary"
+                                                @click="openMemberFromConversation"
+                                                class="btn-app"
                                         >
-                                            <b-dropdown-item
-                                                    @click="window.memberRefillApp.openGameLog('deposit',{ member_id: selectedConversation.contact.member_id })">
-                                                ฝาก
-                                            </b-dropdown-item>
+                                            <i class="fa fa-user-edit"></i> แก้ไขข้อมูล
+                                        </b-button>
+                                    </div>
 
-                                            <b-dropdown-item
-                                                    @click="window.memberRefillApp.openGameLog('withdraw',{ member_id: selectedConversation.contact.member_id })">
-                                                ถอน
-                                            </b-dropdown-item>
+                                    <div v-if="canControlRegister() && selectedConversation.contact.member_id">
+                                        <b-button
+                                                variant="outline-dark"
+                                                @click="openBalanceModal"
+                                                class="btn-app"
+                                        >
+                                            <i class="fa fa-money-bill"></i> ดูยอดเงิน
+                                        </b-button>
+                                    </div>
 
-                                        </b-dropdown>
-                                    </b-button-group>
-
-                                    <b-button
-                                            block
-                                            size="sm"
-                                            variant="outline-primary"
-                                            class="mb-1"
-                                            @click="openMemberFromConversation"
-                                    >
-                                        แก้ไขข้อมูลสมาชิก
-                                    </b-button>
-
-                                    <b-button
-                                            block
-                                            size="sm"
-                                            variant="outline-dark"
-                                            class="mb-1"
-                                            @click="openBalanceModal"
-                                    >
-                                        ดูยอดเงิน
-                                    </b-button>
                                 </div>
                             </div>
+
 
                             {{-- STATUS / ASSIGNEE --}}
                             <div class="border-bottom p-2 small">
@@ -1978,61 +1960,112 @@
                             {{-- NOTES --}}
                             <div class="flex-fill d-flex flex-column p-2">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">โน้ต</h6>
+                                    <div class="d-flex align-items-center">
+                                        <h6 class="mb-0 mr-2">โน้ต</h6>
+                                        <span v-if="notesCount" class="badge badge-secondary">
+                @{{ activeNotePosition }}
+            </span>
+                                    </div>
+
                                     <b-button
                                             size="sm"
                                             variant="outline-success"
-                                            :disabled="savingNote || !newNoteText.trim()"
-                                            @click="addNote"
+                                            @click="openNoteCreateModal"
                                     >
-                                        บันทึกโน้ต
+                                        <i class="fa fa-plus"></i>
                                     </b-button>
                                 </div>
+                                {{-- ส่วนแสดงโน้ต --}}
+                                <div class="flex-fill d-flex flex-column">
 
-                                <b-form-textarea
-                                        v-model="newNoteText"
-                                        rows="2"
-                                        max-rows="4"
-                                        placeholder="พิมพ์โน้ตสั้น ๆ เกี่ยวกับลูกค้าหรือเคสนี้..."
-                                        class="mb-2"
-                                ></b-form-textarea>
-
-                                <div v-if="notesError" class="text-danger small mb-1">
-                                    @{{ notesError }}
-                                </div>
-
-                                <div class="flex-fill overflow-auto">
-                                    <div v-if="notesLoading" class="text-muted text-center my-2">
-                                        <b-spinner small class="mr-1"></b-spinner>
-                                        กำลังโหลดโน้ต...
+                                    <div v-if="notesError" class="text-danger small mb-1">
+                                        @{{ notesError }}
                                     </div>
 
-                                    <div v-else-if="!notes.length" class="text-muted small text-center">
-                                        ยังไม่มีโน้ตสำหรับเคสนี้
-                                    </div>
+                                    <div class="flex-fill overflow-auto">
+                                        <div v-if="notesLoading" class="text-muted text-center my-2">
+                                            <b-spinner small class="mr-1"></b-spinner>
+                                            กำลังโหลดโน้ต...
+                                        </div>
 
-                                    <div v-else>
-                                        <b-card
-                                                v-for="note in notes"
-                                                :key="note.id || note._local_id"
-                                                class="mb-2"
-                                                body-class="py-1 px-2"
-                                        >
-                                            <div class="small">
-                                                @{{ note.body || note.text || '' }}
+                                        <div v-else-if="!notes.length" class="text-muted small text-center">
+                                            ยังไม่มีโน้ตสำหรับเคสนี้
+                                        </div>
+
+                                        <div v-else class="d-flex flex-column h-100">
+
+                                            <!-- เนื้อหาโน้ตปัจจุบัน -->
+                                            <div class="flex-fill">
+                                                <div class="small">
+                                                    @{{ activeNote.body || activeNote.text || '' }}
+                                                </div>
                                             </div>
-                                            <div class="text-muted tiny d-flex justify-content-between mt-1">
-                                        <span>
-                                            @{{ note.employee_name || note.created_by_name || 'พนักงาน' }}
-                                        </span>
-                                                <span v-if="note.created_at">
-                                            @{{ formatDateTime(note.created_at) }}
-                                        </span>
+
+                                            <!-- แถวล่าง: คนเขียน + วันที่ + ปุ่มแก้ไข/ลบ อยู่ฝั่งขวา -->
+                                            <div class="text-muted tiny d-flex justify-content-between align-items-center mt-2 small">
+                <span>
+                    @{{ activeNote.employee_name || activeNote.created_by_name || 'พนักงาน' }}
+                </span>
+
+                                                <div class="d-flex align-items-center">
+                    <span v-if="activeNote.created_at" class="mr-2">
+                        @{{ formatDateTime(activeNote.created_at) }}
+                    </span>
+
+                                                    <b-button
+                                                            v-if="activeNote.id"
+                                                            size="sm"
+                                                            variant="link"
+                                                            class="px-1"
+                                                            @click="openNoteEditModal(activeNote)"
+                                                    >
+                                                        <i class="fa fa-edit"></i>
+                                                    </b-button>
+
+                                                    <b-button
+                                                            v-if="activeNote.id"
+                                                            size="sm"
+                                                            variant="link"
+                                                            class="text-danger px-1"
+                                                            @click="confirmDeleteNote(activeNote)"
+                                                    >
+                                                        <i class="fa fa-trash"></i>
+                                                    </b-button>
+                                                </div>
                                             </div>
-                                        </b-card>
+
+                                            <!-- ปุ่มสไลด์ซ้าย/ขวา แคบ ๆ ตรงกลางล่าง -->
+                                            <div class="mt-2 d-flex justify-content-center align-items-center">
+                                                <b-button
+                                                        size="sm"
+                                                        variant="outline-secondary"
+                                                        class="px-2 py-1 mx-1"
+                                                        @click="prevNote"
+                                                        :disabled="activeNoteIndex <= 0"
+                                                >
+                                                    <i class="fa fa-chevron-left"></i>
+                                                </b-button>
+
+                                                <span class="small text-muted">
+                    @{{ activeNotePosition }}
+                </span>
+
+                                                <b-button
+                                                        size="sm"
+                                                        variant="outline-secondary"
+                                                        class="px-2 py-1 mx-1"
+                                                        @click="nextNote"
+                                                        :disabled="activeNoteIndex >= notesCount - 1"
+                                                >
+                                                    <i class="fa fa-chevron-right"></i>
+                                                </b-button>
+                                            </div>
+
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
 
                         <div v-else class="d-flex h-100 align-items-center justify-content-center text-muted small">
@@ -2068,9 +2101,10 @@
                         scope: 'all', // 'all' | 'mine'
                     },
                     statusOptions: [
+                        // {value: 'all', text: 'ทั้งหมด'},
                         {value: 'open', text: 'ทั้งหมด'},
-                        // {value: 'open', text: 'ห้องเปิดอยู่'},
-                        // {value: 'closed', text: 'ห้องปิดแล้ว'},
+                        {value: 'assigned', text: 'ดำเนินการ'},
+                        {value: 'closed', text: 'เสร็จสิ้น'},
                     ],
                     accountOptions: [],
                     bankOptions: [],
@@ -2173,8 +2207,13 @@
                     notes: [],
                     notesLoading: false,
                     notesError: '',
-                    newNoteText: '',
-                    savingNote: false,
+                    activeNoteIndex: 0,
+
+                    // popup note
+                    noteModalMode: 'create', // 'create' | 'edit'
+                    noteModalText: '',
+                    noteModalSaving: false,
+                    noteEditingId: null,
                 };
             },
             created() {
@@ -2196,6 +2235,23 @@
                 }
             },
             computed: {
+                notesCount() {
+                    return this.notes ? this.notes.length : 0;
+                },
+                activeNote() {
+                    if (!this.notesCount) {
+                        return {};
+                    }
+                    const idx = Math.max(0, Math.min(this.activeNoteIndex, this.notesCount - 1));
+                    return this.notes[idx] || {};
+                },
+                activeNotePosition() {
+                    if (!this.notesCount) {
+                        return '0/0';
+                    }
+                    return (this.activeNoteIndex + 1) + '/' + this.notesCount;
+                },
+
                 filteredQuickReplies() {
                     const term = (this.quickReplySearch || '').toLowerCase().trim();
                     if (!term) {
@@ -2337,6 +2393,34 @@
             },
             methods: {
                 // ===== Notes API (ต้องมี backend: GET/POST /line-oa/conversations/{id}/notes) =====
+                async loadNotes() {
+                    if (!this.selectedConversation || !this.selectedConversation.id) {
+                        this.notes = [];
+                        this.activeNoteIndex = 0;
+                        return;
+                    }
+
+                    this.notesLoading = true;
+                    this.notesError = '';
+
+                    try {
+                        const url = this.apiUrl(`conversations/${this.selectedConversation.id}/notes`);
+                        const resp = await axios.get(url);
+
+                        if (resp.data && resp.data.success) {
+                            this.notes = resp.data.data || [];
+                            this.activeNoteIndex = this.notes.length ? 0 : 0;
+                        } else {
+                            this.notes = [];
+                            this.activeNoteIndex = 0;
+                            this.notesError = resp.data.message || 'โหลดโน้ตไม่สำเร็จ';
+                        }
+                    } catch (e) {
+                        this.notesError = 'โหลดโน้ตไม่สำเร็จ กรุณาลองใหม่';
+                    } finally {
+                        this.notesLoading = false;
+                    }
+                },
                 async fetchNotes(conversationId) {
                     if (!conversationId) return;
 
@@ -2363,44 +2447,80 @@
                         this.notesLoading = false;
                     }
                 },
+                openNoteModal() {
+                    this.notesError = '';
+                    this.newNoteText = '';
+                    this.$nextTick(() => {
+                        this.$refs.noteModal && this.$refs.noteModal.show();
+                    });
+                },
 
+                // โฟกัส textarea ตอน modal โผล่
+                focusNoteInput() {
+                    this.$nextTick(() => {
+                        this.$refs.noteTextarea && this.$refs.noteTextarea.focus();
+                    });
+                },
+
+                // เพิ่มโน้ต (ยิง API เหมือนเดิม แค่ย้ายจากปุ่มเก่า)
                 async addNote() {
-                    if (!this.selectedConversation || !this.newNoteText.trim()) return;
-                    if (this.savingNote) return;
-
-                    const convId = this.selectedConversation.id;
-                    const body = this.newNoteText.trim();
+                    const text = (this.newNoteText || '').trim();
+                    if (!text) {
+                        this.notesError = 'กรุณากรอกข้อความโน้ต';
+                        return;
+                    }
 
                     this.savingNote = true;
                     this.notesError = '';
 
                     try {
-                        const res = await axios.post(this.apiUrl('conversations/' + convId + '/notes'), {
-                            body: body,
-                        });
+                        // ตัวอย่างเรียก API – ปรับ url ให้ตรงของโบ๊ท
+                        const url = this.apiUrl(
+                            `conversations/${this.selectedConversation.id}/notes`
+                        );
 
-                        const data = res.data || {};
-                        const note = data.data || data.note || null;
+                        const resp = await axios.post(url, { body: text });
 
-                        if (note) {
-                            this.notes.unshift({
-                                id: note.id || null,
-                                _local_id: note.id ? null : ('local-' + Date.now()),
-                                body: note.body || note.text || body,
-                                employee_name: note.employee_name || note.created_by_name || null,
-                                created_at: note.created_at || new Date().toISOString(),
-                            });
+                        if (resp.data && resp.data.success) {
+                            const note = resp.data.data;
+
+                            // เติมเข้า array
+                            this.notes.unshift(note); // ถ้าอยากให้ note ใหม่อยู่บนสุด
+                            this.activeNoteIndex = 0; // โชว์โน้ตที่เพิ่งเพิ่ม
+
                             this.newNoteText = '';
+                            this.$refs.noteModal && this.$refs.noteModal.hide();
                         } else {
-                            this.notesError = 'บันทึกโน้ตไม่สำเร็จ (ไม่พบข้อมูลจากเซิร์ฟเวอร์)';
+                            this.notesError =
+                                resp.data.message || 'บันทึกโน้ตไม่สำเร็จ';
                         }
                     } catch (e) {
-                        console.error('[LineOA] addNote error', e);
-                        this.notesError = 'บันทึกโน้ตไม่สำเร็จ';
+                        this.notesError = 'เกิดข้อผิดพลาดในการบันทึกโน้ต';
                     } finally {
                         this.savingNote = false;
                     }
                 },
+
+                // เลื่อนไป note ก่อนหน้า
+                prevNote() {
+                    if (this.activeNoteIndex > 0) {
+                        this.activeNoteIndex--;
+                    }
+                },
+
+                // เลื่อนไป note ถัดไป
+                nextNote() {
+                    if (this.activeNoteIndex < this.notes.length - 1) {
+                        this.activeNoteIndex++;
+                    }
+                },
+
+                // เวลาโหลด notes จาก backend แล้ว (ถ้ามีฟังก์ชัน loadNotes อยู่แล้ว)
+                setNotes(list) {
+                    this.notes = Array.isArray(list) ? list : [];
+                    this.activeNoteIndex = this.notes.length ? 0 : 0;
+                },
+
 // ===== Quick Reply =====
                 openQuickReplyModal() {
                     if (!this.selectedConversation) {

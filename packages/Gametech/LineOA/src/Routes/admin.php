@@ -85,6 +85,8 @@ Route::domain(
 
                 Route::get('conversations/{conversation}/notes', [ChatController::class, 'listNotes'])->name('conversations.list-notes');
                 Route::post('conversations/{conversation}/notes', [ChatController::class, 'storeNote'])->name('conversations.store-notes');
+                Route::patch('conversations/{conversation}/notes/{note}', [ChatController::class, 'updateNote'])->name('conversations.notes.update');
+                Route::delete('conversations/{conversation}/notes/{note}', [ChatController::class, 'destroyNote'])->name('conversations.notes.destroy');
             });
 
         Route::prefix('line_account')->group(function () {
