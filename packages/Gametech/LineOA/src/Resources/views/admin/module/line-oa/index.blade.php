@@ -3779,19 +3779,30 @@
                         const body = res.data || {};
                         const items = body.data || body.employees || [];
 
-                        this.assigneeOptions = items.map(e => {
-                            const name = e.name || e.full_name || e.user_name || e.code || ('พนักงาน #' + e.user_name);
 
-                            return {
-                                code: e.code || '',
-                                user_name: e.user_name || '',
-                                display: name,
-                                sub: e.code
-                                    ? (e.user_name ? `${e.code} • ${e.user_name}` : e.code)
-                                    : (e.user_name || ''),
-                                role: e.role_name || e.role || '',
-                            };
-                        });
+                        const base = [{
+                            code: null,
+                            user_name: '',
+                            display: 'ไม่มีผู้รับผิดชอบ',
+                            sub: '',
+                            role: '',
+                        }];
+
+                        this.assigneeOptions = base.concat(
+                            items.map(e => {
+                                const name = e.name || e.full_name || e.user_name || e.code || ('พนักงาน #' + e.code);
+
+                                return {
+                                    code: e.code || '',
+                                    user_name: e.user_name || '',
+                                    display: name,
+                                    sub: e.code
+                                        ? (e.user_name ? `${e.code} • ${e.user_name}` : e.code)
+                                        : (e.user_name || ''),
+                                    role: e.role_name || e.role || '',
+                                };
+                            })
+                        );
                     } catch (e) {
                         console.error('[LineOA] loadAssignees error', e);
                         this.assigneeOptions = [];
@@ -3803,7 +3814,7 @@
                 },
 
                 async saveAssignee() {
-                    if (!this.selectedConversation || !this.selectedAssigneeId) {
+                    if (!this.selectedConversation) {
                         return;
                     }
 

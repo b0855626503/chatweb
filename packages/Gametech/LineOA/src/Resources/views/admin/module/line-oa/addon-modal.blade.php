@@ -665,7 +665,7 @@
                         variant="primary"
                         size="sm"
                         class="ml-2"
-                        :disabled="!selectedAssigneeId || savingAssignee"
+                        :disabled="savingAssignee"
                         @click="saveAssignee"
                 >
                     <span v-if="savingAssignee">

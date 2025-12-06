@@ -1719,11 +1719,43 @@ class ChatController extends AppBaseController
 
     public function assign(Request $request, LineConversation $conversation): JsonResponse
     {
+        // อนุญาตให้เป็น null ได้ สำหรับเคส "ไม่มีผู้รับผิดชอบ"
         $data = $request->validate([
-            'employee_id' => ['required', 'integer'],
+            'employee_id' => ['nullable', 'integer'],
         ]);
 
-        $employee = Admin::find($data['employee_id']);
+        $employeeId = $data['employee_id'] ?? null;
+
+        // เคส: ไม่มีผู้รับผิดชอบ (กดตัวเลือกแรก)
+        if ($employeeId === null) {
+            $conversation->assigned_employee_id = null;
+            $conversation->assigned_employee_name = null;
+            $conversation->assigned_at = null;
+            $conversation->save();
+
+            $conversationFresh = $conversation->fresh([
+                'contact.member',
+                'account',
+                'registerSessions' => function ($q) {
+                    $q->where('status', 'in_progress');
+                },
+            ]) ?? $conversation;
+
+            DB::afterCommit(function () use ($conversationFresh) {
+                event(new LineOAChatConversationUpdated($conversationFresh));
+                // จะยิง LineOAConversationAssigned ด้วยหรือเปล่า แล้วแต่คุณ:
+                 event(new LineOAConversationAssigned($conversationFresh));
+            });
+
+            return response()->json([
+                'message' => 'success',
+                'data' => $conversationFresh,
+            ]);
+        }
+
+        // เคส: มีผู้รับผิดชอบเป็นพนักงานคนหนึ่ง
+        /** @var \Gametech\Admin\Models\Admin|null $employee */
+        $employee = Admin::find($employeeId);
 
         if (! $employee) {
             return response()->json([
@@ -1732,7 +1764,8 @@ class ChatController extends AppBaseController
             ], 404);
         }
 
-        $conversation->assigned_employee_id = $employee->code; // หรือ id แล้วแต่แบบที่ใช้
+        // ตรงนี้คุณเลือกได้ว่าจะเก็บเป็น id หรือ code
+        $conversation->assigned_employee_id = $employee->code; // หรือ $employee->id
         $conversation->assigned_employee_name = $employee->user_name ?? $employee->name;
         $conversation->assigned_at = now();
         $conversation->save();
