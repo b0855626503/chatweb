@@ -282,14 +282,14 @@
                                             :options="statusOptions"
                                             size="sm"
                                             class="mr-2"
-{{--                                            @change="fetchConversations(1,{ silent : true})"--}}
+                                            {{--                                            @change="fetchConversations(1,{ silent : true})"--}}
                                     ></b-form-select>
 
                                     <b-form-select
                                             v-model="filters.account_id"
                                             :options="accountOptions"
                                             size="sm"
-{{--                                            @change="fetchConversations(1,{ silent : true})"--}}
+                                            {{--                                            @change="fetchConversations(1,{ silent : true})"--}}
                                     >
                                         <template #first>
                                             <option :value="null">ทุก OA</option>
@@ -306,7 +306,8 @@
 
                                 <!-- loading รอบแรก -->
                                 <div v-if="loadingList && !conversations.length" class="text-center my-3 text-muted">
-                                    <b-spinner small class="mr-1"></b-spinner> กำลังโหลดห้องแชต...
+                                    <b-spinner small class="mr-1"></b-spinner>
+                                    กำลังโหลดห้องแชต...
                                 </div>
 
                                 <!-- ไม่มีรายการ -->
@@ -424,7 +425,8 @@
 
                             <!-- loading เพิ่มตอนเลื่อนลง -->
                             <div v-if="loadingMore" class="text-center my-2 text-muted small">
-                                <b-spinner small class="mr-1"></b-spinner> กำลังโหลดเพิ่ม...
+                                <b-spinner small class="mr-1"></b-spinner>
+                                กำลังโหลดเพิ่ม...
                             </div>
 
                             <!-- ข้อความท้ายสุดเมื่อโหลดครบทุกหน้าแล้ว -->
@@ -437,12 +439,12 @@
                         </div>
                     </b-col>
 
+
                     {{-- ====== MIDDLE: CHAT WINDOW ====== --}}
                     <b-col cols="12" md="6" class="chat-middle-col line-oa-col">
 
                         <div class="d-flex flex-column h-85">
 
-                            {{-- HEADER (ย่อให้คล้าย LINE OA) --}}
                             <div class="p-2 border-bottom bg-light" v-if="selectedConversation">
                                 <div class="d-flex align-items-center">
                                     <div class="mr-2"
@@ -465,15 +467,11 @@
                                     <div class="flex-fill">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <h3 class="mb-0">
-                                        <span
-                                                class="text-primary"
-{{--                                                style="cursor: pointer; text-decoration: underline;"--}}
-{{--                                                @click="openMemberModal"--}}
-                                        >
-                                            @{{ (selectedConversation.contact &&
-                                            (selectedConversation.contact.display_name ||
-                                            selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
-                                        </span>
+                            <span class="text-primary">
+                                @{{ (selectedConversation.contact &&
+                                (selectedConversation.contact.display_name ||
+                                selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
+                            </span>
                                                 <b-button
                                                         size="sm"
                                                         class="note-icon-btn btn-icon"
@@ -481,45 +479,25 @@
                                                         @click="oNOffSound"
                                                         v-b-tooltip.hover
                                                         :title="selectedConversation && isConversationMuted(selectedConversation.id)
-                ? 'เปิดเสียงห้องนี้'
-                : 'ปิดเสียงห้องนี้'"
+                                    ? 'เปิดเสียงห้องนี้'
+                                    : 'ปิดเสียงห้องนี้'"
                                                 >
                                                     <i
                                                             :class="[
-                'fa',
-                selectedConversation && isConversationMuted(selectedConversation.id)
-                    ? 'fa-volume-mute text-muted'
-                    : 'fa-volume-up'
-            ]"
+                                        'fa',
+                                        selectedConversation && isConversationMuted(selectedConversation.id)
+                                            ? 'fa-volume-mute text-muted'
+                                            : 'fa-volume-up'
+                                    ]"
                                                     ></i>
                                                 </b-button>
-
                                             </h3>
-
                                         </div>
                                         <div class="text-muted small mt-1" v-if="selectedConversation.line_account">
                                             OA: @{{ selectedConversation.line_account.name }}
                                         </div>
                                     </div>
                                     <div class="text-right ml-3">
-
-                                        {{--                                        <div class="mb-1">--}}
-                                        {{--                                            <b-badge--}}
-                                        {{--                                                    v-if="selectedConversation.status === 'closed'"--}}
-                                        {{--                                                    variant="secondary"--}}
-                                        {{--                                                    class="mr-1"--}}
-                                        {{--                                            >--}}
-                                        {{--                                                ปิดโดย @{{ selectedConversation.closed_by_employee_name || 'พนักงาน' }}--}}
-                                        {{--                                            </b-badge>--}}
-                                        {{--                                            <b-badge--}}
-                                        {{--                                                    v-else-if="selectedConversation.assigned_employee_name"--}}
-                                        {{--                                                    variant="info"--}}
-                                        {{--                                                    class="mr-1"--}}
-                                        {{--                                            >--}}
-                                        {{--                                                รับเรื่องโดย @{{ selectedConversation.assigned_employee_name }}--}}
-                                        {{--                                            </b-badge>--}}
-                                        {{--                                        </div>--}}
-
                                         <div class="d-flex justify-content-end flex-wrap">
                                             <b-button
                                                     v-if="selectedConversation.status === 'open'"
@@ -527,7 +505,8 @@
                                                     variant="outline-primary"
                                                     class="mr-1 mb-1 btn-app"
                                                     @click="acceptConversation"
-                                            ><i class="fa fa-list-check"></i>
+                                            >
+                                                <i class="fa fa-list-check"></i>
                                                 ต้องดำเนินการ
                                             </b-button>
                                             <b-button
@@ -540,15 +519,6 @@
                                                 <i class="fa fa-check-circle"></i>
                                                 ดำเนินการแล้ว
                                             </b-button>
-{{--                                            <b-button--}}
-{{--                                                    v-if="selectedConversation.status === 'closed'"--}}
-{{--                                                    size="sm"--}}
-{{--                                                    variant="outline-danger"--}}
-{{--                                                    class="mr-1 mb-1"--}}
-{{--                                                    @click="openConversation"--}}
-{{--                                            >--}}
-{{--                                                เปิดเคส--}}
-{{--                                            </b-button>--}}
                                         </div>
 
                                         <div
@@ -565,415 +535,435 @@
                                 เลือกห้องแชตจากด้านซ้ายเพื่อเริ่มสนทนา
                             </div>
 
-                            {{-- MESSAGE LIST --}}
-                            <div class="flex-fill overflow-auto px-2 py-2 chat-message-list" ref="messageContainer">
+                            {{-- WRAPPER: การ์ดปักหมุดลอย + message list --}}
+                            <div class="flex-fill position-relative chat-message-wrapper">
 
-                                <div v-if="!selectedConversation"
-                                     class="h-100 d-flex align-items-center justify-content-center text-muted">
-                                    ยังไม่ได้เลือกห้องแชต
-                                </div>
+                                {{-- การ์ดปักหมุดลอย --}}
+                                <div
+                                        v-if="selectedConversation && primaryPinned && !hidePinnedPanel"
+                                        class="chat-pinned-overlay"
+                                >
+                                    <div class="chat-pinned-card">
+                                        <div
+                                                class="d-flex align-items-center chat-pinned-main"
+                                                @click="scrollToMessage(primaryPinned.id)"
+                                        >
+                                            <i class="fa fa-thumbtack mr-2 text-muted chat-pinned-icon"></i>
 
-                                <template v-else>
-                                    <div v-if="loadingMessages" class="text-center text-muted py-3">
-                                        <b-spinner small class="mr-2"></b-spinner>
-                                        กำลังโหลดข้อความ...
-                                    </div>
-
-                                    <div v-else-if="messages.length === 0" class="text-center text-muted py-3">
-                                        ยังไม่มีประวัติการสนทนา
-                                    </div>
-
-                                    <div v-else>
-
-                                        <!-- ========== แถบด้านบน: ข้อความที่ปักหมุด ========== -->
-                                        <div v-if="pinnedMessages.length"
-                                             class="chat-pinned-bar mb-2 pb-2 border-bottom">
-                                            <div class="d-flex align-items-center mb-1">
-                                                <i class="fa fa-thumbtack text-warning mr-1"></i>
-                                                <strong>ข้อความที่ปักหมุด</strong>
+                                            <div class="flex-fill">
+                                                <div class="chat-pinned-text text-truncate">
+                                                    @{{ buildPinnedPreviewText(primaryPinned) }}
+                                                </div>
+                                                <div class="chat-pinned-meta text-muted">
+                                                    @{{ pinnedSenderLabel(primaryPinned) }}
+                                                    <span v-if="primaryPinned.sent_at">
+                                    • @{{ formatChatTime(primaryPinned.sent_at) }}
+                                </span>
+                                                </div>
                                             </div>
 
-                                            <div class="chat-pinned-list">
-                                                <div v-for="pm in pinnedMessages"
-                                                     :key="'pinned-' + pm.id"
-                                                     class="chat-pinned-item small text-truncate d-flex align-items-center mb-1"
-                                                     @click="scrollToMessage(pm.id)">
-                                                    <i class="fa fa-comment mr-1 text-muted"></i>
-                                                    <span class="text-truncate">
-                            @{{ buildPinnedPreviewText(pm) }}
-                        </span>
-                                                    <span class="text-muted ml-2">
-                            @{{ formatChatTime(pm.sent_at) }}
-                        </span>
+                                            <b-button
+                                                    variant="link"
+                                                    size="sm"
+                                                    class="p-0 chat-pinned-toggle"
+                                                    @click.stop="pinnedPanelExpanded = !pinnedPanelExpanded"
+                                            >
+                                                <i :class="pinnedPanelExpanded ? 'fa fa-chevron-up' : 'fa fa-chevron-down'"></i>
+                                            </b-button>
+                                        </div>
+
+                                        <transition name="fade">
+                                            <div
+                                                    v-if="pinnedPanelExpanded && otherPinnedMessages.length"
+                                                    class="chat-pinned-list"
+                                            >
+                                                <div
+                                                        v-for="pm in otherPinnedMessages"
+                                                        :key="'pinned-more-' + pm.id"
+                                                        class="chat-pinned-item"
+                                                        @click="scrollToMessage(pm.id)"
+                                                >
+                                                    <i class="fa fa-thumbtack mr-2 text-muted chat-pinned-icon"></i>
+                                                    <div class="flex-fill">
+                                                        <div class="chat-pinned-text text-truncate">
+                                                            @{{ buildPinnedPreviewText(pm) }}
+                                                        </div>
+                                                        <div class="chat-pinned-meta text-muted">
+                                                            @{{ pinnedSenderLabel(pm) }}
+                                                            <span v-if="pm.sent_at">
+                                            • @{{ formatChatTime(pm.sent_at) }}
+                                        </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                        class="chat-pinned-footer"
+                                                        @click="hidePinnedPanel = true"
+                                                >
+                                                    ไม่แสดงอีก
+                                                </div>
+                                            </div>
+                                        </transition>
+                                    </div>
+                                </div>
+
+                                {{-- MESSAGE LIST --}}
+                                <div class="overflow-auto px-2 py-2 chat-message-list" ref="messageContainer">
+
+                                    <div v-if="!selectedConversation"
+                                         class="h-100 d-flex align-items-center justify-content-center text-muted">
+                                        ยังไม่ได้เลือกห้องแชต
+                                    </div>
+
+                                    <template v-else>
+                                        <div v-if="loadingMessages" class="text-center text-muted py-3">
+                                            <b-spinner small class="mr-2"></b-spinner>
+                                            กำลังโหลดข้อความ...
+                                        </div>
+
+                                        <div v-else-if="messages.length === 0" class="text-center text-muted py-3">
+                                            ยังไม่มีประวัติการสนทนา
+                                        </div>
+
+                                        <div v-else>
+
+                                            <div v-for="item in messagesWithSeparators"
+                                                 :key="item.kind === 'date' ? ('d-' + item.dateKey) : ('m-' + item.message.id)"
+                                                 class="mb-2">
+
+                                                <div v-if="item.kind === 'date'"
+                                                     class="chat-day-separator text-center my-2">
+                                <span class="badge badge-light px-3 py-1">
+                                    @{{ formatChatDay(item.date) }}
+                                </span>
+                                                </div>
+
+                                                <div v-else
+                                                     :data-msg-id="item.message.id"
+                                                     :class="[
+                                    'chat-msg-row',
+                                    item.message.direction === 'inbound' ? 'chat-msg-in' : 'chat-msg-out'
+                                 ]">
+
+                                                    {{-- INBOUND (ลูกค้า) --}}
+                                                    <template v-if="item.message.direction === 'inbound'">
+                                                        <div class="chat-avatar mr-2">
+                                                            <img
+                                                                    :src="(selectedConversation.contact && selectedConversation.contact.picture_url) || '/images/default-avatar.png'"
+                                                                    class="chat-avatar-img"
+                                                                    alt="avatar"
+                                                            >
+                                                        </div>
+
+                                                        <div class="chat-msg-main">
+                                                            <div :class="messageBubbleClass(item.message)">
+
+                                                                <div v-if="item.message.is_pinned"
+                                                                     class="small text-warning mb-1 d-flex align-items-center">
+                                                                    <i class="fa fa-thumbtack mr-1"></i>
+                                                                    <span>ปักหมุดแล้ว</span>
+                                                                </div>
+
+                                                                <div
+                                                                        v-if="item.message.meta && item.message.meta.reply_to"
+                                                                        class="chat-reply-preview mb-1"
+                                                                >
+                                                                    <div class="d-flex align-items-start mb-1">
+                                                                        <img
+                                                                                v-if="replyToAvatarUrl(item.message)"
+                                                                                :src="replyToAvatarUrl(item.message)"
+                                                                                class="chat-reply-avatar mr-2"
+                                                                                alt="avatar"
+                                                                        >
+                                                                        <div>
+                                                                            <div class="chat-reply-name">
+                                                                                @{{ replyToDisplayName(item.message) }}
+                                                                            </div>
+                                                                            <div class="small text-muted">
+                                                                                ตอบกลับข้อความก่อนหน้า
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="chat-reply-quote">
+                                                                        @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="whitespace-pre-wrap">
+                                                                    <template v-if="item.message.type === 'text'">
+                                                                        <div class="chat-line-original">
+                                                        <span v-if="getMessageDisplay(item.message).lang"
+                                                              class="text-primary font-weight-bold mr-1">
+                                                            [@{{ getMessageDisplay(item.message).lang.toUpperCase() }}]
+                                                        </span>
+                                                                            <span>@{{ getMessageDisplay(item.message).original }}</span>
+                                                                        </div>
+
+                                                                        <div v-if="getMessageDisplay(item.message).translated"
+                                                                             class="chat-line-translated text-muted mt-1">
+                                                        <span v-if="getMessageDisplay(item.message).target"
+                                                              class="text-success font-weight-bold mr-1">
+                                                            [@{{ getMessageDisplay(item.message).target.toUpperCase() }}]
+                                                        </span>
+                                                                            <span>@{{ getMessageDisplay(item.message).translated }}</span>
+                                                                        </div>
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'sticker'">
+                                                                        <img
+                                                                                :src="stickerUrl(item.message)"
+                                                                                class="img-fluid"
+                                                                                style="max-width:130px;"
+                                                                                alt="[Sticker]"
+                                                                        >
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'image'">
+                                                                        <img
+                                                                                :src="item.message.payload?.message?.contentUrl || item.message.payload?.message?.previewUrl"
+                                                                                class="img-fluid rounded"
+                                                                                style="max-width:240px;"
+                                                                                alt="[Image]"
+                                                                        >
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'video'">
+                                                                        <video
+                                                                                controls
+                                                                                class="img-fluid rounded"
+                                                                                style="max-width:260px;"
+                                                                                :poster="item.message.payload?.message?.previewUrl"
+                                                                        >
+                                                                            <source :src="item.message.payload?.message?.contentUrl">
+                                                                        </video>
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'audio'">
+                                                                        <audio controls
+                                                                               :src="item.message.payload?.message?.contentUrl"></audio>
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'location'
+                                                    && item.message.payload
+                                                    && item.message.payload.message">
+                                                                        <div>
+                                                                            <strong>@{{ item.message.payload.message.title || 'ตำแหน่ง' }}</strong><br>
+                                                                            @{{ item.message.payload.message.address }}<br>
+                                                                            <a :href="'https://maps.google.com/?q='
+                                                            + item.message.payload.message.latitude
+                                                            + ',' + item.message.payload.message.longitude"
+                                                                               target="_blank">
+                                                                                เปิดแผนที่
+                                                                            </a>
+                                                                        </div>
+                                                                    </template>
+
+                                                                    <template v-else>
+                                                                        [@{{ item.message.type }}]
+                                                                    </template>
+                                                                </div>
+
+                                                                <div class="chat-time-wrapper d-flex align-items-center mt-1">
+                                                <span class="chat-msg-time text-muted small mr-1">
+                                                    @{{ formatChatTime(item.message.sent_at) }}
+                                                </span>
+
+                                                                    <b-dropdown
+                                                                            right
+                                                                            size="sm"
+                                                                            variant="link"
+                                                                            no-caret
+                                                                            toggle-class="p-0 chat-msg-menu-toggle"
+                                                                    >
+                                                                        <template #button-content>
+                                                                            <i class="fa fa-ellipsis-h"></i>
+                                                                        </template>
+
+                                                                        <b-dropdown-item @click="startReply(item.message)">
+                                                                            ตอบกลับ
+                                                                        </b-dropdown-item>
+
+                                                                        <b-dropdown-item v-if="!item.message.is_pinned"
+                                                                                         @click="pinMessage(item.message)">
+                                                                            ปักหมุด
+                                                                        </b-dropdown-item>
+
+                                                                        <b-dropdown-item v-if="item.message.is_pinned"
+                                                                                         @click="unpinMessage(item.message)">
+                                                                            เลิกปักหมุด
+                                                                        </b-dropdown-item>
+                                                                    </b-dropdown>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+
+                                                    {{-- OUTBOUND (พนักงาน) --}}
+                                                    <template v-else>
+                                                        <div class="chat-msg-main">
+                                                            <div :class="messageBubbleClass(item.message)">
+
+                                                                <div v-if="item.message.is_pinned"
+                                                                     class="small text-warning mb-1 d-flex align-items-center">
+                                                                    <i class="fa fa-thumbtack mr-1"></i>
+                                                                    <span>ปักหมุดแล้ว</span>
+                                                                </div>
+
+                                                                <div
+                                                                        v-if="item.message.meta && item.message.meta.reply_to"
+                                                                        class="chat-reply-preview mb-1"
+                                                                >
+                                                                    <div class="d-flex align-items-start mb-1">
+                                                                        <img
+                                                                                v-if="replyToAvatarUrl(item.message)"
+                                                                                :src="replyToAvatarUrl(item.message)"
+                                                                                class="chat-reply-avatar mr-2"
+                                                                                alt="avatar"
+                                                                        >
+                                                                        <div>
+                                                                            <div class="chat-reply-name">
+                                                                                @{{ replyToDisplayName(item.message) }}
+                                                                            </div>
+                                                                            <div class="small text-muted">
+                                                                                ตอบกลับข้อความก่อนหน้า
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="chat-reply-quote">
+                                                                        @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="small" v-if="item.message.source === 'bot'">
+                                                                    <strong>บอท</strong>
+                                                                </div>
+
+                                                                <div class="small"
+                                                                     v-if="item.message.meta && item.message.meta.employee_name">
+                                                                    <strong>@{{ item.message.meta.employee_name }}</strong>
+                                                                </div>
+
+                                                                <div class="whitespace-pre-wrap">
+                                                                    <template v-if="item.message.type === 'text'">
+                                                                        <div class="chat-line-original">
+                                                        <span v-if="getMessageDisplay(item.message).lang"
+                                                              class="text-primary font-weight-bold mr-1">
+                                                            [@{{ getMessageDisplay(item.message).lang.toUpperCase() }}]
+                                                        </span>
+                                                                            <span>@{{ getMessageDisplay(item.message).original }}</span>
+                                                                        </div>
+
+                                                                        <div v-if="getMessageDisplay(item.message).translated"
+                                                                             class="chat-line-translated text-muted mt-1">
+                                                        <span v-if="getMessageDisplay(item.message).target"
+                                                              class="text-success font-weight-bold mr-1">
+                                                            [@{{ getMessageDisplay(item.message).target.toUpperCase() }}]
+                                                        </span>
+                                                                            <span>@{{ getMessageDisplay(item.message).translated }}</span>
+                                                                        </div>
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'sticker'">
+                                                                        <img
+                                                                                :src="stickerUrl(item.message)"
+                                                                                class="img-fluid"
+                                                                                style="max-width:130px;"
+                                                                                alt="[Sticker]"
+                                                                        >
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'image'">
+                                                                        <img
+                                                                                :src="item.message.payload?.message?.contentUrl || item.message.payload?.message?.previewUrl"
+                                                                                class="img-fluid rounded"
+                                                                                style="max-width:240px;"
+                                                                                alt="[Image]"
+                                                                        >
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'video'">
+                                                                        <video
+                                                                                controls
+                                                                                class="img-fluid rounded"
+                                                                                style="max-width:260px;"
+                                                                                :poster="item.message.payload?.message?.previewUrl"
+                                                                        >
+                                                                            <source :src="item.message.payload?.message?.contentUrl">
+                                                                        </video>
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'audio'">
+                                                                        <audio controls
+                                                                               :src="item.message.payload?.message?.contentUrl"></audio>
+                                                                    </template>
+
+                                                                    <template v-else-if="item.message.type === 'location'
+                                                    && item.message.payload
+                                                    && item.message.payload.message">
+                                                                        <div>
+                                                                            <strong>@{{ item.message.payload.message.title || 'ตำแหน่ง' }}</strong><br>
+                                                                            @{{ item.message.payload.message.address }}<br>
+                                                                            <a :href="'https://maps.google.com/?q='
+                                                            + item.message.payload.message.latitude
+                                                            + ',' + item.message.payload.message.longitude"
+                                                                               target="_blank">
+                                                                                เปิดแผนที่
+                                                                            </a>
+                                                                        </div>
+                                                                    </template>
+
+                                                                    <template v-else>
+                                                                        [@{{ item.message.type }}]
+                                                                    </template>
+                                                                </div>
+
+                                                                <div class="chat-time-wrapper d-flex align-items-center mt-1">
+                                                <span class="chat-msg-time text-muted small mr-1">
+                                                    @{{ formatChatTime(item.message.sent_at) }}
+                                                </span>
+
+                                                                    <b-dropdown
+                                                                            right
+                                                                            size="sm"
+                                                                            variant="link"
+                                                                            no-caret
+                                                                            toggle-class="p-0 chat-msg-menu-toggle"
+                                                                    >
+                                                                        <template #button-content>
+                                                                            <i class="fa fa-ellipsis-h"></i>
+                                                                        </template>
+
+                                                                        <b-dropdown-item @click="startReply(item.message)">
+                                                                            ตอบกลับ
+                                                                        </b-dropdown-item>
+
+                                                                        <b-dropdown-item @click="pinMessage(item.message)">
+                                                                            ปักหมุด
+                                                                        </b-dropdown-item>
+
+                                                                        <b-dropdown-item v-if="item.message.is_pinned"
+                                                                                         @click="unpinMessage(item.message)">
+                                                                            เลิกปักหมุด
+                                                                        </b-dropdown-item>
+                                                                    </b-dropdown>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    </template>
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- ========== จบแถบข้อความที่ปักหมุด ========== -->
-
-                                        <div v-for="item in messagesWithSeparators"
-                                             :key="item.kind === 'date' ? ('d-' + item.dateKey) : ('m-' + item.message.id)"
-                                             class="mb-2">
-
-                                            <!-- ========== หัวข้อวันที่คั่นกลาง (05 ธ.ค. / 06 ธ.ค. ฯลฯ) ========== -->
-                                            <div v-if="item.kind === 'date'" class="chat-day-separator text-center my-2">
-        <span class="badge badge-light px-3 py-1">
-            @{{ formatChatDay(item.date) }}
-        </span>
-                                            </div>
-
-                                            <!-- ========== บับเบิลข้อความ + avatar แบบ LINE ========== -->
-                                            <div v-else
-                                                 :class="[
-            'chat-msg-row',
-            item.message.direction === 'inbound' ? 'chat-msg-in' : 'chat-msg-out'
-         ]">
-
-                                                <!-- ================= INBOUND (ลูกค้า) ================= -->
-                                                <template v-if="item.message.direction === 'inbound'">
-                                                    <!-- avatar ลูกค้า -->
-                                                    <div class="chat-avatar mr-2">
-                                                        <img
-                                                                :src="(selectedConversation.contact && selectedConversation.contact.picture_url) || '/images/default-avatar.png'"
-                                                                class="chat-avatar-img"
-                                                                alt="avatar"
-                                                        >
-                                                    </div>
-
-                                                    <!-- ส่วนข้อความ -->
-                                                    <div class="chat-msg-main">
-                                                        <div :class="messageBubbleClass(item.message)">
-
-
-                                                            <!-- ✅ ป้ายบอกว่าเป็นข้อความที่ปักหมุด -->
-                                                            <div v-if="item.message.is_pinned"
-                                                                 class="small text-warning mb-1 d-flex align-items-center">
-                                                                <i class="fa fa-thumbtack mr-1"></i>
-                                                                <span>ปักหมุดแล้ว</span>
-                                                            </div>
-
-                                                            <!-- === PREVIEW ข้อความที่ถูกตอบกลับ === -->
-                                                            <div
-                                                                    v-if="item.message.meta && item.message.meta.reply_to"
-                                                                    class="chat-reply-preview mb-1"
-                                                            >
-                                                                <!-- แถวบน: avatar + ชื่อ + label -->
-                                                                <div class="d-flex align-items-start mb-1">
-                                                                    <img
-                                                                            v-if="replyToAvatarUrl(item.message)"
-                                                                            :src="replyToAvatarUrl(item.message)"
-                                                                            class="chat-reply-avatar mr-2"
-                                                                            alt="avatar"
-                                                                    >
-                                                                    <div>
-                                                                        <div class="chat-reply-name">
-                                                                            @{{ replyToDisplayName(item.message) }}
-                                                                        </div>
-                                                                        <div class="small text-muted">
-                                                                            ตอบกลับข้อความก่อนหน้า
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <!-- กล่องเทา: ข้อความที่ถูกตอบกลับ -->
-                                                                <div class="chat-reply-quote">
-                                                                    @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
-                                                                </div>
-                                                            </div>
-                                                            <!-- === END PREVIEW === -->
-
-                                                            <div class="whitespace-pre-wrap">
-                                                                <!-- TEXT -->
-                                                                <template v-if="item.message.type === 'text'">
-                                                                    <div class="chat-line-original">
-                                <span v-if="getMessageDisplay(item.message).lang"
-                                      class="text-primary font-weight-bold mr-1">
-                                    [@{{ getMessageDisplay(item.message).lang.toUpperCase() }}]
-                                </span>
-                                                                        <span>@{{ getMessageDisplay(item.message).original }}</span>
-                                                                    </div>
-
-                                                                    <div v-if="getMessageDisplay(item.message).translated"
-                                                                         class="chat-line-translated text-muted mt-1">
-                                <span v-if="getMessageDisplay(item.message).target"
-                                      class="text-success font-weight-bold mr-1">
-                                    [@{{ getMessageDisplay(item.message).target.toUpperCase() }}]
-                                </span>
-                                                                        <span>@{{ getMessageDisplay(item.message).translated }}</span>
-                                                                    </div>
-                                                                </template>
-
-                                                                <!-- STICKER -->
-                                                                <template v-else-if="item.message.type === 'sticker'">
-                                                                    <img
-                                                                            :src="stickerUrl(item.message)"
-                                                                            class="img-fluid"
-                                                                            style="max-width:130px;"
-                                                                            alt="[Sticker]"
-                                                                    >
-                                                                </template>
-
-                                                                <!-- IMAGE -->
-                                                                <template v-else-if="item.message.type === 'image'">
-                                                                    <img
-                                                                            :src="item.message.payload?.message?.contentUrl || item.message.payload?.message?.previewUrl"
-                                                                            class="img-fluid rounded"
-                                                                            style="max-width:240px;"
-                                                                            alt="[Image]"
-                                                                    >
-                                                                </template>
-
-                                                                <!-- VIDEO -->
-                                                                <template v-else-if="item.message.type === 'video'">
-                                                                    <video
-                                                                            controls
-                                                                            class="img-fluid rounded"
-                                                                            style="max-width:260px;"
-                                                                            :poster="item.message.payload?.message?.previewUrl"
-                                                                    >
-                                                                        <source :src="item.message.payload?.message?.contentUrl">
-                                                                    </video>
-                                                                </template>
-
-                                                                <!-- AUDIO -->
-                                                                <template v-else-if="item.message.type === 'audio'">
-                                                                    <audio controls :src="item.message.payload?.message?.contentUrl"></audio>
-                                                                </template>
-
-                                                                <!-- LOCATION -->
-                                                                <template v-else-if="item.message.type === 'location'
-                                             && item.message.payload
-                                             && item.message.payload.message">
-                                                                    <div>
-                                                                        <strong>@{{ item.message.payload.message.title || 'ตำแหน่ง' }}</strong><br>
-                                                                        @{{ item.message.payload.message.address }}<br>
-                                                                        <a :href="'https://maps.google.com/?q='
-                                          + item.message.payload.message.latitude
-                                          + ',' + item.message.payload.message.longitude"
-                                                                           target="_blank">
-                                                                            เปิดแผนที่
-                                                                        </a>
-                                                                    </div>
-                                                                </template>
-
-                                                                <!-- UNSUPPORTED -->
-                                                                <template v-else>
-                                                                    [@{{ item.message.type }}]
-                                                                </template>
-                                                            </div>
-
-                                                            <!-- เวลา + ปุ่ม ... -->
-                                                            <div class="chat-time-wrapper d-flex align-items-center mt-1">
-                        <span class="chat-msg-time text-muted small mr-1">
-                            @{{ formatChatTime(item.message.sent_at) }}
-                        </span>
-
-                                                                <b-dropdown
-                                                                        right
-                                                                        size="sm"
-                                                                        variant="link"
-                                                                        no-caret
-                                                                        toggle-class="p-0 chat-msg-menu-toggle"
-                                                                >
-                                                                    <template #button-content>
-                                                                        <i class="fa fa-ellipsis-h"></i>
-                                                                    </template>
-
-                                                                    <b-dropdown-item @click="startReply(item.message)">
-                                                                        ตอบกลับ
-                                                                    </b-dropdown-item>
-
-                                                                    <b-dropdown-item @click="pinMessage(item.message)">
-                                                                        ปักหมุด
-                                                                    </b-dropdown-item>
-
-                                                                    <b-dropdown-item v-if="item.message.is_pinned"
-                                                                                     @click="unpinMessage(item.message)">
-                                                                        เลิกปักหมุด
-                                                                    </b-dropdown-item>
-                                                                </b-dropdown>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </template>
-
-                                                <!-- ================= OUTBOUND (พนักงาน) ================= -->
-                                                <template v-else>
-                                                    <div class="chat-msg-main">
-                                                        <div :class="messageBubbleClass(item.message)">
-
-                                                            <!-- ✅ ป้ายบอกว่าเป็นข้อความที่ปักหมุด -->
-                                                            <div v-if="item.message.is_pinned"
-                                                                 class="small text-warning mb-1 d-flex align-items-center">
-                                                                <i class="fa fa-thumbtack mr-1"></i>
-                                                                <span>ปักหมุดแล้ว</span>
-                                                            </div>
-
-
-                                                            <!-- === PREVIEW ข้อความที่ถูกตอบกลับ === -->
-                                                            <div
-                                                                    v-if="item.message.meta && item.message.meta.reply_to"
-                                                                    class="chat-reply-preview mb-1"
-                                                            >
-                                                                <!-- แถวบน: avatar + ชื่อ + label -->
-                                                                <div class="d-flex align-items-start mb-1">
-                                                                    <img
-                                                                            v-if="replyToAvatarUrl(item.message)"
-                                                                            :src="replyToAvatarUrl(item.message)"
-                                                                            class="chat-reply-avatar mr-2"
-                                                                            alt="avatar"
-                                                                    >
-                                                                    <div>
-                                                                        <div class="chat-reply-name">
-                                                                            @{{ replyToDisplayName(item.message) }}
-                                                                        </div>
-                                                                        <div class="small text-muted">
-                                                                            ตอบกลับข้อความก่อนหน้า
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <!-- กล่องเทา: ข้อความที่ถูกตอบกลับ -->
-                                                                <div class="chat-reply-quote">
-                                                                    @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
-                                                                </div>
-                                                            </div>
-                                                            <!-- === END PREVIEW === -->
-
-                                                            <!-- ถ้าเป็นบอท -->
-                                                            <div class="small" v-if="item.message.source === 'bot'">
-                                                                <strong>บอท</strong>
-                                                            </div>
-
-                                                            <div class="small" v-if="item.message.meta && item.message.meta.employee_name">
-                                                                <strong>@{{ item.message.meta.employee_name }}</strong>
-                                                            </div>
-
-                                                            <div class="whitespace-pre-wrap">
-                                                                <!-- TEXT -->
-                                                                <template v-if="item.message.type === 'text'">
-                                                                    <div class="chat-line-original">
-                                <span v-if="getMessageDisplay(item.message).lang"
-                                      class="text-primary font-weight-bold mr-1">
-                                    [@{{ getMessageDisplay(item.message).lang.toUpperCase() }}]
-                                </span>
-                                                                        <span>@{{ getMessageDisplay(item.message).original }}</span>
-                                                                    </div>
-
-                                                                    <div v-if="getMessageDisplay(item.message).translated"
-                                                                         class="chat-line-translated text-muted mt-1">
-                                <span v-if="getMessageDisplay(item.message).target"
-                                      class="text-success font-weight-bold mr-1">
-                                    [@{{ getMessageDisplay(item.message).target.toUpperCase() }}]
-                                </span>
-                                                                        <span>@{{ getMessageDisplay(item.message).translated }}</span>
-                                                                    </div>
-                                                                </template>
-
-                                                                <!-- STICKER -->
-                                                                <template v-else-if="item.message.type === 'sticker'">
-                                                                    <img
-                                                                            :src="stickerUrl(item.message)"
-                                                                            class="img-fluid"
-                                                                            style="max-width:130px;"
-                                                                            alt="[Sticker]"
-                                                                    >
-                                                                </template>
-
-                                                                <!-- IMAGE -->
-                                                                <template v-else-if="item.message.type === 'image'">
-                                                                    <img
-                                                                            :src="item.message.payload?.message?.contentUrl || item.message.payload?.message?.previewUrl"
-                                                                            class="img-fluid rounded"
-                                                                            style="max-width:240px;"
-                                                                            alt="[Image]"
-                                                                    >
-                                                                </template>
-
-                                                                <!-- VIDEO -->
-                                                                <template v-else-if="item.message.type === 'video'">
-                                                                    <video
-                                                                            controls
-                                                                            class="img-fluid rounded"
-                                                                            style="max-width:260px;"
-                                                                            :poster="item.message.payload?.message?.previewUrl"
-                                                                    >
-                                                                        <source :src="item.message.payload?.message?.contentUrl">
-                                                                    </video>
-                                                                </template>
-
-                                                                <!-- AUDIO -->
-                                                                <template v-else-if="item.message.type === 'audio'">
-                                                                    <audio controls :src="item.message.payload?.message?.contentUrl"></audio>
-                                                                </template>
-
-                                                                <!-- LOCATION -->
-                                                                <template v-else-if="item.message.type === 'location'
-                                             && item.message.payload
-                                             && item.message.payload.message">
-                                                                    <div>
-                                                                        <strong>@{{ item.message.payload.message.title || 'ตำแหน่ง' }}</strong><br>
-                                                                        @{{ item.message.payload.message.address }}<br>
-                                                                        <a :href="'https://maps.google.com/?q='
-                                          + item.message.payload.message.latitude
-                                          + ',' + item.message.payload.message.longitude"
-                                                                           target="_blank">
-                                                                            เปิดแผนที่
-                                                                        </a>
-                                                                    </div>
-                                                                </template>
-
-                                                                <!-- UNSUPPORTED -->
-                                                                <template v-else>
-                                                                    [@{{ item.message.type }}]
-                                                                </template>
-                                                            </div>
-
-                                                            <!-- เวลา + ปุ่ม ... -->
-                                                            <div class="chat-time-wrapper d-flex align-items-center mt-1">
-                        <span class="chat-msg-time text-muted small mr-1">
-                            @{{ formatChatTime(item.message.sent_at) }}
-                        </span>
-
-                                                                <b-dropdown
-                                                                        right
-                                                                        size="sm"
-                                                                        variant="link"
-                                                                        no-caret
-                                                                        toggle-class="p-0 chat-msg-menu-toggle"
-                                                                >
-                                                                    <template #button-content>
-                                                                        <i class="fa fa-ellipsis-h"></i>
-                                                                    </template>
-
-                                                                    <b-dropdown-item @click="startReply(item.message)">
-                                                                        ตอบกลับ
-                                                                    </b-dropdown-item>
-
-                                                                    <b-dropdown-item @click="pinMessage(item.message)">
-                                                                        ปักหมุด
-                                                                    </b-dropdown-item>
-
-                                                                    <b-dropdown-item v-if="item.message.is_pinned"
-                                                                                     @click="unpinMessage(item.message)">
-                                                                        เลิกปักหมุด
-                                                                    </b-dropdown-item>
-                                                                </b-dropdown>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </template>
+                                    </template>
+                                </div>
                             </div>
 
                             {{-- REPLY BOX --}}
                             <div class="border-top p-2 bg-white" v-if="selectedConversation">
 
-                                {{-- แถบ preview เมื่อกำลังตอบกลับข้อความใดข้อความหนึ่ง --}}
                                 <div
                                         v-if="replyingToMessage"
                                         class="border-left border-primary pl-2 pr-2 py-1 mb-1 small d-flex justify-content-between align-items-start"
@@ -996,7 +986,6 @@
                                     </b-button>
                                 </div>
 
-                                {{-- กล่องพิมพ์ข้อความ --}}
                                 <b-form-textarea
                                         ref="replyBox"
                                         v-model="replyText"
@@ -1008,24 +997,18 @@
                                         @keydown.enter.exact.prevent="canReply && sendReply()"
                                 ></b-form-textarea>
 
-                                {{-- แถวล่าง: ไอคอน + ปุ่มส่ง --}}
                                 <div class="d-flex justify-content-between align-items-center mt-2">
-
-                                    {{-- ไอคอนด้านซ้าย --}}
                                     <div class="d-flex align-items-center">
-
-                                        {{-- emoji (เผื่ออนาคตจะเปิด picker) --}}
                                         <b-button
                                                 size="sm"
                                                 variant="link"
                                                 class="chat-tool-btn px-1"
                                                 :disabled="!canReply"
-                                                @click="openEmojiPicker && openEmojiPicker()"
+                                                @click="openStickerModal"
                                         >
                                             <i class="far fa-smile"></i>
                                         </b-button>
 
-                                        {{-- แนบรูป --}}
                                         <b-button
                                                 size="sm"
                                                 variant="link"
@@ -1036,7 +1019,6 @@
                                             <i class="fa fa-paperclip"></i>
                                         </b-button>
 
-                                        {{-- ข้อความตอบกลับด่วน (Quick Reply) --}}
                                         <b-button
                                                 size="sm"
                                                 variant="link"
@@ -1048,7 +1030,6 @@
                                         </b-button>
                                     </div>
 
-                                    {{-- ปุ่มส่ง ด้านขวา --}}
                                     <div>
                                         <b-button
                                                 variant="success"
@@ -1056,17 +1037,16 @@
                                                 :disabled="sending || replyText.trim() === '' || !canReply"
                                                 @click="sendReply"
                                         >
-                <span v-if="sending">
-                    <b-spinner small class="mr-1"></b-spinner> กำลังส่ง...
-                </span>
+                        <span v-if="sending">
+                            <b-spinner small class="mr-1"></b-spinner> กำลังส่ง...
+                        </span>
                                             <span v-else>
-                    ส่ง
-                </span>
+                            ส่ง
+                        </span>
                                         </b-button>
                                     </div>
                                 </div>
 
-                                {{-- input file ซ่อน --}}
                                 <input
                                         type="file"
                                         ref="imageInput"
@@ -1231,12 +1211,12 @@
 
                             {{-- STATUS / ASSIGNEE --}}
                             <div class="border-bottom p-2 small">
-{{--                                <div class="mb-1">--}}
-{{--                                    <span class="text-muted">สถานะเคส:</span>--}}
-{{--                                    <span class="font-weight-bold text-uppercase ml-1">--}}
-{{--                                @{{ selectedConversation.status || '-' }}--}}
-{{--                            </span>--}}
-{{--                                </div>--}}
+                                {{--                                <div class="mb-1">--}}
+                                {{--                                    <span class="text-muted">สถานะเคส:</span>--}}
+                                {{--                                    <span class="font-weight-bold text-uppercase ml-1">--}}
+                                {{--                                @{{ selectedConversation.status || '-' }}--}}
+                                {{--                            </span>--}}
+                                {{--                                </div>--}}
                                 <div class="mb-1">
                                     <span class="text-muted">ผู้รับผิดชอบ:</span>
                                     <span class="font-weight-bold ml-1">
@@ -1260,8 +1240,8 @@
                                     <div class="d-flex align-items-center">
                                         <small class="mb-0 mr-2">โน้ต</small>
                                         <small v-if="notesCount">
-                @{{ activeNotePosition }}
-            </small>
+                                            @{{ activeNotePosition }}
+                                        </small>
                                     </div>
 
                                     <b-button
@@ -1364,7 +1344,6 @@
                                         </div>
                                     </div>
                                 </div>
-
 
 
                             </div>
@@ -1547,6 +1526,31 @@
                             ? window.AdminUser.code
                             : 'guest'
                     ),
+
+                    pinnedPanelExpanded: false,
+                    hidePinnedPanel: false,
+
+                    stickers: [
+                        // ตัวอย่าง: LINE default sticker pack (packageId = "1")
+                        { packageId: '1', stickerId: '1' },
+                        { packageId: '1', stickerId: '2' },
+                        { packageId: '1', stickerId: '3' },
+                        { packageId: '1', stickerId: '4' },
+                        { packageId: '1', stickerId: '5' },
+                        { packageId: '1', stickerId: '6' },
+                        { packageId: '1', stickerId: '7' },
+                        { packageId: '1', stickerId: '8' },
+                        { packageId: '1', stickerId: '9' },
+                        { packageId: '1', stickerId: '10' },
+                        { packageId: '1', stickerId: '11' },
+                        { packageId: '1', stickerId: '12' },
+                        { packageId: '1', stickerId: '13' },
+                        { packageId: '1', stickerId: '14' },
+                        { packageId: '1', stickerId: '15' },
+                        { packageId: '1', stickerId: '16' },
+                        { packageId: '1', stickerId: '17' },
+                    ],
+                    stickerLoading: false,
                 };
             },
             created() {
@@ -1764,14 +1768,18 @@
                     });
                 },
                 pinnedMessages() {
-                    // สมมติ this.messages คือ array ของ message object ตรง ๆ
-                    // ถ้าในระบบคุณเป็นโครงสร้างอื่น (เช่น {message: {...}})
-                    // ให้ปรับตามจริง
-                    if (!Array.isArray(this.messages)) {
-                        return [];
-                    }
-
-                    return this.messages.filter(m => m && m.is_pinned);
+                    return (this.messages || []).filter(m => {
+                        if (!m) return false;
+                        return m.is_pinned === true || m.is_pinned === 1 || m.is_pinned === '1';
+                    });
+                },
+                primaryPinned() {
+                    const list = this.pinnedMessages || [];
+                    return list.length ? list[0] : null;
+                },
+                otherPinnedMessages() {
+                    const list = this.pinnedMessages || [];
+                    return list.length > 1 ? list.slice(1) : [];
                 },
             },
             watch: {
@@ -1971,7 +1979,7 @@
                     const d = new Date(dateString);
 
                     const day = d.getDate();
-                    const monthShort = d.toLocaleDateString('th-TH', { month: 'short' }); // ธ.ค.
+                    const monthShort = d.toLocaleDateString('th-TH', {month: 'short'}); // ธ.ค.
                     const year = d.getFullYear();
 
                     const time = d.toLocaleTimeString('th-TH', {
@@ -2054,14 +2062,14 @@
 
                         if (this.noteModalMode === 'create') {
                             const url = this.apiUrl(`conversations/${this.selectedConversation.id}/notes`);
-                            resp = await axios.post(url, { body });
+                            resp = await axios.post(url, {body});
                         } else {
                             const noteId = this.noteEditingId;
                             if (!noteId) {
                                 throw new Error('ไม่พบโน้ตที่จะแก้ไข');
                             }
                             const url = this.apiUrl(`conversations/${this.selectedConversation.id}/notes/${noteId}`);
-                            resp = await axios.patch(url, { body });
+                            resp = await axios.patch(url, {body});
                         }
 
                         const ok = resp.data && resp.data.success;
@@ -2636,7 +2644,7 @@
 
                 fetchConversations(page = 1, options = {}) {
                     const silent = options.silent === true;
-                    const merge  = options.merge === true;   // อัปเดต list เดิมตาม id
+                    const merge = options.merge === true;   // อัปเดต list เดิมตาม id
                     const append = options.append === true;  // โหลดเพิ่มต่อท้าย list เดิม
 
                     if (!silent) {
@@ -2653,7 +2661,7 @@
                             per_page: this.pagination?.per_page || 20, // เผื่อกำหนด per_page เอง
                         }
                     }).then(res => {
-                        const body    = res.data || {};
+                        const body = res.data || {};
                         const newList = body.data || [];
 
                         // ===== อัปเดต pagination =====
@@ -2804,7 +2812,7 @@
                     }
 
                     // โหลดข้อความ + แล้วค่อยโหลดโน้ต
-                    this.fetchMessages(conv.id, { limit: 50, previous_id: previousId })
+                    this.fetchMessages(conv.id, {limit: 50, previous_id: previousId})
                         .then(() => {
                             this.loadNotes(); // ← ดึงโน้ตของห้องนี้
                             this.$nextTick(() => {
@@ -4004,10 +4012,10 @@
                     }
 
                     const start = el.selectionStart != null ? el.selectionStart : current.length;
-                    const end   = el.selectionEnd   != null ? el.selectionEnd   : current.length;
+                    const end = el.selectionEnd != null ? el.selectionEnd : current.length;
 
                     const before = current.substring(0, start);
-                    const after  = current.substring(end);
+                    const after = current.substring(end);
 
                     this.quickReplyForm.message = before + token + after;
 
@@ -4015,7 +4023,7 @@
                         el.focus();
                         const pos = start + token.length;
                         el.selectionStart = pos;
-                        el.selectionEnd   = pos;
+                        el.selectionEnd = pos;
                     });
                 },
 
@@ -4063,7 +4071,7 @@
                     try {
                         // TODO: ปรับ route ให้ตรงกับ Controller ของข้อความตอบกลับที่โบ๊ทใช้จริง
                         const url = "{{ route('admin.line_quick_reply.create') }}"; // แก้ชื่อ route ตามของโบ๊ท
-                        const resp = await axios.post(url, { data: payload });
+                        const resp = await axios.post(url, {data: payload});
 
                         // สมมติ response ส่ง success กลับมาเหมือนหน้าเมนูข้อความตอบกลับ
                         if (resp.data && resp.data.message) {
@@ -4167,7 +4175,7 @@
                         // POST /line-oa/conversations/{conversation}/assign
                         const res = await axios.post(
                             this.apiUrl('conversations/' + convId + '/assign'),
-                            { employee_id: this.selectedAssigneeId }
+                            {employee_id: this.selectedAssigneeId}
                         );
 
                         const conv = res.data.data || res.data.conversation || null;
@@ -4216,7 +4224,7 @@
                     this.replyingToMessage = null;
                 },
 
-               sendReply() {
+                sendReply() {
                     if (!this.selectedConversation || this.sending) return;
 
                     if (!this.canReply) {
@@ -4524,16 +4532,110 @@
                         const selector = '[data-msg-id="' + messageId + '"]';
                         const el = container.querySelector(selector);
 
-                        if (!el) return;
+                        if (!el) {
+                            console.warn('[LineOA] scrollToMessage: ไม่พบ element สำหรับ id =', messageId);
+                            return;
+                        }
 
-                        // เลื่อนให้อยู่กลาง ๆ หน้าจอ
+                        // เลื่อนให้อยู่ประมาณกลาง ๆ กล่องข้อความ
                         const containerRect = container.getBoundingClientRect();
                         const elRect = el.getBoundingClientRect();
                         const offset = elRect.top - containerRect.top;
 
                         container.scrollTop = container.scrollTop + offset - container.clientHeight / 3;
+
+                        // ---- ไฮไลต์บับเบิลให้เห็นชัด ๆ สักพัก ----
+                        el.classList.add('chat-msg-highlight');
+
+                        setTimeout(() => {
+                            el.classList.remove('chat-msg-highlight');
+                        }, 2000); // 2 วินาทีแล้วค่อยจาง
                     });
                 },
+                pinnedSenderLabel(msg) {
+                    if (!msg) return '';
+
+                    // ลูกค้า
+                    if (msg.direction === 'inbound' && msg.source === 'user') {
+                        const c = this.selectedConversation && this.selectedConversation.contact
+                            ? this.selectedConversation.contact
+                            : null;
+
+                        return (
+                            (c && (c.display_name || c.member_username || c.member_name)) ||
+                            'ลูกค้า'
+                        );
+                    }
+
+                    // บอท
+                    if (msg.source === 'bot') {
+                        return 'บอท';
+                    }
+
+                    // พนักงาน (ดูจาก meta.employee_name ถ้ามี)
+                    if (msg.meta && msg.meta.employee_name) {
+                        return msg.meta.employee_name;
+                    }
+
+                    return 'พนักงาน';
+                },
+
+                // URL รูป preview ของสติกเกอร์
+                buildStickerThumbnailUrl(sticker) {
+                    // NOTE: บาง pack อาจใช้ path แตกต่างกัน แต่ของ default จะใช้ pattern นี้ได้
+                    return 'https://stickershop.line-scdn.net/stickershop/v1/sticker/'
+                        + sticker.stickerId
+                        + '/IOS/sticker.png';
+                },
+
+                openStickerModal() {
+                    if (!this.selectedConversation) {
+                        return;
+                    }
+                    this.$refs.stickerModal && this.$refs.stickerModal.show();
+                },
+
+                async selectSticker(sticker) {
+                    if (!this.selectedConversation) {
+                        return;
+                    }
+
+                    try {
+                        this.stickerLoading = true;
+
+                        const convId = this.selectedConversation.id;
+
+                        const resp = await axios.post(
+                            this.apiUrl('conversations/' + convId + '/reply-sticker'),
+                            {
+                                package_id: sticker.packageId,
+                                sticker_id: sticker.stickerId,
+                            }
+                        );
+
+                        const body = resp.data || {};
+                        const msg = body.data || null;
+
+                        // ตรงนี้แล้วแต่โค้ดเดิมของคุณว่าเก็บ message ยังไง
+                        // ถ้ามี method appendMessage() ก็ใช้เลย
+                        if (msg && typeof this.appendMessage === 'function') {
+                            this.appendMessage(msg);
+                        } else if (Array.isArray(this.messages)) {
+                            this.messages.push(msg);
+                        }
+
+                        this.$refs.stickerModal && this.$refs.stickerModal.hide();
+                    } catch (e) {
+                        console.error('send sticker failed', e);
+                        this.$bvToast && this.$bvToast.toast(
+                            'ส่งสติกเกอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+                            { title: 'เกิดข้อผิดพลาด', variant: 'danger', solid: true }
+                        );
+                    } finally {
+                        this.stickerLoading = false;
+                    }
+                },
+
             }
         });
 

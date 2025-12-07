@@ -138,7 +138,7 @@ class ChatController extends AppBaseController
                     'closed_by_employee_id' => $conv->closed_by_employee_id,
                     'closed_by_employee_name' => $conv->closed_by_employee_name,
                     'closed_at' => optional($conv->closed_at)->toIso8601String(),
-                    'is_pinned'          => (bool) $conv->is_pinned,
+                    'is_pinned' => (bool) $conv->is_pinned,
 
                     'line_account' => [
                         'id' => $conv->account?->id,
@@ -286,6 +286,8 @@ class ChatController extends AppBaseController
                 'closed_by_employee_name' => $conversation->closed_by_employee_name,
                 'closed_at' => optional($conversation->closed_at)->toIso8601String(),
 
+                'is_pinned' => (bool) $conversation->is_pinned,
+
                 'incoming_language' => $conversation->incoming_language,
                 'outgoing_language' => $conversation->outgoing_language,
 
@@ -323,6 +325,7 @@ class ChatController extends AppBaseController
                     'sender_bot_key' => $m->sender_bot_key,
                     'meta' => $m->meta,
                     'payload' => $m->payload,
+                    'is_pinned' => (bool) $m->is_pinned,
                 ];
             }),
         ];
@@ -336,7 +339,7 @@ class ChatController extends AppBaseController
     public function reply(Request $request, LineConversation $conversation): JsonResponse
     {
         $data = $request->validate([
-            'text'                => ['required', 'string'],
+            'text' => ['required', 'string'],
             'reply_to_message_id' => ['nullable', 'integer'],
         ]);
 
@@ -349,7 +352,7 @@ class ChatController extends AppBaseController
         }
 
         /** @var \Gametech\Admin\Models\Admin|null $employee */
-        $employee   = Auth::guard('admin')->user();
+        $employee = Auth::guard('admin')->user();
         $employeeId = $employee?->code ?? null;
 
         if (! $employeeId) {
@@ -360,10 +363,10 @@ class ChatController extends AppBaseController
 
         // ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานตอบใหม่ → เปิดสถานะกลับเป็น open
         if ($conversation->status === 'closed') {
-            $conversation->status                  = 'open';
-            $conversation->closed_by_employee_id   = null;
+            $conversation->status = 'open';
+            $conversation->closed_by_employee_id = null;
             $conversation->closed_by_employee_name = null;
-            $conversation->closed_at               = null;
+            $conversation->closed_at = null;
             $conversation->save();
         }
 
@@ -386,12 +389,12 @@ class ChatController extends AppBaseController
 
             if ($replyTo) {
                 $meta['reply_to'] = [
-                    'id'        => $replyTo->id,
-                    'text'      => mb_strimwidth((string) $replyTo->text, 0, 80, '...'),
+                    'id' => $replyTo->id,
+                    'text' => mb_strimwidth((string) $replyTo->text, 0, 80, '...'),
                     'direction' => $replyTo->direction,
-                    'source'    => $replyTo->source,
-                    'type'      => $replyTo->type,
-                    'sent_at'   => optional($replyTo->sent_at)->toIso8601String(),
+                    'source' => $replyTo->source,
+                    'type' => $replyTo->type,
+                    'sent_at' => optional($replyTo->sent_at)->toIso8601String(),
                 ];
             }
         }
@@ -433,11 +436,11 @@ class ChatController extends AppBaseController
             $lineUserId = $contact->line_user_id;
 
             $replyMeta = is_array($msgMeta) ? ($msgMeta['reply_to'] ?? null) : null;
-            $hasReply  = is_array($replyMeta) && ! empty($replyMeta['text']);
+            $hasReply = is_array($replyMeta) && ! empty($replyMeta['text']);
 
             if ($hasReply && (($replyMeta['type'] ?? 'text') === 'text')) {
 
-                $quoted  = (string) $replyMeta['text'];
+                $quoted = (string) $replyMeta['text'];
                 $altText = "ตอบกลับ: {$quoted}\n".$lineText;
                 $altText = mb_strimwidth($altText, 0, 390, '...', 'UTF-8');
 
@@ -445,7 +448,7 @@ class ChatController extends AppBaseController
                 // เตรียมข้อมูล header: avatar + display name
                 // -------------------------
                 $contactRelation = $conversation->contact;
-                $member          = $contactRelation?->member;
+                $member = $contactRelation?->member;
 
                 // ตรวจว่า message ต้นทางเป็นของลูกค้าจริงไหม
                 $isCustomerMessage =
@@ -464,7 +467,7 @@ class ChatController extends AppBaseController
                     $headerAvatarUrl = $contactRelation->picture_url ?? null;
                 } else {
                     // เคสตอบกลับข้อความของพนักงานเอง หรือ outbound อื่น ๆ
-                    $headerName      = 'พนักงาน';
+                    $headerName = 'พนักงาน';
                     $headerAvatarUrl = null; // ไม่ต้องมีรูป
                 }
 
@@ -475,34 +478,34 @@ class ChatController extends AppBaseController
 
                 if (! empty($headerAvatarUrl)) {
                     $headerContents[] = [
-                        'type'         => 'image',
-                        'url'          => $headerAvatarUrl,
-                        'size'         => 'xs',
-                        'aspectRatio'  => '1:1',
-                        'aspectMode'   => 'cover',
-                        'gravity'      => 'center',
-                        'flex'         => 0,
-                        'margin'       => 'sm',
-                        'align'        => 'start',
+                        'type' => 'image',
+                        'url' => $headerAvatarUrl,
+                        'size' => 'xs',
+                        'aspectRatio' => '1:1',
+                        'aspectMode' => 'cover',
+                        'gravity' => 'center',
+                        'flex' => 0,
+                        'margin' => 'sm',
+                        'align' => 'start',
                     ];
                 }
 
                 $headerContents[] = [
-                    'type'    => 'box',
-                    'layout'  => 'vertical',
+                    'type' => 'box',
+                    'layout' => 'vertical',
                     'spacing' => 'xs',
-                    'contents'=> [
+                    'contents' => [
                         [
-                            'type'   => 'text',
-                            'text'   => $headerName,
+                            'type' => 'text',
+                            'text' => $headerName,
                             'weight' => 'bold',
-                            'size'   => 'sm',
-                            'wrap'   => true,
+                            'size' => 'sm',
+                            'wrap' => true,
                         ],
                         [
-                            'type'  => 'text',
-                            'text'  => 'ตอบกลับข้อความก่อนหน้า',
-                            'size'  => 'xs',
+                            'type' => 'text',
+                            'text' => 'ตอบกลับข้อความก่อนหน้า',
+                            'size' => 'xs',
                             'color' => '#888888',
                         ],
                     ],
@@ -512,37 +515,37 @@ class ChatController extends AppBaseController
                 // ประกอบ Flex bubble
                 // -------------------------
                 $flex = [
-                    'type'    => 'flex',
+                    'type' => 'flex',
                     'altText' => $altText,
-                    'contents'=> [
-                        'type'   => 'bubble',
-                        'body'   => [
-                            'type'    => 'box',
-                            'layout'  => 'vertical',
+                    'contents' => [
+                        'type' => 'bubble',
+                        'body' => [
+                            'type' => 'box',
+                            'layout' => 'vertical',
                             'spacing' => 'sm',
-                            'contents'=> [
+                            'contents' => [
                                 // แถวบน: avatar + ชื่อ + label
                                 [
-                                    'type'       => 'box',
-                                    'layout'     => 'horizontal',
-                                    'spacing'    => 'md',
+                                    'type' => 'box',
+                                    'layout' => 'horizontal',
+                                    'spacing' => 'md',
                                     'alignItems' => 'center',
-                                    'contents'   => $headerContents,
+                                    'contents' => $headerContents,
                                 ],
 
                                 // กล่องเทา: ข้อความเดิม (quoted)
                                 [
-                                    'type'            => 'box',
-                                    'layout'          => 'vertical',
+                                    'type' => 'box',
+                                    'layout' => 'vertical',
                                     'backgroundColor' => '#F5F5F5',
-                                    'cornerRadius'    => 'md',
-                                    'paddingAll'      => '8px',
-                                    'contents'        => [
+                                    'cornerRadius' => 'md',
+                                    'paddingAll' => '8px',
+                                    'contents' => [
                                         [
-                                            'type'  => 'text',
-                                            'text'  => $quoted,
-                                            'size'  => 'sm',
-                                            'wrap'  => true,
+                                            'type' => 'text',
+                                            'text' => $quoted,
+                                            'size' => 'sm',
+                                            'wrap' => true,
                                             'color' => '#555555',
                                         ],
                                     ],
@@ -550,10 +553,10 @@ class ChatController extends AppBaseController
 
                                 // ข้อความตอบกลับของเรา (หรือข้อความแปล)
                                 [
-                                    'type'  => 'text',
-                                    'text'  => $lineText,
-                                    'wrap'  => true,
-                                    'size'  => 'md',
+                                    'type' => 'text',
+                                    'text' => $lineText,
+                                    'wrap' => true,
+                                    'size' => 'md',
                                 ],
                             ],
                         ],
@@ -574,7 +577,7 @@ class ChatController extends AppBaseController
                         if (is_array($sent) && ! empty($sent[0])) {
                             $first = $sent[0];
                             $lineMessageId = $first['id'] ?? null;
-                            $quoteToken    = $first['quoteToken'] ?? null;
+                            $quoteToken = $first['quoteToken'] ?? null;
 
                             $metaForMsg = $message->meta;
                             if (! is_array($metaForMsg)) {
@@ -599,9 +602,9 @@ class ChatController extends AppBaseController
                 } else {
                     Log::channel('line_oa')->warning('[LineChat] ส่ง Flex reply ไป LINE ไม่สำเร็จ', [
                         'conversation_id' => $conversation->id,
-                        'contact_id'      => $contact->id,
-                        'status'          => $result['status'] ?? null,
-                        'error'           => $result['error'] ?? null,
+                        'contact_id' => $contact->id,
+                        'status' => $result['status'] ?? null,
+                        'error' => $result['error'] ?? null,
                     ]);
                 }
             } else {
@@ -620,7 +623,7 @@ class ChatController extends AppBaseController
                         if (is_array($sent) && ! empty($sent[0])) {
                             $first = $sent[0];
                             $lineMessageId = $first['id'] ?? null;
-                            $quoteToken    = $first['quoteToken'] ?? null;
+                            $quoteToken = $first['quoteToken'] ?? null;
 
                             $metaForMsg = $message->meta;
                             if (! is_array($metaForMsg)) {
@@ -643,9 +646,9 @@ class ChatController extends AppBaseController
                 } else {
                     Log::channel('line_oa')->warning('[LineChat] ส่งข้อความไป LINE ไม่สำเร็จ', [
                         'conversation_id' => $conversation->id,
-                        'contact_id'      => $contact->id,
-                        'error'           => $result['error'] ?? null,
-                        'status'          => $result['status'] ?? null,
+                        'contact_id' => $contact->id,
+                        'error' => $result['error'] ?? null,
+                        'status' => $result['status'] ?? null,
                     ]);
                 }
             }
@@ -658,17 +661,17 @@ class ChatController extends AppBaseController
         return response()->json([
             'message' => 'success',
             'data' => [
-                'id'                 => $message->id,
-                'direction'          => $message->direction,
-                'source'             => $message->source,
-                'type'               => $message->type,
-                'text'               => $message->text, // ในระบบเก็บเฉพาะข้อความที่ agent พิมพ์
-                'sent_at'            => optional($message->sent_at)->toIso8601String(),
+                'id' => $message->id,
+                'direction' => $message->direction,
+                'source' => $message->source,
+                'type' => $message->type,
+                'text' => $message->text, // ในระบบเก็บเฉพาะข้อความที่ agent พิมพ์
+                'sent_at' => optional($message->sent_at)->toIso8601String(),
                 'sender_employee_id' => $message->sender_employee_id,
-                'sender_bot_key'     => $message->sender_bot_key,
-                'meta'               => $message->meta,      // มี reply_to / quote_token / sent_messages ให้หลังบ้านใช้
-                'payload'            => $message->payload,
-                'is_pinned'          => (bool) $message->is_pinned,
+                'sender_bot_key' => $message->sender_bot_key,
+                'meta' => $message->meta,      // มี reply_to / quote_token / sent_messages ให้หลังบ้านใช้
+                'payload' => $message->payload,
+                'is_pinned' => (bool) $message->is_pinned,
             ],
         ]);
     }
@@ -684,7 +687,7 @@ class ChatController extends AppBaseController
 
         $file = $request->file('image');
 
-        $employee   = Auth::guard('admin')->user();
+        $employee = Auth::guard('admin')->user();
         $employeeId = $employee?->code ?? null;
 
         if (! $employeeId) {
@@ -695,10 +698,10 @@ class ChatController extends AppBaseController
 
         // ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานส่งรูปใหม่ → เปิดสถานะกลับเป็น open
         if ($conversation->status === 'closed') {
-            $conversation->status                  = 'open';
-            $conversation->closed_by_employee_id   = null;
+            $conversation->status = 'open';
+            $conversation->closed_by_employee_id = null;
             $conversation->closed_by_employee_name = null;
-            $conversation->closed_at               = null;
+            $conversation->closed_at = null;
             $conversation->save();
         }
 
@@ -714,7 +717,7 @@ class ChatController extends AppBaseController
 
         $payloadMsg = $message->payload['message'] ?? [];
         $originalUrl = $payloadMsg['contentUrl'] ?? null;
-        $previewUrl  = $payloadMsg['previewUrl'] ?? $originalUrl;
+        $previewUrl = $payloadMsg['previewUrl'] ?? $originalUrl;
 
         if ($originalUrl) {
             $originalUrl = url($originalUrl);
@@ -741,9 +744,9 @@ class ChatController extends AppBaseController
                 if (is_array($body)) {
                     $sent = $body['sentMessages'] ?? null;
                     if (is_array($sent) && ! empty($sent[0])) {
-                        $first        = $sent[0];
+                        $first = $sent[0];
                         $lineMessageId = $first['id'] ?? null;
-                        $quoteToken    = $first['quoteToken'] ?? null;
+                        $quoteToken = $first['quoteToken'] ?? null;
 
                         $metaForMsg = $message->meta;
                         if (! is_array($metaForMsg)) {
@@ -766,33 +769,113 @@ class ChatController extends AppBaseController
             } else {
                 Log::channel('line_oa')->warning('[LineChat] ส่งรูปไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
-                    'contact_id'      => $contact->id,
-                    'image_url'       => $originalUrl,
-                    'error'           => $result['error'] ?? null,
-                    'status'          => $result['status'] ?? null,
+                    'contact_id' => $contact->id,
+                    'image_url' => $originalUrl,
+                    'error' => $result['error'] ?? null,
+                    'status' => $result['status'] ?? null,
                 ]);
             }
         } else {
             Log::channel('line_oa')->warning('[LineChat] ไม่สามารถส่งรูปไป LINE ได้ (ไม่พบ account/contact/line_user_id หรือ url ว่าง)', [
                 'conversation_id' => $conversation->id,
-                'image_url'       => $originalUrl,
+                'image_url' => $originalUrl,
             ]);
         }
 
         return response()->json([
             'message' => 'success',
             'data' => [
-                'id'                 => $message->id,
-                'direction'          => $message->direction,
-                'source'             => $message->source,
-                'type'               => $message->type,
-                'text'               => $message->text,
-                'sent_at'            => optional($message->sent_at)->toIso8601String(),
+                'id' => $message->id,
+                'direction' => $message->direction,
+                'source' => $message->source,
+                'type' => $message->type,
+                'text' => $message->text,
+                'sent_at' => optional($message->sent_at)->toIso8601String(),
                 'sender_employee_id' => $message->sender_employee_id,
-                'sender_bot_key'     => $message->sender_bot_key,
-                'meta'               => $message->meta,
-                'payload'            => $message->payload,
-                'is_pinned'          => (bool) $message->is_pinned,
+                'sender_bot_key' => $message->sender_bot_key,
+                'meta' => $message->meta,
+                'payload' => $message->payload,
+                'is_pinned' => (bool) $message->is_pinned,
+            ],
+        ]);
+    }
+
+    public function replySticker(Request $request, LineConversation $conversation): JsonResponse
+    {
+        $data = $request->validate([
+            'package_id' => ['required', 'string'],
+            'sticker_id' => ['required', 'string'],
+        ]);
+
+        $packageId = trim($data['package_id']);
+        $stickerId = trim($data['sticker_id']);
+
+        if ($packageId === '' || $stickerId === '') {
+            return response()->json([
+                'message' => 'ต้องระบุ package_id และ sticker_id',
+            ], 422);
+        }
+
+        $employee = Auth::guard('admin')->user();
+        $employeeId = $employee?->code ?? null;
+
+        if (! $employeeId) {
+            return response()->json([
+                'message' => 'ไม่พบข้อมูลผู้ใช้งาน (admin)',
+            ], 403);
+        }
+
+        // 1) บันทึกข้อความ outbound sticker ลง DB
+        $message = $this->chat->createOutboundStickerFromAgent(
+            $conversation,
+            $packageId,
+            $stickerId,
+            $employeeId,
+            [
+                'employee_code' => $employee->code ?? null,
+                'employee_name' => $employee->name ?? null,
+            ]
+        );
+
+        // 2) ยิงสติกเกอร์ไปที่ LINE จริง ๆ
+        $account = $conversation->account;
+        $contact = $conversation->contact;
+
+        if ($account && $contact && $contact->line_user_id) {
+            // ใช้ helper ใหม่
+            $result = $this->lineMessaging->pushSticker(
+                $account,
+                $contact->line_user_id,
+                $packageId,
+                $stickerId
+            );
+
+            if (! $result['success']) {
+                Log::warning('[LineChat] ส่งสติกเกอร์ไป LINE ไม่สำเร็จ', [
+                    'conversation_id' => $conversation->id,
+                    'contact_id' => $contact->id,
+                    'error' => $result['error'] ?? null,
+                    'status' => $result['status'] ?? null,
+                ]);
+            }
+        } else {
+            Log::warning('[LineChat] ไม่สามารถส่งสติกเกอร์ไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
+                'conversation_id' => $conversation->id,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'success',
+            'data' => [
+                'id' => $message->id,
+                'direction' => $message->direction,
+                'source' => $message->source,
+                'type' => $message->type, // 'sticker'
+                'text' => $message->text,
+                'sent_at' => optional($message->sent_at)->toDateTimeString(),
+                'sender_employee_id' => $message->sender_employee_id,
+                'meta' => $message->meta,
+                'is_pined' => (bool) $message->is_pined,
             ],
         ]);
     }
@@ -1055,11 +1138,12 @@ class ChatController extends AppBaseController
             'data' => $message,
         ]);
     }
+
     public function replyTemplateText(Request $request, LineConversation $conversation): JsonResponse
     {
         $data = $request->validate([
-            'template_id'  => ['required', 'integer'],
-            'vars'         => ['array'],
+            'template_id' => ['required', 'integer'],
+            'vars' => ['array'],
             'preview_only' => ['sometimes', 'boolean'],
         ]);
 
@@ -1072,7 +1156,7 @@ class ChatController extends AppBaseController
             ], 403);
         }
 
-        $employeeId   = $employee->code ?? null;
+        $employeeId = $employee->code ?? null;
         $employeeName = $employee->user_name ?? ($employee->name ?? 'พนักงาน');
         if (! $employeeId) {
             return response()->json([
@@ -1102,8 +1186,8 @@ class ChatController extends AppBaseController
         ]);
 
         $contact = $conversation->contact;
-        $member  = $contact?->member;
-        $bank    = $member?->bank;
+        $member = $contact?->member;
+        $bank = $member?->bank;
 
         $displayName =
             $contact->display_name
@@ -1148,15 +1232,15 @@ class ChatController extends AppBaseController
 
         $baseVars = [
             'display_name' => $displayName,
-            'username'     => $username,
-            'member_id'    => $memberId,
-            'phone'        => $phone,
-            'bank_name'    => $bankName,
-            'game_user'    => $member->game_user ?? '',
-            'bank_code'    => $bankCode,
-            'account_no'   => $accountNo,
-            'login_url'    => UrlHelper::loginUrl(),
-            'site_name'    => config('app.name', config('app.domain_url')),
+            'username' => $username,
+            'member_id' => $memberId,
+            'phone' => $phone,
+            'bank_name' => $bankName,
+            'game_user' => $member->game_user ?? '',
+            'bank_code' => $bankCode,
+            'account_no' => $accountNo,
+            'login_url' => UrlHelper::loginUrl(),
+            'site_name' => config('app.name', config('app.domain_url')),
             'support_name' => trim(($employee->name ?? '').' '.($employee->surname ?? '')),
         ];
 
@@ -1196,19 +1280,19 @@ class ChatController extends AppBaseController
                 ];
             } elseif ($kind === 'image') {
                 $original = $item['original'] ?? $item['url'] ?? '';
-                $preview  = $item['preview'] ?? $original;
+                $preview = $item['preview'] ?? $original;
 
                 $original = $this->applyTemplatePlaceholders((string) $original, $vars);
-                $preview  = $this->applyTemplatePlaceholders((string) $preview, $vars);
+                $preview = $this->applyTemplatePlaceholders((string) $preview, $vars);
 
                 if ($original === '') {
                     continue;
                 }
 
                 $lineMessages[] = [
-                    'type'               => 'image',
+                    'type' => 'image',
                     'originalContentUrl' => $original,
-                    'previewImageUrl'    => $preview,
+                    'previewImageUrl' => $preview,
                 ];
             }
             // future: kind อื่นค่อยเพิ่มตรงนี้
@@ -1230,7 +1314,7 @@ class ChatController extends AppBaseController
         }
 
         if (! $previewText) {
-            $firstType   = $lineMessages[0]['type'] ?? 'message';
+            $firstType = $lineMessages[0]['type'] ?? 'message';
             $previewText = '['.$firstType.']';
         }
 
@@ -1238,7 +1322,7 @@ class ChatController extends AppBaseController
         if ($request->boolean('preview_only')) {
             return response()->json([
                 'data' => [
-                    'text'          => $previewText,
+                    'text' => $previewText,
                     'line_messages' => $lineMessages,
                 ],
             ]);
@@ -1248,10 +1332,10 @@ class ChatController extends AppBaseController
 
         // ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานส่ง template ใหม่ → เปิดสถานะกลับเป็น open
         if ($conversation->status === 'closed') {
-            $conversation->status                  = 'open';
-            $conversation->closed_by_employee_id   = null;
+            $conversation->status = 'open';
+            $conversation->closed_by_employee_id = null;
             $conversation->closed_by_employee_name = null;
-            $conversation->closed_at               = null;
+            $conversation->closed_at = null;
             $conversation->save();
         }
 
@@ -1261,13 +1345,13 @@ class ChatController extends AppBaseController
             $previewText,
             (int) $employeeId,
             [
-                'template_id'   => $template->id,
+                'template_id' => $template->id,
                 'line_messages' => $lineMessages,
-                'vars'          => $vars,
+                'vars' => $vars,
             ],
             [
-                'template_key'         => $template->key ?? null,
-                'template_title'       => $template->title ?? $template->description ?? null,
+                'template_key' => $template->key ?? null,
+                'template_title' => $template->title ?? $template->description ?? null,
                 'sender_employee_name' => $employeeName,
             ]
         );
@@ -1289,9 +1373,9 @@ class ChatController extends AppBaseController
                 if (is_array($body)) {
                     $sent = $body['sentMessages'] ?? null;
                     if (is_array($sent) && ! empty($sent[0])) {
-                        $first        = $sent[0];
+                        $first = $sent[0];
                         $lineMessageId = $first['id'] ?? null;
-                        $quoteToken    = $first['quoteToken'] ?? null;
+                        $quoteToken = $first['quoteToken'] ?? null;
 
                         $metaForMsg = $message->meta;
                         if (! is_array($metaForMsg)) {
@@ -1315,16 +1399,16 @@ class ChatController extends AppBaseController
             } else {
                 Log::channel('line_oa')->warning('[LineOA] ส่ง quick reply ไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
-                    'contact_id'      => $contact->id ?? null,
-                    'template_id'     => $template->id,
-                    'status'          => $result['status'] ?? null,
-                    'error'           => $result['error'] ?? null,
+                    'contact_id' => $contact->id ?? null,
+                    'template_id' => $template->id,
+                    'status' => $result['status'] ?? null,
+                    'error' => $result['error'] ?? null,
                 ]);
             }
         } else {
             Log::channel('line_oa')->warning('[LineOA] ไม่สามารถส่ง quick reply ไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
                 'conversation_id' => $conversation->id,
-                'template_id'     => $template->id,
+                'template_id' => $template->id,
             ]);
         }
 
@@ -1332,7 +1416,6 @@ class ChatController extends AppBaseController
             'data' => $message,
         ]);
     }
-
 
     /**
      * แปลง field message จาก LineTemplate ให้กลายเป็นโครงสร้างมาตรฐาน
@@ -2282,7 +2365,7 @@ class ChatController extends AppBaseController
             DB::afterCommit(function () use ($conversationFresh) {
                 event(new LineOAChatConversationUpdated($conversationFresh));
                 // จะยิง LineOAConversationAssigned ด้วยหรือเปล่า แล้วแต่คุณ:
-                 event(new LineOAConversationAssigned($conversationFresh));
+                event(new LineOAConversationAssigned($conversationFresh));
             });
 
             return response()->json([
@@ -3124,18 +3207,18 @@ class ChatController extends AppBaseController
         return response()->json([
             'success' => true,
             'data' => [
-                'id'                 => $message->id,
+                'id' => $message->id,
                 'line_conversation_id' => $message->line_conversation_id,
-                'direction'          => $message->direction,
-                'source'             => $message->source,
-                'type'               => $message->type,
-                'text'               => $message->text,
-                'sent_at'            => optional($message->sent_at)->toIso8601String(),
+                'direction' => $message->direction,
+                'source' => $message->source,
+                'type' => $message->type,
+                'text' => $message->text,
+                'sent_at' => optional($message->sent_at)->toIso8601String(),
                 'sender_employee_id' => $message->sender_employee_id,
-                'sender_bot_key'     => $message->sender_bot_key,
-                'meta'               => $message->meta,
-                'payload'            => $message->payload,
-                'is_pinned'          => (bool) $message->is_pinned,
+                'sender_bot_key' => $message->sender_bot_key,
+                'meta' => $message->meta,
+                'payload' => $message->payload,
+                'is_pinned' => (bool) $message->is_pinned,
             ],
         ]);
     }
@@ -3162,20 +3245,19 @@ class ChatController extends AppBaseController
         return response()->json([
             'success' => true,
             'data' => [
-                'id'                 => $message->id,
+                'id' => $message->id,
                 'line_conversation_id' => $message->line_conversation_id,
-                'direction'          => $message->direction,
-                'source'             => $message->source,
-                'type'               => $message->type,
-                'text'               => $message->text,
-                'sent_at'            => optional($message->sent_at)->toIso8601String(),
+                'direction' => $message->direction,
+                'source' => $message->source,
+                'type' => $message->type,
+                'text' => $message->text,
+                'sent_at' => optional($message->sent_at)->toIso8601String(),
                 'sender_employee_id' => $message->sender_employee_id,
-                'sender_bot_key'     => $message->sender_bot_key,
-                'meta'               => $message->meta,
-                'payload'            => $message->payload,
-                'is_pinned'          => (bool) $message->is_pinned,
+                'sender_bot_key' => $message->sender_bot_key,
+                'meta' => $message->meta,
+                'payload' => $message->payload,
+                'is_pinned' => (bool) $message->is_pinned,
             ],
         ]);
     }
-
 }

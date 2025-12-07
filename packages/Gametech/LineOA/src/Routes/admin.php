@@ -47,6 +47,9 @@ Route::domain(
                 Route::post('conversations/{conversation}/reply-template', [ChatController::class, 'replyTemplateText'])
                     ->name('conversations.reply-template');
 
+                Route::post('conversations/{conversation}/reply-sticker', [ChatController::class, 'replySticker'])
+                    ->name('conversations.reply-sticker');
+
                 Route::post('conversations/{conversation}/pin', [ChatController::class, 'pinConversation']);
 
                 Route::post('conversations/{conversation}/unpin', [ChatController::class, 'unpinConversation']);

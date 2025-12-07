@@ -445,12 +445,417 @@
             margin-top: 2px;
             word-break: break-word;
         }
+        /* ====== แถบด้านบน: ข้อความที่ปักหมุด ====== */
+        .chat-pinned-bar {
+            background-color: #fffbe6;          /* เหลืองอ่อนแบบแจ้งเตือน */
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .chat-pinned-bar > .d-flex i {
+            font-size: 13px;
+        }
+
+        /* list ข้อความที่ปักหมุดด้านใน */
+        .chat-pinned-list {
+            max-height: 80px;                   /* จำกัดความสูง เผื่อปักหลายอัน */
+            overflow-y: auto;
+        }
+
+        /* แต่ละแถวข้อความที่ปักหมุด */
+        .chat-pinned-item {
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background-color .15s ease-in-out;
+        }
+
+        .chat-pinned-item:hover {
+            background-color: #fff3cd;          /* hover เหลืองเข้มขึ้นนิดหน่อย */
+        }
+
+        /* จำกัดความกว้างตัวข้อความ ป้องกันลากยาวเกิน */
+        .chat-pinned-item .text-truncate {
+            max-width: 240px;
+        }
+
+        /* เวลาแสดงเวลาใน pinned bar ให้ดูเบาลงหน่อย */
+        .chat-pinned-item .text-muted {
+            font-size: 11px;
+        }
+
+        /* ====== ปรับ margin กับ separator ของวันนิดหน่อย ให้ไม่อัดกับ pinned bar ====== */
+        .chat-day-separator {
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        .chat-day-separator .badge {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        /* ====== layout message row (กลางจอ) เผื่อยังไม่มี ====== */
+        .chat-msg-row {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        /* ฝั่งลูกค้า (inbound) อยู่ซ้าย */
+        .chat-msg-in {
+            justify-content: flex-start;
+        }
+
+        /* ฝั่งพนักงาน (outbound) อยู่ขวา */
+        .chat-msg-out {
+            justify-content: flex-end;
+        }
+
+        /* กล่อง avatar ด้านหน้า bubble */
+        .chat-avatar {
+            width: 32px;
+            flex: 0 0 32px;
+        }
+
+        .chat-avatar-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* ตัว bubble จริง ๆ (ใช้ร่วมกับ class เดิม messageBubbleClass) */
+        .chat-msg-main {
+            max-width: 75%;
+        }
+
+        /* เวลา + ปุ่ม ... ด้านล่าง bubble */
+        .chat-time-wrapper {
+            font-size: 11px;
+        }
+
+        /* ปุ่มเมนู ... ให้ไอคอนดูเล็ก ๆ หน่อย */
+        .chat-msg-menu-toggle {
+            padding: 0 2px !important;
+        }
 
 
+        /* ====== ไฮไลต์ข้อความที่ถูก jump มาจากแถบปักหมุด ====== */
+        .chat-msg-row.chat-msg-highlight .p-2.rounded {
+            box-shadow: 0 0 0 2px #ffc107;      /* ขอบเหลืองบาง ๆ */
+            background-color: #fff8e1 !important;
+            transition: background-color .4s ease-out, box-shadow .4s ease-out;
+        }
 
+        /* เมื่อเอา class ออก ให้ค่อย ๆ จางคืนสภาพเดิม */
+        .chat-msg-row .p-2.rounded {
+            transition: background-color .4s ease-out, box-shadow .4s ease-out;
+        }
+        /* wrapper ให้มีระยะห่างจากขอบนิดหน่อย */
+        .chat-pinned-wrapper {
+            padding: 6px 16px 4px;
+        }
 
+        /* การ์ดหลัก – ให้มีเงาและโค้งแบบลอยเหนือแชต */
+        .chat-pinned-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+            overflow: hidden; /* กัน border-radius หลุด */
+        }
 
+        /* แถวบนของการ์ด (ข้อความปักหมุดหลัก) */
+        .chat-pinned-main {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        /* icon ปักหมุดเล็กลงหน่อย */
+        .chat-pinned-icon {
+            font-size: 13px;
+        }
+
+        /* ตัวอักษรข้อความ – เล็กลงกว่าฟอนต์แชตทั่วไปนิดหนึ่ง */
+        .chat-pinned-text {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* บรรทัดชื่อ + เวลา */
+        .chat-pinned-meta {
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        /* ปุ่มลูกศรขวา/ลง */
+        .chat-pinned-toggle i {
+            font-size: 12px;
+        }
+
+        /* list ด้านล่างของการ์ด (ข้อความปักหมุดอื่น ๆ) */
+        .chat-pinned-list {
+            border-top: 1px solid #f1f5f9;
+        }
+
+        /* แถวของข้อความปักหมุดอื่น ๆ */
+        .chat-pinned-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 6px 12px 6px 16px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .chat-pinned-item:hover {
+            background-color: #f8fafc;
+        }
+
+        /* footer "ไม่แสดงอีก" */
+        .chat-pinned-footer {
+            padding: 6px 12px 8px 32px;
+            font-size: 11px;
+            color: #6b7280;
+            cursor: pointer;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .chat-pinned-footer:hover {
+            background-color: #f9fafb;
+        }
+
+        /* optional: เอฟเฟกต์ fade ตอนขยาย/ยุบ */
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.15s ease;
+        }
+        .fade-enter,
+        .fade-leave-to {
+            opacity: 0;
+        }
+
+        /* wrapper ของ message + pinned overlay */
+        .chat-message-wrapper {
+            position: relative;
+        }
+
+        /* การ์ดปักหมุดลอยทับ content */
+        .chat-pinned-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10; /* ให้สูงกว่า bubble แชต */
+            padding: 4px 16px 0;
+            pointer-events: auto;
+        }
+
+        /* การ์ด */
+        .chat-pinned-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+            overflow: hidden;
+        }
+
+        /* แถวบน */
+        .chat-pinned-main {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .chat-pinned-icon {
+            font-size: 13px;
+        }
+
+        .chat-pinned-text {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .chat-pinned-meta {
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        /* แถวล่าง */
+        .chat-pinned-list {
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .chat-pinned-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 6px 12px 6px 16px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .chat-pinned-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .chat-pinned-footer {
+            padding: 6px 12px 8px 32px;
+            font-size: 11px;
+            color: #6b7280;
+            cursor: pointer;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .chat-pinned-footer:hover {
+            background-color: #f9fafb;
+        }
+
+        /* ให้ message list เผื่อที่ด้านบนสำหรับการ์ดลอย */
+        .chat-message-list.chat-message-has-pinned {
+            padding-top: 70px; /* ปรับเลขตามความสูงการ์ดจริง */
+        }
+
+        /* effect เปิด/ปิด list ด้านล่าง */
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.15s ease;
+        }
+        .fade-enter,
+        .fade-leave-to {
+            opacity: 0;
+        }
+
+        /* การ์ดปักหมุด */
+        .chat-pinned-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+            overflow: hidden;
+            max-width: calc(100% - 24px);
+            margin: 4px auto 0;
+        }
+
+        /* รายการปักหมุดหลายอันข้างล่าง – เลื่อนในกล่องเอง */
+        .chat-pinned-list {
+            border-top: 1px solid #f1f5f9;
+            max-height: 150px;       /* ปรับเลขตามที่ชอบ */
+            overflow-y: auto;
+        }
+
+        /* item ข้างใน */
+        .chat-pinned-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 6px 12px 6px 16px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .chat-pinned-item:hover {
+            background-color: #f8fafc;
+        }
+        .chat-pinned-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            padding: 4px 16px 0;
+            pointer-events: none;      /* ไม่รับ event ทั้ง overlay */
+        }
+
+        .chat-pinned-card {
+            pointer-events: auto;      /* ยอมให้คลิกเฉพาะที่ตัวการ์ด */
+        }
+
+        .chat-message-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-pinned-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            padding: 4px 16px 0;
+            pointer-events: none;
+        }
+
+        .chat-pinned-card {
+            pointer-events: auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+            max-width: calc(100% - 24px);
+            margin: 4px auto 0;
+            font-size: 12px;
+        }
+
+        .chat-pinned-main {
+            padding: 8px 12px;
+        }
+
+        .chat-pinned-icon {
+            font-size: 12px;
+        }
+
+        .chat-pinned-text {
+            font-size: 12px;
+        }
+
+        .chat-pinned-meta {
+            font-size: 11px;
+        }
+
+        .chat-pinned-list {
+            border-top: 1px solid #f1f5f9;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .chat-pinned-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 6px 12px 6px 16px;
+            cursor: pointer;
+        }
+
+        .chat-pinned-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .chat-pinned-footer {
+            padding: 6px 12px;
+            font-size: 11px;
+            color: #64748b;
+            border-top: 1px solid #f1f5f9;
+            cursor: pointer;
+        }
+
+        .chat-pinned-footer:hover {
+            background-color: #f8fafc;
+        }
+
+        .chat-pinned-toggle i {
+            font-size: 12px;
+        }
+
+        .chat-message-list {
+            height: 100%;
+        }
 
 
     </style>
+    <style>
+        .gt-sticker-item {
+            border-radius: 8px;
+            padding: 4px;
+            transition: background-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .gt-sticker-item:hover {
+            background-color: #f1f3f5;
+            transform: translateY(-1px);
+        }
+    </style>
+
 @endpush

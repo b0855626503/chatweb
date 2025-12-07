@@ -680,3 +680,39 @@
     </template>
 </b-modal>
 
+{{-- ✅ STICKER MODAL --}}
+<b-modal id="line-oa-sticker-modal"
+         ref="stickerModal"
+         title="เลือกสติกเกอร์"
+         size="lg"
+         hide-footer>
+    <div v-if="stickerLoading" class="text-center py-4">
+        <b-spinner small></b-spinner>
+        <span class="ml-2">กำลังโหลดสติกเกอร์...</span>
+    </div>
+
+    <div v-else>
+        <b-row>
+            <b-col cols="3"
+                   v-for="sticker in stickers"
+                   :key="sticker.packageId + ':' + sticker.stickerId"
+                   class="mb-3 text-center">
+                <div class="gt-sticker-item"
+                     @click="selectSticker(sticker)"
+                     style="cursor: pointer;">
+                    <img
+                            :src="buildStickerThumbnailUrl(sticker)"
+                            class="img-fluid mb-1"
+                            style="max-height: 100px; object-fit: contain;"
+                    >
+                </div>
+            </b-col>
+        </b-row>
+
+        <div v-if="!stickers.length" class="text-muted text-center py-3">
+            ไม่พบสติกเกอร์ที่กำหนดไว้
+        </div>
+    </div>
+</b-modal>
+
+

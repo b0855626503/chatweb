@@ -48,6 +48,22 @@ class LineMessagingClient
         return $this->sendRequest($account, '/v2/bot/message/push', $payload, 'pushText');
     }
 
+    public function pushSticker(LineAccount $account, string $toUserId, string $packageId, string $stickerId, array $extraPayload = []): array
+    {
+        $message = array_merge([
+            'type' => 'sticker',
+            'packageId' => $packageId,
+            'stickerId' => $stickerId,
+        ], $extraPayload);
+
+        $payload = [
+            'to' => $toUserId,
+            'messages' => [$message],
+        ];
+
+        return $this->sendRequest($account, '/v2/bot/message/push', $payload, 'pushSticker');
+    }
+
     /**
      * ส่งรูปแบบ push message (ให้ลูกค้าดูรูป)
      */

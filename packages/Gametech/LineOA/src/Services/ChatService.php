@@ -340,6 +340,78 @@ class ChatService
         });
     }
 
+    public function createOutboundStickerFromAgent(
+        LineConversation $conversation,
+        string $packageId,
+        string $stickerId,
+        int $employeeId,
+        ?array $meta = null
+    ): LineMessage {
+        $now = now();
+
+        return DB::transaction(function () use ($conversation, $packageId, $stickerId, $employeeId, $meta, $now) {
+            // เตรียม meta ให้เป็น array
+            $metaPayload = $meta ?? [];
+            if (! is_array($metaPayload)) {
+                $metaPayload = (array) $metaPayload;
+            }
+
+            // ฝังข้อมูลสติกเกอร์ลง meta เพื่อให้ UI นำไปใช้แสดงผลได้
+            $metaPayload['sticker'] = [
+                'package_id' => $packageId,
+                'sticker_id' => $stickerId,
+            ];
+
+            // ✅ payload ที่เราจะยิงออกไปจริง ๆ (สำหรับเก็บลง DB)
+            $payloadForLine = [
+                'type'      => 'sticker',
+                'packageId' => $packageId,
+                'stickerId' => $stickerId,
+            ];
+
+            /** @var LineMessage $message */
+            $message = LineMessage::create([
+                'line_conversation_id' => $conversation->id,
+                'line_account_id'      => $conversation->line_account_id,
+                'line_contact_id'      => $conversation->line_contact_id,
+                'direction'            => 'outbound',
+                'source'               => 'agent',
+                'type'                 => 'sticker',
+                'line_message_id'      => null,
+                'text'                 => null,     // ไม่มีข้อความตัวอักษร
+                'payload'              => $payloadForLine,     // ถ้าอยากเก็บ raw sticker payload เพิ่ม ค่อยมาเติมทีหลังได้
+                'meta'                 => $metaPayload,
+                'sender_employee_id'   => $employeeId,
+                'sender_bot_key'       => null,
+                'sent_at'              => $now,
+            ]);
+
+            // ถ้าห้องปิดอยู่ หรือ status ยังไม่ถูกกำหนด → เปิดห้องอีกครั้ง (อิง logic เดียวกับข้อความ text)
+            if ($conversation->status === 'closed' || $conversation->status === null) {
+                $conversation->status = 'open';
+                $conversation->closed_by_employee_id   = null;
+                $conversation->closed_by_employee_name = null;
+                $conversation->closed_at               = null;
+            }
+
+            // อัปเดต preview + เวลาข้อความล่าสุด
+            $conversation->last_message_preview = $this->buildPreviewText($message);
+            $conversation->last_message_at      = $now;
+            $conversation->unread_count         = 0;
+            $conversation->save();
+
+            // broadcast ให้ list ซ้ายของทุกคนอัปเดต (อิง pattern เดียวกับฟังก์ชันที่คุณส่งมา)
+            DB::afterCommit(function () use ($conversation) {
+                event(new LineOAChatConversationUpdated(
+                    $conversation->fresh(['contact.member', 'account']) ?? $conversation
+                ));
+            });
+
+            return $message;
+        });
+    }
+
+
     /**
      * ใช้ตอนฝั่งแอดมินส่ง "รูป" ออกไป
      */
