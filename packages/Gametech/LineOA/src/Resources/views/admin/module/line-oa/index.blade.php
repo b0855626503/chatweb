@@ -338,6 +338,21 @@
                                                 </div>
                                             </div>
 
+                                            <!-- ปุ่มปักหมุด -->
+                                            <button
+                                                    type="button"
+                                                    class="btn btn-link btn-sm p-0 ml-2"
+                                                    @click.stop="togglePinConversation(conv)"
+                                                    v-b-tooltip.hover
+                                                    :title="conv.is_pinned ? 'เลิกปักหมุดห้องนี้' : 'ปักหมุดห้องนี้'"
+                                            >
+                                                <i
+                                                        :class="conv.is_pinned
+                ? 'fa fa-star text-warning'
+                : 'far fa-star text-muted'"
+                                                ></i>
+                                            </button>
+
                                             <div class="flex-fill">
                                                 <div class="d-flex justify-content-between">
                                                     <strong>
@@ -452,14 +467,35 @@
                                             <h3 class="mb-0">
                                         <span
                                                 class="text-primary"
-                                                style="cursor: pointer; text-decoration: underline;"
-                                                @click="openMemberModal"
+{{--                                                style="cursor: pointer; text-decoration: underline;"--}}
+{{--                                                @click="openMemberModal"--}}
                                         >
                                             @{{ (selectedConversation.contact &&
                                             (selectedConversation.contact.display_name ||
                                             selectedConversation.contact.member_username)) || 'ไม่ทราบชื่อ' }}
                                         </span>
+                                                <b-button
+                                                        size="sm"
+                                                        class="note-icon-btn btn-icon"
+                                                        :disabled="!selectedConversation"
+                                                        @click="oNOffSound"
+                                                        v-b-tooltip.hover
+                                                        :title="selectedConversation && isConversationMuted(selectedConversation.id)
+                ? 'เปิดเสียงห้องนี้'
+                : 'ปิดเสียงห้องนี้'"
+                                                >
+                                                    <i
+                                                            :class="[
+                'fa',
+                selectedConversation && isConversationMuted(selectedConversation.id)
+                    ? 'fa-volume-mute text-muted'
+                    : 'fa-volume-up'
+            ]"
+                                                    ></i>
+                                                </b-button>
+
                                             </h3>
+
                                         </div>
                                         <div class="text-muted small mt-1" v-if="selectedConversation.line_account">
                                             OA: @{{ selectedConversation.line_account.name }}
@@ -583,6 +619,42 @@
                                                         <div :class="messageBubbleClass(item.message)">
 
 
+                                                            <!-- ✅ ป้ายบอกว่าเป็นข้อความที่ปักหมุด -->
+                                                            <div v-if="item.message.is_pinned"
+                                                                 class="small text-warning mb-1 d-flex align-items-center">
+                                                                <i class="fa fa-thumbtack mr-1"></i>
+                                                                <span>ปักหมุดแล้ว</span>
+                                                            </div>
+
+                                                            <!-- === PREVIEW ข้อความที่ถูกตอบกลับ === -->
+                                                            <div
+                                                                    v-if="item.message.meta && item.message.meta.reply_to"
+                                                                    class="chat-reply-preview mb-1"
+                                                            >
+                                                                <!-- แถวบน: avatar + ชื่อ + label -->
+                                                                <div class="d-flex align-items-start mb-1">
+                                                                    <img
+                                                                            v-if="replyToAvatarUrl(item.message)"
+                                                                            :src="replyToAvatarUrl(item.message)"
+                                                                            class="chat-reply-avatar mr-2"
+                                                                            alt="avatar"
+                                                                    >
+                                                                    <div>
+                                                                        <div class="chat-reply-name">
+                                                                            @{{ replyToDisplayName(item.message) }}
+                                                                        </div>
+                                                                        <div class="small text-muted">
+                                                                            ตอบกลับข้อความก่อนหน้า
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- กล่องเทา: ข้อความที่ถูกตอบกลับ -->
+                                                                <div class="chat-reply-quote">
+                                                                    @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                </div>
+                                                            </div>
+                                                            <!-- === END PREVIEW === -->
 
                                                             <div class="whitespace-pre-wrap">
                                                                 <!-- TEXT -->
@@ -703,6 +775,14 @@
                                                 <template v-else>
                                                     <div class="chat-msg-main">
                                                         <div :class="messageBubbleClass(item.message)">
+
+                                                            <!-- ✅ ป้ายบอกว่าเป็นข้อความที่ปักหมุด -->
+                                                            <div v-if="item.message.is_pinned"
+                                                                 class="small text-warning mb-1 d-flex align-items-center">
+                                                                <i class="fa fa-thumbtack mr-1"></i>
+                                                                <span>ปักหมุดแล้ว</span>
+                                                            </div>
+
 
                                                             <!-- === PREVIEW ข้อความที่ถูกตอบกลับ === -->
                                                             <div
@@ -1429,6 +1509,19 @@
                     assigneeSearch: '',
                     selectedAssigneeId: null,
                     savingAssignee: false,
+
+                    // เปิด/ปิดเสียงทั้งระบบหน้าเว็บนี้ (เผื่ออยากใช้ทีหลัง)
+                    soundEnabled: true,
+
+                    // เก็บรายการห้องที่ mute สำหรับ admin คนนี้ (ตาม id)
+                    mutedConversationIds: [],
+
+                    // key สำหรับเก็บใน localStorage (ผูกกับรหัสพนักงาน ถ้ามี)
+                    muteStorageKey: 'lineoa_mute_' + (
+                        (window.AdminUser && window.AdminUser.code)
+                            ? window.AdminUser.code
+                            : 'guest'
+                    ),
                 };
             },
             created() {
@@ -1436,7 +1529,7 @@
                 this.startAutoRefresh();
                 this.subscribeRealtime();
                 this.fetchBanks();
-
+                this.loadMutedConversations();
             },
             beforeDestroy() {
                 this.stopAutoRefresh();
@@ -1662,6 +1755,148 @@
                 // }, 400),
             },
             methods: {
+                loadMutedConversations() {
+                    try {
+                        const raw = localStorage.getItem(this.muteStorageKey);
+                        if (!raw) {
+                            this.mutedConversationIds = [];
+                            return;
+                        }
+
+                        const arr = JSON.parse(raw);
+                        if (Array.isArray(arr)) {
+                            this.mutedConversationIds = arr
+                                .map(id => Number(id))
+                                .filter(id => !isNaN(id));
+                        } else {
+                            this.mutedConversationIds = [];
+                        }
+                    } catch (e) {
+                        console.error('[LineOA] loadMutedConversations error', e);
+                        this.mutedConversationIds = [];
+                    }
+                },
+
+                saveMutedConversations() {
+                    try {
+                        const arr = (this.mutedConversationIds || [])
+                            .map(id => Number(id))
+                            .filter(id => !isNaN(id));
+
+                        localStorage.setItem(this.muteStorageKey, JSON.stringify(arr));
+                    } catch (e) {
+                        console.error('[LineOA] saveMutedConversations error', e);
+                    }
+                },
+
+                isConversationMuted(convId) {
+                    if (!convId) return false;
+                    const id = Number(convId);
+                    return this.mutedConversationIds.includes(id);
+                },
+
+                toggleMuteConversation(convId) {
+                    if (!convId) return;
+
+                    const id = Number(convId);
+                    const idx = this.mutedConversationIds.indexOf(id);
+
+                    if (idx === -1) {
+                        // ยังไม่ถูก mute → เพิ่มเข้า list
+                        this.mutedConversationIds.push(id);
+                    } else {
+                        // เคย mute แล้ว → เอาออก (unmute)
+                        this.mutedConversationIds.splice(idx, 1);
+                    }
+
+                    this.saveMutedConversations();
+                },
+
+                // ใช้กับปุ่มใน UI (อิง selectedConversation)
+                oNOffSound() {
+                    if (!this.selectedConversation) return;
+                    this.toggleMuteConversation(this.selectedConversation.id);
+                },
+
+                // helper สำหรับใช้ guard ก่อนเล่นเสียง
+                shouldPlaySoundForMessage(msg) {
+                    if (!msg) return false;
+
+                    // เล่นเฉพาะข้อความจากลูกค้า
+                    if (msg.direction !== 'inbound' || msg.source !== 'user') {
+                        return false;
+                    }
+
+                    return true;
+                },
+
+                // เล่นเสียง (เช็คทุกเงื่อนไขก่อน)
+                playNewMessageSound(msg) {
+                    console.log('[SOUND] เรียก playNewMessageSound() → msg:', msg);
+
+                    // 1) ต้องมี message
+                    if (!msg) {
+                        console.log('[SOUND] ❌ ไม่มี msg → ไม่เล่นเสียง');
+                        return;
+                    }
+
+                    // 2) ต้องเป็นข้อความ inbound จากลูกค้าเท่านั้น
+                    if (msg.direction !== 'inbound' || msg.source !== 'user') {
+                        console.log('[SOUND] ❌ ไม่ใช่ข้อความลูกค้า → direction:', msg.direction, 'source:', msg.source);
+                        return;
+                    }
+                    console.log('[SOUND] ✔ เป็นข้อความจากลูกค้า OK');
+
+                    // หา conversation ID
+                    const convId =
+                        msg.line_conversation_id ||
+                        msg.conversation_id ||
+                        (msg.conversation && msg.conversation.id) ||
+                        null;
+
+                    console.log('[SOUND] convId =', convId);
+
+                    if (!convId) {
+                        console.log('[SOUND] ❌ หา conversation id ไม่ได้');
+                        return;
+                    }
+
+                    // 3) ตรวจว่าเปิดเสียงระบบอยู่ไหม
+                    console.log('[SOUND] soundEnabled =', this.soundEnabled);
+                    if (!this.soundEnabled) {
+                        console.log('[SOUND] ❌ ระบบปิดเสียงทั้งหมด → ไม่เล่น');
+                        return;
+                    }
+
+                    // 4) ห้องนี้โดน mute หรือเปล่า
+                    const isMuted = this.isConversationMuted && this.isConversationMuted(convId);
+                    console.log('[SOUND] ห้องนี้ mute ไหม? →', isMuted);
+
+                    if (isMuted) {
+                        console.log('[SOUND] ❌ ห้องนี้โดน mute → ไม่เล่น');
+                        return;
+                    }
+
+                    // 5) เล่นเสียงจริง
+                    const audio = document.getElementById('line-noti-audio');
+
+                    if (!audio) {
+                        console.log('[SOUND] ❌ หา element #line-noti-audio ไม่เจอ → ไม่เล่น');
+                        return;
+                    }
+
+                    try {
+                        audio.muted = false;
+                        audio.currentTime = 0;
+                        audio.play().then(() => {
+                            console.log('[SOUND] ✔ เล่นเสียงสำเร็จ');
+                        }).catch(err => {
+                            console.log('[SOUND] ❌ audio.play() error:', err);
+                        });
+                    } catch (e) {
+                        console.log('[SOUND] ❌ exception ตอนเล่นเสียง:', e);
+                    }
+                },
                 pinMessage(msg) {
                     console.log('pinMessage', msg.id);
                 },
@@ -2913,21 +3148,6 @@
 
                     return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
                 },
-                playNewMessageSound() {
-                    const audio = document.getElementById('line-noti-audio');
-                    if (!audio) return;
-                    audio.muted = false;
-                    audio.currentTime = 0;
-
-                    const playSound = () => {
-                        audio.currentTime = 0;
-                        audio.play().catch(() => {
-                        });
-                    };
-
-                    playSound();
-
-                },
                 // ====== Realtime จาก Echo ======
                 subscribeRealtime() {
                     if (!window.Echo || !window.LineOAEventsChannel) return;
@@ -2942,7 +3162,7 @@
                             console.log('[LineOA] รับ event จาก websocket:', e);
                             vm.handleRealtimeIncoming(e);
                             if (e.message && e.message.direction === 'inbound') {
-                                vm.playNewMessageSound();
+                                vm.playNewMessageSound(e.message);
                             }
                         })
                         .listen('.LineOAChatConversationUpdated', (e) => {
@@ -4119,7 +4339,59 @@
 
                     return c && c.picture_url ? c.picture_url : null;
                 },
+                async togglePinConversation(conv) {
+                    if (!conv || !conv.id) return;
 
+                    const convId = conv.id;
+                    const pinned = !!conv.is_pinned;
+
+                    try {
+                        const url = this.apiUrl(
+                            'conversations/' + convId + (pinned ? '/unpin' : '/pin')
+                        );
+
+                        const res = await axios.post(url);
+                        const body = res.data || {};
+                        const updated = body.data || body.conversation || null;
+
+                        if (!updated) return;
+
+                        this.updateConversationLocal(updated);
+
+                        // ถ้าคุณอยากให้ห้องที่ปัก ขึ้นบนสุดทันที:
+                        this.sortConversationsByPin();
+                    } catch (e) {
+                        console.error('[LineOA] togglePinConversation error', e);
+                        this.showAlert && this.showAlert({
+                            success: false,
+                            message: 'เปลี่ยนสถานะปักหมุดห้องไม่สำเร็จ',
+                        });
+                    }
+                },
+
+                updateConversationLocal(conv) {
+                    const idx = this.conversations.findIndex(c => c.id === conv.id);
+                    if (idx !== -1) {
+                        this.$set(this.conversations, idx, Object.assign({}, this.conversations[idx], conv));
+                    }
+                    // ถ้า selectedConversation เป็นห้องเดียวกัน → sync flag ให้ด้วย
+                    if (this.selectedConversation && this.selectedConversation.id === conv.id) {
+                        this.selectedConversation = Object.assign({}, this.selectedConversation, conv);
+                    }
+                },
+
+                sortConversationsByPin() {
+                    this.conversations.sort((a, b) => {
+                        // pinned ก่อน
+                        if (!!a.is_pinned !== !!b.is_pinned) {
+                            return a.is_pinned ? -1 : 1;
+                        }
+                        // จากนั้น sort ตามเวลาเดิม
+                        const at = a.last_message_at || '';
+                        const bt = b.last_message_at || '';
+                        return (at < bt) ? 1 : (at > bt ? -1 : 0);
+                    });
+                },
 
             }
         });

@@ -29,6 +29,7 @@ class LineConversation extends Model implements LineConversationContract
         'closed_at',
         'outgoing_language',
         'incoming_language',
+        'is_pinned',
     ];
 
     protected $casts = [
@@ -36,6 +37,7 @@ class LineConversation extends Model implements LineConversationContract
         'assigned_at' => 'datetime',
         'locked_at' => 'datetime',
         'closed_at' => 'datetime',
+        'is_pinned' => 'boolean',
     ];
 
     protected $appends = [

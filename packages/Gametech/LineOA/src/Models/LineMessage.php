@@ -24,12 +24,14 @@ class LineMessage extends Model implements LineMessageContract
         'sender_employee_id',
         'sender_bot_key',
         'sent_at',
+        'is_pinned',
     ];
 
     protected $casts = [
         'payload' => 'array',
         'meta' => 'array',
         'sent_at' => 'datetime',
+        'is_pinned' => 'boolean',
     ];
 
     public function account(): BelongsTo

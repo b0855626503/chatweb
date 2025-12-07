@@ -43,6 +43,7 @@ class ChatService
 
         $markAsReadToken = Arr::get($event, 'message.markAsReadToken');
         $quoteToken      = Arr::get($event, 'message.quoteToken');
+        $quotedMessageId = Arr::get($event, 'message.quotedMessageId'); // << ตัวนี้สำคัญ
 
         // timestamp ms → sec
         $sentAtCarbon = $sentAt
@@ -59,7 +60,8 @@ class ChatService
             $sentAtCarbon,
             $log,
             $markAsReadToken,
-            $quoteToken
+            $quoteToken,
+            $quotedMessageId
         ) {
             // 1) contact
             $contact = $this->getOrCreateContact($account, $userId);
@@ -85,6 +87,10 @@ class ChatService
 
             if ($quoteToken) {
                 $meta['quote_token'] = $quoteToken;
+            }
+
+            if ($quotedMessageId) {
+                $meta['quoted_message_id'] = $quotedMessageId;
             }
 
             // 3) สร้าง message (inbound)
@@ -115,17 +121,61 @@ class ChatService
                 $this->handleInboundTextLanguageAndTranslation($conversation, $contact, $message);
             }
 
-            // 3.3 ถ้ามี quoteToken (ลูกค้ากด "ตอบกลับ" ข้อความ OA)
-            //      → map ไปยังข้อความต้นทางในห้องนี้ แล้วผูก meta.reply_to
-            if ($quoteToken) {
+            // 3.3 ถ้าลูกค้ากด reply ข้อความเก่า (มี quotedMessageId)
+            //      → map ไปยัง LineMessage ต้นทางด้วย line_message_id แล้วผูก meta.reply_to
+            if ($quotedMessageId) {
                 try {
                     /** @var LineMessage|null $quoted */
                     $quoted = LineMessage::query()
                         ->where('line_conversation_id', $conversation->id)
-                        ->where('meta->quote_token', $quoteToken)
+                        ->where('line_message_id', $quotedMessageId)
                         ->first();
 
                     if ($quoted) {
+                        // เตรียมข้อความ preview สำหรับ quote
+                        $displayText = '';
+                        $quotedMeta  = $quoted->meta;
+
+                        if (! is_array($quotedMeta)) {
+                            $quotedMeta = $quotedMeta ? (array) $quotedMeta : [];
+                        }
+
+                        if ($quoted->type === 'text') {
+                            // ถ้าเป็น outbound ที่เคยแปล → ใช้ translated_text เป็นหลัก
+                            $outboundTrans = $quotedMeta['translation_outbound'] ?? null;
+
+                            if (is_array($outboundTrans) && ! empty($outboundTrans['translated_text'])) {
+                                $displayText = (string) $outboundTrans['translated_text'];
+                            } else {
+                                $displayText = (string) $quoted->text;
+                            }
+                        } else {
+                            // ถ้าไม่ใช่ text → ขึ้น label ตามประเภท
+                            switch ($quoted->type) {
+                                case 'image':
+                                    $displayText = '[รูปภาพ]';
+                                    break;
+                                case 'sticker':
+                                    $displayText = '[สติ๊กเกอร์]';
+                                    break;
+                                case 'video':
+                                    $displayText = '[วิดีโอ]';
+                                    break;
+                                case 'audio':
+                                    $displayText = '[เสียง]';
+                                    break;
+                                case 'location':
+                                    $displayText = '[ตำแหน่งที่ตั้ง]';
+                                    break;
+                                default:
+                                    $displayText = '['.($quoted->type ?: 'ข้อความ').']';
+                                    break;
+                            }
+                        }
+
+                        // ตัดความยาวไม่เกิน ~80 char
+                        $displayText = mb_strimwidth($displayText, 0, 80, '...');
+
                         $metaCurrent = $message->meta;
                         if (! is_array($metaCurrent)) {
                             $metaCurrent = $metaCurrent ? (array) $metaCurrent : [];
@@ -133,7 +183,7 @@ class ChatService
 
                         $metaCurrent['reply_to'] = [
                             'id'        => $quoted->id,
-                            'text'      => mb_strimwidth((string) $quoted->text, 0, 80, '...'),
+                            'text'      => $displayText,
                             'direction' => $quoted->direction,
                             'source'    => $quoted->source,
                             'type'      => $quoted->type,
@@ -144,10 +194,10 @@ class ChatService
                         $message->save();
                     }
                 } catch (\Throwable $e) {
-                    \Log::channel('line_oa')->warning('[LineChat] attach reply_to by quoteToken failed', [
-                        'message_id'  => $message->id,
-                        'quote_token' => $quoteToken,
-                        'error'       => $e->getMessage(),
+                    \Log::channel('line_oa')->warning('[LineChat] attach reply_to by quotedMessageId failed', [
+                        'message_id'       => $message->id,
+                        'quoted_message_id'=> $quotedMessageId,
+                        'error'            => $e->getMessage(),
                     ]);
                 }
             }

@@ -47,6 +47,14 @@ Route::domain(
                 Route::post('conversations/{conversation}/reply-template', [ChatController::class, 'replyTemplateText'])
                     ->name('conversations.reply-template');
 
+                Route::post('conversations/{conversation}/pin', [ChatController::class, 'pinConversation']);
+
+                Route::post('conversations/{conversation}/unpin', [ChatController::class, 'unpinConversation']);
+
+                Route::post('messages/{message}/pin', [ChatController::class, 'pinMessage']);
+
+                Route::post('messages/{message}/unpin', [ChatController::class, 'unpinMessage']);
+
                 Route::get('members/find', [ChatController::class, 'findMember'])->name('members.find');
 
                 Route::get('register/load-bank', [ChatController::class, 'loadBank'])->name('register.load-bank');
