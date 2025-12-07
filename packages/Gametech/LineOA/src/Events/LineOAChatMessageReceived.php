@@ -48,6 +48,10 @@ class LineOAChatMessageReceived implements ShouldBroadcastNow
             $convArr['is_registering'] = $conversation->is_registering;
         }
 
+        if (! isset($convArr['is_pinned'])) {
+            $convArr['is_pinned'] = (bool)$conversation->is_pinned;
+        }
+
         // เติมฟิลด์เสริมแบบเดียวกับ API (index/show) เข้าไปใน contact
         if (isset($convArr['contact']) && is_array($convArr['contact'])) {
             $convArr['contact']['member_name']      = $conversation->contact?->member?->name;

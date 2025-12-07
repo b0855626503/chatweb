@@ -585,6 +585,31 @@
 
                                     <div v-else>
 
+                                        <!-- ========== แถบด้านบน: ข้อความที่ปักหมุด ========== -->
+                                        <div v-if="pinnedMessages.length"
+                                             class="chat-pinned-bar mb-2 pb-2 border-bottom">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="fa fa-thumbtack text-warning mr-1"></i>
+                                                <strong>ข้อความที่ปักหมุด</strong>
+                                            </div>
+
+                                            <div class="chat-pinned-list">
+                                                <div v-for="pm in pinnedMessages"
+                                                     :key="'pinned-' + pm.id"
+                                                     class="chat-pinned-item small text-truncate d-flex align-items-center mb-1"
+                                                     @click="scrollToMessage(pm.id)">
+                                                    <i class="fa fa-comment mr-1 text-muted"></i>
+                                                    <span class="text-truncate">
+                            @{{ buildPinnedPreviewText(pm) }}
+                        </span>
+                                                    <span class="text-muted ml-2">
+                            @{{ formatChatTime(pm.sent_at) }}
+                        </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- ========== จบแถบข้อความที่ปักหมุด ========== -->
+
                                         <div v-for="item in messagesWithSeparators"
                                              :key="item.kind === 'date' ? ('d-' + item.dateKey) : ('m-' + item.message.id)"
                                              class="mb-2">
@@ -1738,6 +1763,16 @@
                         );
                     });
                 },
+                pinnedMessages() {
+                    // สมมติ this.messages คือ array ของ message object ตรง ๆ
+                    // ถ้าในระบบคุณเป็นโครงสร้างอื่น (เช่น {message: {...}})
+                    // ให้ปรับตามจริง
+                    if (!Array.isArray(this.messages)) {
+                        return [];
+                    }
+
+                    return this.messages.filter(m => m && m.is_pinned);
+                },
             },
             watch: {
                 'filters.status': function () {
@@ -1896,12 +1931,6 @@
                     } catch (e) {
                         console.log('[SOUND] ❌ exception ตอนเล่นเสียง:', e);
                     }
-                },
-                pinMessage(msg) {
-                    console.log('pinMessage', msg.id);
-                },
-                unpinMessage(msg) {
-                    console.log('unpinMessage', msg.id);
                 },
                 dateKey(dateString) {
                     if (!dateString) return null;
@@ -4392,7 +4421,119 @@
                         return (at < bt) ? 1 : (at > bt ? -1 : 0);
                     });
                 },
+                async pinMessage(msg) {
+                    if (!msg || !msg.id) return;
 
+                    try {
+                        const res = await axios.post(this.apiUrl('messages/' + msg.id + '/pin'));
+                        const body = res.data || {};
+                        const updated = body.data || body.message || null;
+
+                        if (!updated) return;
+
+                        this.updateMessageLocal(updated);
+                    } catch (e) {
+                        console.error('[LineOA] pinMessage error', e);
+                        this.showAlert && this.showAlert({
+                            success: false,
+                            message: 'ปักหมุดข้อความไม่สำเร็จ',
+                        });
+                    }
+                },
+
+                async unpinMessage(msg) {
+                    if (!msg || !msg.id) return;
+
+                    try {
+                        const res = await axios.post(this.apiUrl('messages/' + msg.id + '/unpin'));
+                        const body = res.data || {};
+                        const updated = body.data || body.message || null;
+
+                        if (!updated) return;
+
+                        this.updateMessageLocal(updated);
+                    } catch (e) {
+                        console.error('[LineOA] unpinMessage error', e);
+                        this.showAlert && this.showAlert({
+                            success: false,
+                            message: 'เลิกปักหมุดข้อความไม่สำเร็จ',
+                        });
+                    }
+                },
+
+                updateMessageLocal(updated) {
+                    const id = updated.id;
+
+                    // แล้วแต่ structure ของ this.messages:
+                    // ถ้าเป็น array ของ message ตรง ๆ
+                    let idx = this.messages.findIndex(m => m.id === id);
+                    if (idx !== -1) {
+                        const merged = Object.assign({}, this.messages[idx], updated);
+                        this.$set(this.messages, idx, merged);
+                        return;
+                    }
+
+                    // ถ้าเป็น array ของ { message: {...} }
+                    idx = this.messages.findIndex(it => it.message && it.message.id === id);
+                    if (idx !== -1) {
+                        const row = this.messages[idx];
+                        const merged = Object.assign({}, row.message, updated);
+                        this.$set(this.messages[idx], 'message', merged);
+                    }
+                },
+                buildPinnedPreviewText(msg) {
+                    if (!msg) return '';
+
+                    // ถ้าเป็น text ใช้ text/translation ตามที่มี
+                    if (msg.type === 'text') {
+                        try {
+                            const disp = this.getMessageDisplay
+                                ? this.getMessageDisplay(msg)
+                                : null;
+
+                            const base = (disp && (disp.translated || disp.original)) || msg.text || '';
+                            if (!base) return '[ข้อความ]';
+
+                            return base.length > 60
+                                ? base.slice(0, 60) + '…'
+                                : base;
+                        } catch (e) {
+                            // กัน error เผื่อ getMessageDisplay ไม่มี
+                            const base = msg.text || '';
+                            return base.length > 60 ? base.slice(0, 60) + '…' : base;
+                        }
+                    }
+
+                    // media อื่น ๆ
+                    if (msg.type === 'image') return '[รูปภาพ]';
+                    if (msg.type === 'sticker') return '[สติกเกอร์]';
+                    if (msg.type === 'video') return '[วิดีโอ]';
+                    if (msg.type === 'audio') return '[เสียง]';
+                    if (msg.type === 'location') return '[ตำแหน่งที่ตั้ง]';
+
+                    return '[' + (msg.type || 'ข้อความ') + ']';
+                },
+
+                scrollToMessage(messageId) {
+                    if (!messageId) return;
+
+                    this.$nextTick(() => {
+                        const container = this.$refs.messageContainer;
+                        if (!container) return;
+
+                        const selector = '[data-msg-id="' + messageId + '"]';
+                        const el = container.querySelector(selector);
+
+                        if (!el) return;
+
+                        // เลื่อนให้อยู่กลาง ๆ หน้าจอ
+                        const containerRect = container.getBoundingClientRect();
+                        const elRect = el.getBoundingClientRect();
+                        const offset = elRect.top - containerRect.top;
+
+                        container.scrollTop = container.scrollTop + offset - container.clientHeight / 3;
+                    });
+                },
             }
         });
 

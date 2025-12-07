@@ -138,6 +138,7 @@ class ChatController extends AppBaseController
                     'closed_by_employee_id' => $conv->closed_by_employee_id,
                     'closed_by_employee_name' => $conv->closed_by_employee_name,
                     'closed_at' => optional($conv->closed_at)->toIso8601String(),
+                    'is_pinned'          => (bool) $conv->is_pinned,
 
                     'line_account' => [
                         'id' => $conv->account?->id,
@@ -667,6 +668,7 @@ class ChatController extends AppBaseController
                 'sender_bot_key'     => $message->sender_bot_key,
                 'meta'               => $message->meta,      // มี reply_to / quote_token / sent_messages ให้หลังบ้านใช้
                 'payload'            => $message->payload,
+                'is_pinned'          => (bool) $message->is_pinned,
             ],
         ]);
     }
@@ -790,6 +792,7 @@ class ChatController extends AppBaseController
                 'sender_bot_key'     => $message->sender_bot_key,
                 'meta'               => $message->meta,
                 'payload'            => $message->payload,
+                'is_pinned'          => (bool) $message->is_pinned,
             ],
         ]);
     }

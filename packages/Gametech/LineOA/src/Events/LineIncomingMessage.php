@@ -60,6 +60,8 @@ class LineIncomingMessage implements ShouldBroadcastNow
                 'last_message'     => $this->conversation->last_message_preview,
                 'last_message_at'  => optional($this->conversation->last_message_at)->toDateTimeString(),
                 'unread_count'     => $this->conversation->unread_count,
+                'unread_count'     => $this->conversation->unread_count,
+                'is_pinned'          => (bool) $this->conversation->is_pinned,
                 'contact'          => $this->conversation->contact ? [
                     'id'               => $this->conversation->contact->id,
                     'display_name'     => $this->conversation->contact->display_name,
@@ -80,6 +82,7 @@ class LineIncomingMessage implements ShouldBroadcastNow
                 'type'               => $this->message->type,
                 'text'               => $this->message->text,
                 'sent_at'            => optional($this->message->sent_at)->toDateTimeString(),
+                'is_pinned'          => (bool) $this->message->is_pinned,
             ],
         ];
     }

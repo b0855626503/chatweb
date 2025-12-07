@@ -56,6 +56,8 @@ class LineOAChatConversationUpdated implements ShouldBroadcastNow
             'closed_by_employee_name' => $conversation->closed_by_employee_name,
             'closed_at'               => optional($conversation->closed_at)->toIso8601String(),
 
+            'is_pinned'               => (bool)$conversation->is_pinned,
+
             // OA – ต้องมี line_account.name เพื่อขึ้น [GT] / [B2] ที่ list ซ้าย
             'line_account' => [
                 'id'   => $conversation->account?->id,
