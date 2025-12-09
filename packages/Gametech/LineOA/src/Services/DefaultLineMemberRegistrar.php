@@ -29,104 +29,160 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
      */
     public function registerFromLineData(array $data): MemberRegistrationResult
     {
-        $phone = Arr::get($data, 'phone');
-        $name = Arr::get($data, 'name');
-        $surname = Arr::get($data, 'surname');
-        $bankCode = Arr::get($data, 'bank_code');
+        $mode      = Arr::get($data, 'register_mode', 'phone'); // 'phone' | 'username'
+        $phone     = Arr::get($data, 'phone');
+        $rawUser   = Arr::get($data, 'username');
+        $username  = $rawUser !== null ? strtolower(trim((string) $rawUser)) : null;
+
+        $name      = Arr::get($data, 'name');
+        $surname   = Arr::get($data, 'surname');
+        $bankCode  = Arr::get($data, 'bank_code');
         $accountNo = Arr::get($data, 'account_no');
 
-        if (! $phone || ! $name || ! $surname || ! $bankCode || ! $accountNo) {
-            return MemberRegistrationResult::failure('MISSING_REQUIRED_FIELDS');
+        // ==== 1) ตรวจ required ตามโหมด ==== //
+        if ($mode === 'phone') {
+            if (! $phone || ! $name || ! $surname || ! $bankCode || ! $accountNo) {
+                return MemberRegistrationResult::failure('MISSING_REQUIRED_FIELDS');
+            }
+        } elseif ($mode === 'username') {
+            if (! $username || ! $name || ! $surname || ! $bankCode || ! $accountNo) {
+                return MemberRegistrationResult::failure('MISSING_REQUIRED_FIELDS');
+            }
+
+            // กัน username รูปแบบผิด (เผื่อ layer บนหลุดมา)
+            if (! preg_match('/^[a-z0-9]+$/', $username)) {
+                return MemberRegistrationResult::failure('INVALID_USERNAME_FORMAT');
+            }
+        } else {
+            // กันเคส mode แปลก
+            return MemberRegistrationResult::failure('INVALID_REGISTER_MODE');
         }
 
-        // user_name = phone, password fixed = 123456
-        $username = $phone;
-        $plainPassword = $phone;
-
         try {
-            return DB::transaction(function () use ($phone, $name, $surname, $bankCode, $accountNo, $username, $plainPassword) {
+            return DB::transaction(function () use ($mode, $phone, $username, $name, $surname, $bankCode, $accountNo) {
 
-                // กัน race condition: ตรวจซ้ำอีกที
-                if ($this->isPhoneExistInMembersOrBankAccount($phone)) {
-                    return MemberRegistrationResult::failure('PHONE_ALREADY_EXISTS');
+                // ==== 2) กันซ้ำตามโหมด ==== //
+
+                // phone-mode: เบอร์ต้องไม่ซ้ำ และไม่ชนบัญชี
+                if ($mode === 'phone') {
+                    if ($this->isPhoneExistInMembersOrBankAccount($phone)) {
+                        return MemberRegistrationResult::failure('PHONE_ALREADY_EXISTS');
+                    }
                 }
 
+                // username-mode: username ต้องไม่ซ้ำ
+                if ($mode === 'username') {
+                    if ($this->isUsernameExistInMembers($username)) {
+                        return MemberRegistrationResult::failure('USERNAME_ALREADY_EXISTS');
+                    }
+
+                    // ถ้ามีการส่ง phone มาด้วย และอยากกันซ้ำเบอร์ด้วย ก็เช็คได้
+                    if ($phone && $this->isPhoneExistInMembersOrBankAccount($phone)) {
+                        return MemberRegistrationResult::failure('PHONE_ALREADY_EXISTS');
+                    }
+                }
+
+                // ไม่ว่าโหมดไหน เลขบัญชีต้องไม่ซ้ำ
                 if ($this->isBankAccountExistInMembersOrBankAccount($bankCode, $accountNo)) {
                     return MemberRegistrationResult::failure('BANK_ACCOUNT_ALREADY_EXISTS');
                 }
-                $config = core()->getConfigData();
-                $today = now()->toDateString();
-                $datenow = now()->toDateTimeString();
-                $ip = request()?->ip() ?? '0.0.0.0';
 
-                // logic acc_check / acc_bay ตาม register() เดิม
+                $config  = core()->getConfigData();
+                $today   = now()->toDateString();
+                $datenow = now()->toDateTimeString();
+                $ip      = request()?->ip() ?? '0.0.0.0';
+
+                // ==== 3) logic acc_check / acc_bay ตามเดิม ==== //
                 if ((string) $bankCode === '4') {
                     $acc_check = substr($accountNo, -4);
                 } else {
                     $acc_check = substr($accountNo, -6);
                 }
-                $acc_bay = substr($accountNo, -7);
+                $acc_bay   = substr($accountNo, -7);
                 $acc_kbank = '';
 
                 $fullname = trim($name.' '.$surname);
 
-                // ค่า default หลาย ๆ ตัวอิงจาก register() เดิม แต่ simple ลง
+                // ==== 4) ตัดสินใจ username / password / wallet / tel ตามโหมด ==== //
+
+                if ($mode === 'phone') {
+                    // ของเดิม: ใช้เบอร์เป็นทุกอย่าง
+                    $finalUsername   = $phone;
+                    $plainPassword   = $phone;
+                    $walletId        = $phone;
+                    $tel             = $phone;
+                } else {
+                    // username-mode
+                    $finalUsername   = $username;
+                    // policy ง่ายสุด: ถ้ามี phone → ใช้ phone เป็น password, ถ้าไม่มี → ใช้ username
+                    $plainPassword   = $phone ?: $username;
+                    // walletid ส่วนใหญ่ระบบเดิมใช้เบอร์ → ถ้ามี phone ก็ใช้ phone, ถ้าไม่มีค่อย fallback เป็น username
+                    $walletId        = $phone ?: $username;
+                    $tel             = $phone ?: '';
+                }
+
+                // ==== 5) สร้าง Member ==== //
+
                 $member = Member::create([
-                    'user_name' => $username,
-                    'user_pass' => $plainPassword,
-                    'password' => Hash::make($plainPassword),
+                    'user_name'  => $finalUsername,
+                    'user_pass'  => $plainPassword,
+                    'password'   => Hash::make($plainPassword),
 
-                    'wallet_id' => $phone,
-                    'tel' => $phone,
+                    'wallet_id'  => $walletId,
+                    'tel'        => $tel,
 
-                    'firstname' => $name,
-                    'lastname' => $surname,
-                    'name' => $fullname,
+                    'firstname'  => $name,
+                    'lastname'   => $surname,
+                    'name'       => $fullname,
 
-                    'bank_code' => $bankCode,
-                    'acc_no' => $accountNo,
-                    'acc_check' => $acc_check,
-                    'acc_bay' => $acc_bay,
-                    'acc_kbank' => $acc_kbank,
+                    'bank_code'  => $bankCode,
+                    'acc_no'     => $accountNo,
+                    'acc_check'  => $acc_check,
+                    'acc_bay'    => $acc_bay,
+                    'acc_kbank'  => $acc_kbank,
 
-                    // ทำให้ถือว่ายืนยันแล้ว (ไม่ใช้ OTP ใน flow LINE)
-                    'confirm' => 'Y',
+                    // ถือว่ายืนยันแล้ว (LINE ไม่ใช้ OTP)
+                    'confirm'       => 'Y',
 
-                    // default ตามที่น่าจะปลอดภัย
-                    'freecredit' => $config->freecredit_open,
-                    'check_status' => 'N',
-                    'promotion' => 'N',
+                    'freecredit'    => $config->freecredit_open,
+                    'check_status'  => 'N',
+                    'promotion'     => 'N',
 
-                    'user_create' => $fullname,
-                    'user_update' => $fullname,
+                    'user_create'   => $fullname,
+                    'user_update'   => $fullname,
 
-                    'lastlogin' => $datenow,
-                    'date_regis' => $today,
-                    'birth_day' => $today,
+                    'lastlogin'     => $datenow,
+                    'date_regis'    => $today,
+                    'birth_day'     => $today,
 
                     'session_limit' => null,
                     'payment_limit' => null,
                     'payment_delay' => null,
-                    'remark' => '',
+                    'remark'        => '',
 
-                    'gender' => 'M',
-                    //                    'team_id' => null,
-                    //                    'campaign_id' => null,
+                    'gender'        => 'M',
+                    // 'team_id'    => null,
+                    // 'campaign_id'=> null,
 
-                    'otp' => '',
-                    'ip' => $ip,
+                    'otp'           => '',
+                    'ip'            => $ip,
                 ]);
 
-                $memberId = $member->code ?? $member->id; // แล้วแต่ model ของโบ๊ทใช้ pk อะไร
+                $memberId = $member->code ?? $member->id; // แล้วแต่ model ใช้ pk อะไร
 
+                // ==== 6) seamless / multigame ตามเดิม ==== //
 
                 if ($config->seamless === 'Y') {
                     if ($memberId) {
-                        $this->gameUserRepo->addGameUser(1, $memberId, ['username' => $username, 'password' => $plainPassword, 'name' => $fullname, 'user_create' => $fullname]);
+                        $this->gameUserRepo->addGameUser(1, $memberId, [
+                            'username'    => $finalUsername,
+                            'password'    => $plainPassword,
+                            'name'        => $fullname,
+                            'user_create' => $fullname,
+                        ]);
                     }
                 } else {
                     if ($config->multigame_open === 'N') {
-
                         $game = core()->getGame();
 
                         if ($game && $memberId) {
@@ -139,7 +195,7 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
 
                 return MemberRegistrationResult::success(
                     $memberId,
-                    $username,
+                    $finalUsername,
                     $plainPassword,
                     $loginUrl,
                     null
@@ -153,6 +209,21 @@ class DefaultLineMemberRegistrar implements LineMemberRegistrar
         }
     }
 
+    /**
+     * เช็คว่า username นี้ถูกใช้แล้วใน members หรือยัง
+     */
+    protected function isUsernameExistInMembers(string $username): bool
+    {
+        $username = strtolower(trim($username));
+
+        if ($username === '') {
+            return true;
+        }
+
+        return Member::where(function ($q) use ($username) {
+            $q->where('user_name', $username);
+        })->exists();
+    }
     /**
      * ใช้ rules เดียวกับ controller:
      * - tel unique ใน members
