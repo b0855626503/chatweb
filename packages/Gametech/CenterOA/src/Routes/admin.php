@@ -1,6 +1,7 @@
 <?php
 
 use Gametech\CenterOA\Http\Controllers\Admin\ImgController;
+use Gametech\CenterOA\Http\Controllers\Admin\MemberGameLogController;
 use Illuminate\Support\Facades\Route;
 
 // admin.xxx.com
@@ -21,6 +22,10 @@ Route::domain(
         Route::post('pic/delete/{id}', [ImgController::class, 'delete'])->defaults('_config', [
             'view' => 'wallet::customer.game.redirect',
         ])->name('admin.delete.pic');
+
+        Route::get('gamelog/log', [MemberGameLogController::class, 'gamelog'])->defaults('_config', [
+            'view' => 'wallet::customer.game.redirect',
+        ])->name('admin.gamelog.log');
     });
 
 

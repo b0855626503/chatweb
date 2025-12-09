@@ -107,7 +107,7 @@
             ref="refillModal"
             id="refillModal"
             centered
-            size="md"
+            size="lg"
             title="เติมเงิน"
             :no-close-on-backdrop="true"
             :hide-footer="true"
@@ -116,134 +116,230 @@
             @hidden="onRefillModalHidden"
     >
         <b-container class="bv-example-row">
-            <b-form
-                    v-if="showRefillUI"
-                    ref="refillFormRef"
-                    id="refillForm"
-                    @submit.prevent="submitRefillForm"
-            >
-                <input
-                        type="hidden"
-                        id="id"
-                        :value="refillForm.id"
-                        required
-                >
+            <b-form-row>
 
-                <b-form-row>
-                    <b-col>
-                        <b-form-group
-                                id="input-group-refill-user"
-                                label="User ID / Game ID:"
-                                label-for="refill_user_name"
-                                description="ระบุ User / Game ID ที่ต้องการเติมเงินรายการนี้"
+                {{-- ฝั่งซ้าย: ฟอร์มเติมเงิน --}}
+                <b-col cols="12" md="5" class="refill-form-col">
+                    <b-form
+                            v-if="showRefillUI"
+                            ref="refillFormRef"
+                            id="refillForm"
+                            @submit.prevent="submitRefillForm"
+                    >
+                        <input
+                                type="hidden"
+                                id="id"
+                                :value="refillForm.id"
+                                required
                         >
-                            <b-input-group>
-                                <b-form-input
-                                        id="refill_user_name"
-                                        v-model="refillForm.user_name"
-                                        type="text"
-                                        size="md"
-                                        placeholder="User / Game ID"
-                                        autocomplete="off"
-                                ></b-form-input>
-                                <b-input-group-append>
-                                    <b-button
-                                            variant="success"
-                                            @click="loadUserForRefill"
-                                    >
-                                        ค้นหา
-                                    </b-button>
-                                </b-input-group-append>
-                            </b-input-group>
-                        </b-form-group>
-                    </b-col>
-                </b-form-row>
 
-                <b-form-row>
-                    <b-col>
-                        <b-form-group
-                                id="input-group-refill-name"
-                                label="ข้อมูลลูกค้า:"
-                                label-for="refill_name"
+                        <b-form-row>
+                            <b-col>
+                                <b-form-group
+                                        id="input-group-refill-user"
+                                        label="User ID / Game ID:"
+                                        label-for="refill_user_name"
+                                        description="ระบุ User / Game ID ที่ต้องการเติมเงินรายการนี้"
+                                >
+                                    <b-input-group>
+                                        <b-form-input
+                                                id="refill_user_name"
+                                                v-model="refillForm.user_name"
+                                                type="text"
+                                                size="md"
+                                                placeholder="User / Game ID"
+                                                autocomplete="off"
+                                        ></b-form-input>
+                                        <b-input-group-append>
+                                            <b-button
+                                                    variant="success"
+                                                    @click="loadUserForRefill"
+                                            >
+                                                ค้นหา
+                                            </b-button>
+                                        </b-input-group-append>
+                                    </b-input-group>
+                                </b-form-group>
+                            </b-col>
+                        </b-form-row>
+
+                        <b-form-row>
+                            <b-col>
+                                <b-form-group
+                                        id="input-group-refill-name"
+                                        label="ข้อมูลลูกค้า:"
+                                        label-for="refill_name"
+                                >
+                                    <b-form-textarea
+                                            id="refill_name"
+                                            v-model="refillForm.name"
+                                            size="sm"
+                                            rows="6"
+                                            max-rows="6"
+                                            required
+                                            plaintext
+                                    ></b-form-textarea>
+                                </b-form-group>
+                            </b-col>
+                        </b-form-row>
+
+                        <b-form-row>
+                            <b-col>
+                                <b-form-group
+                                        id="input-group-amount"
+                                        label="จำนวนเงิน:"
+                                        label-for="amount"
+                                        description="ระบุจำนวนเงิน ระหว่าง 1 - 10,000"
+                                >
+                                    <b-form-input
+                                            id="amount"
+                                            v-model="refillForm.amount"
+                                            type="number"
+                                            size="sm"
+                                            placeholder="จำนวนเงิน"
+                                            min="1"
+                                            max="10000"
+                                            autocomplete="off"
+                                            required
+                                    ></b-form-input>
+                                </b-form-group>
+                            </b-col>
+                        </b-form-row>
+
+                        <b-form-row>
+                            <b-col>
+                                <b-form-group
+                                        id="input-group-account_code"
+                                        label="ช่องทางที่ฝาก:"
+                                        label-for="account_code"
+                                >
+                                    <b-form-select
+                                            id="account_code"
+                                            v-model="refillForm.account_code"
+                                            :options="banks"
+                                            size="sm"
+                                            required
+                                    ></b-form-select>
+                                </b-form-group>
+                            </b-col>
+                        </b-form-row>
+
+                        <b-form-row>
+                            <b-col>
+                                <b-form-group
+                                        id="input-group-refill-remark"
+                                        label="หมายเหตุ:"
+                                        label-for="refill_remark_admin"
+                                >
+                                    <b-form-input
+                                            id="refill_remark_admin"
+                                            v-model="refillForm.remark_admin"
+                                            type="text"
+                                            size="sm"
+                                            autocomplete="off"
+                                    ></b-form-input>
+                                </b-form-group>
+                            </b-col>
+                        </b-form-row>
+
+                        <b-button type="submit" variant="primary">
+                            บันทึก
+                        </b-button>
+                    </b-form>
+                </b-col>
+
+                {{-- ฝั่งขวา: Log ประวัติเติมเงิน --}}
+                <b-col cols="12" md="7" class="refill-log-col">
+                    <div class="refill-log-card" v-if="showRefillUI">
+                        <div class="refill-log-header d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <div class="refill-log-title">ประวัติการเติมเงิน</div>
+                                <div class="refill-log-sub" v-if="refillForm.user_name">
+                                    User: <span v-text="refillForm.user_name"></span>
+                                </div>
+                            </div>
+                            <div class="refill-log-status" v-if="isBusy">
+                                <b-spinner small class="mr-1"></b-spinner>
+                                <span>กำลังโหลด...</span>
+                            </div>
+                        </div>
+
+                        <b-table
+                                striped
+                                hover
+                                small
+                                outlined
+                                sticky-header
+                                show-empty
+                                :items="items"
+                                :fields="fields"
+                                :busy="isBusy"
+                                ref="tbdatalog"
+                                class="refill-log-table"
                         >
-                            <b-form-textarea
-                                    id="refill_name"
-                                    v-model="refillForm.name"
-                                    size="sm"
-                                    rows="6"
-                                    max-rows="6"
-                                    required
-                                    plaintext
-                            ></b-form-textarea>
-                        </b-form-group>
-                    </b-col>
-                </b-form-row>
+                            <template #table-busy>
+                                <div class="text-center text-muted my-2">
+                                    <b-spinner class="align-middle"></b-spinner>
+                                    <strong>กำลังโหลดข้อมูล...</strong>
+                                </div>
+                            </template>
 
-                <b-form-row>
-                    <b-col>
-                        <b-form-group
-                                id="input-group-amount"
-                                label="จำนวนเงิน:"
-                                label-for="amount"
-                                description="ระบุจำนวนเงิน ระหว่าง 1 - 10,000"
-                        >
-                            <b-form-input
-                                    id="amount"
-                                    v-model="refillForm.amount"
-                                    type="number"
-                                    size="sm"
-                                    placeholder="จำนวนเงิน"
-                                    min="1"
-                                    max="10000"
-                                    autocomplete="off"
-                                    required
-                            ></b-form-input>
-                        </b-form-group>
-                    </b-col>
-                </b-form-row>
+                            <!-- รหัสรายการ -->
+                            <template #cell(id)="{ item }">
+                                <span v-text="item.id"></span>
+                            </template>
 
-                <b-form-row>
-                    <b-col>
-                        <b-form-group
-                                id="input-group-account_code"
-                                label="ช่องทางที่ฝาก:"
-                                label-for="account_code"
-                        >
-                            <b-form-select
-                                    id="account_code"
-                                    v-model="refillForm.account_code"
-                                    :options="banks"
-                                    size="sm"
-                                    required
-                            ></b-form-select>
-                        </b-form-group>
-                    </b-col>
-                </b-form-row>
+                            <!-- เวลา -->
+                            <template #cell(date_create)="{ item }">
+                                <span v-text="item.date_create"></span>
+                            </template>
 
-                <b-form-row>
-                    <b-col>
-                        <b-form-group
-                                id="input-group-refill-remark"
-                                label="หมายเหตุ:"
-                                label-for="refill_remark_admin"
-                        >
-                            <b-form-input
-                                    id="refill_remark_admin"
-                                    v-model="refillForm.remark_admin"
-                                    type="text"
-                                    size="sm"
-                                    autocomplete="off"
-                            ></b-form-input>
-                        </b-form-group>
-                    </b-col>
-                </b-form-row>
+                            <!-- ช่องทาง เช่น AUTO / แอดมิน / คิวอาร์ -->
+                            <template #cell(method)="{ item }">
+                                <span v-text="item.method"></span>
+                            </template>
 
-                <b-button type="submit" variant="primary">
-                    บันทึก
-                </b-button>
-            </b-form>
+                            <!-- ยอดที่ลูกค้าแจ้ง (ฝาก/ถอน) -->
+                            <template #cell(amount_request)="{ item }">
+                                <span v-text="intToMoney(item.amount_request)"></span>
+                            </template>
+
+                            <!-- โบนัส / โปร (ถ้ามี) -->
+                            <template #cell(credit_bonus)="{ item }">
+                                <span v-if="item.credit_bonus" v-text="intToMoney(item.credit_bonus)"></span>
+                                <span v-else class="text-muted">-</span>
+                            </template>
+
+                            <!-- ยอดสุทธิหลังดำเนินการ -->
+                            <template #cell(amount)="{ item }">
+                                <span v-text="intToMoney(item.amount)"></span>
+                            </template>
+
+                            <!-- เครดิตก่อน/หลัง -->
+                            <template #cell(credit_before)="{ item }">
+                                <span v-text="intToMoney(item.credit_before)"></span>
+                            </template>
+
+                            <template #cell(credit_after)="{ item }">
+                                <span v-text="intToMoney(item.credit_after)"></span>
+                            </template>
+
+                            <!-- สถานะ -->
+                            <template #cell(status)="{ item }">
+                            <span
+                                    class="badge"
+                                    :class="'bg-' + (item.status_color || 'secondary')"
+                                    v-text="item.status_display"
+                            ></span>
+                            </template>
+                        </b-table>
+                    </div>
+                </b-col>
+
+            </b-form-row>
         </b-container>
     </b-modal>
+
 
     {{-- ฟอร์มหมายเหตุยกเลิกรายการ (เดิม clear) --}}
     <b-modal
@@ -287,15 +383,24 @@
 
     {{-- NEW: ฟอร์มเพิ่ม - ลด ยอดเงิน --}}
     <b-modal
-            ref="money"
-            id="money"
-            centered
+            id="member-refill-money-modal"
+            ref="memberRefillMoneyModal"
+            title="เพิ่ม / ลด เครดิต"
             size="sm"
-            title="เพิ่ม - ลด ยอดเงิน"
-            :no-stacking="true"
+            centered
             :no-close-on-backdrop="true"
             :hide-footer="true"
-            @shown="removeFocusFromTrigger"
+            @shown="
+        removeFocusFromTrigger();
+        window.memberAdjustBridge
+            && window.memberAdjustBridge.onChildShown
+            && window.memberAdjustBridge.onChildShown()
+    "
+            @hidden="
+        window.memberAdjustBridge
+            && window.memberAdjustBridge.onChildHidden
+            && window.memberAdjustBridge.onChildHidden()
+    "
     >
         <b-form @submit.prevent.once="moneySubmit" v-if="showRefillUI">
             <b-form-group
@@ -354,15 +459,24 @@
 
     {{-- NEW: ฟอร์มเพิ่ม - ลด Point --}}
     <b-modal
-            ref="point"
-            id="point"
-            centered
+            id="member-refill-point-modal"
+            ref="memberRefillPointModal"
+            title="เพิ่ม / ลด Point"
             size="sm"
-            title="เพิ่ม - ลด Point"
-            :no-stacking="true"
+            centered
             :no-close-on-backdrop="true"
             :hide-footer="true"
-            @shown="removeFocusFromTrigger"
+            @shown="
+        removeFocusFromTrigger();
+        window.memberAdjustBridge
+            && window.memberAdjustBridge.onChildShown
+            && window.memberAdjustBridge.onChildShown()
+    "
+            @hidden="
+        window.memberAdjustBridge
+            && window.memberAdjustBridge.onChildHidden
+            && window.memberAdjustBridge.onChildHidden()
+    "
     >
         <b-form @submit.prevent.once="pointSubmit" v-if="showRefillUI">
             <b-form-group
@@ -421,15 +535,24 @@
 
     {{-- NEW: ฟอร์มเพิ่ม - ลด Diamond --}}
     <b-modal
-            ref="diamond"
-            id="diamond"
-            centered
+            id="member-refill-diamond-modal"
+            ref="memberRefillDiamondModal"
+            title="เพิ่ม / ลด Diamond"
             size="sm"
-            title="เพิ่ม - ลด Diamond"
-            :no-stacking="true"
+            centered
             :no-close-on-backdrop="true"
             :hide-footer="true"
-            @shown="removeFocusFromTrigger"
+            @shown="
+        removeFocusFromTrigger();
+        window.memberAdjustBridge
+            && window.memberAdjustBridge.onChildShown
+            && window.memberAdjustBridge.onChildShown()
+    "
+            @hidden="
+        window.memberAdjustBridge
+            && window.memberAdjustBridge.onChildHidden
+            && window.memberAdjustBridge.onChildHidden()
+    "
     >
         <b-form @submit.prevent.once="diamondSubmit" v-if="showRefillUI">
             <b-form-group
@@ -490,14 +613,24 @@
     <b-modal
             ref="gamelog"
             id="gamelog"
-            centered
-            size="lg"
             :title="caption"
-            :no-stacking="false"
+            size="lg"
+            centered
             :no-close-on-backdrop="true"
+            :hide-footer="true"
+            @shown="
+        removeFocusFromTrigger();
+        window.memberLogBridge
+            && window.memberLogBridge.onChildShown
+            && window.memberLogBridge.onChildShown()
+    "
+            @hidden="
+        window.memberLogBridge
+            && window.memberLogBridge.onChildHidden
+            && window.memberLogBridge.onChildHidden()
+    "
             :ok-only="true"
             :lazy="true"
-            @shown="removeFocusFromTrigger"
     >
         <b-table
                 striped

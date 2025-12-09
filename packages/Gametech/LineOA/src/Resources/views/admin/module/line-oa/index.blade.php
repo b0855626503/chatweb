@@ -1061,6 +1061,7 @@
                                         </b-button>
                                         {{-- ปุ่ม emoji ใหม่ --}}
                                         <b-button
+                                                ref="emojiBtn"
                                                 size="sm"
                                                 variant="link"
                                                 class="chat-tool-btn px-1"
@@ -1069,6 +1070,7 @@
                                         >
                                             <i class="far fa-grin-alt"></i>
                                         </b-button>
+
 
                                         <b-button
                                                 size="sm"
@@ -1107,20 +1109,8 @@
                                         </b-button>
                                     </div>
                                 </div>
-                                {{-- Emoji picker เล็ก ๆ --}}
-                                <div v-if="showEmojiPicker" class="mt-1 chat-emoji-picker border rounded p-2 bg-white">
-                                    <div class="d-flex flex-wrap" style="max-height: 140px; overflow-y: auto;">
-                                        <button
-                                                v-for="(emoji, idx) in emojiList"
-                                                :key="'emoji-' + idx"
-                                                type="button"
-                                                class="btn btn-sm btn-light m-1"
-                                                @click="insertEmoji(emoji)"
-                                        >
-                                            @{{ emoji }}
-                                        </button>
-                                    </div>
-                                </div>
+
+
 
                                 <input
                                         type="file"
@@ -1259,7 +1249,7 @@
                                     <div v-if="canControlRegister()">
                                         <b-button
                                                 variant="outline-success"
-                                                @click="openRefillModal"
+                                                @click="showAdjustSelector"
                                                 class="btn-app"
                                         >
                                             <div class="btn-icon-group">
@@ -1273,7 +1263,7 @@
                                     <div v-if="canControlRegister()">
                                         <b-button
                                                 variant="outline-success"
-                                                @click="openRefillModal"
+                                                @click="$refs.memberLogModal.show()"
                                                 class="btn-app"
                                         >
                                             <i class="fa fa-history"></i> ประวัติ
@@ -1629,6 +1619,8 @@
                     hidePinnedPanel: false,
                     selectedStickerPackId: null,
                     stickerLoading: false,
+                    showEmojiPicker: false,
+                    emojiPickerStyle: {},
                 };
             },
             created() {
@@ -1648,12 +1640,44 @@
                 if (typeof this.unsubscribeRealtime === 'function') {
                     this.unsubscribeRealtime();
                 }
+                document.removeEventListener('click', this.handleClickOutside);
             },
             mounted() {
                 // default เลือก pack แรกถ้ามี
                 if (this.stickerPacks.length > 0 && !this.selectedStickerPackId) {
                     this.selectedStickerPackId = this.stickerPacks[0].id;
                 }
+                document.addEventListener('click', this.handleClickOutside);
+
+                window.memberAdjustBridge = {
+                    onChildShown: () => {
+                        // กันเคส modal หลักยังค้างอยู่
+                        if (this.$refs.memberAdjustModal) {
+                            this.$refs.memberAdjustModal.hide();
+                        }
+                    },
+                    onChildHidden: () => {
+                        // เวลา modal ลูกถูกปิด → เปิด modal หลักกลับมา
+                        if (this.$refs.memberAdjustModal) {
+                            this.$refs.memberAdjustModal.show();
+                        }
+                    }
+                };
+
+                window.memberLogBridge = {
+                    onChildShown: () => {
+                        // กันเคส modal หลักยังค้างอยู่
+                        if (this.$refs.memberLogModal) {
+                            this.$refs.memberLogModal.hide();
+                        }
+                    },
+                    onChildHidden: () => {
+                        // เวลา modal ลูกถูกปิด → เปิด modal หลักกลับมา
+                        if (this.$refs.memberLogModal) {
+                            this.$refs.memberLogModal.show();
+                        }
+                    }
+                };
             },
             computed: {
                 stickerPackOptions() {
@@ -1962,6 +1986,22 @@
                 // }, 400),
             },
             methods: {
+                handleClickOutside(e) {
+                    const btn = this.$refs.emojiBtn?.$el || this.$refs.emojiBtn;
+                    const popup = this.$refs.emojiPopup;
+
+                    // ยังไม่เปิด → ไม่ต้องทำอะไร
+                    if (!this.showEmojiPicker) return;
+
+                    // ถ้าคลิกโดนปุ่ม → ไม่ปิด
+                    if (btn && btn.contains(e.target)) return;
+
+                    // ถ้าคลิกโดน popup → ไม่ปิด
+                    if (popup && popup.contains(e.target)) return;
+
+                    // ที่เหลือคือคลิคนอก → ปิด
+                    this.showEmojiPicker = false;
+                },
                 loadMutedConversations() {
                     try {
                         const raw = localStorage.getItem(this.muteStorageKey);
@@ -5079,6 +5119,214 @@
                         });
                     }
                 },
+                toggleEmojiPicker() {
+                    if (!this.canReply) return;
+                    this.showEmojiPicker = !this.showEmojiPicker;
+
+                    this.$nextTick(() => {
+                        try {
+                            const input = this.$refs.replyBox && this.$refs.replyBox.$refs
+                                ? this.$refs.replyBox.$refs.input
+                                : this.$refs.replyBox;
+                            input && input.focus && input.focus();
+                        } catch (e) {
+                            // no-op
+                        }
+                    });
+                },
+
+                /**
+                 * callback ตอนเลือก emoji จาก emoji-mart-vue
+                 * param emoji: object ที่ emoji-mart ส่งมา (มี .native เป็น emoji ตัวจริง)
+                 */
+                onEmojiSelect(emoji) {
+                    if (!emoji || !emoji.native) {
+                        return;
+                    }
+
+                    const char = emoji.native;
+                    const current = this.replyText || '';
+
+                    let input = null;
+                    try {
+                        input = this.$refs.replyBox && this.$refs.replyBox.$refs
+                            ? this.$refs.replyBox.$refs.input
+                            : this.$refs.replyBox;
+                    } catch (e) {
+                        input = null;
+                    }
+
+                    if (!input || typeof input.selectionStart !== 'number') {
+                        // fallback: ต่อท้ายข้อความ
+                        this.replyText = current + char;
+                    } else {
+                        const start = input.selectionStart;
+                        const end = input.selectionEnd;
+
+                        this.replyText =
+                            current.slice(0, start) +
+                            char +
+                            current.slice(end);
+
+                        this.$nextTick(() => {
+                            try {
+                                input.focus();
+                                const pos = start + char.length;
+                                input.setSelectionRange(pos, pos);
+                            } catch (e) {
+                                // ignore
+                            }
+                        });
+                    }
+
+                    // จะให้ปิด picker ทันทีหรือค้างไว้ให้จิ้มต่อก็ได้
+                    // ถ้าอยากให้ค้างไว้ จงคอมเมนต์บรรทัดด้านล่าง
+                    this.showEmojiPicker = false;
+                },
+                toggleEmojiPicker() {
+                    if (!this.canReply) return;
+
+                    this.showEmojiPicker = !this.showEmojiPicker;
+
+                    this.$nextTick(() => {
+                        if (!this.showEmojiPicker) return;
+
+                        const btnEl = this.$refs.emojiBtn?.$el || this.$refs.emojiBtn;
+                        if (!btnEl) return;
+
+                        const rect = btnEl.getBoundingClientRect();
+                        const vw = window.innerWidth || document.documentElement.clientWidth;
+                        const vh = window.innerHeight || document.documentElement.clientHeight;
+
+                        // ประมาณความกว้าง/สูงของ emoji picker (ปรับได้)
+                        const pickerWidth  = 320;
+                        const pickerHeight = 340;
+
+                        // --- คำนวณตำแหน่งเริ่มต้น: ใต้ปุ่ม ---
+                        let top  = rect.bottom + 6;
+                        let left = rect.left + rect.width / 2 - pickerWidth / 2;
+
+                        // ถ้าล่างไม่พอ → flip ขึ้นไปเหนือปุ่ม
+                        if (top + pickerHeight > vh - 8) {
+                            top = rect.top - pickerHeight - 6;
+                        }
+
+                        // กันล้นซ้าย/ขวา
+                        if (left < 8) {
+                            left = 8;
+                        }
+                        if (left + pickerWidth > vw - 8) {
+                            left = vw - 8 - pickerWidth;
+                        }
+
+                        this.emojiPickerStyle = {
+                            top:  top + 'px',
+                            left: left + 'px',
+                            width: pickerWidth + 'px',
+                        };
+                    });
+                },
+
+                onEmojiSelect(emoji) {
+                    const char = emoji?.native;
+                    if (!char) return;
+
+                    const input = this.$refs.replyBox?.$refs?.input || this.$refs.replyBox;
+                    const current = this.replyText || '';
+
+                    if (!input || typeof input.selectionStart !== 'number') {
+                        this.replyText = current + char;
+                    } else {
+                        const start = input.selectionStart;
+                        const end   = input.selectionEnd;
+
+                        this.replyText =
+                            current.slice(0, start) +
+                            char +
+                            current.slice(end);
+
+                        this.$nextTick(() => {
+                            try {
+                                input.focus();
+                                const pos = start + char.length;
+                                input.setSelectionRange(pos, pos);
+                            } catch (e) {}
+                        });
+                    }
+
+                    this.showEmojiPicker = false;
+                },
+                showAdjustSelector() {
+                    this.$refs.memberAdjustModal && this.$refs.memberAdjustModal.show();
+                },
+
+                // เรียกจากปุ่มใน modal หลัก
+                openAdjust(type) {
+                    const memberId = this.selectedConversation?.contact?.member_id || null;
+                    if (!memberId) {
+                        // กันไว้หน่อย
+                        return;
+                    }
+
+                    // ปิด modal หลักก่อน
+                    if (this.$refs.memberAdjustModal) {
+                        this.$refs.memberAdjustModal.hide();
+                    }
+
+                    // แล้วค่อยเปิด modal เป้าหมาย
+                    this.$nextTick(() => {
+                        if (type === 'money' && window.memberRefillApp?.money) {
+                            window.memberRefillApp.money({ member_id: memberId });
+                        } else if (type === 'point' && window.memberRefillApp?.point) {
+                            window.memberRefillApp.point({ member_id: memberId });
+                        } else if (type === 'diamond' && window.memberRefillApp?.diamond) {
+                            window.memberRefillApp.diamond({ member_id: memberId });
+                        }
+                    });
+                },
+
+                // อันนี้จะถูกเรียกตอน modal ลูก (money/point/diamond) ถูกปิด
+                onAdjustChildHidden() {
+                    // เปิด modal หลักกลับขึ้นมาใหม่
+                    if (this.$refs.memberAdjustModal) {
+                        this.$refs.memberAdjustModal.show();
+                    }
+                },
+
+                showLogSelector() {
+                    this.$refs.memberLogModal && this.$refs.memberLogModal.show();
+                },
+
+                // เรียกจากปุ่มใน modal หลัก
+                openLog(type) {
+                    const memberId = this.selectedConversation?.contact?.member_id || null;
+                    if (!memberId) {
+                        // กันไว้หน่อย
+                        return;
+                    }
+
+                    // ปิด modal หลักก่อน
+                    if (this.$refs.memberLogModal) {
+                        this.$refs.memberLogModal.hide();
+                    }
+
+                    // แล้วค่อยเปิด modal เป้าหมาย
+                    this.$nextTick(() => {
+                        if (type === 'deposit' && window.memberRefillApp?.openGameLog) {
+                            window.memberRefillApp.openGameLog('deposit',{ member_id: memberId });
+                        } else if (type === 'withdraw' && window.memberRefillApp?.point) {
+                            window.memberRefillApp.openGameLog('withdraw',{ member_id: memberId });
+                        }
+                    });
+                },
+
+                // อันนี้จะถูกเรียกตอน modal ลูก (money/point/diamond) ถูกปิด
+                onLogChildHidden() {
+                    // เปิด modal หลักกลับขึ้นมาใหม่
+                    if (this.$refs.memberLogModal) {
+                        this.$refs.memberLogModal.show();
+                    }
+                }
 
             }
         });
@@ -5695,47 +5943,18 @@
 
             methods: {
                 openGameLog(type, prefill = null) {
-                    this.logType = type;
-
-                    if (type === 'deposit') {
-                        this.caption = 'ประวัติฝากเครดิต';
-                        this.fields = [
-                            {key: 'id', label: 'รหัส', sortable: false},
-                            {key: 'date_create', label: 'เวลา', sortable: true},
-                            {key: 'amount', label: 'ยอดฝาก', sortable: false},
-                            {key: 'pro_name', label: 'โปรโมชั่น', sortable: true},
-                            {key: 'credit_bonus', label: 'โบนัสที่ได้', sortable: false},
-                            {key: 'credit_before', label: 'เครดิตก่อน', sortable: false},
-                            {key: 'credit_after', label: 'เครดิตหลัง', sortable: false},
-                            {key: 'status_display', label: 'สถานะ', sortable: true},
-                        ];
-                    } else if (type === 'withdraw') {
-                        this.caption = 'ประวัติถอนเครดิต';
-                        this.fields = [
-                            {key: 'id', label: 'รหัส', sortable: false},
-                            {key: 'date_create', label: 'เวลา', sortable: true},
-                            {key: 'amount_request', label: 'ยอดแจ้ง', sortable: false},
-                            {key: 'amount', label: 'ยอดถอนที่ได้รับ', sortable: false},
-                            {key: 'credit_before', label: 'เครดิตก่อน', sortable: false},
-                            {key: 'credit_after', label: 'เครดิตหลัง', sortable: false},
-                            {key: 'status_display', label: 'สถานะ', sortable: true},
-                        ];
-                    } else {
-                        this.caption = 'ประวัติรายการ';
-                    }
+                    this.setupLogFields(type);
 
                     this.showRefillUI = true;
+
                     if (prefill && prefill.member_id) {
                         this.currentMemberId = prefill.member_id;
                     }
-                    // เปิด modal
+
                     this.$nextTick(async () => {
                         this.$refs.gamelog.show();
-                        await this.fetchGameLog();
+                        await this.fetchGameLog();   // ใช้เมธอดเดิม
                     });
-
-                    // โหลดข้อมูล
-
                 },
                 async fetchGameLog() {
                     if (!this.logType) return;
@@ -5744,7 +5963,7 @@
                     this.items = [];
 
                     try {
-                        const response = await axios.get('{{ route('admin.member.gamelog') }}', {
+                        const response = await axios.get('{{ route('admin.gamelog.log') }}', {
                             params: {
                                 id: this.currentMemberId,
                                 method: this.logType,
@@ -5767,6 +5986,8 @@
                         this.isBusy = false;
                     }
                 },
+
+
 
                 /**
                  * helper แปลงตัวเลขเป็น string เงิน (อาจมีอยู่แล้วใน app)
@@ -5949,7 +6170,7 @@
 
                     this.currentTopupId = null;
 
-                    // reset form ทุกครั้งก่อนเปิด
+                    // reset form
                     this.refillForm = {
                         id: '',
                         user_name: '',
@@ -5962,27 +6183,42 @@
 
                     this.showRefillUI = true;
 
-                    // มีข้อมูลจากห้องแชต
+                    // เคลียร์ log ก่อน
+                    this.items = [];
+                    this.isBusy = false;
+
                     if (prefill && prefill.member_username) {
                         this.refillForm.user_name = prefill.member_username;
+                        if (prefill.member_id) {
+                            this.currentMemberId = prefill.member_id;
+                        }
+
                         console.warn('[memberRefillApp] refillForm user_name', prefill.member_username);
+
                         this.$nextTick(async () => {
                             if (this.$refs.refillModal) {
                                 this.$refs.refillModal.show();
                             }
-                            console.warn('[memberRefillApp] refillModal show');
-                            // auto ค้นหา
+
+                            // auto ค้นหา user + เติมข้อมูลฝั่งซ้าย
                             if (this.refillForm.user_name) {
                                 try {
-                                    console.warn('[memberRefillApp] loadUserForRefill ', this.refillForm.user_name);
                                     await this.loadUserForRefill();
                                 } catch (e) {
                                     console.warn('[memberRefillApp] auto loadUserForRefill failed', e);
                                 }
                             }
+
+                            // --- ตรงนี้คือส่วน log ฝั่งขวา ---
+                            // ถ้ามี member_id แล้ว ให้ดึง log ฝากมาแสดง
+                            if (this.currentMemberId) {
+                                this.setupLogFields('deposit-mini');
+                                await this.fetchGameLog();
+                            }
                         });
+
                     } else {
-                        // ไม่มี prefill → เปิดเปล่า ๆ ให้กรอกเอง
+                        // ไม่มี prefill
                         this.$nextTick(() => {
                             if (this.$refs.refillModal) {
                                 this.$refs.refillModal.show();
@@ -5990,7 +6226,6 @@
                         });
                     }
                 },
-
 
                 // เดิม clearModal(code)
                 openClearRemarkModal(code) {
@@ -6006,6 +6241,7 @@
                 },
 
                 openMoneyModal(prefill = null) {
+                    console.log('openMoney');
                     // reset form
                     this.formmoney = {
                         id: null,
@@ -6022,7 +6258,7 @@
 
                     this.showRefillUI = true;
                     this.$nextTick(() => {
-                        this.$refs.money && this.$refs.money.show();
+                        this.$refs.memberRefillMoneyModal && this.$refs.memberRefillMoneyModal.show();
                     });
                 },
 
@@ -6040,7 +6276,7 @@
 
                     this.showRefillUI = true;
                     this.$nextTick(() => {
-                        this.$refs.point && this.$refs.point.show();
+                        this.$refs.memberRefillPointModal && this.$refs.memberRefillPointModal.show();
                     });
                 },
 
@@ -6058,7 +6294,7 @@
 
                     this.showRefillUI = true;
                     this.$nextTick(() => {
-                        this.$refs.diamond && this.$refs.diamond.show();
+                        this.$refs.memberRefillDiamondModal && this.$refs.memberRefillDiamondModal.show();
                     });
                 },
 
@@ -6108,10 +6344,27 @@
                         };
 
                         console.log('[memberRefillApp] loadUserForRefill(): loaded', this.refillForm);
+
+                        // ====== เพิ่มส่วนนี้ เพื่อโหลด LOG ฝั่งขวา ======
+                        // สมมติ backend ส่ง member_id กลับมาด้วย
+                        if (data.member_id) {
+                            this.currentMemberId = data.member_id;
+                        }
+
+                        // ถ้ามี currentMemberId แล้ว → ตั้ง field log เป็น deposit และดึง log
+                        if (this.currentMemberId) {
+                            this.setupLogFields('deposit');
+                            await this.fetchGameLog();
+                        } else {
+                            console.warn('[memberRefillApp] ไม่มี currentMemberId จาก loaddata → ยังไม่โหลด log');
+                        }
+                        // ===============================================
+
                     } catch (e) {
                         console.error('[memberRefillApp] loadUserForRefill(): error', e);
                     }
                 },
+
 
 
                 async loadBankAccount() {
@@ -6452,6 +6705,47 @@
 
                 diamond(prefill = null) {
                     this.openDiamondModal(prefill);
+                },
+                setupLogFields(type) {
+                    this.logType = type;
+
+                    if (type === 'deposit') {
+                        this.caption = 'ประวัติฝากเครดิต';
+                        this.fields = [
+                            {key: 'id', label: 'รหัส', sortable: false},
+                            {key: 'date_create', label: 'เวลา', sortable: true},
+                            {key: 'amount', label: 'ยอดฝาก', sortable: false},
+                            {key: 'pro_name', label: 'โปรโมชั่น', sortable: true},
+                            {key: 'credit_bonus', label: 'โบนัสที่ได้', sortable: false},
+                            {key: 'credit_before', label: 'เครดิตก่อน', sortable: false},
+                            {key: 'credit_after', label: 'เครดิตหลัง', sortable: false},
+                            {key: 'status_display', label: 'สถานะ', sortable: true},
+                        ];
+                    } else if (type === 'withdraw') {
+                        this.caption = 'ประวัติถอนเครดิต';
+                        this.fields = [
+                            {key: 'id', label: 'รหัส', sortable: false},
+                            {key: 'date_create', label: 'เวลา', sortable: true},
+                            {key: 'amount_request', label: 'ยอดแจ้ง', sortable: false},
+                            {key: 'amount', label: 'ยอดถอนที่ได้รับ', sortable: false},
+                            {key: 'credit_before', label: 'เครดิตก่อน', sortable: false},
+                            {key: 'credit_after', label: 'เครดิตหลัง', sortable: false},
+                            {key: 'status_display', label: 'สถานะ', sortable: true},
+                        ];
+                    } else if (type === 'refill') {
+                        this.caption = 'ประวัติรายการฝาก';
+                        this.fields = [
+                            {key: 'date_create', label: 'เวลา', sortable: true},
+                            {key: 'amount', label: 'ยอดฝาก', sortable: false},
+                            {key: 'credit_bonus', label: 'โบนัสที่ได้', sortable: false},
+                            {key: 'credit_before', label: 'เครดิตก่อน', sortable: false},
+                            {key: 'credit_after', label: 'เครดิตหลัง', sortable: false},
+                            {key: 'status_display', label: 'สถานะ', sortable: true},
+                        ];
+                    } else {
+                        this.caption = 'ประวัติรายการ';
+                        this.fields = [];
+                    }
                 },
             },
         });

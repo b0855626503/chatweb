@@ -1,38 +1,42 @@
-const mix = require("laravel-mix");
+const mix = require('laravel-mix');
+require('laravel-mix-merge-manifest');
 
-if (mix == 'undefined') {
-    const { mix } = require("laravel-mix");
-}
+// flag ดูว่า prod หรือ dev
+const isProd = mix.inProduction();
 
-require("laravel-mix-merge-manifest");
-
-if (mix.inProduction()) {
-    var publicPath = 'src/Publishable/assets';
+// 1) set publicPath
+// - dev: build ใส่ใน src/Publishable/assets (ใช้ตอนพัฒนาแพ็กเกจ)
+// - prod: build ลง public/ ของ Laravel หลัก (ให้เว็บใช้จริง)
+if (isProd) {
+    mix.setPublicPath('../../../public');
 } else {
-    var publicPath = "../../../public/assets/lineoa";
+    mix.setPublicPath('src/Publishable/assets');
 }
 
-mix.setPublicPath(publicPath).mergeManifest();
-mix.disableNotifications();
-
-mix.inProduction()
-
+// 2) main js
+// - dev: แค่วางไว้เป็น js/lineoa.js ใน publishable
+// - prod: วางเป็น assets/lineoa/js/lineoa.js ใน public
 mix.js(
-    [
-        __dirname + "/src/Resources/assets/js/app.js"
-    ],
-    "js/lineoa.js"
-)
-    .options({
-        processCssUrls: false
-    });
+    __dirname + '/src/Resources/assets/js/app.js',
+    isProd ? 'assets/lineoa/js/lineoa.js' : 'js/lineoa.js'
+).options({
+    processCssUrls: false,
+});
 
-// mix.less(__dirname + "/src/Resources/assets/less/app.less", "css/btn.css");
-
-if (!mix.inProduction()) {
+// 3) dev options
+if (!isProd) {
     mix.sourceMaps();
 }
 
-if (mix.inProduction()) {
+// 4) prod options
+if (isProd) {
     mix.version();
 }
+
+// 5) merge manifest
+// - dev: merge ที่ src/Publishable/assets/mix-manifest.json (เอาไว้ publish ไปก็ได้)
+// - prod: merge ที่ public/mix-manifest.json (ตัวนี้ Laravel ใช้)
+mix.mergeManifest();
+
+// 6) ปิด notification
+mix.disableNotifications();

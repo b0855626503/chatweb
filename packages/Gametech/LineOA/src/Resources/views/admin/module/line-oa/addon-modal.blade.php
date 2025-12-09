@@ -758,6 +758,119 @@
     </div>
 </b-modal>
 
+<!-- ========== ใช้ teleport ให้ emoji picker ลอยนอก DOM ============ -->
+<teleport to="body">
+    <div
+            v-if="showEmojiPicker"
+            class="emoji-overlay"
+            :style="emojiPickerStyle"
+            ref="emojiPopup"
+    >
+        <emoji-picker
+                :show-preview="false"
+                :show-skin-tones="false"
+                :emoji-size="22"
+                :per-line="8"
+                @select="onEmojiSelect"
+        />
+    </div>
+</teleport>
+
+<b-modal
+        id="member-adjust-modal"
+        ref="memberAdjustModal"
+        title="เพิ่ม / ลด ยอดคงเหลือ"
+        centered
+        size="md"
+        :no-close-on-backdrop="true"
+        :hide-footer="true"
+>
+    <div class="adjust-card-wrapper">
+
+        <!-- ยอดเงิน -->
+        <b-button
+                class="adjust-card adjust-money"
+                @click="openAdjust('money')"
+        >
+            <div class="adjust-card-icon">
+                <i class="fa fa-coins"></i>
+            </div>
+            <div class="adjust-card-content">
+                <div class="adjust-card-title">ยอดเงิน</div>
+                <div class="adjust-card-sub">เพิ่ม/ลด เงินในกระเป๋าหลัก</div>
+            </div>
+        </b-button>
+
+        <!-- Points -->
+        <b-button
+                class="adjust-card adjust-point"
+                @click="openAdjust('point')"
+        >
+            <div class="adjust-card-icon">
+                <i class="fa fa-star"></i>
+            </div>
+            <div class="adjust-card-content">
+                <div class="adjust-card-title">Points</div>
+                <div class="adjust-card-sub">จัดการคะแนนสะสม</div>
+            </div>
+        </b-button>
+
+        <!-- Diamond -->
+        <b-button
+                class="adjust-card adjust-diamond"
+                @click="openAdjust('diamond')"
+        >
+            <div class="adjust-card-icon">
+                <i class="fa fa-gem"></i>
+            </div>
+            <div class="adjust-card-content">
+                <div class="adjust-card-title">Diamond</div>
+                <div class="adjust-card-sub">เพิ่ม/ลด เพชรพิเศษ</div>
+            </div>
+        </b-button>
+
+    </div>
+</b-modal>
+
+
+<b-modal
+        id="member-log-modal"
+        ref="memberLogModal"
+        title="ประวัติ"
+        centered
+        size="sm"
+        :no-close-on-backdrop="true"
+        :hide-footer="true"
+>
+    <div class="log-row">
+
+        <b-button
+                class="log-card log-card-deposit"
+                @click="openLog('deposit')"
+        >
+            <div class="log-icon">
+                <i class="fa fa-history"></i>
+                <i class="fa fa-arrow-up"></i>
+            </div>
+            <div class="log-text">ฝาก</div>
+        </b-button>
+
+        <b-button
+                class="log-card log-card-withdraw"
+                @click="openLog('withdraw')"
+        >
+            <div class="log-icon">
+                <i class="fa fa-history"></i>
+                <i class="fa fa-arrow-down"></i>
+            </div>
+            <div class="log-text">ถอน</div>
+        </b-button>
+
+    </div>
+</b-modal>
+
+
+
 
 
 

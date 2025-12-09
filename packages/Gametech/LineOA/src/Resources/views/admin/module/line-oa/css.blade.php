@@ -868,6 +868,234 @@
             font-size: 18px;
             z-index: 5;
         }
+        .chat-emoji-picker-wrapper {
+            position: absolute;
+            z-index: 1050; /* ให้ลอยเหนือ card นิดนึง */
+        }
+
+        .emoji-picker-wrapper {
+            position: relative;
+        }
+
+        .emoji-popover {
+            position: absolute;
+            top: 30px;            /* ระยะห่างจากปุ่ม */
+            left: 0;
+            z-index: 2000;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .emoji-popover .emoji-mart {
+            width: 260px !important;   /* กำหนดขนาดถ้าต้องการ */
+            font-size: 13px;
+        }
+
+        .emoji-overlay {
+            position: fixed;         /* ลอยบนจอ ไม่ดัน layout */
+            z-index: 99999;          /* เหนือ modal, popover */
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+
+        /* layout */
+        .log-row {
+            display: flex;
+            gap: 12px;
+            padding: 10px;
+        }
+
+        /* ปุ่มแบบการ์ด */
+        .log-card {
+            flex: 1;
+            border: none !important;
+            padding: 18px 0 14px;
+            border-radius: 12px;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+
+            color: #fff !important;
+            font-weight: 600;
+            font-size: 15px;
+
+            /* ปิดของ btn-app ที่เคยครอบอยู่ */
+            background-image: none !important;
+            background-size: initial !important;
+            background-color: transparent !important;
+        }
+
+        /* ฝาก (เขียว) */
+        .log-card-deposit {
+            background-color: #16a34a !important; /* เขียว */
+            border-color: #16a34a !important;
+        }
+
+        /* ถอน (แดง) */
+        .log-card-withdraw {
+            background-color: #dc2626 !important; /* แดง */
+            border-color: #dc2626 !important;
+        }
+
+        /* ไอคอน */
+        .log-icon {
+            font-size: 22px;
+            margin-bottom: 4px;
+            display: flex;
+            gap: 6px;
+        }
+
+        /* hover */
+        .log-card:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+        }
+
+
+        /* ครอบทุกการ์ดใน modal */
+        .adjust-card-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 8px 4px 12px;
+        }
+
+        /* base ของแต่ละปุ่มการ์ด */
+        .adjust-card {
+            width: 100%;
+            border: none !important;
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            text-align: left;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.16);
+            transition: all 0.15s ease;
+
+            background-color: #f3f4f6 !important; /* default เผื่อไม่มี class type */
+            color: #111827 !important;
+        }
+
+        /* icon ด้านซ้าย */
+        .adjust-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 20px;
+            background-color: rgba(255,255,255,0.25);
+        }
+
+        /* ข้อความด้านขวา */
+        .adjust-card-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .adjust-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .adjust-card-sub {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* hover แล้วดูเป็นปุ่มจริง ๆ */
+        .adjust-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+        }
+
+        /* theme สีแต่ละประเภท */
+        .adjust-money {
+            background-color: #16a34a !important;   /* เขียว */
+            color: #ffffff !important;
+        }
+
+        .adjust-money .adjust-card-icon {
+            color: #16a34a;
+            background-color: #ecfdf3;
+        }
+
+        .adjust-point {
+            background-color: #2563eb !important;   /* น้ำเงิน */
+            color: #ffffff !important;
+        }
+
+        .adjust-point .adjust-card-icon {
+            color: #2563eb;
+            background-color: #eff6ff;
+        }
+
+        .adjust-diamond {
+            background-color: #7c3aed !important;   /* ม่วง */
+            color: #ffffff !important;
+        }
+
+        .adjust-diamond .adjust-card-icon {
+            color: #7c3aed;
+            background-color: #f5f3ff;
+        }
+        .refill-form-col {
+            border-right: 1px solid #e5e7eb;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 767.98px) {
+            .refill-form-col {
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+            }
+        }
+
+        .refill-log-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .refill-log-card {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .refill-log-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .refill-log-sub {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .refill-log-table {
+            font-size: 11px;
+            margin-top: 4px;
+            max-height: 320px; /* ให้ sticky-header มีผล และไม่ล้น modal */
+        }
     </style>
 
 @endpush
