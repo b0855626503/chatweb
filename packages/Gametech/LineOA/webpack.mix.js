@@ -7,7 +7,7 @@ if (mix == 'undefined') {
 require("laravel-mix-merge-manifest");
 
 if (mix.inProduction()) {
-    var publicPath = 'publishable/assets';
+    var publicPath = 'src/Publishable/assets';
 } else {
     var publicPath = "../../../public/assets/lineoa";
 }
