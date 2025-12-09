@@ -2050,38 +2050,45 @@ class ChatController extends AppBaseController
         }
     }
 
+    public function checkUser(Request $request): JsonResponse
+    {
+        $username = $request->input('username');
+
+        try {
+            /** @var \Gametech\LineOA\Services\RegisterFlowService $flow */
+            $flow = app(RegisterFlowService::class);
+
+            // ใช้ logic เดียวกับระบบสมัครปกติ
+            $exists = $flow->isUsernameAlreadyUsed($username);
+
+            return response()->json([
+                'message' => 'success',
+                'duplicate' => $exists,    // true = ซ้ำ, false = ใช้ได้
+            ]);
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'message' => 'กรุณาลองใหม่',
+            ], 500);
+        }
+    }
+
     public function registerMember(Request $request): JsonResponse
     {
         try {
             /** @var \Gametech\LineOA\Services\RegisterFlowService $flow */
             $flow = app(RegisterFlowService::class);
 
-            // 1) รับค่าจาก popup
-            $phone = $request->input('phone');
+            // อ่านโหมดจาก frontend ('phone' หรือ 'username')
+            $mode = $request->input('register_mode', 'phone');
+
+            // ค่าที่ใช้ร่วมทุกโหมด
             $bankCode = trim((string) $request->input('bank_code'));
             $accountNo = trim((string) $request->input('account_no'));
             $name = trim((string) $request->input('name'));
             $surname = trim((string) $request->input('surname'));
 
-            // 2) Normalize เบอร์ก่อน
-            $normalizedPhone = $flow->normalizePhone($phone);
-
-            if (! $normalizedPhone) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'เบอร์โทรไม่ถูกต้อง',
-                ], 200);
-            }
-
-            // 3) เช็คเบอร์ซ้ำด้วย logic เดิมของระบบ
-            if ($flow->isPhoneAlreadyUsed($normalizedPhone)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'เบอร์นี้มีอยู่ในระบบแล้ว',
-                ], 200);
-            }
-
-            // 4) ตรวจสอบข้อมูลให้ครบ
+            // ตรวจความครบถ้วนของฟิลด์หลัก
             if (! $bankCode || ! $accountNo || ! $name || ! $surname) {
                 return response()->json([
                     'success' => false,
@@ -2089,45 +2096,141 @@ class ChatController extends AppBaseController
                 ], 200);
             }
 
-            // 5) normalize เลขบัญชีให้เหมือน flow สมัครหลัก
-            $normalizedAccount = $flow->normalizeAccountNo($accountNo);
+            /*
+            |--------------------------------------------------------------------------
+            | MODE 1: สมัครด้วยเบอร์โทร (โทร = login id แบบเดิม)
+            |--------------------------------------------------------------------------
+            */
+            if ($mode === 'phone') {
 
-            if (! $normalizedAccount) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'เลขบัญชีไม่ถูกต้อง',
-                ], 200);
-            }
+                $phone = $request->input('phone');
+                $normalizedPhone = $flow->normalizePhone($phone);
 
-            // 6) เคส TW = account_no = phone
-            $isTw = (strtoupper($bankCode) === 'TW' || (string) $bankCode === '18');
-            if ($isTw) {
-                if ($normalizedAccount !== $normalizedPhone) {
+                if (! $normalizedPhone) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'เบอร์โทรไม่ถูกต้อง',
+                    ], 200);
+                }
+
+                if ($flow->isPhoneAlreadyUsed($normalizedPhone)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'เบอร์นี้มีอยู่ในระบบแล้ว',
+                    ], 200);
+                }
+
+                // normalize เลขบัญชี
+                $normalizedAccount = $flow->normalizeAccountNo($accountNo);
+                if (! $normalizedAccount) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'เลขบัญชีไม่ถูกต้อง',
+                    ], 200);
+                }
+
+                // กรณี TW
+                $isTw = (strtoupper($bankCode) === 'TW' || (string) $bankCode === '18');
+                if ($isTw && $normalizedAccount !== $normalizedPhone) {
                     return response()->json([
                         'success' => false,
                         'message' => 'สำหรับธนาคาร TW เลขบัญชีต้องเป็นเบอร์โทรเท่านั้น',
                     ], 200);
                 }
+
+                // เช็คบัญชีซ้ำ
+                if ($flow->isBankAccountAlreadyUsed($bankCode, $normalizedAccount)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'เลขบัญชี มีในระบบแล้ว ไม่สามารถใช้ได้',
+                    ], 200);
+                }
+
+                // payload สำหรับ phone-mode
+                $payload = [
+                    'phone' => $normalizedPhone,
+                    'bank_code' => $bankCode,
+                    'account_no' => $normalizedAccount,
+                    'name' => $name,
+                    'surname' => $surname,
+                    'created_from' => 'line_staff',
+                    'register_mode' => 'phone',
+                ];
             }
 
-            // 7) เช็คซ้ำเลขบัญชีด้วย logic เดียวกับ flow สมัครบอท
-            if ($flow->isBankAccountAlreadyUsed($bankCode, $normalizedAccount)) {
+            /*
+            |--------------------------------------------------------------------------
+            | MODE 2: สมัครด้วย Username
+            |--------------------------------------------------------------------------
+            */
+            elseif ($mode === 'username') {
+
+                $username = strtolower(trim((string) $request->input('username')));
+
+                // ตรวจรูปแบบ username
+                if (!preg_match('/^[a-z0-9]+$/', $username)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'รูปแบบยูสเซอร์เนมไม่ถูกต้อง (ใช้ a-z0-9 เท่านั้น)',
+                    ], 200);
+                }
+
+                if ($flow->isUsernameAlreadyUsed($username)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'ยูสเซอร์เนมนี้มีอยู่แล้ว',
+                    ], 200);
+                }
+
+                // normalize เลขบัญชีให้เหมือนเดิม
+                $normalizedAccount = $flow->normalizeAccountNo($accountNo);
+                if (! $normalizedAccount) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'เลขบัญชีไม่ถูกต้อง',
+                    ], 200);
+                }
+
+                // กรณี TW: username-mode ไม่ได้ใช้เบอร์อยู่แล้ว จึงไม่จำเป็นต้องบังคับเลขบัญชี == phone
+                // ถ้าต้องการ enforce เงื่อนไขใหม่ให้บอกได้
+
+                // เช็คบัญชีซ้ำ
+                if ($flow->isBankAccountAlreadyUsed($bankCode, $normalizedAccount)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'เลขบัญชี มีในระบบแล้ว ไม่สามารถใช้ได้',
+                    ], 200);
+                }
+
+                // Payload สำหรับ username-mode
+                $payload = [
+                    'username' => $username,
+                    'bank_code' => $bankCode,
+                    'account_no' => $normalizedAccount,
+                    'name' => $name,
+                    'surname' => $surname,
+                    'created_from' => 'line_staff',
+                    'register_mode' => 'username',
+                ];
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | ถ้า mode ผิด → error
+            |--------------------------------------------------------------------------
+            */
+            else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'เลขบัญชี มีในระบบแล้ว ไม่สามารถใช้ได้',
+                    'message' => 'โหมดสมัครไม่ถูกต้อง',
                 ], 200);
             }
 
-            // 8) สมัครสมาชิกจริงผ่าน Service กลางของระบบ
-            $payload = [
-                'phone' => $normalizedPhone,
-                'bank_code' => $bankCode,
-                'account_no' => $normalizedAccount,
-                'name' => $name,
-                'surname' => $surname,
-                'created_from' => 'line_staff', // ระบุว่ามาจาก Support Staff
-            ];
-
+            /*
+            |--------------------------------------------------------------------------
+            | เรียก RegisterFlowService → สมัครจริง
+            |--------------------------------------------------------------------------
+            */
             $result = $flow->registerFromStaff($payload);
 
             if (! $result['success']) {
@@ -2137,7 +2240,6 @@ class ChatController extends AppBaseController
                 ], 200);
             }
 
-            // สำเร็จ
             return response()->json([
                 'success' => true,
                 'message' => 'สมัครสมาชิกสำเร็จ',
@@ -2146,7 +2248,6 @@ class ChatController extends AppBaseController
 
         } catch (\Throwable $e) {
 
-            // เก็บ log
             Log::channel('line_oa')->error('[LineOA] registerMember error', [
                 'error' => $e->getMessage(),
             ]);

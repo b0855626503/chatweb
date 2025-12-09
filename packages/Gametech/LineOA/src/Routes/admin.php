@@ -66,6 +66,9 @@ Route::domain(
 
                 Route::post('register/check-phone', [ChatController::class, 'checkPhone'])->name('register.check-phone');
 
+                Route::post('register/check-user', [ChatController::class, 'checkUser'])->name('register.check-user');
+
+
                 Route::post('register/member', [ChatController::class, 'registerMember'])->name('register.member');
 
                 Route::post('contacts/{contact}/attach-member', [ChatController::class, 'attachMember'])
@@ -142,11 +145,11 @@ Route::domain(
             Route::get('/', [TopupController::class, 'index'])->defaults('_config', [
                 'view' => 'admin::module.line_topup.index',
             ])->name('admin.line_topup.index');
-            Route::post('create', [TopupController::class, 'create'])->name('admin.line_topup.create');
             Route::post('loaddata', [TopupController::class, 'loadData'])->name('admin.line_topup.loaddata');
-            Route::post('edit', [TopupController::class, 'edit'])->name('admin.line_topup.edit');
             Route::post('update/{id?}', [TopupController::class, 'update'])->name('admin.line_topup.update');
             Route::post('delete', [TopupController::class, 'destroy'])->name('admin.line_topup.delete');
         });
+
     });
+
 });

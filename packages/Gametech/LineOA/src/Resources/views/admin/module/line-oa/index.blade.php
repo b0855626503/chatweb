@@ -11,12 +11,16 @@
 
 @include('admin::module.line-oa.css')
 
+@php
+    $registerMode = config('website.register.mode', 'phone'); // phone หรือ username
+    $regPhoneConfig = config('website.register.phone');
+@endphp
 @section('content')
     <section class="content text-xs">
         <div class="card">
             <div class="card-body">
                 <div id="line-oa-chat-app" class="line-chat-font">
-                    <line-oa-chat ref="lineOaChat"></line-oa-chat>
+                    <line-oa-chat ref="lineOaChat" :register-mode="'{{ $registerMode }}'" :phone-config='@json($regPhoneConfig)'></line-oa-chat>
                 </div>
                 @include('admin::module.line-oa.member-edt-app')
                 @include('admin::module.line-oa.member-refill-app')
@@ -1367,6 +1371,20 @@
     <script type="module">
         Vue.component('line-oa-chat', {
             template: '#line-oa-chat-template',
+            props: {
+                registerMode: {
+                    type: String,
+                    default: 'phone', // 'phone' หรือ 'username'
+                },
+                phoneConfig: {
+                    type: Object,
+                    default: () => ({
+                        length: 10,
+                        min_length: 10,
+                        max_length: 10,
+                    }),
+                },
+            },
             data() {
                 return {
                     conversations: [],
@@ -1440,6 +1458,7 @@
 
                     // modal สมัครสมาชิกแทนลูกค้า
                     registerModal: {
+                        username: '',
                         phone: '',
                         bank_code: '',
                         account_no: '',
@@ -1448,6 +1467,10 @@
                         loading: false,
                         error: '',
                         checkingDuplicate: false, // เช็คซ้ำเบอร์/บัญชี
+
+                        checkingUsername: false,
+                        usernameStatus: null,          // 'ok' | 'duplicate' | 'invalid' | null
+                        usernameStatusMessage: '',
 
                         checkingPhone: false,
                         phoneStatus: null,          // 'ok' | 'duplicate' | 'invalid' | null
@@ -1628,10 +1651,10 @@
                     if (!me) return false;
 
                     // ถ้ามีการล็อกห้อง → ให้เฉพาะคนล็อกตอบได้
-                    if (conv.locked_by_employee_id) {
-                        return true;
-                        // return String(conv.locked_by_employee_id) === String(me);
-                    }
+                    // if (conv.locked_by_employee_id) {
+                    //     return true;
+                    //     // return String(conv.locked_by_employee_id) === String(me);
+                    // }
                     //
                     // // ถ้าไม่มีการล็อก → ให้เฉพาะผู้รับเรื่องตอบได้
                     return true;
@@ -1655,43 +1678,99 @@
                     if (s === 'invalid' || s === 'error') return 'text-danger';
                     return '';
                 },
-
+                usernameStatusClass() {
+                    const s = this.registerModal.usernameStatus;
+                    if (s === 'ok') return 'text-success';
+                    if (s === 'duplicate' || s === 'invalid') return 'text-danger';
+                    return '';
+                },
                 // ของเดิมที่คุณมีอยู่แล้ว ปรับให้คิดสถานะด้วย
                 canSubmitRegister() {
                     const m = this.registerModal;
+                    const mode = this.registerMode || 'phone';   // phone | username | both
 
-                    const phoneDigits = (m.phone || '').replace(/\D/g, '');
-                    const accDigits = (m.account_no || '').replace(/\D/g, '');
-
-                    const phoneOk = phoneDigits.length === 10;
                     const bankOk = !!m.bank_code;
-
-                    let accountOkLength = false;
-                    if (this.isTwBank) {
-                        accountOkLength = accDigits.length === 10;
-                    } else {
-                        accountOkLength = accDigits.length >= 10;
-                    }
-
                     const nameOk = !!m.name;
                     const snameOk = !!m.surname;
 
-                    const noPendingCheck = !m.checkingPhone && !m.checkingAccount;
+                    const accDigits = (m.account_no || '').replace(/\D/g, '');
+                    let accountOkLength = false;
 
-                    // ห้ามสมัครถ้าเบอร์ "ซ้ำ" หรือ "ไม่ถูกต้อง"
-                    const phoneStatusOk = !['duplicate', 'invalid'].includes(m.phoneStatus);
+                    if (this.isTwBank) {
+                        // TW ต้องเท่ากับ phone length ในระบบไทย = 10
+                        accountOkLength = accDigits.length === 10;
+                    } else {
+                        // ธนาคารทั่วไป
+                        accountOkLength = accDigits.length >= 10;
+                    }
 
-                    // ห้ามสมัครถ้าบัญชีสถานะ invalid/error
-                    const accountStatusOk = !['invalid', 'error'].includes(m.accountStatus);
+                    const noPendingCheck =
+                        !m.checkingPhone &&
+                        !m.checkingAccount &&
+                        !m.checkingUsername; // เพิ่ม username check
 
-                    return phoneOk
-                        && bankOk
-                        && accountOkLength
-                        && nameOk
-                        && snameOk
-                        && noPendingCheck
-                        && phoneStatusOk
-                        && accountStatusOk;
+                    // Validation แบบเฉพาะโหมด
+                    if (mode === 'phone') {
+                        const phoneDigits = (m.phone || '').replace(/\D/g, '');
+
+                        // ความยาวต้องสอดคล้อง config
+                        const minLen = this.phoneConfig?.min_length || 8;
+                        const maxLen = this.phoneConfig?.max_length || 15;
+                        const phoneOk = phoneDigits.length >= minLen && phoneDigits.length <= maxLen;
+
+                        // status จาก backend ต้อง ok
+                        const phoneStatusOk = !['duplicate', 'invalid', 'error'].includes(m.phoneStatus);
+
+                        const accountStatusOk = !['invalid', 'error'].includes(m.accountStatus);
+
+                        return phoneOk
+                            && bankOk
+                            && accountOkLength
+                            && nameOk
+                            && snameOk
+                            && noPendingCheck
+                            && phoneStatusOk
+                            && accountStatusOk;
+                    }
+
+                    if (mode === 'username') {
+                        const username = (m.username || '').trim();
+
+                        // username ต้องยาวไม่น้อยกว่า 4 ตัวขึ้นไป
+                        const usernameLenOk = username.length >= 4;
+
+                        // username ผ่าน regex (ล่างสุด)
+                        const usernameFormatOk = /^[a-z0-9]+$/.test(username);
+
+                        // ห้ามซ้ำ / ห้าม invalid / ห้าม error
+                        const usernameStatusOk = m.usernameStatus === 'ok';
+
+                        const accountStatusOk = !['invalid', 'error'].includes(m.accountStatus);
+
+                        return usernameLenOk
+                            && usernameFormatOk
+                            && usernameStatusOk
+                            && bankOk
+                            && accountOkLength
+                            && nameOk
+                            && snameOk
+                            && accountStatusOk
+                            && noPendingCheck;
+                    }
+
+                    // ถ้ามี mode "both" เพิ่มมาในอนาคต (สมัครแบบใดแบบหนึ่งได้)
+                    if (mode === 'both') {
+                        // ให้เลือกอย่างใดอย่างหนึ่ง
+                        // กรณีนี้กำหนดให้ "username มีค่า" → ใช้ username flow
+                        if ((m.username || '').trim() !== '') {
+                            return this.canSubmitRegisterUsernameMode(m);
+                        }
+
+                        // ถ้า username ว่าง → ใช้ phone flow
+                        return this.canSubmitRegisterPhoneMode(m);
+                    }
+
+                    return false;
                 },
                 getMessageDisplay() {
                     return (msg) => {
@@ -2497,19 +2576,111 @@
                         clearTimeout(this.bankAccountCheckTimer);
                     }
                 },
-                onPhoneInput() {
+                onUsernameInput() {
                     // reset state ทุกครั้งที่พิมพ์
+                    this.registerModal.error = null;
+                    this.registerModal.usernameStatus = null;
+                    this.registerModal.usernameStatusMessage = '';
+
+                    let value = (this.registerModal.username || '').toString();
+
+                    // แปลงเป็นตัวเล็กหมด
+                    value = value.toLowerCase();
+
+                    // อนุญาตเฉพาะ a-z และ 0-9
+                    value = value.replace(/[^a-z0-9]/g, '');
+
+                    // จำกัดความยาวตาม policy (ปรับได้)
+                    const maxLen = 10;
+                    if (value.length > maxLen) {
+                        value = value.substring(0, maxLen);
+                    }
+
+                    this.registerModal.username = value;
+
+                    // ถ้ายาวพอ ตามที่ต้องการค่อยยิงไปเช็ค
+                    if (value.length >= 5) {
+                        this.checkUsernameStatus(value);
+                    }
+                },
+                async checkUsernameStatus(username) {
+                    this.registerModal.checkingUsername = true;
+                    this.registerModal.usernameStatus = null;
+                    this.registerModal.usernameStatusMessage = '';
+
+                    try {
+                        // route นี้ให้ชี้ไปที่ ChatController::checkUsername (หรือชื่อที่คุณใช้จริง)
+                        const { data } = await axios.post(this.apiUrl('register/check-user'), {
+                            username: username,
+                        });
+
+                        // สมมติ backend คืน { message: 'success', duplicate: true|false }
+                        if (data.message !== 'success') {
+                            this.registerModal.usernameStatus = 'invalid';
+                            this.registerModal.usernameStatusMessage =
+                                data.message || 'ยูสเซอร์ไม่ถูกต้อง';
+                            return;
+                        }
+
+                        if (data.duplicate === true) {
+                            this.registerModal.usernameStatus = 'duplicate';
+                            this.registerModal.usernameStatusMessage =
+                                'ยูสเซอร์นี้มีอยู่ในระบบแล้ว';
+                        } else {
+                            this.registerModal.usernameStatus = 'ok';
+                            this.registerModal.usernameStatusMessage =
+                                'สามารถใช้ยูสเซอร์นี้สมัครสมาชิกได้';
+                        }
+                    } catch (e) {
+                        console.error('checkUsernameStatus error', e);
+                        this.registerModal.usernameStatus = 'error';
+                        this.registerModal.usernameStatusMessage =
+                            'ตรวจสอบยูสเซอร์ไม่สำเร็จ กรุณาลองใหม่';
+                        this.registerModal.error =
+                            'ตรวจสอบยูสเซอร์ไม่สำเร็จ กรุณาลองใหม่';
+                    } finally {
+                        this.registerModal.checkingUsername = false;
+                    }
+                },
+                async checkUsernameDuplicate(username) {
+                    try {
+                        this.registerModal.checkingDuplicate = true;
+
+                        const { data } = await axios.post(this.apiUrl('register/check-user'), {
+                            username: username,
+                        });
+
+                        if (data.duplicate === true) {
+                            this.registerModal.error = 'ยูสเซอร์นี้สมัครสมาชิกแล้ว';
+                            return false;
+                        }
+
+                        return true;
+                    } catch (e) {
+                        console.error('เช็คยูสเซอร์ซ้ำไม่สำเร็จ', e);
+                        this.registerModal.error = 'ไม่สามารถตรวจสอบยูสเซอร์ได้ กรุณาลองใหม่';
+                        return false;
+                    } finally {
+                        this.registerModal.checkingDuplicate = false;
+                    }
+                },
+                onPhoneInput() {
                     this.registerModal.error = null;
                     this.registerModal.phoneStatus = null;
                     this.registerModal.phoneStatusMessage = '';
 
                     let digits = (this.registerModal.phone || '').replace(/\D/g, '');
-                    if (digits.length > 10) {
-                        digits = digits.substring(0, 10);
-                    }
-                    this.registerModal.phone = digits; // บังคับให้เป็นตัวเลขล้วน
 
-                    if (digits.length === 10) {
+                    const maxLen = this.phoneConfig?.max_length || 15;
+                    const minLen = this.phoneConfig?.min_length || 8;
+
+                    if (digits.length > maxLen) {
+                        digits = digits.substring(0, maxLen);
+                    }
+                    this.registerModal.phone = digits;
+
+                    // ยิงเช็คเมื่อความยาวถึงขั้นต่ำที่กำหนด
+                    if (digits.length >= minLen) {
                         this.checkPhoneStatus(digits);
                     }
                 },
@@ -3754,16 +3925,65 @@
                         return;
                     }
 
+                    // โหมดการสมัคร: 'phone' หรือ 'username'
+                    const mode = this.registerMode || 'phone';
+
+                    // ถ้ามี canSubmitRegister ก็ใช้เป็นด่านแรกเหมือนเดิม
                     if (typeof this.canSubmitRegister !== 'undefined' && !this.canSubmitRegister) {
                         return;
                     }
 
+                    // เคลียร์ error เดิมก่อน
                     this.registerModal.error = null;
+
+                    // ด่านตรวจเพิ่มกัน user/pass ที่ไม่ผ่าน แต่ดันหลุดมา submit
+                    if (mode === 'username') {
+                        // ต้องมี username
+                        if (!this.registerModal.username) {
+                            this.registerModal.error = 'กรุณากรอกยูสเซอร์เนม';
+                            return;
+                        }
+
+                        // ถ้าเคยยิงเช็คแล้ว และสถานะไม่ใช่ ok ให้บล็อก
+                        if (
+                            this.registerModal.usernameStatus &&
+                            this.registerModal.usernameStatus !== 'ok'
+                        ) {
+                            this.registerModal.error =
+                                this.registerModal.usernameStatusMessage ||
+                                'ยูสเซอร์เนมนี้ไม่สามารถใช้สมัครได้';
+                            return;
+                        }
+                    } else if (mode === 'phone') {
+                        // กรณีใช้เบอร์เป็นตัวหลัก จะกันเคสเบอร์ไม่ ok นิดนึง
+                        if (!this.registerModal.phone) {
+                            this.registerModal.error = 'กรุณากรอกเบอร์โทร';
+                            return;
+                        }
+
+                        if (
+                            this.registerModal.phoneStatus &&
+                            this.registerModal.phoneStatus !== 'ok'
+                        ) {
+                            this.registerModal.error =
+                                this.registerModal.phoneStatusMessage ||
+                                'เบอร์โทรนี้ไม่สามารถใช้สมัครได้';
+                            return;
+                        }
+                    }
 
                     const m = this.registerModal;
 
                     const payload = {
-                        phone: m.phone,
+                        // บอก backend ให้รู้ว่าโหมดอะไร
+                        register_mode: mode,          // 'phone' หรือ 'username'
+
+                        // ถ้าเป็นโหมด username ก็ส่ง username ไปด้วย
+                        username: mode === 'username' ? (m.username || null) : null,
+
+                        // เบอร์ยังส่งไปเหมือนเดิม (จะบังคับหรือไม่ให้ backend เป็นคนตัดสินต่อ)
+                        phone: m.phone || null,
+
                         bank_code: m.bank_code,
                         account_no: m.account_no,
                         name: m.name,
@@ -3797,10 +4017,11 @@
                                 this.showAlert(data);
                                 return;
                             }
+
                             this.showAlert(data);
 
                             if (conv && data.member) {
-                                // ที่นี่ถ้าอยาก sync กับ contact/conversation ต่อได้
+                                // ถ้าจะ sync contact/conversation เพิ่มเติม ก็ทำต่อได้ที่นี่
                             }
 
                             if (this.$refs.registerModal) {
@@ -3809,14 +4030,13 @@
                         })
                         .catch((error) => {
                             console.error('[LineOA] submitRegisterByStaff error', error);
-
                             this.registerModal.error = 'ไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่';
                         })
                         .finally(() => {
                             this.registerModal.loading = false;
-
                         });
                 },
+
                 onRegisterModalHidden() {
                     // รอ 1 tick ให้ DOM stable
                     this.$nextTick(() => {

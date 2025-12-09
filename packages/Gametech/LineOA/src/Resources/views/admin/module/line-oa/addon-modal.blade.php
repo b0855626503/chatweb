@@ -400,13 +400,47 @@
         @hidden="onRegisterModalHidden"
 >
     <b-form @submit.prevent="submitRegisterByStaff">
+
+        {{-- ถ้าเป็นโหมด username ให้มีช่อง username แยก --}}
+        <b-form-group
+                v-if="registerMode === 'username'"
+                label="ยูสเซอร์เนม (ใช้ล็อกอิน)"
+                label-for="reg_username"
+        >
+            <b-form-input
+                    id="reg_username"
+                    v-model="registerModal.username"
+                    autocomplete="off"
+                    minlength="5"
+                    maxlength="10"
+                    class="text-lowercase"
+                    @input="onUserNameInput"
+            ></b-form-input>
+            <!-- กำลังตรวจสอบ Username -->
+            <small v-if="registerModal.checkingUsername"
+                   class="d-block mt-1 text-info">
+                กำลังตรวจสอบ Username...
+            </small>
+
+            <!-- สถานะ Username: ถูกต้อง/ซ้ำ/ไม่ถูกต้อง -->
+            <small v-else-if="registerModal.usernameStatusMessage"
+                   class="d-block mt-1"
+                   :class="usernameStatusClass">
+                @{{ registerModal.usernameStatusMessage }}
+            </small>
+        </b-form-group>
+
+        {{-- เบอร์โทร:
+             - โหมด phone = ใช้เป็น username ด้วย → บังคับกรอกและ validate เข้ม
+             - โหมด username = ใช้เป็นข้อมูลติดต่อ/ยืนยันตัวตน → จะบังคับหรือไม่ก็แล้วแต่ policy --}}
         <b-form-group label="เบอร์โทร" label-for="reg_phone">
             <b-form-input
                     id="reg_phone"
                     type="tel"
                     ref="registerPhoneInput"
                     pattern="[0-9]*" inputmode="numeric"
-                    maxlength="10"
+                    :minlength="phoneConfig.min_length"
+                    :maxlength="phoneConfig.max_length"
                     v-model="registerModal.phone"
                     autocomplete="off"
                     @input="onPhoneInput"

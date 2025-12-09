@@ -1076,6 +1076,24 @@ class RegisterFlowService
         return $existsInBankAccount;
     }
 
+    public function isUsernameAlreadyUsed(string $username): bool
+    {
+        // 1) members.tel หรือ members.user_name ใช้เบอร์นี้แล้ว
+        // normalize ให้เป็นตัวเล็กทั้งหมด
+        $username = strtolower(trim($username));
+
+        // ป้องกัน input ผิด เช่นว่าง หรือมีอักขระแปลก
+        if ($username === '' || !preg_match('/^[a-z0-9]+$/', $username)) {
+            return true; // ถือว่าใช้ไม่ได้
+        }
+
+        // ชื่อคอลัมน์ในระบบโบ๊ทบางแบรนด์ใช้ user_name บางที่ใช้ username
+        // และบาง flow เก็บ login_id เป็น username ด้วย
+        return Member::where(function ($q) use ($username) {
+            $q->where('user_name', $username);
+        })->exists();
+    }
+
     public function isBankAccountAlreadyUsed(?string $bankCode, string $accountNo): bool
     {
         // ตอนนี้ bankCode เป็นเลข bank_code ในระบบ
@@ -1114,28 +1132,61 @@ class RegisterFlowService
      */
     public function registerFromStaff(array $payload): array
     {
-        $phone = $payload['phone'] ?? null;
+        // โหมดสมัคร: phone หรือ username (default = phone เพื่อไม่พังของเดิม)
+        $mode = $payload['register_mode'] ?? 'phone';
+
+        $phone    = $payload['phone'] ?? null;
+        $username = isset($payload['username'])
+            ? strtolower(trim((string) $payload['username']))
+            : null;
+
         $bankCode = $payload['bank_code'] ?? null;
         $accountNo = $payload['account_no'] ?? null;
         $name = $payload['name'] ?? null;
         $surname = $payload['surname'] ?? null;
 
-        if (! $phone || ! $bankCode || ! $accountNo || ! $name || ! $surname) {
+        // ตรวจความครบถ้วนตามโหมด
+        if ($mode === 'phone') {
+            if (! $phone || ! $bankCode || ! $accountNo || ! $name || ! $surname) {
+                return [
+                    'success' => false,
+                    'message' => 'ข้อมูลไม่ครบถ้วน',
+                ];
+            }
+        } elseif ($mode === 'username') {
+            if (! $username || ! $bankCode || ! $accountNo || ! $name || ! $surname) {
+                return [
+                    'success' => false,
+                    'message' => 'ข้อมูลไม่ครบถ้วน',
+                ];
+            }
+        } else {
+            // กันเคสส่ง mode แปลกมา
             return [
                 'success' => false,
-                'message' => 'ข้อมูลไม่ครบถ้วน',
+                'message' => 'โหมดการสมัครไม่ถูกต้อง',
             ];
         }
 
         // เตรียม data ส่งเข้า registerFromLineData ให้สอดคล้องกับ flow เดิม
         $data = [
-            'phone' => $phone,
-            'bank_code' => $bankCode,
-            'account_no' => $accountNo,
-            'name' => $name,
-            'surname' => $surname,
+            'bank_code'    => $bankCode,
+            'account_no'   => $accountNo,
+            'name'         => $name,
+            'surname'      => $surname,
             'created_from' => $payload['created_from'] ?? 'line_staff',
+            'register_mode'=> $mode,
         ];
+
+        // phone ใส่เมื่อมี (โหมด phone หรือ username+phone)
+        if ($phone) {
+            $data['phone'] = $phone;
+        }
+
+        // username ใส่เมื่อมี (ใช้กับโหมด username)
+        if ($username) {
+            $data['username'] = $username;
+        }
 
         // แนบ context เพิ่มเติมถ้ามี
         foreach (['line_contact_id', 'line_conversation_id', 'line_account_id', 'employee_id'] as $key) {
@@ -1169,12 +1220,18 @@ class RegisterFlowService
                 $contact = LineContact::find($payload['line_contact_id']);
             }
 
-            if ($contact && empty($contact->member_id) && $phone) {
+            if ($contact && empty($contact->member_id)) {
+
+                // ใช้ username จากผลลัพธ์ registrar เป็นหลัก (ถูกต้องที่สุด)
+                $resolvedUsername = $result->username
+                    ?? $username
+                    ?? $phone;
+
                 LineContact::where('line_user_id', $contact->line_user_id)
                     ->update([
-                        'member_id' => $result->memberId,
-                        'member_mobile' => $phone,
-                        'member_username' => $phone,
+                        'member_id'       => $result->memberId,
+                        'member_mobile'   => $phone,             // อาจเป็น null ในโหมด username
+                        'member_username' => $resolvedUsername,  // รองรับทั้ง phone / username
                     ]);
             }
         } catch (\Throwable $e) {
@@ -1190,15 +1247,16 @@ class RegisterFlowService
         }
 
         return [
-            'success' => true,
-            'message' => $result->message ?? 'สมัครสมาชิกสำเร็จ',
-            'member' => $member,
-            'member_id' => $result->memberId,
-            'username' => $result->username ?? null,
-            'password' => $result->password ?? null,
-            'login_url' => $result->loginUrl ?? null,
+            'success'    => true,
+            'message'    => $result->message ?? 'สมัครสมาชิกสำเร็จ',
+            'member'     => $member,
+            'member_id'  => $result->memberId,
+            'username'   => $result->username ?? null,
+            'password'   => $result->password ?? null,
+            'login_url'  => $result->loginUrl ?? null,
         ];
     }
+
 
     /**
      * ล้างอักขระมองไม่เห็น และ normalize ช่องว่าง
