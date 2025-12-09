@@ -219,6 +219,7 @@
 <script baseUrl="{{ url()->to('/') }}" id="mainscript" src="{{ mix('assets/admin/js/app.js') }}"></script>
 {{--<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.0/dist/alpine.min.js" defer></script>--}}
 <script src="{{ asset('assets/ui/js/ui.js') }}"></script>
+<script src="{{ mix('assets/lineoa/js/lineo.js') }}"></script>
 {{--<script src="{{ asset('vendor/toasty/dist/toasty.min.js') }}"></script>--}}
 
 @stack('scripts')

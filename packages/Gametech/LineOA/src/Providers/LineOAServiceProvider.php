@@ -52,6 +52,16 @@ class LineOAServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__.'/../Resources/views/admin', 'admin');
 
+        $this->registerPublishing();
+
+    }
+
+    protected function registerPublishing(): void
+    {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
         $this->publishes([
             __DIR__.'/../Database/Seeders/LineTemplateRegisterSeeder.php' =>
                 database_path('seeders/LineTemplateRegisterSeeder.php'),
@@ -59,7 +69,11 @@ class LineOAServiceProvider extends ServiceProvider
 
         $this->publishes([
             __DIR__ . '/../Resources/assets/images' => public_path('vendor/line-oa/images'),
-        ], 'public');
+            dirname(__DIR__) . '/Publishable/assets' => public_path('assets/lineoa'),
+        ], 'lineoa-assets');
+
+        // ถ้าโฟลเดอร์จริงของโบ๊ทชื่ออื่น เช่น publishable/assets/js → ก็เปลี่ยน path ให้ตรง
+        // ตัวอย่าง: dirname(__DIR__).'/publishable/assets' → public/assets/lineoa
     }
 
     /**
@@ -83,6 +97,10 @@ class LineOAServiceProvider extends ServiceProvider
 
         $this->mergeConfigFrom(
             dirname(__DIR__).'/Config/services.php', 'services'
+        );
+
+        $this->mergeConfigFrom(
+            dirname(__DIR__).'/Config/line_oa_stickers.php', 'line_oa_stickers'
         );
     }
 }

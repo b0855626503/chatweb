@@ -856,6 +856,18 @@
             background-color: #f1f3f5;
             transform: translateY(-1px);
         }
+
+        .chat-reply-thumb {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .chat-emoji-picker {
+            max-width: 320px;
+            font-size: 18px;
+            z-index: 5;
+        }
     </style>
 
 @endpush

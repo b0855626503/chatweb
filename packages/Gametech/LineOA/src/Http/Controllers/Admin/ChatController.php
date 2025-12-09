@@ -334,6 +334,235 @@ class ChatController extends AppBaseController
     }
 
     /**
+     * สร้างโครง reply_to meta ให้ครอบคลุมทุกประเภท message
+     *
+     * structure ตัวอย่าง:
+     *  - id, type, direction, source, sent_at
+     *  - text        : ข้อความ preview ตัดความยาว
+     *  - raw_text    : ข้อความดิบจาก message->text
+     *  - preview_image: สำหรับ image/sticker/video
+     *  - sticker     : สำหรับ type=sticker (packageId, stickerId, type)
+     *  - image       : สำหรับ type=image (original, preview)
+     *  - video       : สำหรับ type=video (original, preview)
+     *  - audio       : สำหรับ type=audio (url, duration)
+     *  - location    : สำหรับ type=location (title, address, lat, lng)
+     *
+     * @param  \Gametech\LineOA\Models\LineMessage  $replyTo
+     * @return array
+     */
+    protected function buildReplyToMeta(LineMessage $replyTo): array
+    {
+        // base payload decode
+        $payload = $replyTo->payload ?? [];
+        if (is_string($payload)) {
+            try {
+                $payload = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\Throwable $e) {
+                $payload = [];
+            }
+        }
+
+        $messagePayload = [];
+        if (is_array($payload)) {
+            $messagePayload = $payload['message'] ?? $payload;
+        }
+
+        // base meta
+        $rawText = (string) $replyTo->text;
+
+        // preview text
+        $previewText = $rawText;
+        if ($previewText === '') {
+            switch ($replyTo->type) {
+                case 'image':
+                    $previewText = '[รูปภาพ]';
+                    break;
+                case 'sticker':
+                    $previewText = '[สติ๊กเกอร์]';
+                    break;
+                case 'video':
+                    $previewText = '[วิดีโอ]';
+                    break;
+                case 'audio':
+                    $previewText = '[เสียง]';
+                    break;
+                case 'location':
+                    $previewText = '[ตำแหน่งที่ตั้ง]';
+                    break;
+                default:
+                    $previewText = '[' . ($replyTo->type ?: 'ข้อความ') . ']';
+                    break;
+            }
+        }
+        $previewText = mb_strimwidth($previewText, 0, 80, '...');
+
+        $meta = [
+            'id'        => $replyTo->id,
+            'type'      => $replyTo->type,
+            'direction' => $replyTo->direction,
+            'source'    => $replyTo->source,
+            'sent_at'   => optional($replyTo->sent_at)->toIso8601String(),
+            'text'      => $previewText,
+            'raw_text'  => $rawText,
+        ];
+
+        // cast meta เดิม (ของ message ต้นทาง) เผื่อเอาข้อมูลมาช่วย
+        $rawMeta = $replyTo->meta ?? [];
+        if (is_string($rawMeta)) {
+            try {
+                $rawMeta = json_decode($rawMeta, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\Throwable $e) {
+                $rawMeta = [];
+            }
+        }
+        if (! is_array($rawMeta)) {
+            $rawMeta = [];
+        }
+
+        // ---------- แยกตาม type ----------
+        switch ($replyTo->type) {
+            case 'sticker':
+                $pkg  = $messagePayload['packageId']  ?? $messagePayload['package_id']  ?? null;
+                $sid  = $messagePayload['stickerId']  ?? $messagePayload['sticker_id']  ?? null;
+                $type = $messagePayload['stickerResourceType'] ?? null;
+
+                // fallback จาก meta.sticker (เช่น outbound agent)
+                $metaSticker = $rawMeta['sticker'] ?? null;
+                if (is_array($metaSticker)) {
+                    $pkg  = $pkg ?: ($metaSticker['packageId']  ?? $metaSticker['package_id']  ?? null);
+                    $sid  = $sid ?: ($metaSticker['stickerId']  ?? $metaSticker['sticker_id']  ?? null);
+                    $type = $type ?: ($metaSticker['stickerResourceType'] ?? null);
+                }
+
+                if ($pkg && $sid) {
+                    $type = $type ?: 'STATIC';
+
+                    $meta['sticker'] = [
+                        'packageId'           => $pkg,
+                        'package_id'          => $pkg,
+                        'stickerId'           => $sid,
+                        'sticker_id'          => $sid,
+                        'stickerResourceType' => $type,
+                    ];
+
+                    // preview_image สำหรับ sticker
+                    if ($type === 'STATIC') {
+                        $previewImage = "https://stickershop.line-scdn.net/stickershop/v1/sticker/{$sid}/android/sticker.png";
+                    } elseif ($type === 'ANIMATION' || $type === 'ANIMATION_SOUND') {
+                        $previewImage = "https://stickershop.line-scdn.net/stickershop/v1/sticker/{$sid}/android/sticker_animation.png";
+                    } elseif ($type === 'POPUP') {
+                        $previewImage = "https://stickershop.line-scdn.net/stickershop/v1/sticker/{$sid}/android/sticker_popup.png";
+                    } else {
+                        $previewImage = "https://stickershop.line-scdn.net/stickershop/v1/sticker/{$sid}/android/sticker.png";
+                    }
+
+                    $meta['preview_image'] = $previewImage;
+                }
+                break;
+
+            case 'image':
+                // รองรับทั้ง inbound (originalContentUrl/previewImageUrl) และ outbound (contentUrl/previewUrl)
+                $original = $messagePayload['originalContentUrl']
+                    ?? $messagePayload['contentUrl']
+                    ?? $messagePayload['url']
+                    ?? null;
+
+                $preview = $messagePayload['previewImageUrl']
+                    ?? $messagePayload['previewUrl']
+                    ?? $messagePayload['thumbnailUrl']
+                    ?? $original;
+
+                if ($original) {
+                    if (! preg_match('~^https?://~i', $original)) {
+                        $original = url($original);
+                    }
+                }
+                if ($preview) {
+                    if (! preg_match('~^https?://~i', $preview)) {
+                        $preview = url($preview);
+                    }
+                }
+
+                if ($original || $preview) {
+                    $meta['image'] = [
+                        'original' => $original,
+                        'preview'  => $preview ?: $original,
+                    ];
+                    $meta['preview_image'] = $preview ?: $original;
+                }
+                break;
+
+            case 'video':
+                $original = $messagePayload['originalContentUrl']
+                    ?? $messagePayload['contentUrl']
+                    ?? $messagePayload['url']
+                    ?? null;
+
+                $preview = $messagePayload['previewImageUrl']
+                    ?? $messagePayload['previewUrl']
+                    ?? $messagePayload['thumbnailUrl']
+                    ?? null;
+
+                if ($original && ! preg_match('~^https?://~i', $original)) {
+                    $original = url($original);
+                }
+                if ($preview && ! preg_match('~^https?://~i', $preview)) {
+                    $preview = url($preview);
+                }
+
+                if ($original || $preview) {
+                    $meta['video'] = [
+                        'original' => $original,
+                        'preview'  => $preview,
+                    ];
+                    $meta['preview_image'] = $preview ?: null;
+                }
+                break;
+
+            case 'audio':
+                $audioUrl = $messagePayload['originalContentUrl']
+                    ?? $messagePayload['contentUrl']
+                    ?? $messagePayload['url']
+                    ?? null;
+
+                if ($audioUrl && ! preg_match('~^https?://~i', $audioUrl)) {
+                    $audioUrl = url($audioUrl);
+                }
+
+                $duration = $messagePayload['duration'] ?? null;
+
+                if ($audioUrl || $duration) {
+                    $meta['audio'] = [
+                        'url'      => $audioUrl,
+                        'duration' => $duration,
+                    ];
+                }
+                break;
+
+            case 'location':
+                $title     = $messagePayload['title']   ?? null;
+                $address   = $messagePayload['address'] ?? null;
+                $latitude  = $messagePayload['latitude']  ?? null;
+                $longitude = $messagePayload['longitude'] ?? null;
+
+                $meta['location'] = [
+                    'title'     => $title,
+                    'address'   => $address,
+                    'latitude'  => $latitude,
+                    'longitude' => $longitude,
+                ];
+                break;
+
+            default:
+                // type อื่น ๆ ถ้ามี logic เสริมในอนาคต ก็เติมได้
+                break;
+        }
+
+        return $meta;
+    }
+
+
+    /**
      * ส่ง TEXT จาก admin
      */
     public function reply(Request $request, LineConversation $conversation): JsonResponse
@@ -381,21 +610,13 @@ class ChatController extends AppBaseController
         $replyToId = $data['reply_to_message_id'] ?? null;
 
         if ($replyToId) {
-            /** @var \Gametech\LineOA\Models\LineMessage|null $replyTo */
             $replyTo = LineMessage::query()
                 ->where('line_conversation_id', $conversation->id)
                 ->where('id', $replyToId)
                 ->first();
 
             if ($replyTo) {
-                $meta['reply_to'] = [
-                    'id' => $replyTo->id,
-                    'text' => mb_strimwidth((string) $replyTo->text, 0, 80, '...'),
-                    'direction' => $replyTo->direction,
-                    'source' => $replyTo->source,
-                    'type' => $replyTo->type,
-                    'sent_at' => optional($replyTo->sent_at)->toIso8601String(),
-                ];
+                $meta['reply_to'] = $this->buildReplyToMeta($replyTo);
             }
         }
 
@@ -683,6 +904,7 @@ class ChatController extends AppBaseController
     {
         $request->validate([
             'image' => ['required', 'image', 'max:5120'], // 5MB
+            'reply_to_message_id' => ['nullable', 'integer'], // <<== เพิ่ม
         ]);
 
         $file = $request->file('image');
@@ -696,7 +918,7 @@ class ChatController extends AppBaseController
             ], 403);
         }
 
-        // ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานส่งรูปใหม่ → เปิดสถานะกลับเป็น open
+        // ถ้าห้องเคยถูกปิด → เปิดใหม่
         if ($conversation->status === 'closed') {
             $conversation->status = 'open';
             $conversation->closed_by_employee_id = null;
@@ -705,32 +927,53 @@ class ChatController extends AppBaseController
             $conversation->save();
         }
 
-        /** @var LineMessage $message */
+        // -------------------------------------------------------------
+        // meta พื้นฐาน
+        // -------------------------------------------------------------
+        $meta = [
+            'employee_name' => $employee->user_name ?? null,
+        ];
+
+        // -------------------------------------------------------------
+        // รองรับ reply_to (เหมือน reply() และ replySticker)
+        // -------------------------------------------------------------
+        $replyToId = $request->input('reply_to_message_id');
+
+        if ($replyToId) {
+            $replyTo = LineMessage::query()
+                ->where('line_conversation_id', $conversation->id)
+                ->where('id', $replyToId)
+                ->first();
+
+            if ($replyTo) {
+                $meta['reply_to'] = $this->buildReplyToMeta($replyTo);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // สร้าง LineMessage outbound image (เก็บ meta reply_to ด้วย)
+        // -------------------------------------------------------------
         $message = $this->chat->createOutboundImageFromAgent(
             $conversation,
             $file,
             $employeeId,
-            [
-                'employee_name' => $employee->user_name ?? null,
-            ]
+            $meta
         );
 
+        // เตรียม URL ส่ง LINE
         $payloadMsg = $message->payload['message'] ?? [];
         $originalUrl = $payloadMsg['contentUrl'] ?? null;
-        $previewUrl = $payloadMsg['previewUrl'] ?? $originalUrl;
+        $previewUrl  = $payloadMsg['previewUrl'] ?? $originalUrl;
 
-        if ($originalUrl) {
-            $originalUrl = url($originalUrl);
-        }
-        if ($previewUrl) {
-            $previewUrl = url($previewUrl);
-        }
+        if ($originalUrl) $originalUrl = url($originalUrl);
+        if ($previewUrl)  $previewUrl  = url($previewUrl);
 
         $conversation->loadMissing(['account', 'contact.member']);
         $account = $conversation->account;
         $contact = $conversation->contact;
 
         if ($account && $contact && $contact->line_user_id && $originalUrl) {
+
             $result = $this->lineMessaging->sendImageMessage(
                 $account,
                 $contact->line_user_id,
@@ -738,24 +981,28 @@ class ChatController extends AppBaseController
                 $previewUrl
             );
 
-            if (($result['success'] ?? false)) {
-                // ===== ดึง sentMessages.id และ quoteToken มาเก็บลง message =====
+            if (! empty($result['success'])) {
+
+                // เหมือน reply(): เก็บ line_message_id + quote_token
                 $body = $result['body'] ?? null;
+
                 if (is_array($body)) {
                     $sent = $body['sentMessages'] ?? null;
+
                     if (is_array($sent) && ! empty($sent[0])) {
                         $first = $sent[0];
                         $lineMessageId = $first['id'] ?? null;
-                        $quoteToken = $first['quoteToken'] ?? null;
+                        $quoteToken    = $first['quoteToken'] ?? null;
 
-                        $metaForMsg = $message->meta;
+                        $metaForMsg = $message->meta ?? [];
                         if (! is_array($metaForMsg)) {
-                            $metaForMsg = $metaForMsg ? (array) $metaForMsg : [];
+                            $metaForMsg = (array) $metaForMsg;
                         }
 
                         if ($quoteToken) {
                             $metaForMsg['quote_token'] = $quoteToken;
                         }
+
                         $metaForMsg['sent_messages'] = $sent;
 
                         if ($lineMessageId) {
@@ -769,42 +1016,41 @@ class ChatController extends AppBaseController
             } else {
                 Log::channel('line_oa')->warning('[LineChat] ส่งรูปไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
-                    'contact_id' => $contact->id,
-                    'image_url' => $originalUrl,
-                    'error' => $result['error'] ?? null,
-                    'status' => $result['status'] ?? null,
+                    'contact_id'      => $contact->id,
+                    'image_url'       => $originalUrl,
+                    'error'           => $result['error'] ?? null,
+                    'status'          => $result['status'] ?? null,
                 ]);
             }
-        } else {
-            Log::channel('line_oa')->warning('[LineChat] ไม่สามารถส่งรูปไป LINE ได้ (ไม่พบ account/contact/line_user_id หรือ url ว่าง)', [
-                'conversation_id' => $conversation->id,
-                'image_url' => $originalUrl,
-            ]);
         }
 
+        // -------------------------------------------------------------
+        // response กลับไปหลังบ้าน
+        // -------------------------------------------------------------
         return response()->json([
             'message' => 'success',
             'data' => [
-                'id' => $message->id,
-                'direction' => $message->direction,
-                'source' => $message->source,
-                'type' => $message->type,
-                'text' => $message->text,
-                'sent_at' => optional($message->sent_at)->toIso8601String(),
+                'id'                 => $message->id,
+                'direction'          => $message->direction,
+                'source'             => $message->source,
+                'type'               => $message->type,
+                'text'               => $message->text,
+                'sent_at'            => optional($message->sent_at)->toIso8601String(),
                 'sender_employee_id' => $message->sender_employee_id,
-                'sender_bot_key' => $message->sender_bot_key,
-                'meta' => $message->meta,
-                'payload' => $message->payload,
-                'is_pinned' => (bool) $message->is_pinned,
+                'meta'               => $message->meta,
+                'payload'            => $message->payload,
+                'is_pinned'          => (bool) $message->is_pinned,
             ],
         ]);
     }
+
 
     public function replySticker(Request $request, LineConversation $conversation): JsonResponse
     {
         $data = $request->validate([
             'package_id' => ['required', 'string'],
             'sticker_id' => ['required', 'string'],
+            'reply_to_message_id' => ['nullable', 'integer'], // รองรับ reply เหมือน reply()
         ]);
 
         $packageId = trim($data['package_id']);
@@ -816,6 +1062,7 @@ class ChatController extends AppBaseController
             ], 422);
         }
 
+        /** @var \Gametech\Admin\Models\Admin|null $employee */
         $employee = Auth::guard('admin')->user();
         $employeeId = $employee?->code ?? null;
 
@@ -825,24 +1072,44 @@ class ChatController extends AppBaseController
             ], 403);
         }
 
+        // meta พื้นฐาน
+        $meta = [
+            'employee_code' => $employee->code ?? null,
+            'employee_name' => $employee->user_name ?? null,
+        ];
+
+        // -------------------------
+        // ใส่ข้อมูล reply_to ลงใน meta (ถ้ามี)
+        // -------------------------
+        $replyToId = $data['reply_to_message_id'] ?? null;
+
+        if ($replyToId) {
+            $replyTo = LineMessage::query()
+                ->where('line_conversation_id', $conversation->id)
+                ->where('id', $replyToId)
+                ->first();
+
+            if ($replyTo) {
+                $meta['reply_to'] = $this->buildReplyToMeta($replyTo);
+            }
+        }
+
         // 1) บันทึกข้อความ outbound sticker ลง DB
+        /** @var LineMessage $message */
         $message = $this->chat->createOutboundStickerFromAgent(
             $conversation,
             $packageId,
             $stickerId,
             $employeeId,
-            [
-                'employee_code' => $employee->code ?? null,
-                'employee_name' => $employee->name ?? null,
-            ]
+            $meta
         );
 
         // 2) ยิงสติกเกอร์ไปที่ LINE จริง ๆ
+        $conversation->loadMissing(['account', 'contact']);
         $account = $conversation->account;
         $contact = $conversation->contact;
 
         if ($account && $contact && $contact->line_user_id) {
-            // ใช้ helper ใหม่
             $result = $this->lineMessaging->pushSticker(
                 $account,
                 $contact->line_user_id,
@@ -850,12 +1117,43 @@ class ChatController extends AppBaseController
                 $stickerId
             );
 
-            if (! $result['success']) {
+            if (! empty($result['success'])) {
+                // ===== ดึง sentMessages.id และ quoteToken มาเก็บลง message (เหมือน reply() ) =====
+                $body = $result['body'] ?? null;
+                if (is_array($body)) {
+                    $sent = $body['sentMessages'] ?? null;
+                    if (is_array($sent) && ! empty($sent[0])) {
+                        $first         = $sent[0];
+                        $lineMessageId = $first['id'] ?? null;
+                        $quoteToken    = $first['quoteToken'] ?? null;
+
+                        $metaForMsg = $message->meta;
+                        if (! is_array($metaForMsg)) {
+                            $metaForMsg = $metaForMsg ? (array) $metaForMsg : [];
+                        }
+
+                        if ($quoteToken) {
+                            // เก็บแบบเดียวกับฝั่ง reply text
+                            $metaForMsg['quote_token'] = $quoteToken;
+                        }
+
+                        // เก็บ sentMessages ทั้งชุดไว้ debug ทีหลัง
+                        $metaForMsg['sent_messages'] = $sent;
+
+                        if ($lineMessageId) {
+                            $message->line_message_id = $lineMessageId;
+                        }
+
+                        $message->meta = $metaForMsg;
+                        $message->save();
+                    }
+                }
+            } else {
                 Log::warning('[LineChat] ส่งสติกเกอร์ไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
-                    'contact_id' => $contact->id,
-                    'error' => $result['error'] ?? null,
-                    'status' => $result['status'] ?? null,
+                    'contact_id'      => $contact->id,
+                    'error'           => $result['error'] ?? null,
+                    'status'          => $result['status'] ?? null,
                 ]);
             }
         } else {
@@ -867,18 +1165,19 @@ class ChatController extends AppBaseController
         return response()->json([
             'message' => 'success',
             'data' => [
-                'id' => $message->id,
-                'direction' => $message->direction,
-                'source' => $message->source,
-                'type' => $message->type, // 'sticker'
-                'text' => $message->text,
-                'sent_at' => optional($message->sent_at)->toDateTimeString(),
+                'id'                 => $message->id,
+                'direction'          => $message->direction,
+                'source'             => $message->source,
+                'type'               => $message->type, // 'sticker'
+                'text'               => $message->text,
+                'sent_at'            => optional($message->sent_at)->toDateTimeString(),
                 'sender_employee_id' => $message->sender_employee_id,
-                'meta' => $message->meta,
-                'is_pined' => (bool) $message->is_pined,
+                'meta'               => $message->meta,   // ตอนนี้จะมี reply_to, quote_token, sent_messages
+                'is_pined'           => (bool) $message->is_pined, // คง field เดิมไม่ไปแตะ
             ],
         ]);
     }
+
 
     /**
      * ส่งข้อความจาก LINE template (รองรับ JSON หลายข้อความ เช่น text + image)
@@ -1145,6 +1444,7 @@ class ChatController extends AppBaseController
             'template_id' => ['required', 'integer'],
             'vars' => ['array'],
             'preview_only' => ['sometimes', 'boolean'],
+            'reply_to_message_id' => ['nullable', 'integer'], // รองรับ reply_to แบบเดียวกับ reply()/replySticker/replyImage
         ]);
 
         /** @var \Gametech\Admin\Models\Admin|null $employee */
@@ -1186,8 +1486,8 @@ class ChatController extends AppBaseController
         ]);
 
         $contact = $conversation->contact;
-        $member = $contact?->member;
-        $bank = $member?->bank;
+        $member  = $contact?->member;
+        $bank    = $member?->bank;
 
         $displayName =
             $contact->display_name
@@ -1231,17 +1531,17 @@ class ChatController extends AppBaseController
             ?? '';
 
         $baseVars = [
-            'display_name' => $displayName,
-            'username' => $username,
-            'member_id' => $memberId,
-            'phone' => $phone,
-            'bank_name' => $bankName,
-            'game_user' => $member->game_user ?? '',
-            'bank_code' => $bankCode,
-            'account_no' => $accountNo,
-            'login_url' => UrlHelper::loginUrl(),
-            'site_name' => config('app.name', config('app.domain_url')),
-            'support_name' => trim(($employee->name ?? '').' '.($employee->surname ?? '')),
+            'display_name'  => $displayName,
+            'username'      => $username,
+            'member_id'     => $memberId,
+            'phone'         => $phone,
+            'bank_name'     => $bankName,
+            'game_user'     => $member->game_user ?? '',
+            'bank_code'     => $bankCode,
+            'account_no'    => $accountNo,
+            'login_url'     => UrlHelper::loginUrl(),
+            'site_name'     => config('app.name', config('app.domain_url')),
+            'support_name'  => trim(($employee->name ?? '').' '.($employee->surname ?? '')),
         ];
 
         $vars = array_merge($baseVars, $data['vars'] ?? []);
@@ -1280,19 +1580,19 @@ class ChatController extends AppBaseController
                 ];
             } elseif ($kind === 'image') {
                 $original = $item['original'] ?? $item['url'] ?? '';
-                $preview = $item['preview'] ?? $original;
+                $preview  = $item['preview'] ?? $original;
 
                 $original = $this->applyTemplatePlaceholders((string) $original, $vars);
-                $preview = $this->applyTemplatePlaceholders((string) $preview, $vars);
+                $preview  = $this->applyTemplatePlaceholders((string) $preview, $vars);
 
                 if ($original === '') {
                     continue;
                 }
 
                 $lineMessages[] = [
-                    'type' => 'image',
+                    'type'               => 'image',
                     'originalContentUrl' => $original,
-                    'previewImageUrl' => $preview,
+                    'previewImageUrl'    => $preview,
                 ];
             }
             // future: kind อื่นค่อยเพิ่มตรงนี้
@@ -1314,7 +1614,7 @@ class ChatController extends AppBaseController
         }
 
         if (! $previewText) {
-            $firstType = $lineMessages[0]['type'] ?? 'message';
+            $firstType   = $lineMessages[0]['type'] ?? 'message';
             $previewText = '['.$firstType.']';
         }
 
@@ -1322,21 +1622,41 @@ class ChatController extends AppBaseController
         if ($request->boolean('preview_only')) {
             return response()->json([
                 'data' => [
-                    'text' => $previewText,
+                    'text'          => $previewText,
                     'line_messages' => $lineMessages,
                 ],
             ]);
         }
 
-        // ===== 6) จากนี้คือโหมด "ส่งจริง" เหมือนของเดิม =====
+        // ===== 6) จากนี้คือโหมด "ส่งจริง" =====
 
         // ถ้าห้องเคยถูกปิดไว้ แล้วทีมงานส่ง template ใหม่ → เปิดสถานะกลับเป็น open
         if ($conversation->status === 'closed') {
-            $conversation->status = 'open';
-            $conversation->closed_by_employee_id = null;
+            $conversation->status                  = 'open';
+            $conversation->closed_by_employee_id   = null;
             $conversation->closed_by_employee_name = null;
-            $conversation->closed_at = null;
+            $conversation->closed_at               = null;
             $conversation->save();
+        }
+
+        // ---------- เตรียม meta สำหรับ outbound message ----------
+        $metaForOutbound = [
+            'employee_code' => (int) $employeeId,
+            'employee_name' => $employeeName,
+        ];
+
+        // รองรับ reply_to_message_id เหมือน reply()/replySticker/replyImage
+        $replyToId = $data['reply_to_message_id'] ?? null;
+
+        if ($replyToId) {
+            $replyTo = LineMessage::query()
+                ->where('line_conversation_id', $conversation->id)
+                ->where('id', $replyToId)
+                ->first();
+
+            if ($replyTo) {
+                $meta['reply_to'] = $this->buildReplyToMeta($replyTo);
+            }
         }
 
         /** @var LineMessage $message */
@@ -1345,15 +1665,15 @@ class ChatController extends AppBaseController
             $previewText,
             (int) $employeeId,
             [
-                'template_id' => $template->id,
+                'template_id'   => $template->id,
                 'line_messages' => $lineMessages,
-                'vars' => $vars,
+                'vars'          => $vars,
             ],
-            [
-                'template_key' => $template->key ?? null,
-                'template_title' => $template->title ?? $template->description ?? null,
-                'sender_employee_name' => $employeeName,
-            ]
+            array_merge($metaForOutbound, [
+                'template_key'          => $template->key ?? null,
+                'template_title'        => $template->title ?? $template->description ?? null,
+                'sender_employee_name'  => $employeeName,
+            ])
         );
 
         // ===== 7) ส่งไปที่ LINE จริง ๆ =====
@@ -1373,9 +1693,9 @@ class ChatController extends AppBaseController
                 if (is_array($body)) {
                     $sent = $body['sentMessages'] ?? null;
                     if (is_array($sent) && ! empty($sent[0])) {
-                        $first = $sent[0];
+                        $first         = $sent[0];
                         $lineMessageId = $first['id'] ?? null;
-                        $quoteToken = $first['quoteToken'] ?? null;
+                        $quoteToken    = $first['quoteToken'] ?? null;
 
                         $metaForMsg = $message->meta;
                         if (! is_array($metaForMsg)) {
@@ -1399,21 +1719,21 @@ class ChatController extends AppBaseController
             } else {
                 Log::channel('line_oa')->warning('[LineOA] ส่ง quick reply ไป LINE ไม่สำเร็จ', [
                     'conversation_id' => $conversation->id,
-                    'contact_id' => $contact->id ?? null,
-                    'template_id' => $template->id,
-                    'status' => $result['status'] ?? null,
-                    'error' => $result['error'] ?? null,
+                    'contact_id'      => $contact->id ?? null,
+                    'template_id'     => $template->id,
+                    'status'          => $result['status'] ?? null,
+                    'error'           => $result['error'] ?? null,
                 ]);
             }
         } else {
             Log::channel('line_oa')->warning('[LineOA] ไม่สามารถส่ง quick reply ไป LINE ได้ (ไม่พบ account/contact/line_user_id)', [
                 'conversation_id' => $conversation->id,
-                'template_id' => $template->id,
+                'template_id'     => $template->id,
             ]);
         }
 
         return response()->json([
-            'data' => $message,
+            'data' => $message, // meta ภายในจะมี reply_to + quote_token + sent_messages ครบชุด
         ]);
     }
 

@@ -696,10 +696,30 @@
                                                                         </div>
                                                                     </div>
 
-                                                                    <div class="chat-reply-quote">
-                                                                        @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                    <div class="chat-reply-quote d-flex align-items-center">
+                                                                        <template v-if="replyHasPreviewThumb(item.message.meta.reply_to)">
+                                                                            <img
+                                                                                    :src="replyPreviewThumb(item.message.meta.reply_to)"
+                                                                                    class="chat-reply-thumb mr-2"
+                                                                                    alt="preview"
+                                                                            >
+
+                                                                            <!-- ถ้าไม่ใช่สติ๊กเกอร์ ค่อยแสดงข้อความตามปกติ -->
+                                                                            <span
+                                                                                    v-if="item.message.meta.reply_to.type !== 'sticker'"
+                                                                                    class="text-truncate"
+                                                                            >
+            @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+        </span>
+                                                                        </template>
+
+                                                                        <template v-else>
+                                                                            @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                        </template>
                                                                     </div>
+
                                                                 </div>
+
 
                                                                 <div class="whitespace-pre-wrap">
                                                                     <template v-if="item.message.type === 'text'">
@@ -776,7 +796,7 @@
                                                                 </div>
 
                                                                 <div class="chat-time-wrapper d-flex align-items-center mt-1">
-                                                <span class="chat-msg-time text-muted small mr-1">
+                                                <span class="chat-msg-time text-muted mr-1">
                                                     @{{ formatChatTime(item.message.sent_at) }}
                                                 </span>
 
@@ -842,10 +862,30 @@
                                                                         </div>
                                                                     </div>
 
-                                                                    <div class="chat-reply-quote">
-                                                                        @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                    <div class="chat-reply-quote d-flex align-items-center">
+                                                                        <template v-if="replyHasPreviewThumb(item.message.meta.reply_to)">
+                                                                            <img
+                                                                                    :src="replyPreviewThumb(item.message.meta.reply_to)"
+                                                                                    class="chat-reply-thumb mr-2"
+                                                                                    alt="preview"
+                                                                            >
+
+                                                                            <!-- ถ้าไม่ใช่สติ๊กเกอร์ ค่อยแสดงข้อความตามปกติ -->
+                                                                            <span
+                                                                                    v-if="item.message.meta.reply_to.type !== 'sticker'"
+                                                                                    class="text-truncate"
+                                                                            >
+            @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+        </span>
+                                                                        </template>
+
+                                                                        <template v-else>
+                                                                            @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                        </template>
                                                                     </div>
+
                                                                 </div>
+
 
                                                                 <div class="small" v-if="item.message.source === 'bot'">
                                                                     <strong>บอท</strong>
@@ -931,7 +971,7 @@
                                                                 </div>
 
                                                                 <div class="chat-time-wrapper d-flex align-items-center mt-1">
-                                                <span class="chat-msg-time text-muted small mr-1">
+                                                <span class="chat-msg-time text-muted mr-1">
                                                     @{{ formatChatTime(item.message.sent_at) }}
                                                 </span>
 
@@ -969,6 +1009,7 @@
                                         </div>
                                     </template>
                                 </div>
+
                             </div>
 
                             {{-- REPLY BOX --}}
@@ -1018,6 +1059,16 @@
                                         >
                                             <i class="far fa-smile"></i>
                                         </b-button>
+                                        {{-- ปุ่ม emoji ใหม่ --}}
+                                        <b-button
+                                                size="sm"
+                                                variant="link"
+                                                class="chat-tool-btn px-1"
+                                                :disabled="!canReply"
+                                                @click="toggleEmojiPicker"
+                                        >
+                                            <i class="far fa-grin-alt"></i>
+                                        </b-button>
 
                                         <b-button
                                                 size="sm"
@@ -1054,6 +1105,20 @@
                             ส่ง
                         </span>
                                         </b-button>
+                                    </div>
+                                </div>
+                                {{-- Emoji picker เล็ก ๆ --}}
+                                <div v-if="showEmojiPicker" class="mt-1 chat-emoji-picker border rounded p-2 bg-white">
+                                    <div class="d-flex flex-wrap" style="max-height: 140px; overflow-y: auto;">
+                                        <button
+                                                v-for="(emoji, idx) in emojiList"
+                                                :key="'emoji-' + idx"
+                                                type="button"
+                                                class="btn btn-sm btn-light m-1"
+                                                @click="insertEmoji(emoji)"
+                                        >
+                                            @{{ emoji }}
+                                        </button>
                                     </div>
                                 </div>
 
@@ -1201,7 +1266,7 @@
                                                 <i class="fa fa-plus"></i>
                                                 <i class="fa fa-minus"></i>
                                             </div>
-                                            ยอดเงิน
+                                            เพิ่ม/ลด
                                         </b-button>
                                     </div>
 
@@ -3354,14 +3419,75 @@
 
                 // ====== URL สติ๊กเกอร์ LINE ======
                 stickerUrl(msg) {
-                    if (!msg || !msg.payload || !msg.payload.message) return null;
+                    if (!msg) return null;
 
-                    const pkg = msg.payload.message.packageId;
-                    const sid = msg.payload.message.stickerId;
-                    const type = msg.payload.message.stickerResourceType || 'STATIC';
+                    let payload = msg.payload || {};
+
+                    // กันเคส payload เก็บเป็น string JSON
+                    if (typeof payload === 'string') {
+                        try {
+                            payload = JSON.parse(payload);
+                        } catch (e) {
+                            // ถ้า parse ไม่ได้ก็ปล่อยไป ใช้ object เดิม
+                        }
+                    }
+
+                    // 1) พยายามดึงแบบ inbound: payload.message
+                    let message = payload.message || payload || {};
+
+                    let pkg =
+                        message.packageId ||
+                        message.package_id ||
+                        null;
+
+                    let sid =
+                        message.stickerId ||
+                        message.sticker_id ||
+                        null;
+
+                    let type =
+                        message.stickerResourceType ||
+                        null;
+
+                    // 2) ถ้ายังไม่มี pkg/sid ให้ fallback ไปดูใน meta.sticker (เคส outbound agent)
+                    if ((!pkg || !sid) && msg.meta) {
+                        let meta = msg.meta;
+                        if (typeof meta === 'string') {
+                            try {
+                                meta = JSON.parse(meta);
+                            } catch (e) {
+                                // ignore
+                            }
+                        }
+
+                        const stickerMeta = meta && meta.sticker ? meta.sticker : null;
+
+                        if (stickerMeta) {
+                            pkg =
+                                pkg ||
+                                stickerMeta.packageId ||
+                                stickerMeta.package_id ||
+                                null;
+
+                            sid =
+                                sid ||
+                                stickerMeta.stickerId ||
+                                stickerMeta.sticker_id ||
+                                null;
+
+                            type =
+                                type ||
+                                stickerMeta.stickerResourceType ||
+                                null;
+                        }
+                    }
 
                     if (!pkg || !sid) return null;
 
+                    // default type
+                    type = type || 'STATIC';
+
+                    // จากนี่ไปเหมือนเดิม
                     if (type === 'STATIC') {
                         return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
                     }
@@ -3374,8 +3500,10 @@
                         return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker_popup.png`;
                     }
 
+                    // fallback
                     return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
                 },
+
                 // ====== Realtime จาก Echo ======
                 subscribeRealtime() {
                     if (!window.Echo || !window.LineOAEventsChannel) return;
@@ -4578,23 +4706,103 @@
                     // ข้อความต้นทางไม่ใช่ของลูกค้า → ถือเป็นฝั่งพนักงาน / ระบบ
                     return 'พนักงาน';
                 },
-                buildReplyPreviewText(replyMeta) {
-                    if (!replyMeta) return '';
+                replyHasPreviewThumb(rt) {
+                    if (!rt) return false;
+                    // ถ้า backend ใส่ preview_image มาให้
+                    if (rt.preview_image) return true;
 
-                    if (replyMeta.text) {
-                        return replyMeta.text;
+                    // กันเผื่ออนาคต ถ้าอยาก derive จาก field ย่อยเอง
+                    if (rt.sticker && (rt.sticker.stickerId || rt.sticker.sticker_id)) {
+                        return true;
+                    }
+                    if (rt.image && (rt.image.preview || rt.image.original)) {
+                        return true;
+                    }
+                    if (rt.video && rt.video.preview) {
+                        return true;
+                    }
+                    return false;
+                },
+
+                replyPreviewThumb(rt) {
+                    if (!rt) return null;
+
+                    // เคสหลัก: backend ส่ง preview_image มาให้แล้ว
+                    if (rt.preview_image) {
+                        return rt.preview_image;
                     }
 
-                    const type = replyMeta.type || '';
+                    // Fallback เผื่อบาง case
+                    if (rt.image) {
+                        return rt.image.preview || rt.image.original || null;
+                    }
+                    if (rt.video) {
+                        return rt.video.preview || null;
+                    }
 
-                    if (type === 'image') return '[รูปภาพ]';
-                    if (type === 'sticker') return '[สติ๊กเกอร์]';
-                    if (type === 'video') return '[วิดีโอ]';
-                    if (type === 'audio') return '[เสียง]';
-                    if (type === 'location') return '[ตำแหน่งที่ตั้ง]';
+                    // sticker: ถ้า backend ให้แค่ stickerId/packageId มา
+                    if (rt.sticker) {
+                        const sid = rt.sticker.stickerId || rt.sticker.sticker_id;
+                        const type = rt.sticker.stickerResourceType || 'STATIC';
 
-                    return '[' + (type || 'ข้อความ') + ']';
+                        if (!sid) return null;
+
+                        if (type === 'STATIC') {
+                            return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
+                        }
+                        if (type === 'ANIMATION' || type === 'ANIMATION_SOUND') {
+                            return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker_animation.png`;
+                        }
+                        if (type === 'POPUP') {
+                            return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker_popup.png`;
+                        }
+                        return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${sid}/android/sticker.png`;
+                    }
+
+                    return null;
                 },
+
+                // แนะนำให้ update buildReplyPreviewText ให้ใช้ rt.text เป็นหลัก
+                buildReplyPreviewText(rt) {
+                    if (!rt) return '';
+
+                    // 1) เคสสติ๊กเกอร์: ถ้ามี preview_image แล้ว → ไม่ต้องแสดง text ซ้ำ
+                    if (rt.type === 'sticker' && rt.preview_image) {
+                        return '';
+                    }
+
+                    // 2) ถ้ามี text ที่ backend สรุปมาแล้ว ใช้เลย
+                    if (rt.text) {
+                        return rt.text;
+                    }
+
+                    // 3) กันเคสไม่มี text แต่มี raw_text
+                    if (rt.raw_text) {
+                        // ใช้ Array.from เพื่อไม่ตัด emoji ครึ่งตัว (split surrogate pair)
+                        const chars = Array.from(rt.raw_text);
+                        if (chars.length > 80) {
+                            return chars.slice(0, 80).join('') + '...';
+                        }
+                        return rt.raw_text;
+                    }
+
+                    // 4) fallback ตาม type (เผื่อกรณีไม่มี text จริง ๆ)
+                    switch (rt.type) {
+                        case 'image':
+                            return '[รูปภาพ]';
+                        case 'sticker':
+                            return '[สติ๊กเกอร์]';
+                        case 'video':
+                            return '[วิดีโอ]';
+                        case 'audio':
+                            return '[เสียง]';
+                        case 'location':
+                            return '[ตำแหน่งที่ตั้ง]';
+                        default:
+                            return '[ข้อความ]';
+                    }
+                },
+
                 // url รูปที่อยู่หัว (ใช้ของลูกค้าเท่านั้น)
                 replyToAvatarUrl(message) {
                     const meta = message.meta || {};
@@ -4821,12 +5029,11 @@
                 },
 
                 // URL รูป preview ของสติกเกอร์
-                buildStickerThumbnailUrl(sticker) {
-                    // ใช้ path แบบ android ตามที่ LINE ใช้จริง
+                buildStickerThumbnailUrl(stickerId) {
                     return (
-                        'https://stickershop.line-scdn.net/stickershop/v1/sticker/'
-                        + sticker.stickerId
-                        + '/android/sticker.png'
+                        'https://stickershop.line-scdn.net/stickershop/v1/sticker/' +
+                        stickerId +
+                        '/android/sticker.png'
                     );
                 },
 

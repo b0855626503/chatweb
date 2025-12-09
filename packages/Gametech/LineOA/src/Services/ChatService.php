@@ -41,9 +41,57 @@ class ChatService
         $text        = Arr::get($event, 'message.text');
         $sentAt      = Arr::get($event, 'timestamp');
 
-        $markAsReadToken = Arr::get($event, 'message.markAsReadToken');
-        $quoteToken      = Arr::get($event, 'message.quoteToken');
-        $quotedMessageId = Arr::get($event, 'message.quotedMessageId'); // << ตัวนี้สำคัญ
+        // ------------------------------------------------------------------
+        // ดึง token ต่าง ๆ จาก event ให้ครอบคลุมทั้ง camelCase / snake_case
+        // และทั้งที่อยู่ใน message.* กับ root event
+        // ------------------------------------------------------------------
+
+        // markAsReadToken
+        $markAsReadToken = Arr::get($event, 'message.markAsReadToken')
+            ?? Arr::get($event, 'message.mark_as_read_token')
+            ?? Arr::get($event, 'markAsReadToken')
+            ?? Arr::get($event, 'mark_as_read_token');
+
+        // quoteToken
+        $quoteToken = Arr::get($event, 'message.quoteToken')
+            ?? Arr::get($event, 'message.quote_token')
+            ?? Arr::get($event, 'quoteToken')
+            ?? Arr::get($event, 'quote_token');
+
+        // quotedMessageId
+        $quotedMessageId = Arr::get($event, 'message.quotedMessageId')
+            ?? Arr::get($event, 'message.quoted_message_id')
+            ?? Arr::get($event, 'quotedMessageId')
+            ?? Arr::get($event, 'quoted_message_id');
+
+        // replyToken (สำหรับใช้ต่อ/เก็บ meta)
+        $replyToken = Arr::get($event, 'replyToken')
+            ?? Arr::get($event, 'reply_token');
+
+        // ------------------------------------------------------------------
+        // เตรียม meta base ที่จะใช้กับทุก message type (ไม่ใช่แค่ text)
+        // ------------------------------------------------------------------
+        $baseMeta = [];
+
+        if ($markAsReadToken) {
+            $baseMeta['markAsReadToken']    = $markAsReadToken;
+            $baseMeta['mark_as_read_token'] = $markAsReadToken;
+        }
+
+        if ($quoteToken) {
+            $baseMeta['quoteToken']  = $quoteToken;
+            $baseMeta['quote_token'] = $quoteToken;
+        }
+
+        if ($quotedMessageId) {
+            $baseMeta['quotedMessageId']    = $quotedMessageId;
+            $baseMeta['quoted_message_id']  = $quotedMessageId;
+        }
+
+        if ($replyToken) {
+            $baseMeta['replyToken']  = $replyToken;
+            $baseMeta['reply_token'] = $replyToken;
+        }
 
         // timestamp ms → sec
         $sentAtCarbon = $sentAt
@@ -59,9 +107,8 @@ class ChatService
             $text,
             $sentAtCarbon,
             $log,
-            $markAsReadToken,
-            $quoteToken,
-            $quotedMessageId
+            $quotedMessageId,
+            $baseMeta
         ) {
             // 1) contact
             $contact = $this->getOrCreateContact($account, $userId);
@@ -78,20 +125,8 @@ class ChatService
             // 2) conversation (รองรับ reuse ห้องเดิม + auto reopen)
             $conversation = $this->getOrCreateConversation($account, $contact);
 
-            // 3) meta เบื้องต้น
-            $meta = [];
-
-            if ($markAsReadToken) {
-                $meta['mark_as_read_token'] = $markAsReadToken;
-            }
-
-            if ($quoteToken) {
-                $meta['quote_token'] = $quoteToken;
-            }
-
-            if ($quotedMessageId) {
-                $meta['quoted_message_id'] = $quotedMessageId;
-            }
+            // 3) meta เบื้องต้นจาก token ต่าง ๆ
+            $meta = $baseMeta;
 
             // 3) สร้าง message (inbound)
             /** @var LineMessage $message */
@@ -195,9 +230,9 @@ class ChatService
                     }
                 } catch (\Throwable $e) {
                     \Log::channel('line_oa')->warning('[LineChat] attach reply_to by quotedMessageId failed', [
-                        'message_id'       => $message->id,
-                        'quoted_message_id'=> $quotedMessageId,
-                        'error'            => $e->getMessage(),
+                        'message_id'        => $message->id,
+                        'quoted_message_id' => $quotedMessageId,
+                        'error'             => $e->getMessage(),
                     ]);
                 }
             }
@@ -253,6 +288,7 @@ class ChatService
             return $message;
         });
     }
+
 
     /**
      * ใช้ตอนฝั่งแอดมินตอบ (outbound จาก agent) - TEXT
@@ -359,7 +395,10 @@ class ChatService
             // ฝังข้อมูลสติกเกอร์ลง meta เพื่อให้ UI นำไปใช้แสดงผลได้
             $metaPayload['sticker'] = [
                 'package_id' => $packageId,
+                'packageId' => $packageId,
                 'sticker_id' => $stickerId,
+                'stickerId' => $stickerId,
+                'stickerResourceType' => 'STATIC',
             ];
 
             // ✅ payload ที่เราจะยิงออกไปจริง ๆ (สำหรับเก็บลง DB)
