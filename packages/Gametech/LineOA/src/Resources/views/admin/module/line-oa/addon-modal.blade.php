@@ -414,7 +414,7 @@
                     minlength="5"
                     maxlength="10"
                     class="text-lowercase"
-                    @input="onUserNameInput"
+                    @input="onUsernameInput"
             ></b-form-input>
             <!-- กำลังตรวจสอบ Username -->
             <small v-if="registerModal.checkingUsername"
@@ -720,33 +720,43 @@
          title="เลือกสติกเกอร์"
          size="lg"
          hide-footer>
-    <div v-if="stickerLoading" class="text-center py-4">
-        <b-spinner small></b-spinner>
-        <span class="ml-2">กำลังโหลดสติกเกอร์...</span>
+
+    <!-- เลือกชุดสติกเกอร์จาก config -->
+    <div class="mb-3" v-if="stickerPackOptions.length">
+        <b-form-select
+                v-model="selectedStickerPackId"
+                :options="stickerPackOptions">
+        </b-form-select>
+    </div>
+
+    <div v-if="!activePack">
+        <div class="text-muted text-center py-3">
+            ยังไม่ได้กำหนดชุดสติกเกอร์ใน config/line_oa_stickers.php
+        </div>
     </div>
 
     <div v-else>
         <b-row>
             <b-col cols="3"
-                   v-for="sticker in stickers"
-                   :key="sticker.packageId + ':' + sticker.stickerId"
+                   v-for="stickerId in activeStickers"
+                   :key="activePackageId + ':' + stickerId"
                    class="mb-3 text-center">
                 <div class="gt-sticker-item"
-                     @click="selectSticker(sticker)"
+                     @click="selectStickerFromPack(activePackageId, stickerId)"
                      style="cursor: pointer;">
                     <img
-                            :src="buildStickerThumbnailUrl(sticker)"
+                            :src="buildStickerThumbnailUrl(stickerId)"
                             class="img-fluid mb-1"
-                            style="max-height: 100px; object-fit: contain;"
-                    >
+                            style="max-height: 100px; object-fit: contain;">
                 </div>
             </b-col>
         </b-row>
 
-        <div v-if="!stickers.length" class="text-muted text-center py-3">
-            ไม่พบสติกเกอร์ที่กำหนดไว้
+        <div v-if="!activeStickers.length" class="text-muted text-center py-3">
+            ชุดสติกเกอร์นี้ยังไม่ได้กำหนดรายการ stickerId
         </div>
     </div>
 </b-modal>
+
 
 

@@ -14,13 +14,19 @@
 @php
     $registerMode = config('website.register.mode', 'phone'); // phone หรือ username
     $regPhoneConfig = config('website.register.phone');
+    $stickerPacks = config('line_oa_stickers.packs', []);
 @endphp
 @section('content')
     <section class="content text-xs">
         <div class="card">
             <div class="card-body">
                 <div id="line-oa-chat-app" class="line-chat-font">
-                    <line-oa-chat ref="lineOaChat" :register-mode="'{{ $registerMode }}'" :phone-config='@json($regPhoneConfig)'></line-oa-chat>
+                    <line-oa-chat ref="lineOaChat"
+                                  :register-mode="'{{ $registerMode }}'"
+                                  :phone-config='@json($regPhoneConfig)'
+                                  :sticker-packs='@json($stickerPacks)'
+                    >
+                    </line-oa-chat>
                 </div>
                 @include('admin::module.line-oa.member-edt-app')
                 @include('admin::module.line-oa.member-refill-app')
@@ -1384,6 +1390,10 @@
                         max_length: 10,
                     }),
                 },
+                stickerPacks: {
+                    type: Array,
+                    default: () => [],
+                },
             },
             data() {
                 return {
@@ -1552,27 +1562,7 @@
 
                     pinnedPanelExpanded: false,
                     hidePinnedPanel: false,
-
-                    stickers: [
-                        // ตัวอย่าง: LINE default sticker pack (packageId = "1")
-                        { packageId: '1', stickerId: '1' },
-                        { packageId: '1', stickerId: '2' },
-                        { packageId: '1', stickerId: '3' },
-                        { packageId: '1', stickerId: '4' },
-                        { packageId: '1', stickerId: '5' },
-                        { packageId: '1', stickerId: '6' },
-                        { packageId: '1', stickerId: '7' },
-                        { packageId: '1', stickerId: '8' },
-                        { packageId: '1', stickerId: '9' },
-                        { packageId: '1', stickerId: '10' },
-                        { packageId: '1', stickerId: '11' },
-                        { packageId: '1', stickerId: '12' },
-                        { packageId: '1', stickerId: '13' },
-                        { packageId: '1', stickerId: '14' },
-                        { packageId: '1', stickerId: '15' },
-                        { packageId: '1', stickerId: '16' },
-                        { packageId: '1', stickerId: '17' },
-                    ],
+                    selectedStickerPackId: null,
                     stickerLoading: false,
                 };
             },
@@ -1594,7 +1584,37 @@
                     this.unsubscribeRealtime();
                 }
             },
+            mounted() {
+                // default เลือก pack แรกถ้ามี
+                if (this.stickerPacks.length > 0 && !this.selectedStickerPackId) {
+                    this.selectedStickerPackId = this.stickerPacks[0].id;
+                }
+            },
             computed: {
+                stickerPackOptions() {
+                    return (this.stickerPacks || []).map(p => ({
+                        value: p.id,
+                        text: p.title,
+                    }));
+                },
+
+                activePack() {
+                    if (!this.stickerPacks || this.stickerPacks.length === 0) {
+                        return null;
+                    }
+                    return (
+                        this.stickerPacks.find(p => p.id === this.selectedStickerPackId) ||
+                        this.stickerPacks[0]
+                    );
+                },
+
+                activePackageId() {
+                    return this.activePack ? this.activePack.package_id : null;
+                },
+
+                activeStickers() {
+                    return this.activePack ? (this.activePack.stickers || []) : [];
+                },
                 notesCount() {
                     return this.notes ? this.notes.length : 0;
                 },
@@ -4802,11 +4822,14 @@
 
                 // URL รูป preview ของสติกเกอร์
                 buildStickerThumbnailUrl(sticker) {
-                    // NOTE: บาง pack อาจใช้ path แตกต่างกัน แต่ของ default จะใช้ pattern นี้ได้
-                    return 'https://stickershop.line-scdn.net/stickershop/v1/sticker/'
+                    // ใช้ path แบบ android ตามที่ LINE ใช้จริง
+                    return (
+                        'https://stickershop.line-scdn.net/stickershop/v1/sticker/'
                         + sticker.stickerId
-                        + '/IOS/sticker.png';
+                        + '/android/sticker.png'
+                    );
                 },
+
 
                 openStickerModal() {
                     if (!this.selectedConversation) {
@@ -4815,44 +4838,38 @@
                     this.$refs.stickerModal && this.$refs.stickerModal.show();
                 },
 
-                async selectSticker(sticker) {
-                    if (!this.selectedConversation) {
-                        return;
-                    }
+                async selectStickerFromPack(packageId, stickerId) {
+                    if (!this.selectedConversation) return;
 
                     try {
-                        this.stickerLoading = true;
-
                         const convId = this.selectedConversation.id;
 
                         const resp = await axios.post(
                             this.apiUrl('conversations/' + convId + '/reply-sticker'),
                             {
-                                package_id: sticker.packageId,
-                                sticker_id: sticker.stickerId,
+                                package_id: packageId,
+                                sticker_id: stickerId,
                             }
                         );
 
                         const body = resp.data || {};
                         const msg = body.data || null;
 
-                        // ตรงนี้แล้วแต่โค้ดเดิมของคุณว่าเก็บ message ยังไง
-                        // ถ้ามี method appendMessage() ก็ใช้เลย
                         if (msg && typeof this.appendMessage === 'function') {
                             this.appendMessage(msg);
-                        } else if (Array.isArray(this.messages)) {
+                        } else if (Array.isArray(this.messages) && msg) {
                             this.messages.push(msg);
                         }
 
                         this.$refs.stickerModal && this.$refs.stickerModal.hide();
                     } catch (e) {
                         console.error('send sticker failed', e);
-                        this.$bvToast && this.$bvToast.toast(
-                            'ส่งสติกเกอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
-                            { title: 'เกิดข้อผิดพลาด', variant: 'danger', solid: true }
-                        );
-                    } finally {
-                        this.stickerLoading = false;
+                        this.$bvToast &&
+                        this.$bvToast.toast('ส่งสติกเกอร์ไม่สำเร็จ กรุณาลองใหม่', {
+                            title: 'เกิดข้อผิดพลาด',
+                            variant: 'danger',
+                            solid: true,
+                        });
                     }
                 },
 
@@ -5466,6 +5483,7 @@
 
             mounted() {
                 this.loadBankAccount();
+
             },
 
             methods: {
