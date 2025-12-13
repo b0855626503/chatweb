@@ -3,20 +3,18 @@
 namespace Gametech\Admin\Providers;
 
 use Codedge\Updater\Traits\UseVersionFile;
-use Codedge\Updater\UpdaterFacade;
 use Gametech\Admin\Bouncer;
 use Gametech\Admin\Facades\Bouncer as BouncerFacade;
 use Gametech\Admin\Models\AdminProxy;
 use Gametech\Admin\Models\RoleProxy;
 use Gametech\Admin\Observers\AdminObserver;
 use Gametech\Admin\Observers\RoleObserver;
-use Gametech\Core\Tree;
 use Gametech\Core\Core;
+use Gametech\Core\Tree;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -29,25 +27,37 @@ class AdminServiceProvider extends ServiceProvider
      */
     public function boot(Router $router)
     {
-        // ถ้า helpers ถูก autoload ผ่าน composer แล้ว ไม่ต้อง include ตรงนี้
-        // include __DIR__ . '/../Http/helpers.php';
-
         AdminProxy::observe(AdminObserver::class);
         RoleProxy::observe(RoleObserver::class);
 
-        // โหมดจาก Core (มี 1 record)
-        $config = app()->make(Core::class)->getConfigData();
-        if ($config->seamless == 'Y') {
-            $this->registerConfigSeamless();
-        } else {
-            if ($config->multigame_open == 'Y') {
-                $this->registerConfig();
+        /**
+         * จุดสำคัญ:
+         * - หลีกเลี่ยงการเรียก Core/DB หนัก ๆ ใน CLI / early bootstrap
+         * - เมนู/วิวก็ไม่จำเป็นใน console อยู่แล้ว
+         */
+        if (! $this->app->runningInConsole()) {
+            // โหมดจาก Core (มี 1 record)
+            // ใช้ app('core') เป็นหลักเพื่อไม่ผูกกับ helper timing
+            /** @var Core $core */
+            $core = $this->app->bound('core') ? $this->app->make('core') : $this->app->make(Core::class);
+            $config = $core->getConfigData();
+
+            if ($config && ($config->seamless ?? null) === 'Y') {
+                $this->registerConfigSeamless();
             } else {
-                $this->registerConfigSingle();
+                if ($config && ($config->multigame_open ?? null) === 'Y') {
+                    $this->registerConfig();
+                } else {
+                    $this->registerConfigSingle();
+                }
             }
+        } else {
+            // console ไม่ต้องแบก config menu/acl mode
+            // ยัง merge config ใน registerConfig* ได้ถ้าคุณต้องการให้ CLI อ่าน config('menu.admin')
+            // แต่ส่วนใหญ่ artisan ไม่ต้องใช้เมนู
         }
 
-        // โหลด routes ใน boot
+        // โหลด routes
         $this->loadRoutesFrom(__DIR__ . '/../Http/routes.php');
 
         // โหลด views
@@ -66,14 +76,11 @@ class AdminServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // assets publish
-//        $this->publishes([
-//            __DIR__ . '/../../publishable/assets' => public_path('assets/admin'),
-//        ], 'public');
-
         // ACL + Bouncer
         $this->registerACL();
         $this->registerBouncer();
+
+        // helpers
         $this->loadHelpers();
     }
 
@@ -83,7 +90,7 @@ class AdminServiceProvider extends ServiceProvider
     protected function registerConfig()
     {
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/admin-menu.php', 'menu.admin');
-        $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl.php',        'acl');
+        $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl.php', 'acl');
     }
 
     /**
@@ -92,7 +99,7 @@ class AdminServiceProvider extends ServiceProvider
     protected function registerConfigSingle()
     {
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/admin-menu-single.php', 'menu.admin');
-        $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl-single.php',        'acl');
+        $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl-single.php', 'acl');
     }
 
     /**
@@ -101,7 +108,7 @@ class AdminServiceProvider extends ServiceProvider
     protected function registerConfigSeamless()
     {
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/admin-menu-seamless.php', 'menu.admin');
-        $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl-seamless.php',        'acl');
+        $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl-seamless.php', 'acl');
     }
 
     /**
@@ -111,7 +118,6 @@ class AdminServiceProvider extends ServiceProvider
     {
         $menuComposer = function ($view) {
             static $menuTree = null; // cache ต่อรีเควสต์
-            static $aclKeys  = null; // cache ต่อรีเควสต์
 
             if ($menuTree) {
                 $view->with('menu', $menuTree);
@@ -123,43 +129,38 @@ class AdminServiceProvider extends ServiceProvider
             // ยังไม่ล็อกอิน → ส่งเมนูว่าง (กัน dereference null)
             $user = Auth::guard('admin')->user();
             if (! $user) {
-                $view->with('menu', $tree);
+                $menuTree = $tree;
+                $view->with('menu', $menuTree);
                 return;
             }
 
             $permissionType     = $user->role->permission_type ?? 'all';
             $allowedPermissions = (array) ($user->role->permissions ?? []);
 
-            // ดึง key ใน ACL แบบปลอดภัย (สตริงเท่านั้น)
-            if ($aclKeys === null) {
-                $aclKeys = collect((array) config('acl', []))
-                    ->pluck('key')
-                    ->filter(fn($v) => is_string($v) && $v !== '')
-                    ->unique()
-                    ->values()
-                    ->all();
-            }
-
             $menu = (array) config('menu.admin');
 
-//            dump($menu);
-
             foreach ($menu as $index => $item) {
-                if (!bouncer()->hasPermission($item['key'])) {
+                if (! bouncer()->hasPermission($item['key'])) {
                     continue;
                 }
 
-                if ($index + 1 < count(config('menu.admin')) && $permissionType != 'all') {
-                    $permission = config('menu.admin')[$index + 1];
+                if ($index + 1 < count($menu) && $permissionType !== 'all') {
+                    $permission = $menu[$index + 1] ?? null;
 
-                    if (substr_count($permission['key'], '.') == 2 && substr_count($item['key'], '.') == 1) {
-                        foreach ($allowedPermissions as $key => $value) {
-                            if ($item['key'] == $value) {
-                                $neededItem = $allowedPermissions[$key + 1];
+                    if ($permission
+                        && substr_count(($permission['key'] ?? ''), '.') == 2
+                        && substr_count(($item['key'] ?? ''), '.') == 1) {
 
-                                foreach (config('menu.admin') as $key1 => $findMatced) {
-                                    if ($findMatced['key'] == $neededItem) {
-                                        $item['route'] = $findMatced['route'];
+                        foreach ($allowedPermissions as $k => $v) {
+                            if (($item['key'] ?? null) === $v) {
+                                $neededItem = $allowedPermissions[$k + 1] ?? null;
+
+                                if ($neededItem) {
+                                    foreach ($menu as $candidate) {
+                                        if (($candidate['key'] ?? null) === $neededItem) {
+                                            $item['route'] = $candidate['route'] ?? ($item['route'] ?? null);
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -170,71 +171,22 @@ class AdminServiceProvider extends ServiceProvider
                 $tree->add($item, 'menu');
             }
 
+            // เรียงเมนูด้วย core()->sortItems ถ้ามี (ยึดของเดิม)
             $tree->items = core()->sortItems($tree->items);
 
-            $view->with('menu', $tree);
+            // เซ็ต currentRoute ให้ blade เดิมใช้งาน (กันกรณีเดิมพึ่งพา)
+            $routeName = Route::currentRouteName() ?? '';
+            $group     = Str::before(Str::after($routeName, 'admin.'), '.');
+            if ($group) {
+                $tree->currentRoute = $group;
+            }
 
-//            foreach ($menu as $index => $item) {
-//                $key = $item['key'] ?? null;
-//
-//                // เช็คสิทธิ์เฉพาะเมนูที่ "มีใน ACL"
-//                if ($key && in_array($key, $aclKeys, true)) {
-//                    if (! bouncer()->hasPermission($key)) {
-//                        continue;
-//                    }
-//                }
-//                // ถ้า key ไม่มีใน ACL → แสดงได้ทุกคน
-//
-//                // เติม route ให้หัวข้อ ตามลอจิกเดิม
-//                if ($index + 1 < count($menu) && $permissionType !== 'all') {
-//                    $permission = $menu[$index + 1] ?? null;
-//
-//                    if ($permission
-//                        && substr_count($permission['key'] ?? '', '.') == 2
-//                        && substr_count($item['key'] ?? '', '.') == 1) {
-//
-//                        foreach ($allowedPermissions as $k => $v) {
-//                            if (($item['key'] ?? null) === $v) {
-//                                $needed = $allowedPermissions[$k + 1] ?? null;
-//
-//                                if ($needed) {
-//                                    foreach ($menu as $candidate) {
-//                                        if (($candidate['key'] ?? null) === $needed) {
-//                                            $item['route'] = $candidate['route'] ?? ($item['route'] ?? null);
-//                                            break;
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                // ถ้ามี route แต่ระบบไม่มี route นี้จริง → ข้าม
-//                if (isset($item['route']) && ! Route::has($item['route'])) {
-//                    continue;
-//                }
-//
-//                $tree->add($item, 'menu');
-//            }
-//
-//            // เรียงเมนูด้วย core()->sortItems ถ้ามี
-//            try { $tree->items = core()->sortItems($tree->items); } catch (\Throwable $e) {}
-//
-//            // เซ็ต currentRoute ให้ blade เดิมใช้งาน
-//            $routeName = Route::currentRouteName() ?? '';                    // e.g. admin.marketing_team.index
-//            $group     = Str::before(Str::after($routeName, 'admin.'), '.'); // -> marketing_team
-//            if ($group) {
-//                $tree->currentRoute = $group;
-//            }
-//
-//            $menuTree = $tree;
-//            $view->with('menu', $menuTree);
+            $menuTree = $tree;
+            $view->with('menu', $menuTree);
         };
 
-        // ✅ แชร์เมนูให้ทั้ง layout และ module
         view()->composer('admin::layouts.*', $menuComposer);
-        view()->composer('admin::module.*',       $menuComposer);
+        view()->composer('admin::module.*', $menuComposer);
 
         // ✅ ACL สำหรับ module views
         view()->composer(['admin::module.*'], function ($view) {
@@ -245,11 +197,10 @@ class AdminServiceProvider extends ServiceProvider
         view()->composer(['admin::layouts.*'], function ($view) {
             $this->deleteVersionFile();
             $newpatch = false;
-            $current = config('self-update.version_installed');
+            $current  = config('self-update.version_installed');
             $view->with('version', $current)->with('patch', $newpatch);
         });
     }
-
 
     /**
      * Registers acl to entire application
@@ -288,19 +239,23 @@ class AdminServiceProvider extends ServiceProvider
      */
     protected function registerBouncer()
     {
-        $loader = AliasLoader::getInstance();
-        $loader->alias('bouncer', BouncerFacade::class);
+        // facade alias (คงไว้เพื่อไม่กระทบของเดิม ถ้ามีที่ไหนใช้ bouncer::...)
+        AliasLoader::getInstance()->alias('bouncer', BouncerFacade::class);
 
-        $this->app->singleton('bouncer', function () {
-            return app()->make(Bouncer::class);
+        // source of truth: app('bouncer')
+        $this->app->singleton('bouncer', function ($app) {
+            return $app->make(Bouncer::class);
         });
+
+        // type-hint Bouncer::class → ได้ instance เดียวกับ app('bouncer')
+        $this->app->alias('bouncer', Bouncer::class);
     }
 
     protected function loadHelpers(): void
     {
         $file = __DIR__ . '/../Http/helpers.php';
 
-        if (file_exists($file)) {
+        if (is_file($file)) {
             require_once $file;
         }
     }
