@@ -17,7 +17,9 @@ class SmsDeliveryReceiptWebhookController extends Controller
     {
         // Vonage (SMS API) มักเป็น GET query string, บางเจ้าจะเป็น POST form/json
         $payload = $request->all();
-
+        Log::channel('sms')->warning('payload', [
+            'payload' => $payload
+        ]);
         // กัน provider แปลก ๆ เข้ามามั่ว (แต่ยังตอบ 200 กัน retry รัว)
         $provider = strtolower(trim($provider));
 

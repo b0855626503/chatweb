@@ -39,13 +39,23 @@ return [
 
             'webhooks' => [
                 'dlr' => [
-                    'url'       => env('VONAGE_DLR_URL'),
-                    'method'    => 'GET',
+                    // ตั้งให้ตรงกับ route จริง: /api/sms/webhook/vonage/dlr
+                    // แนะนำให้ใส่ token ใน URL ด้วย เช่น .../dlr?token=xxxx
+                    'url'    => env('VONAGE_DLR_URL'),
+
+                    // แนะนำ POST-JSON เพื่อความเสถียร (Vonage UI มีให้เลือก)
+                    // ถ้าคุณยังไม่ได้เปลี่ยนใน UI ให้คง GET ไว้ก็ได้
+                    'method' => env('VONAGE_DLR_METHOD', 'POST-JSON'),
+
+                    // Shared token (ชัวร์สุด): middleware จะตรวจจาก ?token=... หรือ header X-Webhook-Token
+                    'token'  => env('SMS_WEBHOOK_TOKEN'),
+
+                    // Signature: ปิดไว้ก่อนจนกว่าจะเห็น Vonage ส่ง sig/timestamp มาจริง
                     'signature' => [
-                        'enabled' => true,
+                        'enabled' => env('VONAGE_SIGNATURE_ENABLED', false),
                         'secret'  => env('VONAGE_SIGNATURE_SECRET'),
                         'method'  => env('VONAGE_SIGNATURE_METHOD', 'md5hash'),
-                        'timestamp_tolerance' => env('VONAGE_SIGNATURE_TOLERANCE', 300),
+                        'timestamp_tolerance' => (int) env('VONAGE_SIGNATURE_TOLERANCE', 300),
                     ],
                 ],
 
@@ -54,9 +64,6 @@ return [
                 ],
             ],
 
-            /*
-            | Vonage-specific behavior
-            */
             'options' => [
                 'supports_dlr' => true,
                 'supports_unicode' => true,
@@ -80,6 +87,9 @@ return [
             'webhooks' => [
                 'dlr' => [
                     'method' => 'POST',
+                    // future:
+                    // 'token' => env('SMS_WEBHOOK_TOKEN'),
+                    // 'signature' => [...]
                 ],
             ],
 
@@ -123,11 +133,7 @@ return [
     |--------------------------------------------------------------------------
     | Campaign Auto Finalize
     |--------------------------------------------------------------------------
-    |
-    | ใช้กับ job ที่ sweep campaign
-    |
     */
-
     'campaign' => [
         'expire_after_hours' => 24,
     ],
@@ -139,23 +145,18 @@ return [
     */
     'import' => [
         'max_preview_rows' => env('SMS_IMPORT_PREVIEW_ROWS', 20),
-
-        // คอลัมน์เบอร์ที่พยายามเดาให้ ถ้าไฟล์มี header
         'phone_column_candidates' => ['phone', 'tel', 'mobile', 'msisdn', 'เบอร์', 'เบอร์โทร', 'โทรศัพท์'],
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Members source settings (ให้ยืดหยุ่นกับ schema ของคุณ)
+    | Members source settings
     |--------------------------------------------------------------------------
     */
     'members' => [
-        // ชื่อ table/Model ของสมาชิก (คุณปรับตามระบบจริงได้)
         'table' => env('SMS_MEMBERS_TABLE', 'members'),
         'pk' => env('SMS_MEMBERS_PK', 'code'),
         'tel_column' => env('SMS_MEMBERS_TEL_COLUMN', 'tel'),
-
-        // ถ้ามี consent column ให้ใส่ชื่อไว้ (ไม่มีก็ null)
         'consent_column' => env('SMS_MEMBERS_CONSENT_COLUMN', 'marketing_sms_consent'),
         'consent_yes_value' => env('SMS_MEMBERS_CONSENT_YES', 'Y'),
     ],
