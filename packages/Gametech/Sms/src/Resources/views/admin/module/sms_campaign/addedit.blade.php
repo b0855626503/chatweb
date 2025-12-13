@@ -531,7 +531,7 @@
                         url = "{{ route('admin.'.$menu->currentRoute.'.update') }}";
                     }
 
-                    this.$http.post(url, { id: this.code, data: this.formaddedit , import_batch_id: this.importBatch.id || null,})
+                    this.$http.post(url, { id: this.code, data: this.formaddedit , import_batch_id: this.importBatch.id || null })
                         .then(response => {
                             this.$refs.addedit.hide();
 
