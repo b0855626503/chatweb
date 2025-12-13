@@ -12,22 +12,14 @@ use Illuminate\Support\Facades\Log;
 class DeliveryReceiptService
 {
     /**
-     * Handle Provider DLR payload (provider-agnostic entrypoint).
-     *
-     * - Create sms_delivery_receipts row (idempotent)
-     * - Find SmsRecipient by provider_message_id
-     * - Apply DLR mapping to SmsRecipient
-     * - Update campaign counters
-     * - Finalize campaign if all recipients are terminal
+     * Provider-agnostic DLR handler
      */
     public function handleProviderDlr(string $provider, array $payload): array
     {
         $provider = strtolower(trim($provider ?: 'vonage'));
 
-        // normalize id/status/error fields (support multiple naming styles)
         $messageId = (string) Arr::get($payload, 'messageId', Arr::get($payload, 'message-id'));
         if ($messageId === '') {
-            // เผื่อ provider อื่นใช้ชื่ออื่น (ไม่เดาเยอะ แค่สำรองยอดนิยม)
             $messageId = (string) (Arr::get($payload, 'MessageSid') ?? Arr::get($payload, 'message_id') ?? '');
         }
 
@@ -43,12 +35,10 @@ class DeliveryReceiptService
             return ['status' => 'missing_required_fields'];
         }
 
-        // idempotent upsert (provider + message_id)
         $dlr = SmsDeliveryReceipt::updateOrCreate([
             'provider' => $provider,
             'message_id' => $messageId,
         ], [
-            // เก็บสถานะล่าสุดที่ได้รับ
             'status' => $status ?: null,
             'err_code' => $errCode ?: null,
             'scts' => (string) Arr::get($payload, 'scts'),
@@ -61,12 +51,9 @@ class DeliveryReceiptService
             'price' => (string) Arr::get($payload, 'price'),
             'payload' => $payload,
             'received_at' => now(),
-
-            // process bookkeeping
             'process_status' => 'pending',
         ]);
 
-        // ถ้าเคย processed แล้ว ให้จบแบบสุภาพ
         if ($dlr->process_status === 'processed') {
             return ['status' => 'duplicate_ignored', 'dlr_id' => $dlr->id];
         }
@@ -74,7 +61,6 @@ class DeliveryReceiptService
         try {
             return DB::transaction(function () use ($provider, $payload, $dlr, $messageId) {
 
-                /** @var SmsRecipient|null $recipient */
                 $recipient = SmsRecipient::where('provider_message_id', $messageId)->first();
 
                 if (! $recipient) {
@@ -92,30 +78,26 @@ class DeliveryReceiptService
                     return ['status' => 'recipient_not_found', 'dlr_id' => $dlr->id];
                 }
 
-                // link dlr -> recipient/campaign/team (ใช้ field ที่มีจริงใน model SmsDeliveryReceipt)
                 $dlr->recipient_id = $recipient->id;
                 $dlr->campaign_id = $recipient->campaign_id;
                 $dlr->team_id = $recipient->team_id;
 
-                // ensure recipient provider set (source of truth for mapping)
                 if (! $recipient->provider) {
                     $recipient->provider = $provider;
                 }
 
                 $before = (string) $recipient->status;
 
-                // apply mapping + store raw payload
                 $recipient->applyDeliveryReceipt($payload);
                 $recipient->save();
 
                 $after = (string) $recipient->status;
 
-                // update campaign counters (เฉพาะ transitions สำคัญ)
                 if ($recipient->campaign_id) {
                     $this->updateCampaignCountersOnTransition((int) $recipient->campaign_id, $before, $after);
 
-                    // ✅ finalize campaign if done
-                    $this->finalizeCampaignIfDone((int) $recipient->campaign_id);
+                    // ✅ สำคัญ: ปิดแคมเปญจาก “ความจริงใน recipients” ไม่อิง counter ที่อาจเพี้ยน
+                    $this->finalizeCampaignIfDoneByRecipients((int) $recipient->campaign_id);
                 }
 
                 $dlr->process_status = 'processed';
@@ -160,39 +142,42 @@ class DeliveryReceiptService
     }
 
     /**
-     * Finalize campaign when all recipients are in terminal states (delivered/failed)
-     * Uses ONLY fields that exist in SmsCampaign: status, finished_at, total_recipients, delivered_count, failed_count
+     * ✅ Finalize campaign based on SmsRecipient rows (source of truth)
+     * - total = count recipients (excluding soft-deleted by default scope)
+     * - done  = count recipients where status in (delivered, failed)
      */
-    private function finalizeCampaignIfDone(int $campaignId): void
+    private function finalizeCampaignIfDoneByRecipients(int $campaignId): void
     {
-        /** @var SmsCampaign|null $campaign */
         $campaign = SmsCampaign::query()->lockForUpdate()->find($campaignId);
         if (! $campaign) {
             return;
         }
 
-        // ถ้าจบแล้วไม่ต้องทำอะไร
-        if ($campaign->status === 'completed') {
+        if ((string) $campaign->status === 'completed') {
             return;
         }
 
-        // total_recipients อาจยังไม่ set ในบาง flow → fallback จาก count จริง
-        $total = (int) ($campaign->total_recipients ?: $campaign->recipients()->count());
+        $total = SmsRecipient::query()
+            ->where('campaign_id', $campaignId)
+            ->count();
 
-        $done = (int) ($campaign->delivered_count + $campaign->failed_count);
+        if ($total <= 0) {
+            return;
+        }
 
-        // ถ้ามี recipient และ done ครบ → ปิด
-        if ($total > 0 && $done >= $total) {
+        $done = SmsRecipient::query()
+            ->where('campaign_id', $campaignId)
+            ->whereIn('status', ['delivered', 'failed'])
+            ->count();
+
+        if ($done >= $total) {
             $campaign->status = 'completed';
             $campaign->finished_at = $campaign->finished_at ?: now();
             $campaign->save();
         }
     }
 
-    /*
-     * Backward compatibility:
-     * ถ้าโค้ดเดิมยังเรียก handleVonageDlr อยู่ ให้คง method นี้ไว้
-     */
+    // Backward compatibility
     public function handleVonageDlr(array $payload): array
     {
         return $this->handleProviderDlr('vonage', $payload);
