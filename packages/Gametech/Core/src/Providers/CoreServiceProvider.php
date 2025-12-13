@@ -42,6 +42,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->register(EventServiceProvider::class);
 
         $this->registerFacades();
+        $this->loadHelpers();
 //        $this->registerConfig();
     }
 
@@ -92,5 +93,14 @@ class CoreServiceProvider extends ServiceProvider
         );
 
         $this->mergeConfigFrom(__DIR__.'/../config/gametech.php', 'gametech');
+    }
+
+    protected function loadHelpers(): void
+    {
+        $file = __DIR__ . '/../Http/helpers.php';
+
+        if (file_exists($file)) {
+            require_once $file;
+        }
     }
 }

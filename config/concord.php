@@ -20,6 +20,7 @@ return [
         Gametech\Marketing\Providers\ModuleServiceProvider::class,
         Gametech\LineOA\Providers\ModuleServiceProvider::class,
         Gametech\FacebookOA\Providers\ModuleServiceProvider::class,
+        Gametech\Sms\Providers\ModuleServiceProvider::class,
     ],
     'register_route_models' => true,
 ];

@@ -2,22 +2,21 @@
 
 namespace Gametech\Admin\Models;
 
-
 use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 use DateTimeInterface;
 use Gametech\Admin\Contracts\Admin as AdminContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-//use HighIdeas\UsersOnline\Traits\UsersOnlineTrait;
+
+// use HighIdeas\UsersOnline\Traits\UsersOnlineTrait;
 
 class Admin extends Authenticatable implements AdminContract
 {
+    use LaravelSubQueryTrait;
     use Notifiable;
 
-    use LaravelSubQueryTrait;
-
-//    use UsersOnlineTrait;
+    //    use UsersOnlineTrait;
 
     protected function serializeDate(DateTimeInterface $date)
     {
@@ -27,6 +26,7 @@ class Admin extends Authenticatable implements AdminContract
     protected $table = 'employees';
 
     const CREATED_AT = 'date_create';
+
     const UPDATED_AT = 'date_update';
 
     protected $dateFormat = 'Y-m-d H:i:s';
@@ -79,7 +79,7 @@ class Admin extends Authenticatable implements AdminContract
         'role_id',
         'lastlogin',
         'google2fa_secret',
-        'google2fa_enable'
+        'google2fa_enable',
     ];
 
     /**
@@ -128,7 +128,7 @@ class Admin extends Authenticatable implements AdminContract
         'password' => 'string',
         'role_id' => 'integer',
         'google2fa_enable' => 'integer',
-        'lastlogin' => 'datetime:Y-m-d H:i:s'
+        'lastlogin' => 'datetime:Y-m-d H:i:s',
     ];
 
     /**
@@ -137,7 +137,7 @@ class Admin extends Authenticatable implements AdminContract
      * @var array
      */
     protected $hidden = [
-        'password','google2fa_secret'
+        'password', 'google2fa_secret',
     ];
 
     protected static function booted()
@@ -149,12 +149,12 @@ class Admin extends Authenticatable implements AdminContract
 
     public function scopeActive($query)
     {
-        return $query->where('enable','Y');
+        return $query->where('enable', 'Y');
     }
 
     public function scopeInactive($query)
     {
-        return $query->where('enable','N');
+        return $query->where('enable', 'N');
     }
 
     /**
@@ -165,17 +165,15 @@ class Admin extends Authenticatable implements AdminContract
         return $this->belongsTo(RoleProxy::modelClass(), 'role_id');
     }
 
-
-
     /**
      * Checks if admin has permission to perform certain action.
      *
-     * @param  String  $permission
-     * @return Boolean
+     * @param  string  $permission
+     * @return bool
      */
     public function hasPermission($permission)
     {
-//        if($permission == 'auth.broadcast')
+        //        if($permission == 'auth.broadcast')
         if ($this->role->permission_type == 'custom' && ! $this->role->permissions) {
             return false;
         }
@@ -183,5 +181,8 @@ class Admin extends Authenticatable implements AdminContract
         return in_array($permission, $this->role->permissions);
     }
 
-    public function receivesBroadcastNotificationsOn() { return env('APP_NAME').'_events'; }
+    public function receivesBroadcastNotificationsOn()
+    {
+        return env('APP_NAME').'_events';
+    }
 }

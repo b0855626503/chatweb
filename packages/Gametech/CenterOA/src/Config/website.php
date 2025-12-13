@@ -2,11 +2,11 @@
 
 return [
     'register' => [
-        'mode' => 'username', // 'username' | 'phone' | 'both',
+        'mode' => 'phone', // 'username' | 'phone' | 'both',
         'phone' => [
-            'length' => 15,
-            'min_length' => 8,
-            'max_length' => 15,
+            'length' => 10,
+            'min_length' => 10,
+            'max_length' => 10,
         ],
     ],
 ];

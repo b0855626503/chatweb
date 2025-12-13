@@ -109,7 +109,8 @@
             "Gametech\\Marketing\\": "packages/Gametech/Marketing/src",
             "Gametech\\CenterOA\\": "packages/Gametech/CenterOA/src",
             "Gametech\\LineOA\\": "packages/Gametech/LineOA/src",
-            "Gametech\\FacebookOA\\": "packages/Gametech/FacebookOA/src"
+            "Gametech\\FacebookOA\\": "packages/Gametech/FacebookOA/src",
+            "Gametech\\Sms\\": "packages/Gametech/Sms/src"
         },
         "files": [
             "packages/Gametech/Core/src/Http/helpers.php",

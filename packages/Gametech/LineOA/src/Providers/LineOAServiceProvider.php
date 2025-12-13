@@ -102,5 +102,9 @@ class LineOAServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             dirname(__DIR__).'/Config/line_oa_stickers.php', 'line_oa_stickers'
         );
+
+        $this->mergeConfigFrom(
+            dirname(__DIR__).'/Config/line_oa.php', 'line_oa'
+        );
     }
 }

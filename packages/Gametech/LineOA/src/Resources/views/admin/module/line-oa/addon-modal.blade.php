@@ -124,6 +124,7 @@
         hide-footer
         :no-close-on-backdrop="true"
         @hidden="resetQuickReplyForm"
+
 >
     <b-form @submit.prevent="submitQuickReplyForm">
         <!-- หมวดหมู่ (fix เป็น quick_reply) -->
@@ -151,8 +152,21 @@
                     autocomplete="off"
             ></b-form-input>
         </b-form-group>
-
-
+        <div class="chat-reply-wrapper">
+        <div
+                v-if="showEmojiPickerModal"
+                class="emoji-overlay-chat"
+                ref="emojiPopupModal"
+        >
+            <emoji-picker
+                    :data="emojiIndex"
+                    :show-preview="false"
+                    :show-skin-tones="false"
+                    :emoji-size="20"
+                    :per-line="8"
+                    @select="onEmojiSelect"
+            />
+        </div>
         <!-- MESSAGE -->
         <b-form-group
                 label="ข้อความ:"
@@ -168,6 +182,7 @@
                     max-rows="6"
                     autocomplete="off"
                     required
+                    class="no-resize"
             ></b-form-textarea>
 
             <!-- ปุ่มใส่ placeholder -->
@@ -224,8 +239,24 @@
                     </b-button>
                 </b-button-group>
             </div>
-        </b-form-group>
 
+            <!-- ปุ่มเปิด Emoji picker (ใช้ตัว teleport กลาง) -->
+
+            <div class="mt-2">
+        <span class="text-muted small">
+            กด Emoji เพื่อแทรกลงในข้อความตอบกลับ
+        </span>
+                <b-button
+                        ref="quickReplyEmojiBtn"
+                        size="sm"
+                        variant="outline-secondary"
+                        @click.prevent="openEmojiPickerForQuickReply"
+                >
+                    😀 Emoji
+                </b-button>
+            </div>
+        </b-form-group>
+        </div>
 
         <!-- ENABLED -->
         <b-form-group label="สถานะการใช้งาน:">
@@ -591,13 +622,45 @@
         :no-close-on-backdrop="noteModalSaving"
         :hide-header-close="noteModalSaving"
 >
+    <div class="chat-reply-wrapper">
+        <div
+                v-if="showEmojiPickerNoteModal"
+                class="emoji-overlay-chat"
+                ref="emojiPopupNoteModal"
+        >
+            <emoji-picker
+                    :data="emojiIndex"
+                    :show-preview="false"
+                    :show-skin-tones="false"
+                    :emoji-size="20"
+                    :per-line="8"
+                    @select="onEmojiSelect"
+            />
+        </div>
     <b-form-textarea
+            ref="noteMessageInput"
             v-model="noteModalText"
             rows="4"
             class="no-resize"
             max-rows="6"
             placeholder="พิมพ์โน้ตสำหรับเคสนี้..."
     ></b-form-textarea>
+    </div>
+    <!-- ปุ่มเปิด Emoji picker (ใช้ตัว teleport กลาง) -->
+
+    <div class="mt-2">
+        <span class="text-muted small">
+            กด Emoji เพื่อแทรกลงในข้อความตอบกลับ
+        </span>
+        <b-button
+                ref="noteEmojiBtn"
+                size="sm"
+                variant="outline-secondary"
+                @click.prevent="openEmojiPickerForNote"
+        >
+            😀 Emoji
+        </b-button>
+    </div>
 
     <template #modal-footer="{ ok, cancel }">
         <b-button
@@ -757,24 +820,6 @@
         </div>
     </div>
 </b-modal>
-
-<!-- ========== ใช้ teleport ให้ emoji picker ลอยนอก DOM ============ -->
-<teleport to="body">
-    <div
-            v-if="showEmojiPicker"
-            class="emoji-overlay"
-            :style="emojiPickerStyle"
-            ref="emojiPopup"
-    >
-        <emoji-picker
-                :show-preview="false"
-                :show-skin-tones="false"
-                :emoji-size="22"
-                :per-line="8"
-                @select="onEmojiSelect"
-        />
-    </div>
-</teleport>
 
 <b-modal
         id="member-adjust-modal"

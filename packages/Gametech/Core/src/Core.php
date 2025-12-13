@@ -164,7 +164,13 @@ class Core
 
     public function getConfigData()
     {
-        return $this->configRepository->first();
+        $websiteId = config('app.name'); // หรือจะดึงจาก context อื่นที่คุณใช้อยู่
+        $cacheKey = 'config_data_first_' . $websiteId;
+        $ttl = now()->addMinutes(5);
+
+        return cache()->remember($cacheKey, $ttl, function () {
+            return $this->configRepository->first();
+        });
 
     }
 

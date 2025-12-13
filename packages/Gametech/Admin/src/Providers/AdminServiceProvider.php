@@ -74,6 +74,7 @@ class AdminServiceProvider extends ServiceProvider
         // ACL + Bouncer
         $this->registerACL();
         $this->registerBouncer();
+        $this->loadHelpers();
     }
 
     /**
@@ -293,5 +294,14 @@ class AdminServiceProvider extends ServiceProvider
         $this->app->singleton('bouncer', function () {
             return app()->make(Bouncer::class);
         });
+    }
+
+    protected function loadHelpers(): void
+    {
+        $file = __DIR__ . '/../Http/helpers.php';
+
+        if (file_exists($file)) {
+            require_once $file;
+        }
     }
 }

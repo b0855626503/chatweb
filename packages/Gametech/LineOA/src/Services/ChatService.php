@@ -12,6 +12,7 @@ use Gametech\LineOA\Models\LineWebhookLog;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ChatService
@@ -35,11 +36,11 @@ class ChatService
      */
     public function handleIncomingMessage(LineAccount $account, array $event, ?LineWebhookLog $log = null): LineMessage
     {
-        $userId      = Arr::get($event, 'source.userId');
-        $messageId   = Arr::get($event, 'message.id');
+        $userId = Arr::get($event, 'source.userId');
+        $messageId = Arr::get($event, 'message.id');
         $messageType = Arr::get($event, 'message.type'); // text | sticker | image ...
-        $text        = Arr::get($event, 'message.text');
-        $sentAt      = Arr::get($event, 'timestamp');
+        $text = Arr::get($event, 'message.text');
+        $sentAt = Arr::get($event, 'timestamp');
 
         // ------------------------------------------------------------------
         // ดึง token ต่าง ๆ จาก event ให้ครอบคลุมทั้ง camelCase / snake_case
@@ -74,22 +75,22 @@ class ChatService
         $baseMeta = [];
 
         if ($markAsReadToken) {
-            $baseMeta['markAsReadToken']    = $markAsReadToken;
+            $baseMeta['markAsReadToken'] = $markAsReadToken;
             $baseMeta['mark_as_read_token'] = $markAsReadToken;
         }
 
         if ($quoteToken) {
-            $baseMeta['quoteToken']  = $quoteToken;
+            $baseMeta['quoteToken'] = $quoteToken;
             $baseMeta['quote_token'] = $quoteToken;
         }
 
         if ($quotedMessageId) {
-            $baseMeta['quotedMessageId']    = $quotedMessageId;
-            $baseMeta['quoted_message_id']  = $quotedMessageId;
+            $baseMeta['quotedMessageId'] = $quotedMessageId;
+            $baseMeta['quoted_message_id'] = $quotedMessageId;
         }
 
         if ($replyToken) {
-            $baseMeta['replyToken']  = $replyToken;
+            $baseMeta['replyToken'] = $replyToken;
             $baseMeta['reply_token'] = $replyToken;
         }
 
@@ -132,18 +133,18 @@ class ChatService
             /** @var LineMessage $message */
             $message = LineMessage::create([
                 'line_conversation_id' => $conversation->id,
-                'line_account_id'      => $account->id,
-                'line_contact_id'      => $contact->id,
-                'direction'            => 'inbound',
-                'source'               => 'user',
-                'type'                 => $messageType ?? 'text',
-                'line_message_id'      => $messageId,
-                'text'                 => $messageType === 'text' ? $text : null,
-                'payload'              => $event,
-                'meta'                 => $meta ?: null,
-                'sender_employee_id'   => null,
-                'sender_bot_key'       => null,
-                'sent_at'              => $sentAtCarbon,
+                'line_account_id' => $account->id,
+                'line_contact_id' => $contact->id,
+                'direction' => 'inbound',
+                'source' => 'user',
+                'type' => $messageType ?? 'text',
+                'line_message_id' => $messageId,
+                'text' => $messageType === 'text' ? $text : null,
+                'payload' => $event,
+                'meta' => $meta ?: null,
+                'sender_employee_id' => null,
+                'sender_bot_key' => null,
+                'sent_at' => $sentAtCarbon,
             ]);
 
             // 3.1 ถ้าเป็นรูป ให้พยายามดึง binary จาก LINE แล้วแปลงเป็น URL สำหรับ frontend
@@ -169,7 +170,7 @@ class ChatService
                     if ($quoted) {
                         // เตรียมข้อความ preview สำหรับ quote
                         $displayText = '';
-                        $quotedMeta  = $quoted->meta;
+                        $quotedMeta = $quoted->meta;
 
                         if (! is_array($quotedMeta)) {
                             $quotedMeta = $quotedMeta ? (array) $quotedMeta : [];
@@ -217,12 +218,12 @@ class ChatService
                         }
 
                         $metaCurrent['reply_to'] = [
-                            'id'        => $quoted->id,
-                            'text'      => $displayText,
+                            'id' => $quoted->id,
+                            'text' => $displayText,
                             'direction' => $quoted->direction,
-                            'source'    => $quoted->source,
-                            'type'      => $quoted->type,
-                            'sent_at'   => optional($quoted->sent_at)->toIso8601String(),
+                            'source' => $quoted->source,
+                            'type' => $quoted->type,
+                            'sent_at' => optional($quoted->sent_at)->toIso8601String(),
                         ];
 
                         $message->meta = $metaCurrent;
@@ -230,24 +231,24 @@ class ChatService
                     }
                 } catch (\Throwable $e) {
                     \Log::channel('line_oa')->warning('[LineChat] attach reply_to by quotedMessageId failed', [
-                        'message_id'        => $message->id,
+                        'message_id' => $message->id,
                         'quoted_message_id' => $quotedMessageId,
-                        'error'             => $e->getMessage(),
+                        'error' => $e->getMessage(),
                     ]);
                 }
             }
 
             // 4) update conversation summary
             $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at      = $sentAtCarbon;
-            $conversation->unread_count         = $conversation->unread_count + 1;
+            $conversation->last_message_at = $sentAtCarbon;
+            $conversation->unread_count = $conversation->unread_count + 1;
 
             // safety guard: ถ้า status ว่างหรือถูกปิดอยู่ ให้กลับเป็น open
             if ($conversation->status === null || $conversation->status === 'closed') {
-                $conversation->status                  = 'open';
-                $conversation->closed_by_employee_id   = null;
+                $conversation->status = 'open';
+                $conversation->closed_by_employee_id = null;
                 $conversation->closed_by_employee_name = null;
-                $conversation->closed_at               = null;
+                $conversation->closed_at = null;
             }
 
             $conversation->save();
@@ -258,12 +259,12 @@ class ChatService
 
             // 6) ผูก log (ถ้ามี)
             if ($log) {
-                $log->line_account_id      = $account->id;
+                $log->line_account_id = $account->id;
                 $log->line_conversation_id = $conversation->id;
-                $log->line_contact_id      = $contact->id;
-                $log->line_message_id      = $message->id;
-                $log->is_processed         = true;
-                $log->processed_at         = now();
+                $log->line_contact_id = $contact->id;
+                $log->line_message_id = $message->id;
+                $log->is_processed = true;
+                $log->processed_at = now();
                 $log->save();
             }
 
@@ -289,7 +290,6 @@ class ChatService
         });
     }
 
-
     /**
      * ใช้ตอนฝั่งแอดมินตอบ (outbound จาก agent) - TEXT
      */
@@ -299,6 +299,27 @@ class ChatService
         int $employeeId,
         ?array $meta = null
     ): LineMessage {
+
+        $conversation->loadMissing('account');
+
+        $account = $conversation->account;
+
+        if (! $account || $account->status !== 'active') {
+            Log::channel('line_oa')->warning('[LineChat] createOutboundMessageFromAgent blocked: account not active', [
+                'conversation_id' => $conversation->id,
+                'line_account_id' => $conversation->line_account_id,
+                'account_status' => $account->status ?? null,
+                'employee_id' => $employeeId,
+            ]);
+
+            // ตรงนี้มี 2 แนวทาง แล้วแต่คุณจะเลือกใช้งาน
+
+            // 1) ถ้าคุณรับได้กับการโยน exception (caller ต้อง try/catch เอง)
+            throw new \RuntimeException('LINE account is not active.');
+            // 2) หรือถ้าอยากให้เมธอดนี้ “ไม่ถูกเรียกเลย” ตอน account ปิด
+            //    แนะนำให้ย้าย if-block นี้ไปอยู่ในเมธอดระดับสูงกว่า (เช่น sendAgentTextMessage ใน ChatService)
+            //    แทนที่จะเช็กใน createOutboundMessageFromAgent (จะไม่ต้องเปลี่ยน contract ที่นี่)
+        }
         // เตรียมข้อมูลแปล สำหรับข้อความขาออก (แต่ยังไม่เปลี่ยนค่า text เดิม)
         $targetLang = 'th';
         $translation = null;
@@ -376,6 +397,89 @@ class ChatService
         });
     }
 
+    public function createOutboundMessageFromBot(
+        LineConversation $conversation,
+        string $text,
+        ?string $botKey = null,
+        ?array $meta = null
+    ): LineMessage {
+        $now = now();
+
+        $conversation->loadMissing('account');
+
+        $account = $conversation->account;
+
+        if (! $account || $account->status !== 'active') {
+            Log::channel('line_oa')->warning('[LineChat] createOutboundMessageFromAgent blocked: account not active', [
+                'conversation_id' => $conversation->id,
+                'line_account_id' => $conversation->line_account_id,
+                'account_status' => $account->status ?? null,
+                'employee_id' => 0,
+            ]);
+
+            // ตรงนี้มี 2 แนวทาง แล้วแต่คุณจะเลือกใช้งาน
+
+            // 1) ถ้าคุณรับได้กับการโยน exception (caller ต้อง try/catch เอง)
+            throw new \RuntimeException('LINE account is not active.');
+            // 2) หรือถ้าอยากให้เมธอดนี้ “ไม่ถูกเรียกเลย” ตอน account ปิด
+            //    แนะนำให้ย้าย if-block นี้ไปอยู่ในเมธอดระดับสูงกว่า (เช่น sendAgentTextMessage ใน ChatService)
+            //    แทนที่จะเช็กใน createOutboundMessageFromAgent (จะไม่ต้องเปลี่ยน contract ที่นี่)
+        }
+
+        return DB::transaction(function () use ($conversation, $text, $botKey, $meta, $now) {
+
+            /** @var LineMessage $message */
+            $message = LineMessage::create([
+                'line_conversation_id' => $conversation->id,
+                'line_account_id' => $conversation->line_account_id,
+                'line_contact_id' => $conversation->line_contact_id,
+                'direction' => 'outbound',
+                'source' => 'bot',
+                'type' => 'text',
+                'line_message_id' => null,
+                'text' => $text,
+                'payload' => null,
+                'meta' => $meta,
+                'sender_employee_id' => null,
+                'sender_bot_key' => $botKey,
+                'sent_at' => $now,
+            ]);
+
+            // อัปเดต conversation ให้ list ห้องกับ header ใช้
+            $conversation->last_message_preview = $this->buildPreviewText($message);
+            $conversation->last_message_at = $now;
+            // policy ตอนนี้: บอทตอบไม่เพิ่ม unread
+            // $conversation->unread_count      = 0;
+            $conversation->save();
+
+            DB::afterCommit(function () use ($conversation, $message) {
+
+                // conversation with relations
+                $convFresh = $conversation->fresh([
+                    'contact.member',
+                    'account',
+                    'registerSessions' => function ($q) {
+                        $q->where('status', 'in_progress');
+                    },
+                ]) ?? $conversation;
+
+                // message with relations
+                $msgFresh = $message->fresh([
+                    'conversation.contact.member',
+                    'conversation.account',
+                ]) ?? $message;
+
+                // สำหรับ list ห้องด้านซ้าย
+                event(new LineOAChatConversationUpdated($convFresh));
+
+                // สำหรับ timeline ของห้องแชต (bubble)
+                event(new LineOAChatMessageReceived($convFresh, $msgFresh));
+            });
+
+            return $message;
+        });
+    }
+
     public function createOutboundStickerFromAgent(
         LineConversation $conversation,
         string $packageId,
@@ -384,6 +488,27 @@ class ChatService
         ?array $meta = null
     ): LineMessage {
         $now = now();
+
+        $conversation->loadMissing('account');
+
+        $account = $conversation->account;
+
+        if (! $account || $account->status !== 'active') {
+            Log::channel('line_oa')->warning('[LineChat] createOutboundMessageFromAgent blocked: account not active', [
+                'conversation_id' => $conversation->id,
+                'line_account_id' => $conversation->line_account_id,
+                'account_status' => $account->status ?? null,
+                'employee_id' => $employeeId,
+            ]);
+
+            // ตรงนี้มี 2 แนวทาง แล้วแต่คุณจะเลือกใช้งาน
+
+            // 1) ถ้าคุณรับได้กับการโยน exception (caller ต้อง try/catch เอง)
+            throw new \RuntimeException('LINE account is not active.');
+            // 2) หรือถ้าอยากให้เมธอดนี้ “ไม่ถูกเรียกเลย” ตอน account ปิด
+            //    แนะนำให้ย้าย if-block นี้ไปอยู่ในเมธอดระดับสูงกว่า (เช่น sendAgentTextMessage ใน ChatService)
+            //    แทนที่จะเช็กใน createOutboundMessageFromAgent (จะไม่ต้องเปลี่ยน contract ที่นี่)
+        }
 
         return DB::transaction(function () use ($conversation, $packageId, $stickerId, $employeeId, $meta, $now) {
             // เตรียม meta ให้เป็น array
@@ -403,7 +528,7 @@ class ChatService
 
             // ✅ payload ที่เราจะยิงออกไปจริง ๆ (สำหรับเก็บลง DB)
             $payloadForLine = [
-                'type'      => 'sticker',
+                'type' => 'sticker',
                 'packageId' => $packageId,
                 'stickerId' => $stickerId,
             ];
@@ -411,32 +536,32 @@ class ChatService
             /** @var LineMessage $message */
             $message = LineMessage::create([
                 'line_conversation_id' => $conversation->id,
-                'line_account_id'      => $conversation->line_account_id,
-                'line_contact_id'      => $conversation->line_contact_id,
-                'direction'            => 'outbound',
-                'source'               => 'agent',
-                'type'                 => 'sticker',
-                'line_message_id'      => null,
-                'text'                 => null,     // ไม่มีข้อความตัวอักษร
-                'payload'              => $payloadForLine,     // ถ้าอยากเก็บ raw sticker payload เพิ่ม ค่อยมาเติมทีหลังได้
-                'meta'                 => $metaPayload,
-                'sender_employee_id'   => $employeeId,
-                'sender_bot_key'       => null,
-                'sent_at'              => $now,
+                'line_account_id' => $conversation->line_account_id,
+                'line_contact_id' => $conversation->line_contact_id,
+                'direction' => 'outbound',
+                'source' => 'agent',
+                'type' => 'sticker',
+                'line_message_id' => null,
+                'text' => null,     // ไม่มีข้อความตัวอักษร
+                'payload' => $payloadForLine,     // ถ้าอยากเก็บ raw sticker payload เพิ่ม ค่อยมาเติมทีหลังได้
+                'meta' => $metaPayload,
+                'sender_employee_id' => $employeeId,
+                'sender_bot_key' => null,
+                'sent_at' => $now,
             ]);
 
             // ถ้าห้องปิดอยู่ หรือ status ยังไม่ถูกกำหนด → เปิดห้องอีกครั้ง (อิง logic เดียวกับข้อความ text)
             if ($conversation->status === 'closed' || $conversation->status === null) {
                 $conversation->status = 'open';
-                $conversation->closed_by_employee_id   = null;
+                $conversation->closed_by_employee_id = null;
                 $conversation->closed_by_employee_name = null;
-                $conversation->closed_at               = null;
+                $conversation->closed_at = null;
             }
 
             // อัปเดต preview + เวลาข้อความล่าสุด
             $conversation->last_message_preview = $this->buildPreviewText($message);
-            $conversation->last_message_at      = $now;
-            $conversation->unread_count         = 0;
+            $conversation->last_message_at = $now;
+            $conversation->unread_count = 0;
             $conversation->save();
 
             // broadcast ให้ list ซ้ายของทุกคนอัปเดต (อิง pattern เดียวกับฟังก์ชันที่คุณส่งมา)
@@ -450,7 +575,6 @@ class ChatService
         });
     }
 
-
     /**
      * ใช้ตอนฝั่งแอดมินส่ง "รูป" ออกไป
      */
@@ -461,6 +585,27 @@ class ChatService
         ?array $meta = null
     ): LineMessage {
         $now = now();
+
+        $conversation->loadMissing('account');
+
+        $account = $conversation->account;
+
+        if (! $account || $account->status !== 'active') {
+            Log::channel('line_oa')->warning('[LineChat] createOutboundMessageFromAgent blocked: account not active', [
+                'conversation_id' => $conversation->id,
+                'line_account_id' => $conversation->line_account_id,
+                'account_status' => $account->status ?? null,
+                'employee_id' => $employeeId,
+            ]);
+
+            // ตรงนี้มี 2 แนวทาง แล้วแต่คุณจะเลือกใช้งาน
+
+            // 1) ถ้าคุณรับได้กับการโยน exception (caller ต้อง try/catch เอง)
+            throw new \RuntimeException('LINE account is not active.');
+            // 2) หรือถ้าอยากให้เมธอดนี้ “ไม่ถูกเรียกเลย” ตอน account ปิด
+            //    แนะนำให้ย้าย if-block นี้ไปอยู่ในเมธอดระดับสูงกว่า (เช่น sendAgentTextMessage ใน ChatService)
+            //    แทนที่จะเช็กใน createOutboundMessageFromAgent (จะไม่ต้องเปลี่ยน contract ที่นี่)
+        }
 
         return DB::transaction(function () use ($conversation, $file, $employeeId, $meta, $now) {
             // upload รูปไปที่ storage (disk public)
@@ -530,6 +675,27 @@ class ChatService
         ?array $meta = null
     ): LineMessage {
         $now = now();
+
+        $conversation->loadMissing('account');
+
+        $account = $conversation->account;
+
+        if (! $account || $account->status !== 'active') {
+            Log::channel('line_oa')->warning('[LineChat] createOutboundMessageFromAgent blocked: account not active', [
+                'conversation_id' => $conversation->id,
+                'line_account_id' => $conversation->line_account_id,
+                'account_status' => $account->status ?? null,
+                'employee_id' => $employeeId,
+            ]);
+
+            // ตรงนี้มี 2 แนวทาง แล้วแต่คุณจะเลือกใช้งาน
+
+            // 1) ถ้าคุณรับได้กับการโยน exception (caller ต้อง try/catch เอง)
+            throw new \RuntimeException('LINE account is not active.');
+            // 2) หรือถ้าอยากให้เมธอดนี้ “ไม่ถูกเรียกเลย” ตอน account ปิด
+            //    แนะนำให้ย้าย if-block นี้ไปอยู่ในเมธอดระดับสูงกว่า (เช่น sendAgentTextMessage ใน ChatService)
+            //    แทนที่จะเช็กใน createOutboundMessageFromAgent (จะไม่ต้องเปลี่ยน contract ที่นี่)
+        }
 
         return DB::transaction(function () use ($conversation, $previewText, $employeeId, $payload, $meta, $now) {
             $metaPayload = $meta ?? [];

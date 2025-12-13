@@ -16,6 +16,9 @@ class CreateLineWebhookLogs extends Migration
 
 
         Schema::create('line_webhook_logs', function (Blueprint $table) {
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_unicode_ci';
+
             $table->bigIncrements('id');
 
             // OA ไหน (อาจจะหาได้จาก webhook_token ใน URL)

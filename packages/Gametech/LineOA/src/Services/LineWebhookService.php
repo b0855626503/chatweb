@@ -140,7 +140,13 @@ class LineWebhookService
                     ->exists();
 
                 if ($isFirstInbound) {
-                    $this->handleWelcomeForFirstMessage($account, $event, $message);
+
+                    if (config('line_oa.first_chat_welcome_enabled', true)) {
+                        $this->handleWelcomeForFirstMessage($account, $event, $message);
+                    } else {
+                        Log::channel('line_oa')->info('[LineWebhook] welcome disabled by config');
+                    }
+
                 }
             }
         } catch (\Throwable $e) {
@@ -165,6 +171,12 @@ class LineWebhookService
                 $conversation = $message->conversation ?? null;
 
                 if ($contact && $conversation) {
+
+                    if (! config('line_oa.register_flow_enabled', true)) {
+                        Log::channel('line_oa')->info('[LineWebhook] register flow disabled by config');
+                        return;
+                    }
+
                     /** @var \Gametech\LineOA\Services\RegisterFlowService $registerFlow */
                     $registerFlow = app(\Gametech\LineOA\Services\RegisterFlowService::class);
 
@@ -177,21 +189,23 @@ class LineWebhookService
                     if ($flowResult && $flowResult->handled && $flowResult->replyText) {
                         // เก็บข้อความที่ BOT ตอบกลับในการสมัครสมาชิกลง line_messages
                         try {
-                            LineMessage::create([
-                                'line_conversation_id' => $message->line_conversation_id,
-                                'line_account_id' => $message->line_account_id,
-                                'line_contact_id' => $message->line_contact_id,
-                                'direction' => 'outbound',
-                                'source' => 'bot',
-                                'type' => 'text',
-                                'line_message_id' => null,
-                                'text' => $flowResult->replyText,
-                                'payload' => null,
-                                'meta' => null,
-                                'sender_employee_id' => null,
-                                'sender_bot_key' => 'register_flow',
-                                'sent_at' => now(),
-                            ]);
+                            $contact      = $message->contact ?? null;
+                            $conversation = $message->conversation ?? null;
+                            if ($conversation) {
+                                // meta เพิ่ม context เผื่อ debug / ใช้ต่อในอนาคต
+                                $meta = [
+                                    'flow' => 'register',
+                                    'step' => optional($flowResult->session)->current_step ?? null,
+                                ];
+
+                                // สร้าง message ฝั่ง bot + อัปเดต conversation
+                                $botMessage = $this->chat->createOutboundMessageFromBot(
+                                    $conversation,
+                                    $flowResult->replyText,
+                                    'register_flow',
+                                    $meta
+                                );
+                            }
                         } catch (\Throwable $e) {
                             Log::channel('line_oa')->error('[LineWebhook] store bot message failed (register flow)', [
                                 'account_id' => $account->id,
@@ -366,11 +380,15 @@ class LineWebhookService
         array $event,
         LineMessage $inbound
     ): void {
+
+        if (! config('line_oa.first_chat_welcome_enabled', true)) {
+            return; // ปิด welcome → ไม่ทำอะไรเลย
+        }
         $lineUserId = Arr::get($event, 'source.userId');
         if (! $lineUserId) {
             return;
         }
-        return;
+
 
         // ให้แน่ใจว่ามี relation ครบ
         $inbound->loadMissing('conversation', 'contact');

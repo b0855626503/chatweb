@@ -9,6 +9,9 @@ class CreateLineConversationsTable extends Migration
     public function up()
     {
         Schema::create('line_conversations', function (Blueprint $table) {
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_unicode_ci';
+
             $table->bigIncrements('id');
 
             $table->unsignedBigInteger('line_account_id');

@@ -697,7 +697,8 @@
                                                                     </div>
 
                                                                     <div class="chat-reply-quote d-flex align-items-center">
-                                                                        <template v-if="replyHasPreviewThumb(item.message.meta.reply_to)">
+                                                                        <template
+                                                                                v-if="replyHasPreviewThumb(item.message.meta.reply_to)">
                                                                             <img
                                                                                     :src="replyPreviewThumb(item.message.meta.reply_to)"
                                                                                     class="chat-reply-thumb mr-2"
@@ -714,7 +715,9 @@
                                                                         </template>
 
                                                                         <template v-else>
-                                                                            @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                            @{{
+                                                                            buildReplyPreviewText(item.message.meta.reply_to)
+                                                                            }}
                                                                         </template>
                                                                     </div>
 
@@ -741,7 +744,8 @@
                                                                         </div>
                                                                     </template>
 
-                                                                    <template v-else-if="item.message.type === 'sticker'">
+                                                                    <template
+                                                                            v-else-if="item.message.type === 'sticker'">
                                                                         <img
                                                                                 :src="stickerUrl(item.message)"
                                                                                 class="img-fluid"
@@ -779,8 +783,11 @@
                                                     && item.message.payload
                                                     && item.message.payload.message">
                                                                         <div>
-                                                                            <strong>@{{ item.message.payload.message.title || 'ตำแหน่ง' }}</strong><br>
-                                                                            @{{ item.message.payload.message.address }}<br>
+                                                                            <strong>@{{
+                                                                                item.message.payload.message.title ||
+                                                                                'ตำแหน่ง' }}</strong><br>
+                                                                            @{{ item.message.payload.message.address
+                                                                            }}<br>
                                                                             <a :href="'https://maps.google.com/?q='
                                                             + item.message.payload.message.latitude
                                                             + ',' + item.message.payload.message.longitude"
@@ -811,7 +818,8 @@
                                                                             <i class="fa fa-ellipsis-h"></i>
                                                                         </template>
 
-                                                                        <b-dropdown-item @click="startReply(item.message)">
+                                                                        <b-dropdown-item
+                                                                                @click="startReply(item.message)">
                                                                             ตอบกลับ
                                                                         </b-dropdown-item>
 
@@ -863,7 +871,8 @@
                                                                     </div>
 
                                                                     <div class="chat-reply-quote d-flex align-items-center">
-                                                                        <template v-if="replyHasPreviewThumb(item.message.meta.reply_to)">
+                                                                        <template
+                                                                                v-if="replyHasPreviewThumb(item.message.meta.reply_to)">
                                                                             <img
                                                                                     :src="replyPreviewThumb(item.message.meta.reply_to)"
                                                                                     class="chat-reply-thumb mr-2"
@@ -880,7 +889,9 @@
                                                                         </template>
 
                                                                         <template v-else>
-                                                                            @{{ buildReplyPreviewText(item.message.meta.reply_to) }}
+                                                                            @{{
+                                                                            buildReplyPreviewText(item.message.meta.reply_to)
+                                                                            }}
                                                                         </template>
                                                                     </div>
 
@@ -893,7 +904,8 @@
 
                                                                 <div class="small"
                                                                      v-if="item.message.meta && item.message.meta.employee_name">
-                                                                    <strong>@{{ item.message.meta.employee_name }}</strong>
+                                                                    <strong>@{{ item.message.meta.employee_name
+                                                                        }}</strong>
                                                                 </div>
 
                                                                 <div class="whitespace-pre-wrap">
@@ -916,7 +928,8 @@
                                                                         </div>
                                                                     </template>
 
-                                                                    <template v-else-if="item.message.type === 'sticker'">
+                                                                    <template
+                                                                            v-else-if="item.message.type === 'sticker'">
                                                                         <img
                                                                                 :src="stickerUrl(item.message)"
                                                                                 class="img-fluid"
@@ -954,8 +967,11 @@
                                                     && item.message.payload
                                                     && item.message.payload.message">
                                                                         <div>
-                                                                            <strong>@{{ item.message.payload.message.title || 'ตำแหน่ง' }}</strong><br>
-                                                                            @{{ item.message.payload.message.address }}<br>
+                                                                            <strong>@{{
+                                                                                item.message.payload.message.title ||
+                                                                                'ตำแหน่ง' }}</strong><br>
+                                                                            @{{ item.message.payload.message.address
+                                                                            }}<br>
                                                                             <a :href="'https://maps.google.com/?q='
                                                             + item.message.payload.message.latitude
                                                             + ',' + item.message.payload.message.longitude"
@@ -986,11 +1002,13 @@
                                                                             <i class="fa fa-ellipsis-h"></i>
                                                                         </template>
 
-                                                                        <b-dropdown-item @click="startReply(item.message)">
+                                                                        <b-dropdown-item
+                                                                                @click="startReply(item.message)">
                                                                             ตอบกลับ
                                                                         </b-dropdown-item>
 
-                                                                        <b-dropdown-item @click="pinMessage(item.message)">
+                                                                        <b-dropdown-item
+                                                                                @click="pinMessage(item.message)">
                                                                             ปักหมุด
                                                                         </b-dropdown-item>
 
@@ -1036,17 +1054,35 @@
                                         ยกเลิก
                                     </b-button>
                                 </div>
+                                <div class="chat-reply-wrapper">
+                                    <!-- EMOJI PICKER: ลอยทับเหนือกล่องพิมพ์ -->
+                                    <div
+                                            v-if="showEmojiPicker"
+                                            class="emoji-overlay-chat"
+                                            ref="emojiPopup"
+                                    >
+                                        <emoji-picker
+                                                :data="emojiIndex"
+                                                :show-preview="false"
+                                                :show-skin-tones="false"
+                                                :emoji-size="20"
+                                                :per-line="8"
+                                                @select="onEmojiSelect"
+                                        />
+                                    </div>
 
-                                <b-form-textarea
-                                        ref="replyBox"
-                                        v-model="replyText"
-                                        rows="1"
-                                        max-rows="4"
-                                        class="no-resize chat-reply-textarea"
-                                        placeholder="Enter: ส่ง, Shift + Enter: ขึ้นบรรทัดใหม่..."
-                                        :disabled="!canReply"
-                                        @keydown.enter.exact.prevent="canReply && sendReply()"
-                                ></b-form-textarea>
+                                    <!-- REPLY BOX -->
+                                    <b-form-textarea
+                                            ref="replyBox"
+                                            v-model="replyText"
+                                            rows="1"
+                                            max-rows="4"
+                                            class="no-resize chat-reply-textarea"
+                                            placeholder="Enter: ส่ง, Shift + Enter: ขึ้นบรรทัดใหม่..."
+                                            :disabled="!canReply"
+                                            @keydown.enter.exact.prevent="canReply && sendReply()"
+                                    ></b-form-textarea>
+                                </div>
 
                                 <div class="d-flex justify-content-between align-items-center mt-2">
                                     <div class="d-flex align-items-center">
@@ -1109,7 +1145,6 @@
                                         </b-button>
                                     </div>
                                 </div>
-
 
 
                                 <input
@@ -1202,7 +1237,11 @@
                                                 variant="outline-danger"
                                                 @click="cancelRegisterFlow"
                                         >
-                                            <i class="fa fa-times"></i> ยกเลิกสมัคร (บอท)
+                                            <div class="btn-icon-group">
+                                                <i class="fa fa-times"></i>
+                                                <i class="fa fa-user-plus"></i>
+                                            </div>
+                                            สมัคร (บอท)
                                         </b-button>
                                     </div>
 
@@ -1456,7 +1495,7 @@
                     pagination: {
                         current_page: 1,
                         last_page: 1,
-                        per_page: 10,
+                        per_page: 5,
                         total: 0,
                     },
                     filters: {
@@ -1619,19 +1658,31 @@
                     hidePinnedPanel: false,
                     selectedStickerPackId: null,
                     stickerLoading: false,
+                    // ===== Emoji picker ส่วนกลาง =====
                     showEmojiPicker: false,
-                    emojiPickerStyle: {},
+                    showEmojiPickerModal: false,
+                    showEmojiPickerNoteModal: false,
+                    emojiPickerStyle: {
+                        // default โผล่กลางจอ
+                        top: '20%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '320px',
+                        zIndex: 200000,
+                    },
+                    emojiTarget: 'chat', // 'chat' หรือ 'quickReply'
+                    emojiIndex: window.__emojiIndex || null,
                 };
             },
             created() {
                 this.fetchConversations(1);
-                this.startAutoRefresh();
+                // this.startAutoRefresh();
                 this.subscribeRealtime();
                 this.fetchBanks();
                 this.loadMutedConversations();
             },
             beforeDestroy() {
-                this.stopAutoRefresh();
+                // this.stopAutoRefresh();
 
                 if (this.selectedConversation) {
                     this.unlockConversation(this.selectedConversation);
@@ -1641,6 +1692,7 @@
                     this.unsubscribeRealtime();
                 }
                 document.removeEventListener('click', this.handleClickOutside);
+
             },
             mounted() {
                 // default เลือก pack แรกถ้ามี
@@ -1987,21 +2039,32 @@
             },
             methods: {
                 handleClickOutside(e) {
-                    const btn = this.$refs.emojiBtn?.$el || this.$refs.emojiBtn;
-                    const popup = this.$refs.emojiPopup;
+                    const btnMain = this.$refs.emojiBtn?.$el || this.$refs.emojiBtn;
+                    const btnQuick = this.$refs.quickReplyEmojiBtn?.$el || this.$refs.quickReplyEmojiBtn;
+                    const btnNote = this.$refs.noteEmojiBtn?.$el || this.$refs.noteEmojiBtn;
+                    const popupMain = this.$refs.emojiPopup;
+                    const popupModal = this.$refs.emojiPopupModal;
+                    const popupNoteModal = this.$refs.emojiPopupNoteModal;
 
-                    // ยังไม่เปิด → ไม่ต้องทำอะไร
-                    if (!this.showEmojiPicker) return;
+                    if (!this.showEmojiPicker && !this.showEmojiPickerModal && !this.showEmojiPickerNoteModal) return;
 
-                    // ถ้าคลิกโดนปุ่ม → ไม่ปิด
-                    if (btn && btn.contains(e.target)) return;
+                    // กดโดนปุ่มใดปุ่มหนึ่ง → ไม่ปิด
+                    if (btnMain && btnMain.contains(e.target)) return;
+                    if (btnQuick && btnQuick.contains(e.target)) return;
+                    if (btnNote && btnNote.contains(e.target)) return;
 
-                    // ถ้าคลิกโดน popup → ไม่ปิด
-                    if (popup && popup.contains(e.target)) return;
+                    // กดโดน popup ใด popup หนึ่ง → ไม่ปิด
+                    if (popupMain && popupMain.contains(e.target)) return;
+                    if (popupModal && popupModal.contains(e.target)) return;
+                    if (popupNoteModal && popupNoteModal.contains(e.target)) return;
 
-                    // ที่เหลือคือคลิคนอก → ปิด
+                    // ที่เหลือคือคลิกนอก → ปิดทั้งสอง
                     this.showEmojiPicker = false;
+                    this.showEmojiPickerModal = false;
+                    this.showEmojiPickerNoteModal = false;
                 },
+
+
                 loadMutedConversations() {
                     try {
                         const raw = localStorage.getItem(this.muteStorageKey);
@@ -2735,7 +2798,7 @@
 
                     try {
                         // route นี้ให้ชี้ไปที่ ChatController::checkUsername (หรือชื่อที่คุณใช้จริง)
-                        const { data } = await axios.post(this.apiUrl('register/check-user'), {
+                        const {data} = await axios.post(this.apiUrl('register/check-user'), {
                             username: username,
                         });
 
@@ -2771,7 +2834,7 @@
                     try {
                         this.registerModal.checkingDuplicate = true;
 
-                        const { data } = await axios.post(this.apiUrl('register/check-user'), {
+                        const {data} = await axios.post(this.apiUrl('register/check-user'), {
                             username: username,
                         });
 
@@ -2940,8 +3003,8 @@
 
                 fetchConversations(page = 1, options = {}) {
                     const silent = options.silent === true;
-                    const merge = options.merge === true;   // อัปเดต list เดิมตาม id
-                    const append = options.append === true;  // โหลดเพิ่มต่อท้าย list เดิม
+                    const merge  = options.merge === true;
+                    const append = options.append === true;
 
                     if (!silent) {
                         this.loadingList = true;
@@ -2953,39 +3016,66 @@
                             status: this.filters.status,
                             q: this.filters.q,
                             account_id: this.filters.account_id,
-                            scope: this.filters.scope, // ให้ backend ใช้ filter ได้
-                            per_page: this.pagination?.per_page || 20, // เผื่อกำหนด per_page เอง
+                            scope: this.filters.scope,
+                            per_page: this.pagination?.per_page || 20,
                         }
                     }).then(res => {
-                        const body = res.data || {};
+                        const body    = res.data || {};
                         const newList = body.data || [];
 
                         // ===== อัปเดต pagination =====
-                        this.pagination = Object.assign(this.pagination, body.meta || {});
+                        const meta = body.meta || {};
+
+                        const currentPage = meta.current_page != null ? meta.current_page : page;
+                        const lastPage    = meta.last_page    != null ? meta.last_page    : (this.pagination?.last_page || page);
+
+                        this.pagination = Object.assign({}, this.pagination || {}, meta, {
+                            current_page: currentPage,
+                            last_page: lastPage,
+                        });
+
+                        console.log('[LineOA] fetchConversations result', {
+                            page: page,
+                            meta: this.pagination,
+                            newCount: newList.length,
+                        });
 
                         // ===== จัดการ conversations =====
                         if (append && Array.isArray(this.conversations)) {
-                            // โหมดโหลดเพิ่ม: เอาของเดิม + หน้าใหม่ ต่อท้ายกัน
-                            const existing = this.conversations.slice();
+                            const beforeLen   = this.conversations.length;
+                            const existing    = this.conversations.slice();
                             const existingIds = new Set(
                                 existing
                                     .filter(c => c && c.id != null)
                                     .map(c => c.id)
                             );
 
+                            console.log('[LineOA] existing ids:', Array.from(existingIds));
+                            console.log('[LineOA] new ids:', newList.map(i => i && i.id));
+
                             newList.forEach(item => {
-                                if (!item || item.id == null) {
-                                    return;
-                                }
+                                if (!item || item.id == null) return;
                                 if (!existingIds.has(item.id)) {
                                     existing.push(item);
                                 }
                             });
 
+                            const added = existing.length - beforeLen;
+
+                            console.log('[LineOA] append conversations', {
+                                before: beforeLen,
+                                added,
+                                after: existing.length,
+                            });
+
                             this.conversations = existing;
 
+                            // ❗ ถ้าหน้านี้ไม่มี id ใหม่เลย → ถือว่าถึงหน้าสุดท้ายแล้ว
+                            if (added === 0) {
+                                this.pagination.current_page = this.pagination.last_page;
+                            }
                         } else if (merge && Array.isArray(this.conversations) && this.conversations.length > 0) {
-                            // โหมด merge เดิมของโบ๊ท: ใช้ id เดิม แล้วอัปเดตค่าใหม่ทับ
+                            // โหมด merge เดิม
                             const oldById = {};
                             this.conversations.forEach(conv => {
                                 if (conv && conv.id != null) {
@@ -3004,8 +3094,9 @@
                             });
 
                             this.conversations = mergedList;
+
                         } else {
-                            // โหมดปกติ: แทนที่ทั้ง list (เช่น เปลี่ยน filter / ค้นหาใหม่)
+                            // โหมดปกติ: แทนที่ทั้ง list
                             this.conversations = newList;
                         }
 
@@ -3026,12 +3117,17 @@
 
                     }).catch(err => {
                         console.error('fetchConversations error', err);
+
                     }).finally(() => {
                         if (!silent) {
                             this.loadingList = false;
                         }
+                        // กันกรณีใช้ loadingMore ใน onScroll
+                        this.loadingMore = false;
                     });
                 },
+
+
 
                 /**
                  * เวลาเปลี่ยน filter เช่น status / scope / account / ค้นหา
@@ -3049,22 +3145,47 @@
                 onConversationListScroll(event) {
                     const el = event.target;
 
-                    // ยังโหลดอยู่ → หยุดก่อนกัน double load
-                    if (this.loadingList) return;
+                    console.log('[LineOA] scroll list left', el.scrollTop, el.scrollHeight, el.clientHeight);
 
-                    // ถ้ายังไม่ถึงหน้าสุดท้าย → เลื่อนโหลดเพิ่ม
-                    if (this.pagination.current_page < this.pagination.last_page) {
-
-                        // ถ้าเลื่อนถึงเกือบล่าง
-                        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
-
-                            this.fetchConversations(this.pagination.current_page + 1, {
-                                silent: true,
-                                append: true,
-                            });
-                        }
+                    if (this.loadingList || this.loadingMore) {
+                        return;
                     }
+
+                    const pag     = this.pagination || {};
+                    const current = pag.current_page || 1;
+                    const last    = pag.last_page || 1;
+
+                    console.log('[LineOA] pagination', { current, last });
+
+                    if (current >= last) {
+                        return;
+                    }
+
+                    const threshold   = 10;
+                    const bottom      = el.scrollTop + el.clientHeight;
+                    const isNearBottom = bottom + threshold >= el.scrollHeight;
+
+                    console.log('[LineOA] near bottom ?', { bottom, scrollHeight: el.scrollHeight, isNearBottom });
+
+                    if (!isNearBottom) {
+                        return;
+                    }
+
+                    const nextPage = current + 1;
+
+                    console.log('[LineOA] load more page', nextPage);
+
+                    this.loadingMore = true;
+
+                    this.fetchConversations(nextPage, {
+                        silent: true,
+                        append: true,
+                    }).catch(err => {
+                        console.error('[LineOA] load more error', err);
+                    });
                 },
+
+
 
                 // ใช้สำหรับกรณี backend ต้องดึง content เอง (ตอนนี้ template ใช้ payload อยู่แล้ว)
                 imageUrl(msg) {
@@ -3900,20 +4021,6 @@
                     }
                 },
 
-                // ====== รับเรื่อง / ปิดเคส ======
-                updateConversationLocal(conv) {
-                    if (!conv || !conv.id) return;
-
-                    if (this.selectedConversation && this.selectedConversation.id === conv.id) {
-                        this.selectedConversation = Object.assign({}, this.selectedConversation, conv);
-                    }
-
-                    const idx = this.conversations.findIndex(c => c.id === conv.id);
-                    if (idx !== -1) {
-                        const merged = Object.assign({}, this.conversations[idx], conv);
-                        this.$set(this.conversations, idx, merged);
-                    }
-                },
                 acceptConversation() {
                     if (!this.selectedConversation) return;
 
@@ -4401,6 +4508,12 @@
                     };
                     this.quickReplySaving = false;
                     this.quickReplySaveError = null;
+
+                    // ถ้า picker เปิดอยู่ในโหมด quickReply ให้ปิด
+                    if (this.emojiTarget === 'quickReply') {
+                        this.showEmojiPicker = false;
+                        this.emojiTarget = 'chat'; // หรือ null ก็ได้ ตามสะดวก
+                    }
                 },
 
                 /**
@@ -4893,15 +5006,24 @@
                         });
                     }
                 },
-
                 updateConversationLocal(conv) {
+                    // กันเคส conv ว่าง หรือไม่มี id
+                    if (!conv || !conv.id) return;
+
                     const idx = this.conversations.findIndex(c => c.id === conv.id);
-                    if (idx !== -1) {
-                        this.$set(this.conversations, idx, Object.assign({}, this.conversations[idx], conv));
+                    if (idx === -1) {
+                        return;
                     }
-                    // ถ้า selectedConversation เป็นห้องเดียวกัน → sync flag ให้ด้วย
+
+                    // merge ครั้งเดียว ใช้ร่วมกันทั้ง list และ selected
+                    const merged = Object.assign({}, this.conversations[idx], conv);
+
+                    // อัปเดตใน conversations list
+                    this.$set(this.conversations, idx, merged);
+
+                    // ถ้า selectedConversation เป็นห้องเดียวกัน → sync ด้วย object เดียวกัน
                     if (this.selectedConversation && this.selectedConversation.id === conv.id) {
-                        this.selectedConversation = Object.assign({}, this.selectedConversation, conv);
+                        this.selectedConversation = merged;
                     }
                 },
 
@@ -5121,141 +5243,253 @@
                 },
                 toggleEmojiPicker() {
                     if (!this.canReply) return;
-                    this.showEmojiPicker = !this.showEmojiPicker;
 
-                    this.$nextTick(() => {
-                        try {
-                            const input = this.$refs.replyBox && this.$refs.replyBox.$refs
-                                ? this.$refs.replyBox.$refs.input
-                                : this.$refs.replyBox;
-                            input && input.focus && input.focus();
-                        } catch (e) {
-                            // no-op
-                        }
-                    });
-                },
-
-                /**
-                 * callback ตอนเลือก emoji จาก emoji-mart-vue
-                 * param emoji: object ที่ emoji-mart ส่งมา (มี .native เป็น emoji ตัวจริง)
-                 */
-                onEmojiSelect(emoji) {
-                    if (!emoji || !emoji.native) {
-                        return;
-                    }
-
-                    const char = emoji.native;
-                    const current = this.replyText || '';
-
-                    let input = null;
-                    try {
-                        input = this.$refs.replyBox && this.$refs.replyBox.$refs
-                            ? this.$refs.replyBox.$refs.input
-                            : this.$refs.replyBox;
-                    } catch (e) {
-                        input = null;
-                    }
-
-                    if (!input || typeof input.selectionStart !== 'number') {
-                        // fallback: ต่อท้ายข้อความ
-                        this.replyText = current + char;
-                    } else {
-                        const start = input.selectionStart;
-                        const end = input.selectionEnd;
-
-                        this.replyText =
-                            current.slice(0, start) +
-                            char +
-                            current.slice(end);
-
-                        this.$nextTick(() => {
-                            try {
-                                input.focus();
-                                const pos = start + char.length;
-                                input.setSelectionRange(pos, pos);
-                            } catch (e) {
-                                // ignore
-                            }
-                        });
-                    }
-
-                    // จะให้ปิด picker ทันทีหรือค้างไว้ให้จิ้มต่อก็ได้
-                    // ถ้าอยากให้ค้างไว้ จงคอมเมนต์บรรทัดด้านล่าง
-                    this.showEmojiPicker = false;
-                },
-                toggleEmojiPicker() {
-                    if (!this.canReply) return;
-
+                    this.emojiTarget = 'chat';
                     this.showEmojiPicker = !this.showEmojiPicker;
 
                     this.$nextTick(() => {
                         if (!this.showEmojiPicker) return;
 
                         const btnEl = this.$refs.emojiBtn?.$el || this.$refs.emojiBtn;
-                        if (!btnEl) return;
-
-                        const rect = btnEl.getBoundingClientRect();
-                        const vw = window.innerWidth || document.documentElement.clientWidth;
-                        const vh = window.innerHeight || document.documentElement.clientHeight;
-
-                        // ประมาณความกว้าง/สูงของ emoji picker (ปรับได้)
-                        const pickerWidth  = 320;
-                        const pickerHeight = 340;
-
-                        // --- คำนวณตำแหน่งเริ่มต้น: ใต้ปุ่ม ---
-                        let top  = rect.bottom + 6;
-                        let left = rect.left + rect.width / 2 - pickerWidth / 2;
-
-                        // ถ้าล่างไม่พอ → flip ขึ้นไปเหนือปุ่ม
-                        if (top + pickerHeight > vh - 8) {
-                            top = rect.top - pickerHeight - 6;
+                        if (!btnEl) {
+                            console.warn('[emoji] ไม่พบ ref emojiBtn');
+                            return;
                         }
 
-                        // กันล้นซ้าย/ขวา
-                        if (left < 8) {
-                            left = 8;
-                        }
-                        if (left + pickerWidth > vw - 8) {
-                            left = vw - 8 - pickerWidth;
-                        }
+                        // this.positionEmojiPicker(btnEl);
 
-                        this.emojiPickerStyle = {
-                            top:  top + 'px',
-                            left: left + 'px',
-                            width: pickerWidth + 'px',
-                        };
+                        const input = this.getReplyInputEl();
+                        if (input && input.focus) {
+                            input.focus();
+                        }
                     });
                 },
 
+                // ================= EMOJI: เปิดจาก Quick Reply Modal =================
+                openEmojiPickerForQuickReply() {
+                    console.log('[quickReply] openEmojiPickerForQuickReply() fired');
+
+                    this.emojiTarget = 'quickReply';
+                    this.showEmojiPickerModal = !this.showEmojiPickerModal;
+
+                    this.$nextTick(() => {
+                        if (!this.showEmojiPickerModal) return;
+
+                        const btnEl = this.$refs.quickReplyEmojiBtn?.$el || this.$refs.quickReplyEmojiBtn;
+                        if (!btnEl) {
+                            console.warn('[emoji] ไม่พบ ref quickReplyEmojiBtn');
+                            return;
+                        }
+
+                        // this.positionEmojiPicker(btnEl);
+
+                        // // ตำแหน่งกลางจอแบบ fix ไปเลย ไม่ต้องอิงปุ่ม
+                        // this.emojiPickerStyle = {
+                        //     top: '20%',
+                        //     left: '50%',
+                        //     transform: 'translateX(-50%)',
+                        //     width: '320px',
+                        //     zIndex: 200000,
+                        // };
+
+                        const input = this.getQuickReplyInputEl();
+                        if (input && input.focus) {
+                            input.focus();
+                        }
+                    });
+                },
+
+                openEmojiPickerForNote() {
+                    console.log('[quickReply] openEmojiPickerForNote() fired');
+
+                    this.emojiTarget = 'note';
+                    this.showEmojiPickerNoteModal = !this.showEmojiPickerNoteModal;
+
+                    this.$nextTick(() => {
+                        if (!this.showEmojiPickerNoteModal) return;
+
+                        const btnEl = this.$refs.noteEmojiBtn?.$el || this.$refs.noteEmojiBtn;
+                        if (!btnEl) {
+                            console.warn('[emoji] ไม่พบ ref noteEmojiBtn');
+                            return;
+                        }
+
+                        // this.positionEmojiPicker(btnEl);
+
+
+                        const input = this.getNoteInputEl();
+                        if (input && input.focus) {
+                            input.focus();
+                        }
+                    });
+                },
+
+                // ================= ใช้ร่วม: จัดตำแหน่ง popup รอบปุ่ม =================
+                positionEmojiPicker(btnEl) {
+                    const rect = btnEl.getBoundingClientRect();
+                    const vw = window.innerWidth || document.documentElement.clientWidth;
+                    const vh = window.innerHeight || document.documentElement.clientHeight;
+
+                    const pickerWidth = 320;
+                    const pickerHeight = 340;
+
+                    let top = rect.bottom + 6;
+                    let left = rect.left + rect.width / 2 - pickerWidth / 2;
+
+                    if (top + pickerHeight > vh - 8) {
+                        top = rect.top - pickerHeight - 6;
+                    }
+                    if (left < 8) {
+                        left = 8;
+                    }
+                    if (left + pickerWidth > vw - 8) {
+                        left = vw - 8 - pickerWidth;
+                    }
+
+                    this.emojiPickerStyle = {
+                        top: top + 'px',
+                        left: left + 'px',
+                        width: pickerWidth + 'px',
+                        zIndex: 200000,
+                    };
+                },
+
+                // ================= ตอนเลือก emoji จาก emoji-picker =================
                 onEmojiSelect(emoji) {
                     const char = emoji?.native;
                     if (!char) return;
 
-                    const input = this.$refs.replyBox?.$refs?.input || this.$refs.replyBox;
+                    if (this.emojiTarget === 'quickReply') {
+                        this.insertEmojiIntoQuickReply(char);
+                    } else if (this.emojiTarget === 'chat') {
+                        this.insertEmojiIntoReplyText(char);
+                    } else if (this.emojiTarget === 'note') {
+                        this.insertEmojiIntoNote(char);
+                    }
+
+                    // ถ้าอยากให้ค้างให้กดหลายตัว ก็ comment บรรทัดนี้
+                    // this.showEmojiPicker = false;
+                    // this.showEmojiPickerModal = false;
+                    // this.showEmojiPickerNoteModal = false;
+                },
+
+                // ---------- แทรก emoji เข้า “ช่องตอบแชตหลัก” ----------
+                insertEmojiIntoReplyText(char) {
+                    const input = this.getReplyInputEl();
                     const current = this.replyText || '';
 
                     if (!input || typeof input.selectionStart !== 'number') {
                         this.replyText = current + char;
-                    } else {
-                        const start = input.selectionStart;
-                        const end   = input.selectionEnd;
-
-                        this.replyText =
-                            current.slice(0, start) +
-                            char +
-                            current.slice(end);
-
-                        this.$nextTick(() => {
-                            try {
-                                input.focus();
-                                const pos = start + char.length;
-                                input.setSelectionRange(pos, pos);
-                            } catch (e) {}
-                        });
+                        return;
                     }
 
-                    this.showEmojiPicker = false;
+                    const start = input.selectionStart;
+                    const end = input.selectionEnd;
+
+                    this.replyText =
+                        current.slice(0, start) +
+                        char +
+                        current.slice(end);
+
+                    this.$nextTick(() => {
+                        try {
+                            input.focus();
+                            const pos = start + char.length;
+                            input.setSelectionRange(pos, pos);
+                        } catch (e) {
+                        }
+                    });
                 },
+
+                getReplyInputEl() {
+                    try {
+                        return this.$refs.replyBox && this.$refs.replyBox.$refs
+                            ? this.$refs.replyBox.$refs.input
+                            : this.$refs.replyBox;
+                    } catch (e) {
+                        return null;
+                    }
+                },
+
+
+                // ---------- แทรก emoji เข้า “quickReplyForm.message” ----------
+                insertEmojiIntoQuickReply(char) {
+                    const input = this.getQuickReplyInputEl();
+                    const current = this.quickReplyForm.message || '';
+
+                    if (!input || typeof input.selectionStart !== 'number') {
+                        this.quickReplyForm.message = current + char;
+                        return;
+                    }
+
+                    const start = input.selectionStart;
+                    const end = input.selectionEnd;
+
+                    this.quickReplyForm.message =
+                        current.slice(0, start) +
+                        char +
+                        current.slice(end);
+
+                    this.$nextTick(() => {
+                        try {
+                            input.focus();
+                            const pos = start + char.length;
+                            input.setSelectionRange(pos, pos);
+                        } catch (e) {
+                        }
+                    });
+                },
+
+                // ---------- แทรก emoji เข้า “quickReplyForm.message” ----------
+                insertEmojiIntoNote(char) {
+                    const input = this.getNoteInputEl();
+                    const current = this.noteModalText || '';
+
+                    if (!input || typeof input.selectionStart !== 'number') {
+                        this.noteModalText = current + char;
+                        return;
+                    }
+
+                    const start = input.selectionStart;
+                    const end = input.selectionEnd;
+
+                    this.noteModalText =
+                        current.slice(0, start) +
+                        char +
+                        current.slice(end);
+
+                    this.$nextTick(() => {
+                        try {
+                            input.focus();
+                            const pos = start + char.length;
+                            input.setSelectionRange(pos, pos);
+                        } catch (e) {
+                        }
+                    });
+                },
+
+                getQuickReplyInputEl() {
+                    const comp = this.$refs.quickReplyMessageInput;
+                    if (!comp) return null;
+
+                    if (comp.$refs && comp.$refs.input) {
+                        return comp.$refs.input;
+                    }
+
+                    return comp.$el ? comp.$el.querySelector('textarea') : null;
+                },
+
+                getNoteInputEl() {
+                    const comp = this.$refs.noteMessageInput;
+                    if (!comp) return null;
+
+                    if (comp.$refs && comp.$refs.input) {
+                        return comp.$refs.input;
+                    }
+
+                    return comp.$el ? comp.$el.querySelector('textarea') : null;
+                },
+
                 showAdjustSelector() {
                     this.$refs.memberAdjustModal && this.$refs.memberAdjustModal.show();
                 },
@@ -5276,11 +5510,11 @@
                     // แล้วค่อยเปิด modal เป้าหมาย
                     this.$nextTick(() => {
                         if (type === 'money' && window.memberRefillApp?.money) {
-                            window.memberRefillApp.money({ member_id: memberId });
+                            window.memberRefillApp.money({member_id: memberId});
                         } else if (type === 'point' && window.memberRefillApp?.point) {
-                            window.memberRefillApp.point({ member_id: memberId });
+                            window.memberRefillApp.point({member_id: memberId});
                         } else if (type === 'diamond' && window.memberRefillApp?.diamond) {
-                            window.memberRefillApp.diamond({ member_id: memberId });
+                            window.memberRefillApp.diamond({member_id: memberId});
                         }
                     });
                 },
@@ -5313,9 +5547,9 @@
                     // แล้วค่อยเปิด modal เป้าหมาย
                     this.$nextTick(() => {
                         if (type === 'deposit' && window.memberRefillApp?.openGameLog) {
-                            window.memberRefillApp.openGameLog('deposit',{ member_id: memberId });
+                            window.memberRefillApp.openGameLog('deposit', {member_id: memberId});
                         } else if (type === 'withdraw' && window.memberRefillApp?.point) {
-                            window.memberRefillApp.openGameLog('withdraw',{ member_id: memberId });
+                            window.memberRefillApp.openGameLog('withdraw', {member_id: memberId});
                         }
                     });
                 },
@@ -5988,7 +6222,6 @@
                 },
 
 
-
                 /**
                  * helper แปลงตัวเลขเป็น string เงิน (อาจมีอยู่แล้วใน app)
                  */
@@ -6212,7 +6445,7 @@
                             // --- ตรงนี้คือส่วน log ฝั่งขวา ---
                             // ถ้ามี member_id แล้ว ให้ดึง log ฝากมาแสดง
                             if (this.currentMemberId) {
-                                this.setupLogFields('deposit-mini');
+                                this.setupLogFields('topup');
                                 await this.fetchGameLog();
                             }
                         });
@@ -6353,7 +6586,7 @@
 
                         // ถ้ามี currentMemberId แล้ว → ตั้ง field log เป็น deposit และดึง log
                         if (this.currentMemberId) {
-                            this.setupLogFields('deposit');
+                            this.setupLogFields('topup');
                             await this.fetchGameLog();
                         } else {
                             console.warn('[memberRefillApp] ไม่มี currentMemberId จาก loaddata → ยังไม่โหลด log');
@@ -6364,7 +6597,6 @@
                         console.error('[memberRefillApp] loadUserForRefill(): error', e);
                     }
                 },
-
 
 
                 async loadBankAccount() {
@@ -6732,14 +6964,12 @@
                             {key: 'credit_after', label: 'เครดิตหลัง', sortable: false},
                             {key: 'status_display', label: 'สถานะ', sortable: true},
                         ];
-                    } else if (type === 'refill') {
+                    } else if (type === 'topup') {
                         this.caption = 'ประวัติรายการฝาก';
                         this.fields = [
                             {key: 'date_create', label: 'เวลา', sortable: true},
+                            {key: 'bank', label: 'ธนาคาร', sortable: false},
                             {key: 'amount', label: 'ยอดฝาก', sortable: false},
-                            {key: 'credit_bonus', label: 'โบนัสที่ได้', sortable: false},
-                            {key: 'credit_before', label: 'เครดิตก่อน', sortable: false},
-                            {key: 'credit_after', label: 'เครดิตหลัง', sortable: false},
                             {key: 'status_display', label: 'สถานะ', sortable: true},
                         ];
                     } else {

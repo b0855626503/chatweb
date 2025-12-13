@@ -259,7 +259,7 @@
                                 </div>
                             </div>
                             <div class="refill-log-status" v-if="isBusy">
-                                <b-spinner small class="mr-1"></b-spinner>
+                                <b-spinner class="mr-1"></b-spinner>
                                 <span>กำลังโหลด...</span>
                             </div>
                         </div>
@@ -267,7 +267,6 @@
                         <b-table
                                 striped
                                 hover
-                                small
                                 outlined
                                 sticky-header
                                 show-empty

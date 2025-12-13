@@ -3,6 +3,7 @@
           integrity="sha512-jU/7UFiaW5UBGODEopEqnbIAHOI8fO6T99m7Tsmqs2gkdujByJfkCbbfPSN4Wlqlb9TGnsuC0YgUgWkRBK7B9A=="
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <style>
+
         .content-header {
             display:none !important;
         }
@@ -119,11 +120,13 @@
 
         /* บังคับ … ให้ทำงานเสมอ */
         .fixed-line {
-            display: block;
-            white-space: unset !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere;   /* modern + สวย */
+            word-break: break-word;    /* fallback */
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 100%; /* สำคัญมาก */
+            max-width: 100%;
+            display: block;
         }
 
         .btn-app {
@@ -179,9 +182,10 @@
         }
 
         .line-oa-chat-page {
-            height: calc(110vh - 0px); /* ปรับเลขนี้ตามความสูง header/footer ของ layout */
+            height: calc(100vh - 60px); /* -60px = เผื่อ header/topbar ถ้ามี */
             display: flex;
             flex-direction: column;
+            overflow: hidden; /* กันลูกทะลุ */
         }
 
         /* ให้ container + row ขยายเต็ม และยืดลูกทุกคอลัมน์ */
@@ -199,7 +203,7 @@
 
         /* คอลัมน์กลาง: ไม่ให้ทะลุกรอบ */
         .line-oa-chat-page .chat-middle-col {
-            height: 100%;
+            height: calc(100vh - 0px);
             overflow: hidden;
         }
 
@@ -893,13 +897,28 @@
             font-size: 13px;
         }
 
-        .emoji-overlay {
-            position: fixed;         /* ลอยบนจอ ไม่ดัน layout */
-            z-index: 99999;          /* เหนือ modal, popover */
-            background: white;
+        .chat-reply-wrapper {
+            position: relative;
+        }
+
+        .chat-reply-wrapper #chatEmojiContainer {
+            position: absolute;
+            bottom: 100%;          /* วางเหนือ replybox */
+            left: 0;
+            width: 100%;           /* กว้างเท่า replybox */
+            z-index: 200000;
+        }
+
+        /* emoji picker เอง */
+        .emoji-overlay-chat {
+            background: #fff;
             border: 1px solid #ddd;
             border-radius: 6px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            max-height: 50%;
+            overflow-y: auto;
+            width: 100%;           /* สำคัญ! ทำให้มันยืดเต็ม container */
+            padding: 8px;
         }
 
 
@@ -1096,6 +1115,60 @@
             margin-top: 4px;
             max-height: 320px; /* ให้ sticky-header มีผล และไม่ล้น modal */
         }
+
+        /* wrapper ของ replybox */
+        .chat-reply-wrapper {
+            position: relative;
+        }
+
+        /* emoji picker ลอยทับเหนือ replybox */
+        .emoji-overlay-chat {
+            position: absolute;
+            bottom: calc(100% + 4px);   /* อยู่เหนือกล่องพิมพ์นิดหน่อย */
+            left: 0;
+            right: 0;                   /* = กว้างเท่ากับ replybox */
+            z-index: 200000;            /* ให้อยู่ทับข้อความแชต */
+
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+
+            max-height: none;
+            overflow: visible;
+            padding: 6px;
+            margin: 0;                  /* กัน margin ไปดัน layout */
+        }
+
+        /* emoji-mart ชอบกำหนด width เอง → บังคับให้เต็มกรอบ */
+        .emoji-overlay-chat .emoji-mart {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 250px !important;
+            max-height: 250px !important;
+            box-sizing: border-box;
+        }
+
+        .line-oa-chat-page {
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .line-oa-sidebar {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .line-oa-sidebar .conversation-list {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
     </style>
 
 @endpush

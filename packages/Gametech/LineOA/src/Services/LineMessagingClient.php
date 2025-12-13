@@ -240,6 +240,23 @@ class LineMessagingClient
     protected function sendRequest(LineAccount $account, string $uri, array $payload, string $context): array
     {
         try {
+
+            if ($account->status !== 'active') {
+                Log::channel('line_oa')->warning('[LineMessagingClient] request blocked: account not active', [
+                    'account_id' => $account->id,
+                    'context'    => $context,
+                    'uri'        => $uri,
+                    'payload'    => $payload,
+                    'status'     => $account->status,
+                ]);
+
+                return [
+                    'success' => false,
+                    'status'  => null,
+                    'body'    => null,
+                    'error'   => 'LINE account is not active.',
+                ];
+            }
             /** @var Response $response */
             $response = $this->http($account)->post($uri, $payload);
 

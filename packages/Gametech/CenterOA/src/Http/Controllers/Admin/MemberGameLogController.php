@@ -354,8 +354,6 @@ class MemberGameLogController extends AppBaseController
                 'amount' => $item->value,
                 'status' => $item->staus,
                 'bank' => $item->bank,
-                'method' => 'เติมเงิน',
-                'status_color' => $color[$item->status],
                 'status_display' => $status[$item->status],
             ];
 

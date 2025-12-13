@@ -126,6 +126,13 @@ return [
             'days' => 14,
         ],
 
+        'sms' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/sms/daily.log'),
+            'level' => 'debug',
+            'days' => 14,
+        ],
+
         'facebook_oa' => [
             'driver' => 'daily',
             'path' => storage_path('logs/facebook_oa/daily.log'),

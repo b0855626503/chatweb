@@ -59,8 +59,9 @@ class ChatController extends AppBaseController
         $status = $request->get('status', 'open'); // open | closed (UI)
         $accountId = $request->get('account_id');
         $q = trim((string) $request->get('q', ''));
-        $perPage = (int) $request->get('per_page', 20);
+        $perPage = (int) $request->get('per_page', 5);
         $scope = $request->get('scope', 'all'); // all | mine
+        $page = max(1, (int) $request->get('page', 1));
 
         $query = LineConversation::query()
             ->with([
@@ -115,7 +116,9 @@ class ChatController extends AppBaseController
             });
         }
 
-        $paginator = $query->paginate($perPage);
+        $paginator = $query->paginate($perPage,['*'],'page',$page);
+
+        Log::channel('line_oa')->info('pagination', ['page' => $paginator]);
 
         $data = [
             'data' => $paginator->getCollection()->map(function (LineConversation $conv) {
@@ -1655,7 +1658,7 @@ class ChatController extends AppBaseController
                 ->first();
 
             if ($replyTo) {
-                $meta['reply_to'] = $this->buildReplyToMeta($replyTo);
+                $metaForOutbound['reply_to'] = $this->buildReplyToMeta($replyTo);
             }
         }
 
@@ -3163,14 +3166,15 @@ class ChatController extends AppBaseController
         }
 
         $member = $memberRepository->find($memberId);
-        $gameUser = $member->gameUser;
 
         if (! $member) {
             return response()->json([
-                'ok' => false,
+                'ok'      => false,
                 'message' => 'ไม่พบข้อมูลสมาชิก (อาจถูกลบออกจากระบบแล้ว)',
             ], 404);
         }
+
+        $gameUser = $member->gameUser;
 
         $balance = 0.0;
         $rawResponse = null;
