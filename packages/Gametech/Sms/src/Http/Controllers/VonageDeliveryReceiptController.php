@@ -2,7 +2,8 @@
 
 namespace Gametech\Sms\Http\Controllers;
 
-use Gametech\LineOA\Http\DeliveryReceiptService;
+
+use Gametech\Sms\Services\DeliveryReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;

@@ -27,9 +27,13 @@ Route::domain(
                 ->as('sms.')
                 ->group(function () {
 
-                    Route::match(['GET', 'POST'], '/webhook/vonage/dlr', [VonageDeliveryReceiptController::class, 'handle'])
+//                    Route::match(['GET', 'POST'], '/webhook/vonage/dlr', [VonageDeliveryReceiptController::class, 'handle'])
+//                        ->middleware([VerifySmsWebhookSignature::class])
+//                        ->name('vonage.dlr');
+
+                    Route::match(['GET', 'POST'], '/webhook/{provider}/dlr', [SmsDeliveryReceiptWebhookController::class, 'dlr'])
                         ->middleware([VerifySmsWebhookSignature::class])
-                        ->name('vonage.dlr');
+                        ->name('webhook.dlr');
 
                     Route::post('/imports/parse', [SmsImportController::class, 'parse'])
                         ->name('imports.parse');

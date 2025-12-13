@@ -335,10 +335,27 @@ class SmsCampaignController extends AppBaseController
         $deliveredTotal = (clone $base)->whereIn('status', ['delivered'])->count();
         $failedTotal = (clone $base)->whereIn('status', ['failed'])->count();
 
+        // ✅ หา last_import_batch_id แบบ “ถูกจังหวะ”:
+        // - ถ้า build recipients แล้ว → sms_recipients จะมี import_batch_id (อิงผลจริง)
+        // - ถ้ายังไม่ build แต่มีการ upload/parse แล้วผูก campaign_id ใน sms_import_batches → ต้องยัง “มองเห็น batch”
+        //   เพื่อให้ปุ่ม Build จากไฟล์เปิดได้
         $lastImportBatchId = (clone $base)
             ->whereNotNull('import_batch_id')
             ->orderByDesc('id')
             ->value('import_batch_id');
+
+        if (! $lastImportBatchId) {
+            // fallback: ดูจาก import_batches ล่าสุดของ campaign (ยังไม่ build ก็เจอ)
+            try {
+                $lastImportBatchId = $this->importBatchRepository
+                    ->query()
+                    ->where('campaign_id', $campaignId)
+                    ->orderByDesc('id')
+                    ->value('id');
+            } catch (\Throwable $e) {
+                // เงียบไว้: stats ไม่ควรทำให้หน้าแตก
+            }
+        }
 
         return [
             'recipients_total' => (int) $recipientsTotal,
