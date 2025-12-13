@@ -4,7 +4,8 @@
          :no-stacking="true"
          :no-close-on-backdrop="true"
          :hide-footer="true">
-    <b-form @submit.prevent="addEditSubmit" v-if="show">
+    {{-- ✅ ตัด v-if="show" ออก เพื่อไม่ destroy/recreate --}}
+    <b-form @submit.prevent="addEditSubmit">
 
         {{-- Campaign Name --}}
         <b-form-group
@@ -170,7 +171,7 @@
             </small>
         </b-form-group>
 
-        {{-- Recipient summary (หลังมี campaign id ถึงจะ meaningful) --}}
+        {{-- Recipient summary --}}
         <b-card v-if="formmethod === 'edit'" class="mb-3" body-class="p-2">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="font-weight-bold">สรุปผู้รับของแคมเปญ</div>
@@ -189,12 +190,11 @@
             </div>
         </b-card>
 
-        {{-- Build recipients actions (แสดงตามกลุ่มเป้าหมาย) --}}
+        {{-- Build recipients actions --}}
         <b-form-group
                 id="input-group-build"
                 label="สร้างรายชื่อผู้รับ (Build recipients):"
                 description="ระบบจะสร้างแถวใน sms_recipients ตามแคมเปญนี้ (แนะนำให้บันทึกก่อน แล้วค่อย Build)">
-            {{-- Build จากสมาชิก --}}
             <b-button size="sm" variant="outline-success" class="mr-1"
                       v-if="showBuildMembersBtn"
                       @click="buildRecipients('member_all')"
@@ -202,7 +202,6 @@
                 @{{ building ? 'กำลังทำ...' : 'Build จากสมาชิกทั้งหมด' }}
             </b-button>
 
-            {{-- Build จากไฟล์ --}}
             <b-button size="sm" variant="outline-success" class="mr-1"
                       v-if="showBuildUploadBtn"
                       @click="buildRecipients('upload_only')"
@@ -210,7 +209,6 @@
                 @{{ building ? 'กำลังทำ...' : 'Build จากไฟล์ที่อัปโหลด' }}
             </b-button>
 
-            {{-- Build แบบผสม --}}
             <b-button size="sm" variant="outline-success"
                       v-if="showBuildMixedBtn"
                       @click="buildRecipients('mixed')"
@@ -272,17 +270,22 @@
             el: '#app',
             data() {
                 return {
-                    show: false,
+                    // ✅ ไม่ใช้ show เพื่อ render form แล้ว (เก็บไว้ได้แต่ไม่จำเป็น)
+                    show: true,
+
                     formmethod: 'add',
                     code: null,
 
                     building: false,
                     dispatching: false,
                     loadingStats: false,
+                    loadingData: false,
+
+                    // guard กัน race + call ซ้ำ
+                    loadToken: 0,
 
                     dispatchLimit: 1000,
 
-                    // Upload import
                     importFile: null,
                     importUploading: false,
                     importOptions: {
@@ -298,7 +301,6 @@
                         preview: [],
                     },
 
-                    // Campaign recipient stats (best-effort)
                     stats: {
                         recipients_total: 0,
                         queued_total: 0,
@@ -335,7 +337,7 @@
                 },
 
                 canBuildBase() {
-                    return this.formmethod === 'edit' && !!this.code;
+                    return this.formmethod === 'edit' && !!this.code && !this.loadingData;
                 },
 
                 canBuildUpload() {
@@ -346,12 +348,16 @@
                     return this.canBuildBase && !!this.importBatch.id;
                 },
 
+                // ✅ ตรงนี้ “นิ่ง” แล้ว: จะโชว์อะไรตาม audience_mode จริง ๆ
                 showBuildMembersBtn() {
-                    return this.formaddedit.audience_mode === 'member_all' || this.formaddedit.audience_mode === 'member_filter' || this.formaddedit.audience_mode === 'mixed';
+                    return this.formaddedit.audience_mode === 'member_all'
+                        || this.formaddedit.audience_mode === 'member_filter'
+                        || this.formaddedit.audience_mode === 'mixed';
                 },
 
                 showBuildUploadBtn() {
-                    return this.formaddedit.audience_mode === 'upload_only' || this.formaddedit.audience_mode === 'mixed';
+                    return this.formaddedit.audience_mode === 'upload_only'
+                        || this.formaddedit.audience_mode === 'mixed';
                 },
 
                 showBuildMixedBtn() {
@@ -359,14 +365,10 @@
                 },
 
                 canDispatch() {
-                    // ต้องเป็น edit + มี campaign id + มี queued ค้างส่ง (หรืออย่างน้อยมี recipients)
-                    if (this.formmethod !== 'edit' || !this.code) return false;
+                    if (this.formmethod !== 'edit' || !this.code || this.loadingData) return false;
 
-                    // ถ้ามี stats.queued_total ใช้มันเป็นหลัก
                     if ((this.stats.queued_total || 0) > 0) return true;
 
-                    // fallback: ถ้ามี recipients_total แต่ queued ยังไม่โหลด/ไม่รองรับ ก็ยังให้ dispatch ได้
-                    // (แต่ UI จะเตือนให้เห็น recommendedDispatch เป็น 0)
                     return (this.stats.recipients_total || 0) > 0;
                 },
 
@@ -378,52 +380,44 @@
             },
 
             watch: {
-                // เวลาเปลี่ยน audience_mode ให้ clear เฉพาะส่วนที่เสี่ยงทำให้คนเข้าใจผิด
                 'formaddedit.audience_mode'(val) {
-                    // ถ้าเปลี่ยนไปไม่ใช้ไฟล์ ก็ล้าง batch preview (กันเข้าใจผิดว่า 1 เบอร์ = recipients)
+                    // ถ้าเปลี่ยนไปไม่ใช้ไฟล์ → ล้างไฟล์/preview กันเข้าใจผิด
                     if (val !== 'upload_only' && val !== 'mixed') {
                         this.importFile = null;
                         this.importBatch = {id: null, valid_phones: 0, invalid_phones: 0, duplicate_phones: 0, preview: []};
                     }
                 },
 
-                // อัปเดต dispatchLimit อัตโนมัติเมื่อโหลด stats แล้วมี queued_total
                 'stats.queued_total'(val) {
                     const q = parseInt(val || 0, 10);
                     if (q > 0) {
-                        this.dispatchLimit = Math.min(1000, q);
+                        // ปรับให้สวย: ไม่ดันทับถ้าผู้ใช้ตั้งเองเกินคิว
+                        this.dispatchLimit = Math.min(this.dispatchLimit || 1000, q, 5000);
+                        if (!this.dispatchLimit || this.dispatchLimit < 1) this.dispatchLimit = Math.min(1000, q);
                     }
                 }
             },
 
             methods: {
-                editModal(code) {
-                    this.code = null;
+                // ✅ เปิด modal แบบนิ่ง: ไม่ toggle show ไม่ nextTick
+                async editModal(code) {
                     this.resetForm();
-
                     this.formmethod = 'edit';
-                    this.show = false;
+                    this.code = code;
 
-                    this.$nextTick(async () => {
-                        this.code = code;
-                        await this.loadData();
-                        await this.refreshStats();
-                        this.$refs.addedit.show();
-                        this.show = true;
-                    });
+                    this.$refs.addedit.show();
+
+                    // กันกดรัว ๆ / กัน load ซ้ำ
+                    await this.loadDataOnce();
+                    await this.refreshStatsOnce();
                 },
 
                 addModal() {
-                    this.code = null;
                     this.resetForm();
-
                     this.formmethod = 'add';
-                    this.show = false;
+                    this.code = null;
 
-                    this.$nextTick(() => {
-                        this.$refs.addedit.show();
-                        this.show = true;
-                    });
+                    this.$refs.addedit.show();
                 },
 
                 resetForm() {
@@ -443,59 +437,87 @@
 
                     this.stats = {recipients_total: 0, queued_total: 0, delivered_total: 0, failed_total: 0};
                     this.loadingStats = false;
+                    this.loadingData = false;
 
                     this.dispatchLimit = 1000;
                     this.building = false;
                     this.dispatching = false;
                 },
 
-                async loadData() {
-                    const response = await axios.post(
-                        "{{ route('admin.'.$menu->currentRoute.'.loaddata') }}",
-                        {id: this.code}
-                    );
+                async loadDataOnce() {
+                    if (this.loadingData) return;
+                    this.loadingData = true;
 
-                    const data = response.data.data || {};
+                    const token = ++this.loadToken;
 
-                    this.formaddedit.name = data.name || '';
-                    this.formaddedit.sender_name = data.sender_name || '';
-                    this.formaddedit.message = data.message || '';
-                    this.formaddedit.audience_mode = data.audience_mode || 'member_all';
-                    this.formaddedit.respect_opt_out = (data.respect_opt_out ?? 1) ? true : false;
-                    this.formaddedit.require_consent = (data.require_consent ?? 0) ? true : false;
-                    this.formaddedit.remark = data.remark || '';
+                    try {
+                        const response = await axios.post(
+                            "{{ route('admin.'.$menu->currentRoute.'.loaddata') }}",
+                            { id: this.code }
+                        );
 
-                    // best-effort stats (ถ้า backend ส่งมา)
-                    if (typeof data.recipients_total !== 'undefined') this.stats.recipients_total = parseInt(data.recipients_total || 0, 10);
-                    if (typeof data.queued_total !== 'undefined') this.stats.queued_total = parseInt(data.queued_total || 0, 10);
-                    if (typeof data.delivered_total !== 'undefined') this.stats.delivered_total = parseInt(data.delivered_total || 0, 10);
-                    if (typeof data.failed_total !== 'undefined') this.stats.failed_total = parseInt(data.failed_total || 0, 10);
+                        // ถ้ามีการเรียกใหม่แทรก → ทิ้งผลลัพธ์เก่า
+                        if (token !== this.loadToken) return;
+
+                        const data = response.data.data || {};
+
+                        this.formaddedit.name = data.name || '';
+                        this.formaddedit.sender_name = data.sender_name || '';
+                        this.formaddedit.message = data.message || '';
+                        this.formaddedit.audience_mode = data.audience_mode || 'member_all';
+                        this.formaddedit.respect_opt_out = (data.respect_opt_out ?? 1) ? true : false;
+                        this.formaddedit.require_consent = (data.require_consent ?? 0) ? true : false;
+                        this.formaddedit.remark = data.remark || '';
+
+                        // best-effort stats จาก loaddata (ถ้า backend ส่งมา)
+                        if (typeof data.recipients_total !== 'undefined') this.stats.recipients_total = parseInt(data.recipients_total || 0, 10);
+                        if (typeof data.queued_total !== 'undefined') this.stats.queued_total = parseInt(data.queued_total || 0, 10);
+                        if (typeof data.delivered_total !== 'undefined') this.stats.delivered_total = parseInt(data.delivered_total || 0, 10);
+                        if (typeof data.failed_total !== 'undefined') this.stats.failed_total = parseInt(data.failed_total || 0, 10);
+
+                        // ✅ สำคัญ: ทำให้ import batch “ไม่ว่าง” เมื่อเคย upload มาก่อน
+                        // backend คุณควรส่ง last_import_batch_id มาด้วย (ที่เราปรับ controller ไปแล้ว)
+                        if (data.last_import_batch_id && !this.importBatch.id) {
+                            this.importBatch.id = parseInt(data.last_import_batch_id, 10);
+                        }
+                    } catch (e) {
+                        console.log('loadData error', e);
+                    } finally {
+                        // ยังต้องเช็ค token กัน case เรียกซ้อน
+                        if (token === this.loadToken) {
+                            this.loadingData = false;
+                        }
+                    }
                 },
 
-                async refreshStats() {
-                    // ถ้า backend ยังไม่มี endpoint stats ก็ใช้ loadData เป็น fallback
-                    // (คุณสามารถทำ route admin.sms_campaign.stats ภายหลังได้)
+                async refreshStatsOnce() {
+                    // ใช้ route stats ถ้ามี, ถ้าไม่มีก็ fallback เป็น loadDataOnce()
                     if (this.formmethod !== 'edit' || !this.code) return;
+                    if (this.loadingStats) return;
 
                     this.loadingStats = true;
+
                     try {
-                        // ถ้าคุณมี route stats แยก ให้เปิดใช้บล็อกนี้แทน (ตอนนี้ยังไม่ผูก route ใหม่เพื่อไม่กระทบระบบ)
-                        // const res = await axios.post("{{ route('admin.'.$menu->currentRoute.'.stats') }}", { id: this.code });
-                        // const s = res.data.data || {};
-                        // this.stats = {
-                        //     recipients_total: parseInt(s.recipients_total || 0, 10),
-                        //     queued_total: parseInt(s.queued_total || 0, 10),
-                        //     delivered_total: parseInt(s.delivered_total || 0, 10),
-                        //     failed_total: parseInt(s.failed_total || 0, 10),
-                        // };
+                        // ถ้าคุณทำ route admin.sms_campaign.stats แล้ว ให้เปิดบล็อกนี้
+                         const res = await axios.post("{{ route('admin.'.$menu->currentRoute.'.stats') }}", { id: this.code });
+                         const s = res.data.data || {};
+                         this.stats = {
+                             recipients_total: parseInt(s.recipients_total || 0, 10),
+                             queued_total: parseInt(s.queued_total || 0, 10),
+                             delivered_total: parseInt(s.delivered_total || 0, 10),
+                             failed_total: parseInt(s.failed_total || 0, 10),
+                         };
 
-                        await this.loadData();
-
+                        //await this.loadDataOnce();
                     } catch (e) {
                         console.log('refreshStats error', e);
                     } finally {
                         this.loadingStats = false;
                     }
+                },
+
+                async refreshStats() {
+                    await this.refreshStatsOnce();
                 },
 
                 addEditSubmit(event) {
@@ -509,7 +531,7 @@
                         url = "{{ route('admin.'.$menu->currentRoute.'.update') }}";
                     }
 
-                    this.$http.post(url, {id: this.code, data: this.formaddedit})
+                    this.$http.post(url, { id: this.code, data: this.formaddedit , import_batch_id: this.importBatch.id || null,})
                         .then(response => {
                             this.$refs.addedit.hide();
 
@@ -544,7 +566,6 @@
                         const fd = new FormData();
                         fd.append('file', this.importFile);
 
-                        // เผื่ออยากผูก campaign_id ไว้เลย
                         if (this.formmethod === 'edit' && this.code) {
                             fd.append('campaign_id', this.code);
                         }
@@ -625,7 +646,7 @@
                             centered: true
                         });
 
-                        await this.refreshStats();
+                        await this.refreshStatsOnce();
 
                     } catch (e) {
                         console.log('buildRecipients error', e);
@@ -670,7 +691,7 @@
                             centered: true
                         });
 
-                        await this.refreshStats();
+                        await this.refreshStatsOnce();
 
                     } catch (e) {
                         console.log('dispatchQueued error', e);
