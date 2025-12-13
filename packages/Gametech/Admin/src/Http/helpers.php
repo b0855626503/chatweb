@@ -6,28 +6,17 @@ if (! function_exists('bouncer')) {
     /**
      * Global helper: bouncer()
      *
-     * แนวทาง:
-     * - ปกติคืนจาก container key 'bouncer' ถ้ามี (กันแตก instance และเปิดทางให้ทำ singleton ได้)
-     * - ถ้ายังไม่ bind 'bouncer' ให้ resolve ด้วย Bouncer::class
-     * - ถ้า container ยังไม่พร้อม (ถูกเรียกเร็วผิดปกติ) โยน error ที่อ่านง่าย
+     * แนวทางที่นิ่งสุด:
+     * - resolve ผ่าน Bouncer::class เป็นหลัก (source of truth)
+     * - จะได้ไม่ผูกกับทิศทาง alias ของ 'bouncer'
      */
-    function bouncer()
+    function bouncer(): Bouncer
     {
-        if (function_exists('app')) {
-            try {
-                // ถ้าคุณไป bind ไว้เป็น singleton ใน AdminServiceProvider ภายหลัง → จะได้ instance เดียวทันที
-                if (app()->bound('bouncer')) {
-                    return app('bouncer');
-                }
-
-                // default: resolve ตาม class
-                return app(Bouncer::class);
-            } catch (\Throwable $e) {
-                // fallthrough ไป throw ด้านล่าง
-            }
+        if (! function_exists('app')) {
+            throw new \RuntimeException('bouncer() helper was called before the application container is available.');
         }
 
-        throw new \RuntimeException('bouncer() helper was called before the application container is available.');
+        return app(Bouncer::class);
     }
 }
 
@@ -36,7 +25,7 @@ if (! function_exists('showCleanRoutUrl')) {
      * Clean the url for the front end to display.
      *
      * @param string $link
-     * @return void  (ฟังก์ชันนี้ echo ออกเหมือนเดิม)
+     * @return void
      */
     function showCleanRoutUrl($link): void
     {

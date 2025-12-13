@@ -22,102 +22,64 @@ class AdminServiceProvider extends ServiceProvider
 {
     use UseVersionFile;
 
-    /**
-     * Bootstrap services.
-     */
     public function boot(Router $router)
     {
         AdminProxy::observe(AdminObserver::class);
         RoleProxy::observe(RoleObserver::class);
 
-        /**
-         * จุดสำคัญ:
-         * - หลีกเลี่ยงการเรียก Core/DB หนัก ๆ ใน CLI / early bootstrap
-         * - เมนู/วิวก็ไม่จำเป็นใน console อยู่แล้ว
-         */
+        // ลดงานหนักใน CLI
         if (! $this->app->runningInConsole()) {
-            // โหมดจาก Core (มี 1 record)
-            // ใช้ app('core') เป็นหลักเพื่อไม่ผูกกับ helper timing
-            /** @var Core $core */
-            $core = $this->app->bound('core') ? $this->app->make('core') : $this->app->make(Core::class);
-            $config = $core->getConfigData();
+            // ใช้ core() ได้ (หลังแก้ CoreServiceProvider แล้วจะไม่วนลูป)
+            $config = core()->getConfigData();
 
-            if ($config && ($config->seamless ?? null) === 'Y') {
+            if (($config->seamless ?? null) === 'Y') {
                 $this->registerConfigSeamless();
             } else {
-                if ($config && ($config->multigame_open ?? null) === 'Y') {
+                if (($config->multigame_open ?? null) === 'Y') {
                     $this->registerConfig();
                 } else {
                     $this->registerConfigSingle();
                 }
             }
-        } else {
-            // console ไม่ต้องแบก config menu/acl mode
-            // ยัง merge config ใน registerConfig* ได้ถ้าคุณต้องการให้ CLI อ่าน config('menu.admin')
-            // แต่ส่วนใหญ่ artisan ไม่ต้องใช้เมนู
         }
 
-        // โหลด routes
         $this->loadRoutesFrom(__DIR__ . '/../Http/routes.php');
-
-        // โหลด views
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'admin');
 
-        // ผูก view composers (กัน CLI)
         if (! $this->app->runningInConsole()) {
             $this->composeView();
         }
-
-        // $router->aliasMiddleware('admin', BouncerMiddleware::class);
     }
 
-    /**
-     * Register services.
-     */
     public function register()
     {
-        // ACL + Bouncer
         $this->registerACL();
         $this->registerBouncer();
-
-        // helpers
         $this->loadHelpers();
     }
 
-    /**
-     * Register package config (Multi-game).
-     */
     protected function registerConfig()
     {
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/admin-menu.php', 'menu.admin');
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl.php', 'acl');
     }
 
-    /**
-     * Register package config (Single).
-     */
     protected function registerConfigSingle()
     {
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/admin-menu-single.php', 'menu.admin');
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl-single.php', 'acl');
     }
 
-    /**
-     * Register package config (Seamless).
-     */
     protected function registerConfigSeamless()
     {
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/admin-menu-seamless.php', 'menu.admin');
         $this->mergeConfigFrom(dirname(__DIR__) . '/Config/acl-seamless.php', 'acl');
     }
 
-    /**
-     * View composers — คอมโพสเมนูครั้งเดียวบน layout แล้ว share ให้ทุกวิว
-     */
     protected function composeView()
     {
         $menuComposer = function ($view) {
-            static $menuTree = null; // cache ต่อรีเควสต์
+            static $menuTree = null;
 
             if ($menuTree) {
                 $view->with('menu', $menuTree);
@@ -126,7 +88,6 @@ class AdminServiceProvider extends ServiceProvider
 
             $tree = Tree::create();
 
-            // ยังไม่ล็อกอิน → ส่งเมนูว่าง (กัน dereference null)
             $user = Auth::guard('admin')->user();
             if (! $user) {
                 $menuTree = $tree;
@@ -171,10 +132,8 @@ class AdminServiceProvider extends ServiceProvider
                 $tree->add($item, 'menu');
             }
 
-            // เรียงเมนูด้วย core()->sortItems ถ้ามี (ยึดของเดิม)
             $tree->items = core()->sortItems($tree->items);
 
-            // เซ็ต currentRoute ให้ blade เดิมใช้งาน (กันกรณีเดิมพึ่งพา)
             $routeName = Route::currentRouteName() ?? '';
             $group     = Str::before(Str::after($routeName, 'admin.'), '.');
             if ($group) {
@@ -188,12 +147,10 @@ class AdminServiceProvider extends ServiceProvider
         view()->composer('admin::layouts.*', $menuComposer);
         view()->composer('admin::module.*', $menuComposer);
 
-        // ✅ ACL สำหรับ module views
         view()->composer(['admin::module.*'], function ($view) {
             $view->with('acl', $this->createACL());
         });
 
-        // header: version
         view()->composer(['admin::layouts.*'], function ($view) {
             $this->deleteVersionFile();
             $newpatch = false;
@@ -202,9 +159,6 @@ class AdminServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Registers acl to entire application
-     */
     public function registerACL()
     {
         $this->app->singleton('acl', function () {
@@ -212,9 +166,6 @@ class AdminServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Create acl tree
-     */
     public function createACL()
     {
         static $tree;
@@ -234,21 +185,15 @@ class AdminServiceProvider extends ServiceProvider
         return $tree;
     }
 
-    /**
-     * Register Bouncer as a singleton.
-     */
     protected function registerBouncer()
     {
-        // facade alias (คงไว้เพื่อไม่กระทบของเดิม ถ้ามีที่ไหนใช้ bouncer::...)
         AliasLoader::getInstance()->alias('bouncer', BouncerFacade::class);
 
-        // source of truth: app('bouncer')
-        $this->app->singleton('bouncer', function ($app) {
-            return $app->make(Bouncer::class);
-        });
+        // source of truth = Bouncer::class
+        $this->app->singleton(Bouncer::class);
 
-        // type-hint Bouncer::class → ได้ instance เดียวกับ app('bouncer')
-        $this->app->alias('bouncer', Bouncer::class);
+        // เรียกได้ทั้ง app('bouncer') และ type-hint Bouncer::class
+        $this->app->alias(Bouncer::class, 'bouncer');
     }
 
     protected function loadHelpers(): void
