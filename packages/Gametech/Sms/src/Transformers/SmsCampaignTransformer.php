@@ -48,7 +48,7 @@ class SmsCampaignTransformer extends TransformerAbstract
                     แก้ไข
                 </button>
                 <button type="button" class="btn btn-outline-danger"
-                    onclick="window.app && window.app.deleteItem && window.app.deleteItem(' . $id . ')">
+                    onclick="window.app && window.app.delModal && window.app.delModal(' . $id . ')">
                     ลบ
                 </button>
             </div>

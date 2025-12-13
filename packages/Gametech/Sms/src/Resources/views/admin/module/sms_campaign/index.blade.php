@@ -76,6 +76,7 @@
                   'member_filter' => 'กรองสมาชิก',
               ], '', ['id' => 'audience_mode', 'class' => 'form-control form-control-sm']) !!}
                                 </div>
+                                <div class="form-group col-6"></div>
 
                                 <div class="form-group col-auto">
                                     <button class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
