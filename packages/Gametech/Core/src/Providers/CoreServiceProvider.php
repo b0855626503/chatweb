@@ -7,48 +7,90 @@ use Gametech\Core\Exceptions\Handler;
 use Gametech\Core\Models\ConfigProxy;
 use Gametech\Core\Observers\ConfigObserver;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
+use Gametech\Core\Facades\Core as CoreFacade;
 
 class CoreServiceProvider extends ServiceProvider
 {
+    /**
+     * Bootstrap services.
+     *
+     * @return void
+     */
     public function boot()
     {
+
+
         ConfigProxy::observe(ConfigObserver::class);
-    }
 
-    public function register()
-    {
-        $this->app->bind(ExceptionHandler::class, Handler::class);
-
-        $this->app->register(EventServiceProvider::class);
-
-        $this->registerCoreSingleton();
-        $this->loadHelpers();
+//        $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'core');
     }
 
     /**
-     * ผูก Core ให้ไม่วนลูป:
-     * - singleton ที่ Core::class
-     * - alias 'core' ชี้ไป Core::class
+     * Register services.
+     *
+     * @return void
      */
-    protected function registerCoreSingleton(): void
+    public function register()
     {
-        // ถ้า Core constructor autowire ได้ ใช้แบบนี้นิ่งสุด (ไม่ recursion)
-        $this->app->singleton(Core::class);
+        $this->app->bind(
+            ExceptionHandler::class,
+            Handler::class
+        );
 
-        // ให้เรียก app('core') ได้
-        $this->app->alias(Core::class, 'core');
+        $this->app->register(EventServiceProvider::class);
 
-        // หมายเหตุ: อย่าใช้ alias('core', Core::class) + singleton('core')->make(Core::class)
-        // เพราะจะวนลูปและกิน memory
+        $this->registerFacades();
+//        $this->registerConfig();
     }
 
-    protected function loadHelpers(): void
+    /**
+     * Register Bouncer as a singleton.
+     *
+     * @return void
+     */
+    protected function registerFacades()
     {
-        $file = __DIR__ . '/../Http/helpers.php';
+//        $loader = AliasLoader::getInstance();
+//        $loader->alias('core', CoreFacade::class);
+//
+//        $this->app->singleton('core', function () {
+//            return app()->make(Core::class);
+//        });
 
-        if (is_file($file)) {
-            require_once $file;
-        }
+//        AliasLoader::getInstance()->alias('core', CoreFacade::class);
+
+        $this->app->singleton('core', function ($app) {
+            return $app->make(Core::class);
+            // หรือประกอบเองถ้าต้องยัดสกาลาร์จาก config:
+            // return new Core(config('core.a'), ..., $app->make(...));
+        });
+
+// 2) ทำ container alias เพื่อให้ type-hint Core::class ได้อินสแตนซ์เดียวกัน
+        $this->app->alias(Core::class, 'core');
+        AliasLoader::getInstance()->alias('core', CoreFacade::class);
+// 3) ทำ facade alias แบบชื่อคลาสที่อ่านง่าย
+//        AliasLoader::getInstance()->alias('core', CoreFacade::class);
+
+
+    }
+
+    /**
+     * Register package config.
+     *
+     * @return void
+     */
+    protected function registerConfig()
+    {
+        $this->mergeConfigFrom(
+            dirname(__DIR__) . '/Config/admin-menu.php', 'menu.admin'
+        );
+
+        $this->mergeConfigFrom(
+            dirname(__DIR__) . '/Config/acl.php', 'acl'
+        );
+
+        $this->mergeConfigFrom(__DIR__.'/../config/gametech.php', 'gametech');
     }
 }

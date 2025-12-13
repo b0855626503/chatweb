@@ -1,11 +1,10 @@
 <?php
-
 use Gametech\Core\Core;
 
 if (! function_exists('core')) {
-    function core(): Core
+    function core()
     {
-        return app('core');
+        return app()->make(Core::class);
     }
 }
 
@@ -46,3 +45,4 @@ if (! function_exists('array_permutation')) {
         return $results;
     }
 }
+?>
