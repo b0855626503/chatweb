@@ -47,7 +47,7 @@ class SmsCampaignController extends AppBaseController
 
     public function loadData(Request $request)
     {
-        $id = $request->input('id');
+        $id = (int) $request->input('id');
 
         $data = $this->repository->find($id);
 
@@ -55,7 +55,35 @@ class SmsCampaignController extends AppBaseController
             return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
 
-        return $this->sendResponse($data, 'ดำเนินการเสร็จสิ้น');
+        // === เพิ่ม stats ของ recipients (เพื่อให้ modal ใช้แสดง/แนะนำ dispatch) ===
+        // ใช้ query จาก repository เดิม เพื่อไม่ผูกกับ model โดยตรง
+        $base = $this->recipientRepository->query()->where('campaign_id', $data->id);
+
+        $recipientsTotal = (clone $base)->count();
+
+        $queuedTotal = (clone $base)->where('status', 'queued')->count();
+
+        // delivered บางระบบอาจใช้ delivered หรือ sent เป็นหลัก
+        $deliveredTotal = (clone $base)->whereIn('status', ['delivered'])->count();
+
+        $failedTotal = (clone $base)->whereIn('status', ['failed'])->count();
+
+        // (optional) เอา import_batch_id ล่าสุดไว้โชว์ใน modal
+        $lastImportBatchId = (clone $base)
+            ->whereNotNull('import_batch_id')
+            ->orderByDesc('id')
+            ->value('import_batch_id');
+
+        // แปลงเป็น array เพื่อไม่ไปยุ่ง object ของ repository
+        $payload = is_object($data) ? $data->toArray() : (array) $data;
+
+        $payload['recipients_total'] = (int) $recipientsTotal;
+        $payload['queued_total'] = (int) $queuedTotal;
+        $payload['delivered_total'] = (int) $deliveredTotal;
+        $payload['failed_total'] = (int) $failedTotal;
+        $payload['last_import_batch_id'] = $lastImportBatchId ? (int) $lastImportBatchId : null;
+
+        return $this->sendResponse($payload, 'ดำเนินการเสร็จสิ้น');
     }
 
     public function create(Request $request)
@@ -64,20 +92,22 @@ class SmsCampaignController extends AppBaseController
 
         $data = (array) $request->input('data', []);
 
-        // ปรับค่า default ที่ควรมีสำหรับ campaign
         $data['provider'] = $data['provider'] ?? 'vonage';
         $data['status'] = $data['status'] ?? 'draft';
         $data['audience_mode'] = $data['audience_mode'] ?? 'member_all';
         $data['respect_opt_out'] = array_key_exists('respect_opt_out', $data) ? (bool) $data['respect_opt_out'] : true;
         $data['require_consent'] = array_key_exists('require_consent', $data) ? (bool) $data['require_consent'] : false;
 
-        // user audit (ให้ตรงแพตเทิร์นเดิม)
         $data['user_create'] = $user;
         $data['user_update'] = $user;
 
-        $this->repository->create($data);
+        $created = $this->repository->create($data);
 
-        return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
+        // แนะนำ: ส่ง id กลับไปด้วย (ไม่กระทบของเดิม เพราะยังส่งSuccess เหมือนเดิม)
+        // ถ้า frontend ยังไม่ใช้ก็ไม่เป็นไร
+        return $this->sendResponse([
+            'id' => is_object($created) ? (int) $created->id : null,
+        ], 'ดำเนินการเสร็จสิ้น');
     }
 
     public function update(Request $request)
@@ -100,11 +130,6 @@ class SmsCampaignController extends AppBaseController
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
     }
 
-    /**
-     * Toggle/edit single field pattern (เหมือน controller เดิม)
-     * request: id, status, method
-     * example: method=status, status=paused
-     */
     public function edit(Request $request)
     {
         $user = $this->user()->name.' '.$this->user()->surname;
@@ -148,14 +173,6 @@ class SmsCampaignController extends AppBaseController
         return $this->sendSuccess('ดำเนินการเสร็จสิ้น');
     }
 
-    /**
-     * Build recipients into sms_recipients for a campaign
-     *
-     * request:
-     * - id (campaign id)
-     * - mode: member_all | upload_only | mixed
-     * - import_batch_id (required if upload_only/mixed)
-     */
     public function buildRecipients(Request $request)
     {
         $id = (int) $request->input('id');
@@ -192,7 +209,6 @@ class SmsCampaignController extends AppBaseController
                     return $this->sendError('ไม่พบ import batch ดังกล่าว', 200);
                 }
 
-                // phones ชั่วคราวถูกเก็บใน meta (ตามโค้ดที่ให้ไปก่อนหน้า)
                 $phones = (array) ($batch->meta['phones'] ?? []);
 
                 $result['upload'] = $this->recipientBuilder->buildFromImportBatch(
@@ -213,13 +229,6 @@ class SmsCampaignController extends AppBaseController
         return $this->sendResponse($result, 'ดำเนินการเสร็จสิ้น');
     }
 
-    /**
-     * Dispatch queued recipients to SendSmsJob
-     *
-     * request:
-     * - id (campaign id)
-     * - limit (default 1000, max 5000)
-     */
     public function dispatchQueued(Request $request)
     {
         $id = (int) $request->input('id');
@@ -238,28 +247,51 @@ class SmsCampaignController extends AppBaseController
             return $this->sendError('ไม่พบข้อมูลดังกล่าว', 200);
         }
 
-        $recipientIds = $this->recipientRepository
-            ->query()
-            ->where('campaign_id', $campaign->id)
-            ->where('status', 'queued')
-            ->orderBy('id')
-            ->limit($limit)
-            ->pluck('id');
+        try {
+            $dispatchedIds = DB::transaction(function () use ($campaign, $limit) {
+                // lock แถว queued กันกดซ้ำ/แข่งกัน
+                $ids = $this->recipientRepository
+                    ->query()
+                    ->where('campaign_id', $campaign->id)
+                    ->where('status', 'queued')
+                    ->orderBy('id')
+                    ->limit($limit)
+                    ->lockForUpdate()
+                    ->pluck('id');
 
-        foreach ($recipientIds as $rid) {
-            SendSmsJob::dispatch((int) $rid)->onQueue('sms');
+                if ($ids->isEmpty()) {
+                    return collect();
+                }
+
+                // mark เป็น sending ก่อน dispatch เพื่อกันปล่อยซ้ำ
+                $this->recipientRepository
+                    ->query()
+                    ->whereIn('id', $ids->all())
+                    ->update([
+                        'status' => 'sending',
+                        'queued_at' => DB::raw('IFNULL(queued_at, NOW())'),
+                    ]);
+
+                return $ids;
+            });
+
+            foreach ($dispatchedIds as $rid) {
+                SendSmsJob::dispatch((int) $rid)->onQueue('sms');
+            }
+
+            if (($campaign->status ?? 'draft') === 'draft') {
+                $this->repository->update([
+                    'status' => 'running',
+                    'started_at' => $campaign->started_at ?: now(),
+                ], $campaign->id);
+            }
+
+            return $this->sendResponse([
+                'dispatched' => $dispatchedIds->count(),
+            ], 'ดำเนินการเสร็จสิ้น');
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Dispatch ไม่สำเร็จ: '.$e->getMessage(), 200);
         }
-
-        // อัปเดตสถานะแคมเปญแบบเบา ๆ
-        if (($campaign->status ?? 'draft') === 'draft') {
-            $this->repository->update([
-                'status' => 'running',
-                'started_at' => $campaign->started_at ?: now(),
-            ], $campaign->id);
-        }
-
-        return $this->sendResponse([
-            'dispatched' => $recipientIds->count(),
-        ], 'ดำเนินการเสร็จสิ้น');
     }
 }

@@ -8,50 +8,50 @@
 
         {{-- Campaign Name --}}
         <b-form-group
-            id="input-group-name"
-            label="ชื่อแคมเปญ:"
-            label-for="name"
-            description="ตั้งชื่อเพื่อให้ทีมงานจำได้ เช่น โปรโมชันปลายปี / แจ้งระบบ / เตือนฝาก">
+                id="input-group-name"
+                label="ชื่อแคมเปญ:"
+                label-for="name"
+                description="ตั้งชื่อเพื่อให้ทีมงานจำได้ เช่น โปรโมชันปลายปี / แจ้งระบบ / เตือนฝาก">
             <b-form-input
-                id="name"
-                v-model="formaddedit.name"
-                type="text"
-                size="sm"
-                autocomplete="off"
-                required
+                    id="name"
+                    v-model="formaddedit.name"
+                    type="text"
+                    size="sm"
+                    autocomplete="off"
+                    required
             ></b-form-input>
         </b-form-group>
 
         {{-- Sender --}}
         <b-form-group
-            id="input-group-sender"
-            label="Sender (from):"
-            label-for="sender_name"
-            description="ชื่อผู้ส่งตามที่อนุญาตใน Vonage (หรือค่า default ที่ตั้งใน config)">
+                id="input-group-sender"
+                label="Sender (from):"
+                label-for="sender_name"
+                description="ชื่อผู้ส่งตามที่อนุญาตใน Vonage (หรือค่า default ที่ตั้งใน config)">
             <b-form-input
-                id="sender_name"
-                v-model="formaddedit.sender_name"
-                type="text"
-                size="sm"
-                autocomplete="off"
-                placeholder="เช่น GAMETECH"
+                    id="sender_name"
+                    v-model="formaddedit.sender_name"
+                    type="text"
+                    size="sm"
+                    autocomplete="off"
+                    placeholder="เช่น GAMETECH"
             ></b-form-input>
         </b-form-group>
 
         {{-- Message --}}
         <b-form-group
-            id="input-group-message"
-            label="ข้อความ SMS:"
-            label-for="message"
-            description="ระวังความยาว (SMS แบ่งเป็นหลายส่วนได้) แนะนำให้สั้น กระชับ และมีจุดประสงค์ชัด">
+                id="input-group-message"
+                label="ข้อความ SMS:"
+                label-for="message"
+                description="ระวังความยาว (SMS แบ่งเป็นหลายส่วนได้) แนะนำให้สั้น กระชับ และมีจุดประสงค์ชัด">
             <b-form-textarea
-                id="message"
-                v-model="formaddedit.message"
-                rows="4"
-                max-rows="8"
-                size="sm"
-                autocomplete="off"
-                required
+                    id="message"
+                    v-model="formaddedit.message"
+                    rows="4"
+                    max-rows="8"
+                    size="sm"
+                    autocomplete="off"
+                    required
             ></b-form-textarea>
             <small class="text-muted">
                 ความยาว: @{{ (formaddedit.message || '').length }} ตัวอักษร
@@ -62,24 +62,24 @@
 
         {{-- Audience mode --}}
         <b-form-group
-            id="input-group-audience"
-            label="กลุ่มเป้าหมาย (Audience Mode):"
-            label-for="audience_mode"
-            description="เลือกว่าจะยิงจากสมาชิก, จากไฟล์, หรือผสม">
+                id="input-group-audience"
+                label="กลุ่มเป้าหมาย (Audience Mode):"
+                label-for="audience_mode"
+                description="เลือกว่าจะยิงจากสมาชิก, จากไฟล์, หรือผสม">
             <b-form-select
-                id="audience_mode"
-                v-model="formaddedit.audience_mode"
-                :options="audienceModeOptions"
-                size="sm"
-                required
+                    id="audience_mode"
+                    v-model="formaddedit.audience_mode"
+                    :options="audienceModeOptions"
+                    size="sm"
+                    required
             ></b-form-select>
         </b-form-group>
 
         {{-- Opt-out / Consent --}}
         <b-form-group
-            id="input-group-rules"
-            label="กฎการส่ง:"
-            label-for="rules">
+                id="input-group-rules"
+                label="กฎการส่ง:"
+                label-for="rules">
             <b-form-checkbox v-model="formaddedit.respect_opt_out" switch size="sm">
                 เคารพ Opt-out (STOP/Unsub) — แนะนำให้เปิดตลอด
             </b-form-checkbox>
@@ -93,19 +93,19 @@
 
         {{-- Upload import (เฉพาะ upload_only/mixed) --}}
         <b-form-group
-            v-if="formaddedit.audience_mode === 'upload_only' || formaddedit.audience_mode === 'mixed'"
-            id="input-group-upload"
-            label="อัปโหลดไฟล์เบอร์ (CSV/XLS/XLSX):"
-            label-for="import_file"
-            description="อัปโหลดเพื่อสร้าง Import Batch และนำไป Build recipients"
+                v-if="showUploadSection"
+                id="input-group-upload"
+                label="อัปโหลดไฟล์เบอร์ (CSV/XLS/XLSX):"
+                label-for="import_file"
+                description="อัปโหลดเพื่อสร้าง Import Batch และนำไป Build recipients"
         >
             <b-input-group size="sm" class="mb-2">
                 <b-form-file
-                    id="import_file"
-                    v-model="importFile"
-                    accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    browse-text="เลือกไฟล์"
-                    placeholder="ยังไม่ได้เลือกไฟล์"
+                        id="import_file"
+                        v-model="importFile"
+                        accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        browse-text="เลือกไฟล์"
+                        placeholder="ยังไม่ได้เลือกไฟล์"
                 ></b-form-file>
 
                 <b-input-group-append>
@@ -139,14 +139,8 @@
             <div v-if="importBatch.id" class="mt-2">
                 <div class="small text-muted">
                     Import Batch: <strong>#@{{ importBatch.id }}</strong>
-                    (valid: @{{ importBatch.valid_phones }}, invalid: @{{ importBatch.invalid_phones }}, dup: @{{
-                    importBatch.duplicate_phones }})
+                    (valid: @{{ importBatch.valid_phones }}, invalid: @{{ importBatch.invalid_phones }}, dup: @{{ importBatch.duplicate_phones }})
                 </div>
-
-                <b-button size="sm" variant="outline-success" class="mt-2"
-                          @click="buildRecipients('upload_only')">
-                    Build recipients จากไฟล์นี้
-                </b-button>
             </div>
 
             <div v-if="importBatch.preview && importBatch.preview.length" class="mt-2">
@@ -170,60 +164,98 @@
                     </table>
                 </div>
             </div>
+
+            <small class="text-muted d-block mt-2">
+                หมายเหตุ: อัปโหลดไฟล์ได้ตั้งแต่ตอน Add (campaign_id ยังเป็น null ได้) แต่การ Build/Dispatch ต้องทำตอน Edit
+            </small>
         </b-form-group>
 
-        {{-- Build recipients quick actions --}}
+        {{-- Recipient summary (หลังมี campaign id ถึงจะ meaningful) --}}
+        <b-card v-if="formmethod === 'edit'" class="mb-3" body-class="p-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="font-weight-bold">สรุปผู้รับของแคมเปญ</div>
+                <b-button size="sm" variant="outline-secondary" :disabled="loadingStats" @click="refreshStats">
+                    @{{ loadingStats ? 'กำลังโหลด...' : 'รีเฟรช' }}
+                </b-button>
+            </div>
+            <div class="small text-muted mt-1">
+                ผู้รับทั้งหมด: <strong>@{{ stats.recipients_total }}</strong>
+                | ค้างส่ง (queued): <strong>@{{ stats.queued_total }}</strong>
+                | Delivered: <strong>@{{ stats.delivered_total }}</strong>
+                | Failed: <strong>@{{ stats.failed_total }}</strong>
+            </div>
+            <div class="small text-muted" v-if="stats.recipients_total === 0">
+                ยังไม่มีรายชื่อผู้รับ — กรุณา Build recipients ก่อน
+            </div>
+        </b-card>
+
+        {{-- Build recipients actions (แสดงตามกลุ่มเป้าหมาย) --}}
         <b-form-group
-            id="input-group-build"
-            label="สร้างรายชื่อผู้รับ (Build recipients):"
-            description="แนะนำ: บันทึกแคมเปญก่อน แล้วค่อย Build/Dispatch เพื่อกันข้อมูลหลุด">
+                id="input-group-build"
+                label="สร้างรายชื่อผู้รับ (Build recipients):"
+                description="ระบบจะสร้างแถวใน sms_recipients ตามแคมเปญนี้ (แนะนำให้บันทึกก่อน แล้วค่อย Build)">
+            {{-- Build จากสมาชิก --}}
             <b-button size="sm" variant="outline-success" class="mr-1"
+                      v-if="showBuildMembersBtn"
                       @click="buildRecipients('member_all')"
-                      :disabled="formmethod !== 'edit' || building">
+                      :disabled="!canBuildBase || building">
                 @{{ building ? 'กำลังทำ...' : 'Build จากสมาชิกทั้งหมด' }}
             </b-button>
 
+            {{-- Build จากไฟล์ --}}
+            <b-button size="sm" variant="outline-success" class="mr-1"
+                      v-if="showBuildUploadBtn"
+                      @click="buildRecipients('upload_only')"
+                      :disabled="!canBuildUpload || building">
+                @{{ building ? 'กำลังทำ...' : 'Build จากไฟล์ที่อัปโหลด' }}
+            </b-button>
+
+            {{-- Build แบบผสม --}}
             <b-button size="sm" variant="outline-success"
-                      v-if="formaddedit.audience_mode === 'mixed'"
+                      v-if="showBuildMixedBtn"
                       @click="buildRecipients('mixed')"
-                      :disabled="formmethod !== 'edit' || building || !importBatch.id">
+                      :disabled="!canBuildMixed || building">
                 @{{ building ? 'กำลังทำ...' : 'Build แบบผสม (สมาชิก+ไฟล์)' }}
             </b-button>
 
             <small class="text-muted d-block mt-2">
-                หมายเหตุ: ปุ่ม Build ต้องใช้ตอน “แก้ไข” เพราะต้องมี campaign id ก่อน
+                หมายเหตุ: ปุ่ม Build ต้องทำตอน “แก้ไข” เพราะต้องมี campaign id ก่อน
             </small>
         </b-form-group>
 
         {{-- Dispatch --}}
         <b-form-group
-            id="input-group-dispatch"
-            label="เริ่มส่ง (Dispatch queued):"
-            description="ปล่อยคิวส่งเข้า queue:sms ตามจำนวนที่กำหนดต่อครั้ง">
+                id="input-group-dispatch"
+                label="เริ่มส่ง (Dispatch queued):"
+                description="ปล่อยคิวส่งเข้า queue:sms ตามจำนวนที่กำหนดต่อครั้ง">
             <b-input-group size="sm">
                 <b-form-input type="number" min="1" max="5000" v-model.number="dispatchLimit"></b-form-input>
                 <b-input-group-append>
                     <b-button variant="primary" @click="dispatchQueued"
-                              :disabled="formmethod !== 'edit' || dispatching">
+                              :disabled="!canDispatch || dispatching">
                         @{{ dispatching ? 'กำลังปล่อยคิว...' : 'Dispatch' }}
                     </b-button>
                 </b-input-group-append>
             </b-input-group>
+
+            <small class="text-muted d-block mt-2">
+                แนะนำ: dispatch @{{ recommendedDispatch }} รายการ (อิงจาก queued ที่ค้างส่ง)
+            </small>
         </b-form-group>
 
         {{-- Remark --}}
         <b-form-group
-            id="input-group-remark"
-            label="หมายเหตุ:"
-            label-for="remark"
-            description="บันทึกเพิ่มเติม เช่น ใช้กับเว็บไหน กลุ่มลูกค้าไหน">
+                id="input-group-remark"
+                label="หมายเหตุ:"
+                label-for="remark"
+                description="บันทึกเพิ่มเติม เช่น ใช้กับเว็บไหน กลุ่มลูกค้าไหน">
             <b-form-textarea
-                id="remark"
-                v-model="formaddedit.remark"
-                rows="2"
-                max-rows="6"
-                size="sm"
-                autocomplete="off"
+                    id="remark"
+                    v-model="formaddedit.remark"
+                    rows="2"
+                    max-rows="6"
+                    size="sm"
+                    autocomplete="off"
             ></b-form-textarea>
         </b-form-group>
 
@@ -246,6 +278,7 @@
 
                     building: false,
                     dispatching: false,
+                    loadingStats: false,
 
                     dispatchLimit: 1000,
 
@@ -263,6 +296,14 @@
                         invalid_phones: 0,
                         duplicate_phones: 0,
                         preview: [],
+                    },
+
+                    // Campaign recipient stats (best-effort)
+                    stats: {
+                        recipients_total: 0,
+                        queued_total: 0,
+                        delivered_total: 0,
+                        failed_total: 0,
                     },
 
                     yesNoOptions: [
@@ -287,6 +328,74 @@
                     },
                 };
             },
+
+            computed: {
+                showUploadSection() {
+                    return this.formaddedit.audience_mode === 'upload_only' || this.formaddedit.audience_mode === 'mixed';
+                },
+
+                canBuildBase() {
+                    return this.formmethod === 'edit' && !!this.code;
+                },
+
+                canBuildUpload() {
+                    return this.canBuildBase && !!this.importBatch.id;
+                },
+
+                canBuildMixed() {
+                    return this.canBuildBase && !!this.importBatch.id;
+                },
+
+                showBuildMembersBtn() {
+                    return this.formaddedit.audience_mode === 'member_all' || this.formaddedit.audience_mode === 'member_filter' || this.formaddedit.audience_mode === 'mixed';
+                },
+
+                showBuildUploadBtn() {
+                    return this.formaddedit.audience_mode === 'upload_only' || this.formaddedit.audience_mode === 'mixed';
+                },
+
+                showBuildMixedBtn() {
+                    return this.formaddedit.audience_mode === 'mixed';
+                },
+
+                canDispatch() {
+                    // ต้องเป็น edit + มี campaign id + มี queued ค้างส่ง (หรืออย่างน้อยมี recipients)
+                    if (this.formmethod !== 'edit' || !this.code) return false;
+
+                    // ถ้ามี stats.queued_total ใช้มันเป็นหลัก
+                    if ((this.stats.queued_total || 0) > 0) return true;
+
+                    // fallback: ถ้ามี recipients_total แต่ queued ยังไม่โหลด/ไม่รองรับ ก็ยังให้ dispatch ได้
+                    // (แต่ UI จะเตือนให้เห็น recommendedDispatch เป็น 0)
+                    return (this.stats.recipients_total || 0) > 0;
+                },
+
+                recommendedDispatch() {
+                    const q = parseInt(this.stats.queued_total || 0, 10);
+                    if (q <= 0) return 0;
+                    return Math.min(1000, q);
+                },
+            },
+
+            watch: {
+                // เวลาเปลี่ยน audience_mode ให้ clear เฉพาะส่วนที่เสี่ยงทำให้คนเข้าใจผิด
+                'formaddedit.audience_mode'(val) {
+                    // ถ้าเปลี่ยนไปไม่ใช้ไฟล์ ก็ล้าง batch preview (กันเข้าใจผิดว่า 1 เบอร์ = recipients)
+                    if (val !== 'upload_only' && val !== 'mixed') {
+                        this.importFile = null;
+                        this.importBatch = {id: null, valid_phones: 0, invalid_phones: 0, duplicate_phones: 0, preview: []};
+                    }
+                },
+
+                // อัปเดต dispatchLimit อัตโนมัติเมื่อโหลด stats แล้วมี queued_total
+                'stats.queued_total'(val) {
+                    const q = parseInt(val || 0, 10);
+                    if (q > 0) {
+                        this.dispatchLimit = Math.min(1000, q);
+                    }
+                }
+            },
+
             methods: {
                 editModal(code) {
                     this.code = null;
@@ -295,13 +404,15 @@
                     this.formmethod = 'edit';
                     this.show = false;
 
-                    this.$nextTick(() => {
+                    this.$nextTick(async () => {
                         this.code = code;
-                        this.loadData();
+                        await this.loadData();
+                        await this.refreshStats();
                         this.$refs.addedit.show();
                         this.show = true;
                     });
                 },
+
                 addModal() {
                     this.code = null;
                     this.resetForm();
@@ -314,6 +425,7 @@
                         this.show = true;
                     });
                 },
+
                 resetForm() {
                     this.formaddedit = {
                         name: '',
@@ -328,6 +440,10 @@
                     this.importFile = null;
                     this.importUploading = false;
                     this.importBatch = {id: null, valid_phones: 0, invalid_phones: 0, duplicate_phones: 0, preview: []};
+
+                    this.stats = {recipients_total: 0, queued_total: 0, delivered_total: 0, failed_total: 0};
+                    this.loadingStats = false;
+
                     this.dispatchLimit = 1000;
                     this.building = false;
                     this.dispatching = false;
@@ -349,8 +465,37 @@
                     this.formaddedit.require_consent = (data.require_consent ?? 0) ? true : false;
                     this.formaddedit.remark = data.remark || '';
 
-                    // ถ้าเคยมี import ล่าสุดผูกไว้ใน meta ก็เอามาโชว์ได้ (optional)
-                    // ปล่อยว่างไว้ก่อนเพื่อไม่ไปพึ่ง schema meta
+                    // best-effort stats (ถ้า backend ส่งมา)
+                    if (typeof data.recipients_total !== 'undefined') this.stats.recipients_total = parseInt(data.recipients_total || 0, 10);
+                    if (typeof data.queued_total !== 'undefined') this.stats.queued_total = parseInt(data.queued_total || 0, 10);
+                    if (typeof data.delivered_total !== 'undefined') this.stats.delivered_total = parseInt(data.delivered_total || 0, 10);
+                    if (typeof data.failed_total !== 'undefined') this.stats.failed_total = parseInt(data.failed_total || 0, 10);
+                },
+
+                async refreshStats() {
+                    // ถ้า backend ยังไม่มี endpoint stats ก็ใช้ loadData เป็น fallback
+                    // (คุณสามารถทำ route admin.sms_campaign.stats ภายหลังได้)
+                    if (this.formmethod !== 'edit' || !this.code) return;
+
+                    this.loadingStats = true;
+                    try {
+                        // ถ้าคุณมี route stats แยก ให้เปิดใช้บล็อกนี้แทน (ตอนนี้ยังไม่ผูก route ใหม่เพื่อไม่กระทบระบบ)
+                        // const res = await axios.post("{{ route('admin.'.$menu->currentRoute.'.stats') }}", { id: this.code });
+                        // const s = res.data.data || {};
+                        // this.stats = {
+                        //     recipients_total: parseInt(s.recipients_total || 0, 10),
+                        //     queued_total: parseInt(s.queued_total || 0, 10),
+                        //     delivered_total: parseInt(s.delivered_total || 0, 10),
+                        //     failed_total: parseInt(s.failed_total || 0, 10),
+                        // };
+
+                        await this.loadData();
+
+                    } catch (e) {
+                        console.log('refreshStats error', e);
+                    } finally {
+                        this.loadingStats = false;
+                    }
                 },
 
                 addEditSubmit(event) {
@@ -366,8 +511,6 @@
 
                     this.$http.post(url, {id: this.code, data: this.formaddedit})
                         .then(response => {
-                            // ถ้าเป็น add แล้ว backend สร้าง id ให้ แนะนำให้ส่งกลับ id ด้วย
-                            // แต่เพื่อไม่เปลี่ยน interface เดิม เรารีเฟรช datatable อย่างเดียวก่อน
                             this.$refs.addedit.hide();
 
                             this.$bvModal.msgBoxOk(response.data.message, {
@@ -410,23 +553,15 @@
                         fd.append('has_header', this.importOptions.has_header ? 1 : 0);
                         if (this.importOptions.phone_column) fd.append('phone_column', this.importOptions.phone_column);
 
-                        // route นี้ต้องมี: admin.sms_import.store (ถ้าคุณใช้ controller แบบที่ให้ไป)
-                        // แต่ถ้าคุณตั้ง route เป็น sms_import หรือ sms_campaign/import/parse ให้แก้ตรงนี้ได้
                         const res = await axios.post("{{ route('admin.sms_import.parse') }}", fd, {
                             headers: {'Content-Type': 'multipart/form-data'}
                         });
 
-                        // ถ้า controller ของคุณตอบแบบ sendResponse/sendSuccess อาจมีโครง data ต่างกัน
-                        // ด้านล่างรองรับทั้ง 2 แบบ
                         const payload = res.data.data || res.data || {};
                         const batch = payload.batch || payload;
 
-                        // ถ้าคุณใช้ controller ที่ผมให้ก่อนหน้า จะ redirect เป็นหน้า show
-                        // แนะนำให้ทำ route parse แบบ json แยก (เหมือน LineOA style) เพื่อ UX ดีที่สุด
-                        // แต่ตอนนี้ทำ best-effort แปลงให้ก่อน:
                         this.importBatch.id = batch.id || payload.batch_id || null;
 
-                        // กรณี response เป็น JSON แบบเดิมที่ส่ง counters/preview
                         if (payload.counters) {
                             this.importBatch.valid_phones = payload.counters.valid_phones || 0;
                             this.importBatch.invalid_phones = payload.counters.invalid_phones || 0;
@@ -464,7 +599,6 @@
                 async buildRecipients(mode) {
                     if (this.formmethod !== 'edit' || !this.code) return;
 
-                    // สำหรับ upload_only/mixed ต้องมี importBatch id
                     if ((mode === 'upload_only' || mode === 'mixed') && !this.importBatch.id) {
                         this.$bvModal.msgBoxOk('กรุณาอัปโหลดไฟล์ให้ได้ Import Batch ก่อน', {
                             title: 'แจ้งเตือน',
@@ -491,6 +625,8 @@
                             centered: true
                         });
 
+                        await this.refreshStats();
+
                     } catch (e) {
                         console.log('buildRecipients error', e);
                         this.$bvModal.msgBoxOk('Build recipients ไม่สำเร็จ', {
@@ -507,12 +643,24 @@
                 async dispatchQueued() {
                     if (this.formmethod !== 'edit' || !this.code) return;
 
+                    if (!this.canDispatch) {
+                        this.$bvModal.msgBoxOk('ยังไม่มีผู้รับค้างส่ง กรุณา Build recipients ก่อน', {
+                            title: 'แจ้งเตือน',
+                            size: 'sm',
+                            okVariant: 'warning',
+                            centered: true
+                        });
+                        return;
+                    }
+
                     this.dispatching = true;
 
                     try {
+                        const limit = this.dispatchLimit || this.recommendedDispatch || 1000;
+
                         const res = await axios.post("{{ route('admin.'.$menu->currentRoute.'.dispatch') }}", {
                             id: this.code,
-                            limit: this.dispatchLimit || 1000
+                            limit: limit
                         });
 
                         this.$bvModal.msgBoxOk(res.data.message || 'ดำเนินการเสร็จสิ้น', {
@@ -521,6 +669,8 @@
                             okVariant: 'success',
                             centered: true
                         });
+
+                        await this.refreshStats();
 
                     } catch (e) {
                         console.log('dispatchQueued error', e);
@@ -538,4 +688,3 @@
         });
     </script>
 @endpush
-

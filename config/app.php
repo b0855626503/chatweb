@@ -304,7 +304,7 @@ return [
         Gametech\CenterOA\Providers\CenterOAServiceProvider::class,
         Gametech\LineOA\Providers\LineOAServiceProvider::class,
         Gametech\FacebookOA\Providers\FacebookOAServiceProvider::class,
-        Gametech\Sms\Providers\SmsServiceProvider::class,
+        \Gametech\Admin\Resources\views\module\batch_user\SmsServiceProvider::class,
 
     ],
 
