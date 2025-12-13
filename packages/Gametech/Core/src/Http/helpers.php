@@ -1,48 +1,48 @@
 <?php
-use Gametech\Core\Core;
+    use Gametech\Core\Core;
 
-if (! function_exists('core')) {
-    function core()
-    {
-        return app()->make(Core::class);
+    if (! function_exists('core')) {
+        function core()
+        {
+            return app()->make(Core::class);
+        }
     }
-}
 
-if (! function_exists('array_permutation')) {
-    function array_permutation($input)
-    {
-        $results = [];
+    if (! function_exists('array_permutation')) {
+        function array_permutation($input)
+        {
+            $results = [];
 
-        foreach ($input as $key => $values) {
-            if (empty($values)) {
-                continue;
-            }
-
-            if (empty($results)) {
-                foreach ($values as $value) {
-                    $results[] = [$key => $value];
+            foreach ($input as $key => $values) {
+                if (empty($values)) {
+                    continue;
                 }
-            } else {
-                $append = [];
 
-                foreach ($results as &$result) {
-                    $result[$key] = array_shift($values);
+                if (empty($results)) {
+                    foreach ($values as $value) {
+                        $results[] = [$key => $value];
+                    }
+                } else {
+                    $append = [];
 
-                    $copy = $result;
+                    foreach ($results as &$result) {
+                        $result[$key] = array_shift($values);
 
-                    foreach ($values as $item) {
-                        $copy[$key] = $item;
-                        $append[] = $copy;
+                        $copy = $result;
+
+                        foreach ($values as $item) {
+                            $copy[$key] = $item;
+                            $append[] = $copy;
+                        }
+
+                        array_unshift($values, $result[$key]);
                     }
 
-                    array_unshift($values, $result[$key]);
+                    $results = array_merge($results, $append);
                 }
-
-                $results = array_merge($results, $append);
             }
-        }
 
-        return $results;
+            return $results;
+        }
     }
-}
 ?>
