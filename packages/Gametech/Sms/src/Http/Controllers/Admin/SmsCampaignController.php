@@ -106,7 +106,7 @@ class SmsCampaignController extends AppBaseController
         $importBatchId = $request->input('import_batch_id');
 
         // defaults
-        $data['provider'] = $data['provider'] ?? 'vonage';
+        $data['provider'] = $data['provider'] ?? config('sms.default');
         $data['status'] = $data['status'] ?? 'draft';
         $data['audience_mode'] = $data['audience_mode'] ?? 'member_all';
         $data['respect_opt_out'] = array_key_exists('respect_opt_out', $data) ? (bool) $data['respect_opt_out'] : true;

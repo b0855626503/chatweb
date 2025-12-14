@@ -111,6 +111,27 @@ return [
             'failed' => 'failed',
             'undelivered' => 'failed',
         ],
+
+        'infobip' => [
+            // Infobip: status.name (ตัวอย่าง):
+            // - delivered_to_handset
+            // - pending
+            // - sent
+            // - rejected
+            // - undeliverable
+            // - expired
+            'delivered_to_handset' => 'delivered',
+            'delivered'            => 'delivered',
+
+            'pending'              => 'sent',
+            'accepted'             => 'sent',
+            'sent'                 => 'sent',
+
+            'rejected'             => 'failed',
+            'undeliverable'        => 'failed',
+            'expired'              => 'failed',
+            'failed'               => 'failed',
+        ],
     ],
 
     'campaign' => [

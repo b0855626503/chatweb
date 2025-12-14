@@ -7,73 +7,85 @@ use Gametech\Sms\Models\SmsRecipient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Infobip SMS Provider (HTTP client, no SDK)
+ *
+ * หมายเหตุ:
+ * - Flow หลักของ package ใช้ OutboundSmsService ใน SendSmsJob
+ * - Provider นี้มีไว้สำหรับการใช้งานผ่าน SmsProviderInterface (ถ้าในอนาคต refactor)
+ */
 class InfobipSmsProvider implements SmsProviderInterface
 {
-    protected string $baseUrl;
-    protected string $apiKey;
-
-    public function __construct()
-    {
-        $this->baseUrl = rtrim((string) config('sms.providers.infobip.credentials.base_url'), '/');
-        $this->apiKey  = (string) config('sms.providers.infobip.credentials.api_key');
-    }
-
     public function send(SmsRecipient $recipient, string $message, ?string $sender = null): array
     {
-        try {
-            if ($this->baseUrl === '' || $this->apiKey === '') {
-                return [
-                    'success' => false,
-                    'error_message' => 'MISSING_INFOBIP_CREDENTIALS',
-                ];
-            }
+        $provider = 'infobip';
 
-            $from = $sender ?: (string) config('sms.providers.infobip.credentials.from');
+        $baseUrl = rtrim((string) config("sms.providers.$provider.credentials.base_url"), '/');
+        $apiKey  = (string) config("sms.providers.$provider.credentials.api_key");
+        $from    = (string) ($sender ?: config("sms.providers.$provider.credentials.from"));
 
-            $payload = [
-                'messages' => [[
-                    'from' => $from,
-                    'destinations' => [
-                        ['to' => $recipient->phone_e164],
-                    ],
-                    'text' => $message,
-                ]],
+        if ($baseUrl === '' || $apiKey === '' || $from === '') {
+            return [
+                'success' => false,
+                'error_code' => 'MISSING_CREDENTIALS',
+                'error_message' => 'Infobip credentials are missing (INFOBIP_BASE_URL / INFOBIP_API_KEY / INFOBIP_SMS_FROM).',
             ];
+        }
 
-            $dlrUrl = (string) config('sms.providers.infobip.webhooks.dlr.url');
-            if ($dlrUrl !== '') {
-                $payload['messages'][0]['notifyUrl'] = $dlrUrl;
-            }
+        $endpoint = $baseUrl . '/sms/2/text/advanced';
+        $timeout  = (int) env('INFOBIP_TIMEOUT', (int) env('SMS_HTTP_TIMEOUT', 10));
 
-            $response = Http::withHeaders([
-                'Authorization' => 'App ' . $this->apiKey,
-                'Content-Type'  => 'application/json',
-                'Accept'        => 'application/json',
-            ])
-                ->post($this->baseUrl . '/sms/2/text/advanced', $payload);
+        $payload = [
+            'messages' => [[
+                'from' => $from,
+                'destinations' => [
+                    ['to' => (string) ($recipient->phone_e164 ?: $recipient->phone_raw)],
+                ],
+                'text' => $message,
+            ]],
+        ];
 
-            if (! $response->successful()) {
+        $dlrUrl = (string) config("sms.providers.$provider.webhooks.dlr.url", '');
+        if ($dlrUrl !== '') {
+            $payload['messages'][0]['notifyUrl'] = $dlrUrl;
+        }
+
+        try {
+            $res = Http::timeout($timeout)
+                ->withHeaders([
+                    'Authorization' => 'App ' . $apiKey,
+                    'Accept' => 'application/json',
+                ])
+                ->asJson()
+                ->post($endpoint, $payload);
+
+            if (! $res->successful()) {
+                $body = $res->json() ?? ['raw' => $res->body()];
+
                 return [
                     'success' => false,
-                    'error_code' => $response->status(),
-                    'error_message' => $response->body(),
+                    'error_code' => (string) (data_get($body, 'requestError.serviceException.messageId') ?: $res->status()),
+                    'error_message' => (string) (data_get($body, 'requestError.serviceException.text') ?: 'Infobip HTTP error'),
+                    'raw' => $body,
                 ];
             }
 
-            $data = $response->json();
+            $data = (array) $res->json();
             $msg  = $data['messages'][0] ?? null;
 
-            if (! $msg || empty($msg['messageId'])) {
+            $messageId = (string) (is_array($msg) ? ($msg['messageId'] ?? '') : '');
+            if ($messageId === '') {
                 return [
                     'success' => false,
-                    'error_message' => 'INVALID_PROVIDER_RESPONSE',
+                    'error_code' => 'INVALID_RESPONSE',
+                    'error_message' => 'Infobip response missing messageId',
                     'raw' => $data,
                 ];
             }
 
             return [
                 'success' => true,
-                'provider_message_id' => $msg['messageId'],
+                'provider_message_id' => $messageId,
                 'raw' => $data,
             ];
 
@@ -85,6 +97,7 @@ class InfobipSmsProvider implements SmsProviderInterface
 
             return [
                 'success' => false,
+                'error_code' => 'EXCEPTION',
                 'error_message' => $e->getMessage(),
             ];
         }

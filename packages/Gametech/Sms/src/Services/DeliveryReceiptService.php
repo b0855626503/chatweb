@@ -182,4 +182,34 @@ class DeliveryReceiptService
     {
         return $this->handleProviderDlr('vonage', $payload);
     }
+
+    private function normalizeInfobipDlrPayload(array $payload): array
+    {
+        $row = Arr::get($payload, 'results.0');
+        if (! is_array($row)) {
+            // บาง integration อาจส่งเป็น object เดียว
+            $row = Arr::get($payload, 'result');
+        }
+
+        if (! is_array($row)) {
+            return $payload;
+        }
+
+        $statusName = (string) Arr::get($row, 'status.name', '');
+        $groupName  = (string) Arr::get($row, 'status.groupName', '');
+        $rawStatus  = $statusName !== '' ? $statusName : $groupName;
+        $rawStatus  = strtolower(str_replace(' ', '_', $rawStatus));
+
+        $errorCode = (string) (Arr::get($row, 'error.name') ?: Arr::get($row, 'error.groupName') ?: Arr::get($row, 'errorId') ?: '');
+        $errorCode = strtolower(str_replace(' ', '_', $errorCode));
+
+        return array_merge($payload, [
+            'messageId'   => (string) Arr::get($row, 'messageId', Arr::get($payload, 'messageId')),
+            'to'          => (string) Arr::get($row, 'to', Arr::get($payload, 'to')),
+            'status'      => $rawStatus,
+            'error_code'  => $errorCode,
+            'err_code'    => $errorCode,
+            'description' => (string) Arr::get($row, 'status.description', Arr::get($row, 'error.description', '')),
+        ]);
+    }
 }

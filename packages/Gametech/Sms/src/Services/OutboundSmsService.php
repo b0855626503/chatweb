@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 class OutboundSmsService
 {
     protected string $provider;
+
     protected int $timeout;
 
     public function __construct()
@@ -24,34 +25,33 @@ class OutboundSmsService
     /**
      * ส่ง SMS ออก
      *
-     * @param  string  $to   เบอร์ปลายทาง (แนะนำ E.164)
-     * @param  string  $text ข้อความ
-     * @param  array   $opts options:
-     *   - provider (string) default config('sms.default')
-     *   - from (string) sender override
-     *   - client_ref (string|int) reference อ้างอิงภายใน (เช่น recipient_id)
-     *   - unicode (bool) true => ส่งแบบ unicode (ไทย/emoji)
-     *   - callback_url (string) DLR callback url override
-     *   - country_code (string) ค่า default '66' ใช้เมื่อเบอร์ขึ้นต้นด้วย 0
-     *
+     * @param  string  $to  เบอร์ปลายทาง (แนะนำ E.164)
+     * @param  string  $text  ข้อความ
+     * @param  array  $opts  options:
+     *                       - provider (string) default config('sms.default')
+     *                       - from (string) sender override
+     *                       - client_ref (string|int) reference อ้างอิงภายใน (เช่น recipient_id)
+     *                       - unicode (bool) true => ส่งแบบ unicode (ไทย/emoji)
+     *                       - callback_url (string) DLR callback url override
+     *                       - country_code (string) ค่า default '66' ใช้เมื่อเบอร์ขึ้นต้นด้วย 0
      * @return array {
-     *   success: bool,
-     *   provider: string,
-     *   provider_message_id?: string|null,
-     *   to?: string|null,
-     *   price?: string|null,
-     *   currency?: string|null,
-     *   error_code?: string,
-     *   error_message?: string,
-     *   raw?: array
-     * }
+     *               success: bool,
+     *               provider: string,
+     *               provider_message_id?: string|null,
+     *               to?: string|null,
+     *               price?: string|null,
+     *               currency?: string|null,
+     *               error_code?: string,
+     *               error_message?: string,
+     *               raw?: array
+     *               }
      */
     public function send(string $to, string $text, array $opts = []): array
     {
         $provider = (string) ($opts['provider'] ?? $this->provider);
 
         // normalize เบอร์ให้ consistent ทุก provider
-        $countryCode  = (string) ($opts['country_code'] ?? '66');
+        $countryCode = (string) ($opts['country_code'] ?? '66');
         $toNormalized = $this->normalizePhone($to, $countryCode);
 
         // DLR callback (provider-agnostic)
@@ -63,7 +63,8 @@ class OutboundSmsService
         return match ($provider) {
             'vonage' => $this->sendViaVonage($toNormalized, $text, $opts, $callbackUrl),
             'twilio' => $this->sendViaTwilio($toNormalized, $text, $opts, $callbackUrl),
-            default  => $this->fail($provider, 'UNSUPPORTED_PROVIDER', 'Unsupported SMS provider: ' . $provider),
+            'infobip' => $this->sendViaInfobip($toNormalized, $text, $opts, $callbackUrl),
+            default => $this->fail($provider, 'UNSUPPORTED_PROVIDER', 'Unsupported SMS provider: '.$provider),
         };
     }
 
@@ -75,10 +76,10 @@ class OutboundSmsService
         $provider = 'vonage';
 
         $endpoint = 'https://rest.nexmo.com/sms/json';
-        $timeout  = (int) env('VONAGE_TIMEOUT', $this->timeout);
+        $timeout = (int) env('VONAGE_TIMEOUT', $this->timeout);
 
         // ให้ตรงกับ config/sms.php (credentials.*)
-        $apiKey    = (string) config("sms.providers.$provider.credentials.api_key");
+        $apiKey = (string) config("sms.providers.$provider.credentials.api_key");
         $apiSecret = (string) config("sms.providers.$provider.credentials.api_secret");
 
         $from = (string) (
@@ -98,11 +99,11 @@ class OutboundSmsService
         $toDigits = ltrim($toNormalized, '+');
 
         $payload = [
-            'api_key'    => $apiKey,
+            'api_key' => $apiKey,
             'api_secret' => $apiSecret,
-            'to'         => $toDigits,
-            'from'       => $from,
-            'text'       => $text,
+            'to' => $toDigits,
+            'from' => $from,
+            'text' => $text,
         ];
 
         // unicode สำหรับไทย/emoji
@@ -140,8 +141,8 @@ class OutboundSmsService
         } catch (\Throwable $e) {
             Log::error('[OutboundSmsService] exception', [
                 'provider' => $provider,
-                'to'       => $toDigits,
-                'message'  => $e->getMessage(),
+                'to' => $toDigits,
+                'message' => $e->getMessage(),
             ]);
 
             return $this->fail($provider, 'EXCEPTION', $e->getMessage());
@@ -156,7 +157,7 @@ class OutboundSmsService
         $provider = 'twilio';
 
         $accountSid = (string) config("sms.providers.$provider.credentials.account_sid");
-        $authToken  = (string) config("sms.providers.$provider.credentials.auth_token");
+        $authToken = (string) config("sms.providers.$provider.credentials.auth_token");
 
         $from = (string) (
             $opts['from']
@@ -177,7 +178,7 @@ class OutboundSmsService
         // Twilio รับ To เป็น E.164 (+66...)
         $payload = [
             'From' => $from,
-            'To'   => $toNormalized,
+            'To' => $toNormalized,
             'Body' => $text,
         ];
 
@@ -196,12 +197,12 @@ class OutboundSmsService
             if (! $res->successful()) {
                 $raw = [
                     'status' => $res->status(),
-                    'body'   => $res->json() ?? $res->body(),
+                    'body' => $res->json() ?? $res->body(),
                 ];
 
                 // พยายาม map error ของ Twilio ให้เข้าใจง่ายขึ้น
                 $errCode = (string) (($raw['body']['code'] ?? '') ?: 'HTTP_ERROR');
-                $errMsg  = (string) (($raw['body']['message'] ?? '') ?: 'Twilio HTTP error');
+                $errMsg = (string) (($raw['body']['message'] ?? '') ?: 'Twilio HTTP error');
 
                 return $this->fail($provider, $errCode, $errMsg, $raw);
             }
@@ -211,14 +212,138 @@ class OutboundSmsService
             return $this->mapTwilioResponse($data);
 
         } catch (\Throwable $e) {
-            Log::error('[OutboundSmsService] exception', [
+            Log::channel('sms')->error('[OutboundSmsService] exception', [
                 'provider' => $provider,
-                'to'       => $toNormalized,
-                'message'  => $e->getMessage(),
+                'to' => $toNormalized,
+                'message' => $e->getMessage(),
             ]);
 
             return $this->fail($provider, 'EXCEPTION', $e->getMessage());
         }
+    }
+
+    /**
+     * Infobip SMS API (REST-first, ไม่ใช้ SDK)
+     * Endpoint: POST {baseUrl}/sms/2/text/advanced
+     * Auth:     Authorization: App {api_key}
+     */
+    protected function sendViaInfobip(string $toNormalized, string $text, array $opts, string $callbackUrl): array
+    {
+        $provider = 'infobip';
+
+        $baseUrl = rtrim((string) config("sms.providers.$provider.credentials.base_url"), '/');
+        $apiKey = (string) config("sms.providers.$provider.credentials.api_key");
+
+        $from = (string) (
+            $opts['from']
+            ?? config("sms.providers.$provider.credentials.from", '')
+        );
+
+        if ($baseUrl === '' || $apiKey === '' || $from === '') {
+            return $this->fail(
+                $provider,
+                'MISSING_CREDENTIALS',
+                'Infobip credentials are missing (INFOBIP_BASE_URL / INFOBIP_API_KEY / INFOBIP_SMS_FROM).'
+            );
+        }
+
+        $timeout = (int) env('INFOBIP_TIMEOUT', $this->timeout);
+        $endpoint = $baseUrl.'/sms/2/text/advanced';
+
+        $message = [
+            'from' => $from,
+            'destinations' => [
+                ['to' => $toNormalized],
+            ],
+            'text' => $text,
+        ];
+
+        // DLR callback (Infobip ใช้ notifyUrl ระดับ message)
+        if ($callbackUrl !== '') {
+            $message['notifyUrl'] = $callbackUrl;
+        }
+
+        // อ้างอิงภายใน (Infobip: clientMessageId ช่วย map กลับได้)
+        if (! empty($opts['client_ref'])) {
+            $message['clientMessageId'] = (string) $opts['client_ref'];
+        }
+
+        $payload = ['messages' => [$message]];
+
+        try {
+            $res = Http::timeout($timeout)
+                ->withHeaders([
+                    'Authorization' => 'App '.$apiKey,
+                    'Accept' => 'application/json',
+                ])
+                ->asJson()
+                ->post($endpoint, $payload);
+
+            if (! $res->successful()) {
+                $body = $res->json() ?? ['raw' => $res->body()];
+
+                // Infobip error มักมี requestError.serviceException
+                $errCode = (string) data_get($body, 'requestError.serviceException.messageId', $res->status());
+                $errMsg = (string) data_get($body, 'requestError.serviceException.text', 'Infobip HTTP error');
+
+                return $this->fail($provider, $errCode, $errMsg, [
+                    'status' => $res->status(),
+                    'body' => $body,
+                ]);
+            }
+
+            return $this->mapInfobipResponse((array) $res->json());
+
+        } catch (\Throwable $e) {
+            Log::channel('sms')->error('[OutboundSmsService] exception', [
+                'provider' => $provider,
+                'to' => $toNormalized,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $this->fail($provider, 'EXCEPTION', $e->getMessage());
+        }
+    }
+
+    protected function mapInfobipResponse(array $data): array
+    {
+        $msg = $data['messages'][0] ?? null;
+        if (! is_array($msg)) {
+            return $this->fail('infobip', 'INVALID_RESPONSE', 'Invalid Infobip response', $data);
+        }
+
+        $messageId = (string) ($msg['messageId'] ?? '');
+        if ($messageId === '') {
+            return $this->fail('infobip', 'INVALID_RESPONSE', 'Infobip response missing messageId', $data);
+        }
+
+        // status.groupName / status.name
+        $statusName = (string) data_get($msg, 'status.name', '');
+        $groupName = (string) data_get($msg, 'status.groupName', '');
+        $rawStatus = strtolower($statusName !== '' ? $statusName : $groupName);
+
+        // groupName: REJECTED / UNDELIVERABLE / EXPIRED ฯลฯ → ถือว่า fail
+        $isFailedGroup = in_array(strtoupper($groupName), ['REJECTED', 'UNDELIVERABLE', 'EXPIRED'], true);
+        if ($isFailedGroup) {
+            return $this->fail(
+                'infobip',
+                (string) data_get($msg, 'status.groupId', 'FAILED'),
+                (string) data_get($msg, 'status.description', 'Send SMS failed'),
+                $data,
+                $messageId
+            );
+        }
+
+        return [
+            'success' => true,
+            'provider' => 'infobip',
+            'provider_message_id' => $messageId,
+            'to' => (string) data_get($msg, 'to', ''),
+            'price' => (string) data_get($msg, 'smsCount', ''),
+            'currency' => null,
+            'raw' => $data,
+            'status_raw' => $rawStatus ?: null,
+        ];
     }
 
     protected function mapVonageResponse(array $data): array
@@ -232,13 +357,13 @@ class OutboundSmsService
         // status = 0 => success
         if ((string) ($msg['status'] ?? '') === '0') {
             return [
-                'success'             => true,
-                'provider'            => 'vonage',
+                'success' => true,
+                'provider' => 'vonage',
                 'provider_message_id' => $msg['message-id'] ?? null,
-                'to'                  => $msg['to'] ?? null,
-                'price'               => $msg['message-price'] ?? null,
-                'currency'            => isset($msg['message-price']) ? 'EUR' : null,
-                'raw'                 => $data,
+                'to' => $msg['to'] ?? null,
+                'price' => $msg['message-price'] ?? null,
+                'currency' => isset($msg['message-price']) ? 'EUR' : null,
+                'raw' => $data,
             ];
         }
 
@@ -260,25 +385,25 @@ class OutboundSmsService
         }
 
         return [
-            'success'             => true,
-            'provider'            => 'twilio',
+            'success' => true,
+            'provider' => 'twilio',
             'provider_message_id' => $sid,
-            'to'                  => $data['to'] ?? null,
-            'price'               => $data['price'] ?? null,
-            'currency'            => $data['price_unit'] ?? null,
-            'raw'                 => $data,
+            'to' => $data['to'] ?? null,
+            'price' => $data['price'] ?? null,
+            'currency' => $data['price_unit'] ?? null,
+            'raw' => $data,
         ];
     }
 
     protected function fail(string $provider, string $code, string $message, array $raw = [], ?string $providerMessageId = null): array
     {
         return [
-            'success'             => false,
-            'provider'            => $provider,
-            'error_code'          => $code,
-            'error_message'       => $message,
+            'success' => false,
+            'provider' => $provider,
+            'error_code' => $code,
+            'error_message' => $message,
             'provider_message_id' => $providerMessageId,
-            'raw'                 => $raw,
+            'raw' => $raw,
         ];
     }
 
@@ -297,10 +422,10 @@ class OutboundSmsService
         }
 
         if (Str::startsWith($p, '0')) {
-            $p = '+' . ltrim($countryCode, '+') . substr($p, 1);
+            $p = '+'.ltrim($countryCode, '+').substr($p, 1);
         } elseif (! Str::startsWith($p, '+')) {
             // ถ้า user ส่งมาเป็น 6685... หรือ 855... ให้เติม + นำหน้าไว้ก่อน
-            $p = '+' . $p;
+            $p = '+'.$p;
         }
 
         return $p;
