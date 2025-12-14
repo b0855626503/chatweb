@@ -2,7 +2,7 @@
 
 use Gametech\Sms\Http\Controllers\Admin\SmsCampaignRecipientsController;
 use Gametech\Sms\Http\Controllers\Admin\SmsImportController;
-use Gametech\Sms\Http\Controllers\VonageDeliveryReceiptController;
+use Gametech\Sms\Http\Controllers\Webhooks\SmsDeliveryReceiptWebhookController;
 use Gametech\Sms\Http\Middleware\VerifySmsWebhookSignature;
 use Illuminate\Support\Facades\Route;
 
@@ -27,9 +27,9 @@ Route::domain(
                 ->as('sms.')
                 ->group(function () {
 
-//                    Route::match(['GET', 'POST'], '/webhook/vonage/dlr', [VonageDeliveryReceiptController::class, 'handle'])
-//                        ->middleware([VerifySmsWebhookSignature::class])
-//                        ->name('vonage.dlr');
+                    //                    Route::match(['GET', 'POST'], '/webhook/vonage/dlr', [VonageDeliveryReceiptController::class, 'handle'])
+                    //                        ->middleware([VerifySmsWebhookSignature::class])
+                    //                        ->name('vonage.dlr');
 
                     Route::match(['GET', 'POST'], '/webhook/{provider}/dlr', [SmsDeliveryReceiptWebhookController::class, 'dlr'])
                         ->middleware([VerifySmsWebhookSignature::class])

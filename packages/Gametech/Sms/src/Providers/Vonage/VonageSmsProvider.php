@@ -15,8 +15,9 @@ class VonageSmsProvider implements SmsProviderInterface
 
     public function __construct()
     {
-        $this->apiKey    = config('sms.providers.vonage.api_key');
-        $this->apiSecret = config('sms.providers.vonage.api_secret');
+        // ให้ตรงกับ config/sms.php (credentials.*)
+        $this->apiKey    = (string) config('sms.providers.vonage.credentials.api_key');
+        $this->apiSecret = (string) config('sms.providers.vonage.credentials.api_secret');
         $this->endpoint  = 'https://rest.nexmo.com/sms/json';
     }
 
@@ -27,7 +28,7 @@ class VonageSmsProvider implements SmsProviderInterface
                 'api_key'    => $this->apiKey,
                 'api_secret' => $this->apiSecret,
                 'to'         => ltrim($recipient->phone_e164, '+'),
-                'from'       => $sender ?: config('sms.providers.vonage.from'),
+                'from'       => $sender ?: (string) config('sms.providers.vonage.credentials.from'),
                 'text'       => $message,
             ]);
 

@@ -182,7 +182,7 @@ class SmsDeliveryReceiptDataTable extends DataTable
             [
                 'data' => 'msisdn',
                 'name' => 'sms_delivery_receipts.msisdn',
-                'title' => 'MSISDN',
+                'title' => 'Mobile',
                 'orderable' => false,
                 'searchable' => false,
                 'className' => 'text-left text-nowrap',
@@ -192,7 +192,7 @@ class SmsDeliveryReceiptDataTable extends DataTable
             [
                 'data' => 'to',
                 'name' => 'sms_delivery_receipts.to',
-                'title' => 'To',
+                'title' => 'Sender ID',
                 'orderable' => false,
                 'searchable' => false,
                 'className' => 'text-left text-nowrap',
